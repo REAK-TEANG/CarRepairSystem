@@ -4,48 +4,50 @@
 
 :root {
   /* ============================================================ */
-  /* PREMIUM COOL LIGHT MODE THEME TOKENS                          */
+  /* REFINED LIGHT MODE THEME TOKENS                              */
   /* ============================================================ */
-  --bg-canvas: #F8FAFC;         /* Crisp Slate 50 app background */
-  --bg-card: #FFFFFF;           /* Pure white cards & containers */
-  --bg-hover: #F1F5F9;          /* Slate 100 soft hover background */
-  --bg-input: #FFFFFF;          /* Pure white form inputs */
-  --border-color: #E2E8F0;      /* Crisp light slate border */
-  --text-primary: #0F172A;      /* Slate 900 header text */
-  --text-secondary: #475569;    /* Slate 600 body text */
-  --text-muted: #64748B;        /* Slate 500 caption text */
-  --accent-primary: #059669;    /* Vivid Emerald Green (#059669) */
-  --accent-secondary: #10B981;  /* Mint Emerald (#10B981) */
-  --accent-text: #FFFFFF;       /* Pure white text inside green pills */
-  --sidebar-bg: #FFFFFF;        /* Pure white sidebar surface */
-  --sidebar-border: #E2E8F0;    /* Sidebar right border */
-  --sidebar-hover: #F1F5F9;     /* Sidebar hover item */
-  --sidebar-text: #475569;      /* Sidebar link text */
-  --shadow-card: 0 4px 20px -2px rgba(15, 23, 42, 0.06);
-  --shadow-neon: 0 4px 14px 0 rgba(5, 150, 105, 0.25);
+  --bg-canvas: #F4F5F7;         /* Soft neutral slate canvas */
+  --bg-card: #FFFFFF;           /* Clean card containers */
+  --bg-hover: #ECEEF2;          /* Subtle hover background */
+  --bg-input: #FFFFFF;          /* Clean form inputs */
+  --border-color: #E2E4E9;      /* Crisp border */
+  --text-primary: #111827;      /* Primary text */
+  --text-secondary: #4B5563;    /* Secondary text */
+  --text-muted: #6B7280;        /* Muted caption text */
+  --accent-primary: #2563EB;    /* Precision Blue */
+  --accent-hover: #1D4ED8;      /* Deepened Blue on hover */
+  --accent-secondary: #3B82F6;  /* Secondary Blue */
+  --accent-text: #FFFFFF;       /* White text on accent */
+  --sidebar-bg: #FFFFFF;        /* Clean sidebar */
+  --sidebar-border: #E2E4E9;    /* Sidebar border */
+  --sidebar-hover: #F1F3F6;     /* Sidebar hover item */
+  --sidebar-text: #4B5563;      /* Sidebar link text */
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+  --shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
 html.dark {
   /* ============================================================ */
-  /* EMERALD SPRING WHISPER DARK MODE THEME TOKENS                */
+  /* REFINED OBSIDIAN DARK MODE THEME TOKENS                      */
   /* ============================================================ */
-  --bg-canvas: #081C15;         /* Deep Forest Night background */
-  --bg-card: #163B2C;           /* Emerald Slate card surface */
-  --bg-hover: #214E3A;          /* Dark Spring hover background */
-  --bg-input: #214E3A;          /* Form input background */
-  --border-color: #2D5F48;      /* Emerald separation border */
-  --text-primary: #F8FAFC;      /* Crisp white text */
-  --text-secondary: #94D2BD;    /* Muted mint text */
-  --text-muted: #64748B;        /* Muted caption text */
-  --accent-primary: #34D399;    /* Emerald Neon green */
-  --accent-secondary: #52B788;  /* Spring Mint green */
-  --accent-text: #081C15;       /* Dark text inside neon pills */
-  --sidebar-bg: #081C15;        /* Deep Forest sidebar */
-  --sidebar-border: #2D5F48;    /* Sidebar border */
-  --sidebar-hover: #163B2C;     /* Sidebar hover item */
-  --sidebar-text: #94D2BD;      /* Sidebar link text */
-  --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
-  --shadow-neon: 0 0 20px -2px rgba(52, 211, 153, 0.35);
+  --bg-canvas: #0F1318;         /* Deep graphite slate */
+  --bg-card: #161C24;           /* Solid card surface */
+  --bg-hover: #1F2633;          /* Subtle hover background */
+  --bg-input: #121720;          /* Clean dark inputs */
+  --border-color: #273142;      /* Border separation */
+  --text-primary: #F3F4F6;      /* Off-white text */
+  --text-secondary: #9CA3AF;    /* Soft gray secondary text */
+  --text-muted: #6B7280;        /* Muted caption text */
+  --accent-primary: #3B82F6;    /* Precision Blue */
+  --accent-hover: #2563EB;      /* Darkened Blue on hover */
+  --accent-secondary: #60A5FA;  /* Accent tint */
+  --accent-text: #FFFFFF;       /* White text on accent */
+  --sidebar-bg: #0F1318;        /* Deep graphite sidebar */
+  --sidebar-border: #273142;    /* Sidebar border */
+  --sidebar-hover: #161C24;     /* Sidebar hover item */
+  --sidebar-text: #9CA3AF;      /* Sidebar link text */
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.35);
+  --shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.25);
 }
 
 @layer base {
@@ -62,16 +64,16 @@ html.dark {
     -moz-osx-font-smoothing: grayscale;
     background-color: var(--bg-canvas);
     color: var(--text-primary);
-    transition: background-color 0.25s ease, color 0.25s ease;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   body {
-    font-family: "SF UI Display", -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: var(--bg-canvas);
     color: var(--text-primary);
     min-height: 100vh;
     line-height: 1.5;
-    transition: background-color 0.25s ease, color 0.25s ease;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   .tabular-nums {
@@ -80,7 +82,7 @@ html.dark {
 }
 
 @layer components {
-  /* Custom theme-aware scrollbars */
+  /* Subtle scrollbars */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -92,17 +94,10 @@ html.dark {
 
   ::-webkit-scrollbar-thumb {
     background: var(--border-color);
-    border-radius: 9999px;
+    border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--accent-primary);
-  }
-}
-
-@layer utilities {
-  .neon-border-glow {
-    box-shadow: var(--shadow-neon);
-    border-color: var(--accent-primary) !important;
+    background: var(--text-muted);
   }
 }

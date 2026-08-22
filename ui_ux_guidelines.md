@@ -2,11 +2,15 @@
 
 This document outlines the design principles, color palette, typography, and UX guidelines to follow when building the Car Repair Shop Management System.
 
+> **Core Directive:**  
+> "Design a clean, intentional user interface for Car Repair Shop Management System that prioritizes high information density, precise typographic hierarchy, and genuine utility. Avoid all generic AI tropes: no glowing neon gradients, no random floating glassmorphism cards, no corporate Memphis illustrations, and no overly rounded pill shapes. Use a disciplined, restrained color palette (at most two primary tones, grounded neutrals). Rely on crisp 1px borders, structured grids, and high-contrast typography. The final design should feel like a well-crafted, professional tool built by humans who care about speed and clarity."
+
 ---
 
 ## 1. Design Philosophy
-- **Dark Mode Aesthetic:** Built with a modern, high-contrast dark palette tailored for performance and visual clarity in workshop environments.
-- **Vibrant Dual-Green Accents:** Utilizing Electric Lime (`#B5FF57`) and Emerald Neon (`#13F287`) for key actions, progress indicators, and active UI states.
+- **High Information Density & Utility:** Structured for workshop speed, rapid scannability, and high data density without clutter.
+- **Disciplined, Restrained Palette:** Grounded deep slate/charcoal neutrals paired with high-contrast functional accents (`#B5FF57` Electric Lime & `#13F287` Mint Neon).
+- **Crisp Structural Geometry:** Crisp 1px border dividers (`#323B43`), structured grids, and clean border radii. No floaty glassmorphism traps or generic corporate illustrations.
 - **Clean System Typography:** Powered by **SF UI Display** / Apple System fonts (`-apple-system`, `BlinkMacSystemFont`, `SF Pro Display`, `Inter`).
 
 ---
