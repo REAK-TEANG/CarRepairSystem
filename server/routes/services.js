@@ -1,13 +1,19 @@
 import { Router } from 'express'
-import { query } from '../db.js'
+import { supabase } from '../db.js'
 
 const router = Router()
 
 // GET all services
 router.get('/', async (req, res) => {
   try {
-    const rows = await query.all('SELECT * FROM services ORDER BY id ASC')
-    const services = rows.map((r) => ({
+    const { data: rows, error } = await supabase
+      .from('services')
+      .select('*')
+      .order('id', { ascending: true })
+
+    if (error) throw error
+
+    const services = (rows || []).map((r) => ({
       id: r.id,
       name: r.name,
       category: r.category,
@@ -26,14 +32,25 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { name, category, description, estimatedCost, laborHours, isActive } = req.body
-    const result = await query.run(
-      'INSERT INTO services (name, category, description, estimated_cost, estimated_hours, is_active) VALUES (?, ?, ?, ?, ?, ?)',
-      [name, category || 'Maintenance', description, parseFloat(estimatedCost) || 0, parseFloat(laborHours) || 1.0, isActive === false ? 0 : 1]
-    )
+
+    const { data: inserted, error } = await supabase
+      .from('services')
+      .insert({
+        name,
+        category: category || 'Maintenance',
+        description,
+        estimated_cost: parseFloat(estimatedCost) || 0,
+        estimated_hours: parseFloat(laborHours) || 1.0,
+        is_active: isActive !== false
+      })
+      .select()
+      .single()
+
+    if (error) throw error
 
     res.status(201).json({
       data: {
-        id: result.lastID,
+        id: inserted.id,
         name,
         category: category || 'Maintenance',
         description,
@@ -51,11 +68,23 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { name, category, description, estimatedCost, laborHours, isActive } = req.body
-    await query.run(
-      'UPDATE services SET name = COALESCE(?, name), category = COALESCE(?, category), description = COALESCE(?, description), estimated_cost = COALESCE(?, estimated_cost), estimated_hours = COALESCE(?, estimated_hours), is_active = COALESCE(?, is_active), updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [name, category, description, estimatedCost, laborHours, isActive === undefined ? null : (isActive ? 1 : 0), req.params.id]
-    )
-    const updated = await query.get('SELECT * FROM services WHERE id = ?', [req.params.id])
+    const updateData = {}
+    if (name !== undefined) updateData.name = name
+    if (category !== undefined) updateData.category = category
+    if (description !== undefined) updateData.description = description
+    if (estimatedCost !== undefined) updateData.estimated_cost = estimatedCost
+    if (laborHours !== undefined) updateData.estimated_hours = laborHours
+    if (isActive !== undefined) updateData.is_active = isActive
+
+    const { data: updated, error } = await supabase
+      .from('services')
+      .update(updateData)
+      .eq('id', req.params.id)
+      .select()
+      .single()
+
+    if (error) throw error
+
     res.json({
       data: {
         id: updated.id,
@@ -75,7 +104,8 @@ router.put('/:id', async (req, res) => {
 // DELETE service
 router.delete('/:id', async (req, res) => {
   try {
-    await query.run('DELETE FROM services WHERE id = ?', [req.params.id])
+    const { error } = await supabase.from('services').delete().eq('id', req.params.id)
+    if (error) throw error
     res.json({ success: true, message: 'Service removed' })
   } catch (err) {
     res.status(500).json({ error: err.message })

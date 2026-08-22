@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { query } from '../db.js'
+import { supabase } from '../db.js'
 
 const router = Router()
 
@@ -7,17 +7,26 @@ const router = Router()
 router.get('/', async (req, res) => {
   try {
     const { search } = req.query
-    let sql = 'SELECT * FROM customers ORDER BY id DESC'
-    let params = []
-    if (search) {
-      sql = 'SELECT * FROM customers WHERE full_name LIKE ? OR phone LIKE ? OR customer_code LIKE ? ORDER BY id DESC'
-      params = [`%${search}%`, `%${search}%`, `%${search}%`]
-    }
-    const rows = await query.all(sql, params)
+    let query = supabase.from('customers').select('*').order('id', { ascending: false })
 
-    // Map DB fields to frontend format
-    const customers = await Promise.all(rows.map(async (r) => {
-      const vehCount = await query.get('SELECT COUNT(*) as count FROM vehicles WHERE customer_id = ? OR owner = ?', [r.id, r.full_name])
+    if (search) {
+      query = supabase
+        .from('customers')
+        .select('*')
+        .or(`full_name.ilike.%${search}%,phone.ilike.%${search}%,customer_code.ilike.%${search}%`)
+        .order('id', { ascending: false })
+    }
+
+    const { data: rows, error } = await query
+    if (error) throw error
+
+    // Get vehicle counts for each customer
+    const customers = await Promise.all((rows || []).map(async (r) => {
+      const { count } = await supabase
+        .from('vehicles')
+        .select('*', { count: 'exact', head: true })
+        .eq('customer_id', r.id)
+
       return {
         id: r.id,
         code: r.customer_code,
@@ -26,7 +35,7 @@ router.get('/', async (req, res) => {
         email: r.email,
         address: r.address,
         avatar: r.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-        vehiclesCount: vehCount ? vehCount.count : 0,
+        vehiclesCount: count || 0,
         totalSpent: r.total_spent || '$0.00',
         registrationDate: r.registration_date,
         notes: r.notes
@@ -41,8 +50,14 @@ router.get('/', async (req, res) => {
 // GET single customer
 router.get('/:id', async (req, res) => {
   try {
-    const r = await query.get('SELECT * FROM customers WHERE id = ?', [req.params.id])
-    if (!r) return res.status(404).json({ error: 'Customer not found' })
+    const { data: r, error } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('id', req.params.id)
+      .single()
+
+    if (error || !r) return res.status(404).json({ error: 'Customer not found' })
+
     res.json({
       data: {
         id: r.id,
@@ -65,18 +80,29 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { name, phone, email, address } = req.body
-    const count = await query.get('SELECT COUNT(*) as cnt FROM customers')
-    const code = `CUST-${String((count?.cnt || 0) + 1).padStart(3, '0')}`
+    const { count } = await supabase.from('customers').select('*', { count: 'exact', head: true })
+    const code = `CUST-${String((count || 0) + 1).padStart(3, '0')}`
     const avatar = `https://images.unsplash.com/photo-${1534528741775 + Math.floor(Math.random() * 1000)}?w=150`
 
-    const result = await query.run(
-      'INSERT INTO customers (customer_code, full_name, phone, email, address, avatar_url, total_spent) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [code, name, phone, email, address, avatar, '$0.00']
-    )
+    const { data: inserted, error } = await supabase
+      .from('customers')
+      .insert({
+        customer_code: code,
+        full_name: name,
+        phone,
+        email,
+        address,
+        avatar_url: avatar,
+        total_spent: '$0.00'
+      })
+      .select()
+      .single()
+
+    if (error) throw error
 
     res.status(201).json({
       data: {
-        id: result.lastID,
+        id: inserted.id,
         code,
         name,
         phone,
@@ -97,11 +123,15 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { name, phone, email, address } = req.body
-    await query.run(
-      'UPDATE customers SET full_name = ?, phone = ?, email = ?, address = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [name, phone, email, address, req.params.id]
-    )
-    const updated = await query.get('SELECT * FROM customers WHERE id = ?', [req.params.id])
+    const { data: updated, error } = await supabase
+      .from('customers')
+      .update({ full_name: name, phone, email, address })
+      .eq('id', req.params.id)
+      .select()
+      .single()
+
+    if (error) throw error
+
     res.json({
       data: {
         id: updated.id,
@@ -122,7 +152,8 @@ router.put('/:id', async (req, res) => {
 // DELETE customer
 router.delete('/:id', async (req, res) => {
   try {
-    await query.run('DELETE FROM customers WHERE id = ?', [req.params.id])
+    const { error } = await supabase.from('customers').delete().eq('id', req.params.id)
+    if (error) throw error
     res.json({ success: true, message: 'Customer deleted successfully' })
   } catch (err) {
     res.status(500).json({ error: err.message })

@@ -31,7 +31,7 @@ app.use((req, res, next) => {
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', database: 'connected (sqlite)', timestamp: new Date().toISOString() })
+  res.json({ status: 'ok', database: 'connected (supabase/postgresql)', timestamp: new Date().toISOString() })
 })
 
 // Mount REST API routes
@@ -63,7 +63,7 @@ async function startServer() {
       console.log(`====================================================`)
       console.log(`🚗 Car Repair Backend Server running on http://localhost:${PORT}`)
       console.log(`📡 REST API Endpoints active at http://localhost:${PORT}/api/*`)
-      console.log(`💾 SQLite Database connected`)
+      console.log(`💾 Supabase PostgreSQL Database connected`)
       console.log(`====================================================`)
     })
   } catch (err) {

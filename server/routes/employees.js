@@ -1,13 +1,19 @@
 import { Router } from 'express'
-import { query } from '../db.js'
+import { supabase } from '../db.js'
 
 const router = Router()
 
 // GET all employees
 router.get('/', async (req, res) => {
   try {
-    const rows = await query.all('SELECT * FROM employees ORDER BY id ASC')
-    const employees = rows.map((r) => ({
+    const { data: rows, error } = await supabase
+      .from('employees')
+      .select('*')
+      .order('id', { ascending: true })
+
+    if (error) throw error
+
+    const employees = (rows || []).map((r) => ({
       id: r.id,
       empCode: r.employee_code,
       name: r.name,
@@ -29,17 +35,30 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { name, roleTitle, department, phone, email, baseSalary, attendanceToday, status } = req.body
-    const count = await query.get('SELECT COUNT(*) as cnt FROM employees')
-    const empCode = `EMP-${String((count?.cnt || 0) + 1).padStart(3, '0')}`
+    const { count } = await supabase.from('employees').select('*', { count: 'exact', head: true })
+    const empCode = `EMP-${String((count || 0) + 1).padStart(3, '0')}`
 
-    const result = await query.run(
-      'INSERT INTO employees (employee_code, name, position, department, phone, email, salary, attendance_today, employment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [empCode, name, roleTitle, department || 'Workshop', phone, email, baseSalary || '$3,500/mo', attendanceToday || 'Present', status || 'Active']
-    )
+    const { data: inserted, error } = await supabase
+      .from('employees')
+      .insert({
+        employee_code: empCode,
+        name,
+        position: roleTitle,
+        department: department || 'Workshop',
+        phone,
+        email,
+        salary: baseSalary || '$3,500/mo',
+        attendance_today: attendanceToday || 'Present',
+        employment_status: status || 'Active'
+      })
+      .select()
+      .single()
+
+    if (error) throw error
 
     res.status(201).json({
       data: {
-        id: result.lastID,
+        id: inserted.id,
         empCode,
         name,
         roleTitle,
@@ -60,11 +79,25 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { name, roleTitle, department, phone, email, baseSalary, attendanceToday, status } = req.body
-    await query.run(
-      'UPDATE employees SET name = COALESCE(?, name), position = COALESCE(?, position), department = COALESCE(?, department), phone = COALESCE(?, phone), email = COALESCE(?, email), salary = COALESCE(?, salary), attendance_today = COALESCE(?, attendance_today), employment_status = COALESCE(?, employment_status), updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [name, roleTitle, department, phone, email, baseSalary, attendanceToday, status, req.params.id]
-    )
-    const updated = await query.get('SELECT * FROM employees WHERE id = ?', [req.params.id])
+    const updateData = {}
+    if (name !== undefined) updateData.name = name
+    if (roleTitle !== undefined) updateData.position = roleTitle
+    if (department !== undefined) updateData.department = department
+    if (phone !== undefined) updateData.phone = phone
+    if (email !== undefined) updateData.email = email
+    if (baseSalary !== undefined) updateData.salary = baseSalary
+    if (attendanceToday !== undefined) updateData.attendance_today = attendanceToday
+    if (status !== undefined) updateData.employment_status = status
+
+    const { data: updated, error } = await supabase
+      .from('employees')
+      .update(updateData)
+      .eq('id', req.params.id)
+      .select()
+      .single()
+
+    if (error) throw error
+
     res.json({
       data: {
         id: updated.id,
@@ -87,11 +120,21 @@ router.put('/:id', async (req, res) => {
 // POST toggle attendance
 router.post('/:id/toggle-attendance', async (req, res) => {
   try {
-    const emp = await query.get('SELECT * FROM employees WHERE id = ?', [req.params.id])
-    if (!emp) return res.status(404).json({ error: 'Employee not found' })
+    const { data: emp, error: fetchErr } = await supabase
+      .from('employees')
+      .select('*')
+      .eq('id', req.params.id)
+      .single()
+
+    if (fetchErr || !emp) return res.status(404).json({ error: 'Employee not found' })
 
     const newAttendance = emp.attendance_today === 'Present' ? 'On Leave' : 'Present'
-    await query.run('UPDATE employees SET attendance_today = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [newAttendance, req.params.id])
+    const { error } = await supabase
+      .from('employees')
+      .update({ attendance_today: newAttendance })
+      .eq('id', req.params.id)
+
+    if (error) throw error
 
     res.json({
       data: {
@@ -115,7 +158,8 @@ router.post('/:id/toggle-attendance', async (req, res) => {
 // DELETE employee
 router.delete('/:id', async (req, res) => {
   try {
-    await query.run('DELETE FROM employees WHERE id = ?', [req.params.id])
+    const { error } = await supabase.from('employees').delete().eq('id', req.params.id)
+    if (error) throw error
     res.json({ success: true, message: 'Employee removed' })
   } catch (err) {
     res.status(500).json({ error: err.message })

@@ -1,13 +1,19 @@
 import { Router } from 'express'
-import { query } from '../db.js'
+import { supabase } from '../db.js'
 
 const router = Router()
 
 // GET all mechanics
 router.get('/', async (req, res) => {
   try {
-    const rows = await query.all('SELECT * FROM mechanics ORDER BY id ASC')
-    const mechanics = rows.map((r) => ({
+    const { data: rows, error } = await supabase
+      .from('mechanics')
+      .select('*')
+      .order('id', { ascending: true })
+
+    if (error) throw error
+
+    const mechanics = (rows || []).map((r) => ({
       id: r.id,
       code: r.mechanic_code,
       name: r.name,
@@ -30,17 +36,31 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { name, phone, email, specialization, experience, status } = req.body
-    const count = await query.get('SELECT COUNT(*) as cnt FROM mechanics')
-    const code = `MEC-${String((count?.cnt || 0) + 1).padStart(2, '0')}`
+    const { count } = await supabase.from('mechanics').select('*', { count: 'exact', head: true })
+    const code = `MEC-${String((count || 0) + 1).padStart(2, '0')}`
 
-    const result = await query.run(
-      'INSERT INTO mechanics (mechanic_code, name, phone, email, specialization, experience_years, rating, active_jobs, completed_jobs, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [code, name, phone, email, specialization, parseInt(experience, 10) || 5, 5.0, 0, 0, status || 'Active']
-    )
+    const { data: inserted, error } = await supabase
+      .from('mechanics')
+      .insert({
+        mechanic_code: code,
+        name,
+        phone,
+        email,
+        specialization,
+        experience_years: parseInt(experience, 10) || 5,
+        rating: 5.0,
+        active_jobs: 0,
+        completed_jobs: 0,
+        status: status || 'Active'
+      })
+      .select()
+      .single()
+
+    if (error) throw error
 
     res.status(201).json({
       data: {
-        id: result.lastID,
+        id: inserted.id,
         code,
         name,
         phone,
@@ -62,11 +82,23 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { name, phone, email, specialization, experience, status } = req.body
-    await query.run(
-      'UPDATE mechanics SET name = COALESCE(?, name), phone = COALESCE(?, phone), email = COALESCE(?, email), specialization = COALESCE(?, specialization), experience_years = COALESCE(?, experience_years), status = COALESCE(?, status), updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [name, phone, email, specialization, experience, status, req.params.id]
-    )
-    const updated = await query.get('SELECT * FROM mechanics WHERE id = ?', [req.params.id])
+    const updateData = {}
+    if (name !== undefined) updateData.name = name
+    if (phone !== undefined) updateData.phone = phone
+    if (email !== undefined) updateData.email = email
+    if (specialization !== undefined) updateData.specialization = specialization
+    if (experience !== undefined) updateData.experience_years = experience
+    if (status !== undefined) updateData.status = status
+
+    const { data: updated, error } = await supabase
+      .from('mechanics')
+      .update(updateData)
+      .eq('id', req.params.id)
+      .select()
+      .single()
+
+    if (error) throw error
+
     res.json({
       data: {
         id: updated.id,
@@ -90,7 +122,8 @@ router.put('/:id', async (req, res) => {
 // DELETE mechanic
 router.delete('/:id', async (req, res) => {
   try {
-    await query.run('DELETE FROM mechanics WHERE id = ?', [req.params.id])
+    const { error } = await supabase.from('mechanics').delete().eq('id', req.params.id)
+    if (error) throw error
     res.json({ success: true, message: 'Mechanic removed' })
   } catch (err) {
     res.status(500).json({ error: err.message })

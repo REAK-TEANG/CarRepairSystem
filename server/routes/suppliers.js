@@ -1,16 +1,22 @@
 import { Router } from 'express'
-import { query } from '../db.js'
+import { supabase } from '../db.js'
 
 const router = Router()
 
 // GET all suppliers
 router.get('/', async (req, res) => {
   try {
-    const rows = await query.all('SELECT * FROM suppliers ORDER BY id DESC')
-    const suppliers = rows.map((r) => ({
+    const { data: rows, error } = await supabase
+      .from('suppliers')
+      .select('*')
+      .order('id', { ascending: false })
+
+    if (error) throw error
+
+    const suppliers = (rows || []).map((r) => ({
       id: r.id,
       name: r.name,
-      contactPerson: r.contact_person,
+      contactPerson: r.contact_person || r.contact_name,
       phone: r.phone,
       email: r.email,
       address: r.address,
@@ -28,13 +34,28 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { name, contactPerson, phone, email, address, categories } = req.body
-    const result = await query.run(
-      'INSERT INTO suppliers (name, contact_person, phone, email, address, categories, rating, active_orders) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [name, contactPerson, phone, email, address, categories, 4.9, 0]
-    )
+
+    const { data: inserted, error } = await supabase
+      .from('suppliers')
+      .insert({
+        name,
+        contact_person: contactPerson,
+        contact_name: contactPerson,
+        phone,
+        email,
+        address,
+        categories,
+        rating: 4.9,
+        active_orders: 0
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+
     res.status(201).json({
       data: {
-        id: result.lastID,
+        id: inserted.id,
         name,
         contactPerson,
         phone,
@@ -54,16 +75,29 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { name, contactPerson, phone, email, address, categories } = req.body
-    await query.run(
-      'UPDATE suppliers SET name = ?, contact_person = ?, phone = ?, email = ?, address = ?, categories = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [name, contactPerson, phone, email, address, categories, req.params.id]
-    )
-    const updated = await query.get('SELECT * FROM suppliers WHERE id = ?', [req.params.id])
+
+    const { data: updated, error } = await supabase
+      .from('suppliers')
+      .update({
+        name,
+        contact_person: contactPerson,
+        contact_name: contactPerson,
+        phone,
+        email,
+        address,
+        categories
+      })
+      .eq('id', req.params.id)
+      .select()
+      .single()
+
+    if (error) throw error
+
     res.json({
       data: {
         id: updated.id,
         name: updated.name,
-        contactPerson: updated.contact_person,
+        contactPerson: updated.contact_person || updated.contact_name,
         phone: updated.phone,
         email: updated.email,
         address: updated.address,
@@ -80,7 +114,8 @@ router.put('/:id', async (req, res) => {
 // DELETE supplier
 router.delete('/:id', async (req, res) => {
   try {
-    await query.run('DELETE FROM suppliers WHERE id = ?', [req.params.id])
+    const { error } = await supabase.from('suppliers').delete().eq('id', req.params.id)
+    if (error) throw error
     res.json({ success: true, message: 'Supplier removed' })
   } catch (err) {
     res.status(500).json({ error: err.message })

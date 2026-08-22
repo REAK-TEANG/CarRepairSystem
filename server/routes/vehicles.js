@@ -1,13 +1,19 @@
 import { Router } from 'express'
-import { query } from '../db.js'
+import { supabase } from '../db.js'
 
 const router = Router()
 
 // GET all vehicles
 router.get('/', async (req, res) => {
   try {
-    const rows = await query.all('SELECT * FROM vehicles ORDER BY id DESC')
-    const vehicles = rows.map((r) => ({
+    const { data: rows, error } = await supabase
+      .from('vehicles')
+      .select('*')
+      .order('id', { ascending: false })
+
+    if (error) throw error
+
+    const vehicles = (rows || []).map((r) => ({
       id: r.id,
       number: r.vehicle_number,
       vin: r.vin,
@@ -31,14 +37,29 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { number, vin, brand, model, year, color, fuelType, mileage, owner, ownerId } = req.body
-    const result = await query.run(
-      'INSERT INTO vehicles (customer_id, vehicle_number, vin, brand, model, year, color, fuel_type, mileage, owner) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [ownerId || 1, number, vin, brand, model, year, color, fuelType || 'Gasoline', mileage || 0, owner]
-    )
+
+    const { data: inserted, error } = await supabase
+      .from('vehicles')
+      .insert({
+        customer_id: ownerId || 1,
+        vehicle_number: number,
+        vin,
+        brand,
+        model,
+        year,
+        color,
+        fuel_type: fuelType || 'Gasoline',
+        mileage: mileage || 0,
+        owner
+      })
+      .select()
+      .single()
+
+    if (error) throw error
 
     res.status(201).json({
       data: {
-        id: result.lastID,
+        id: inserted.id,
         number,
         vin,
         brand,
@@ -60,11 +81,27 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { number, vin, brand, model, year, color, fuelType, mileage, owner, ownerId } = req.body
-    await query.run(
-      'UPDATE vehicles SET vehicle_number = ?, vin = ?, brand = ?, model = ?, year = ?, color = ?, fuel_type = ?, mileage = ?, owner = ?, customer_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [number, vin, brand, model, year, color, fuelType, mileage, owner, ownerId || 1, req.params.id]
-    )
-    const updated = await query.get('SELECT * FROM vehicles WHERE id = ?', [req.params.id])
+
+    const { data: updated, error } = await supabase
+      .from('vehicles')
+      .update({
+        vehicle_number: number,
+        vin,
+        brand,
+        model,
+        year,
+        color,
+        fuel_type: fuelType,
+        mileage,
+        owner,
+        customer_id: ownerId || 1
+      })
+      .eq('id', req.params.id)
+      .select()
+      .single()
+
+    if (error) throw error
+
     res.json({
       data: {
         id: updated.id,
@@ -88,7 +125,8 @@ router.put('/:id', async (req, res) => {
 // DELETE vehicle
 router.delete('/:id', async (req, res) => {
   try {
-    await query.run('DELETE FROM vehicles WHERE id = ?', [req.params.id])
+    const { error } = await supabase.from('vehicles').delete().eq('id', req.params.id)
+    if (error) throw error
     res.json({ success: true, message: 'Vehicle removed successfully' })
   } catch (err) {
     res.status(500).json({ error: err.message })

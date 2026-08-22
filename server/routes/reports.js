@@ -1,17 +1,25 @@
 import { Router } from 'express'
-import { query } from '../db.js'
+import { supabase } from '../db.js'
 
 const router = Router()
 
 // GET reports overview & analytics
 router.get('/', async (req, res) => {
   try {
-    const custCount = await query.get('SELECT COUNT(*) as cnt FROM customers')
-    const vehCount = await query.get('SELECT COUNT(*) as cnt FROM vehicles')
-    const jobCount = await query.get('SELECT COUNT(*) as cnt FROM repair_orders')
-    const completedJobCount = await query.get('SELECT COUNT(*) as cnt FROM repair_orders WHERE status = "Completed"')
-    const invStats = await query.get('SELECT SUM(amount) as totalInvoiced, SUM(paid_amount) as totalCollected FROM invoices')
-    const partCount = await query.get('SELECT COUNT(*) as cnt, SUM(stock_quantity) as totalUnits FROM spare_parts')
+    const { count: custCount } = await supabase.from('customers').select('*', { count: 'exact', head: true })
+    const { count: vehCount } = await supabase.from('vehicles').select('*', { count: 'exact', head: true })
+    const { count: jobCount } = await supabase.from('repair_orders').select('*', { count: 'exact', head: true })
+    const { count: completedJobCount } = await supabase.from('repair_orders').select('*', { count: 'exact', head: true }).eq('status', 'Completed')
+    const { count: partCount } = await supabase.from('spare_parts').select('*', { count: 'exact', head: true })
+
+    // Get invoice totals
+    const { data: invRows } = await supabase.from('invoices').select('amount, paid_amount')
+    const totalInvoiced = (invRows || []).reduce((sum, r) => sum + (r.amount || 0), 0)
+    const totalCollected = (invRows || []).reduce((sum, r) => sum + (r.paid_amount || 0), 0)
+
+    // Get total stock units
+    const { data: partRows } = await supabase.from('spare_parts').select('stock_quantity')
+    const totalStockUnits = (partRows || []).reduce((sum, r) => sum + (r.stock_quantity || 0), 0)
 
     const reportsList = [
       { id: 1, title: 'Monthly Revenue & Profit Breakdown', category: 'Financial', date: 'August 2026', format: 'PDF / Excel' },
@@ -25,14 +33,14 @@ router.get('/', async (req, res) => {
       data: {
         reports: reportsList,
         metrics: {
-          totalCustomers: custCount?.cnt || 0,
-          totalVehicles: vehCount?.cnt || 0,
-          totalRepairJobs: jobCount?.cnt || 0,
-          completedRepairs: completedJobCount?.cnt || 0,
-          totalRevenue: invStats?.totalInvoiced || 0,
-          totalCollected: invStats?.totalCollected || 0,
-          totalSpareParts: partCount?.cnt || 0,
-          totalStockUnits: partCount?.totalUnits || 0
+          totalCustomers: custCount || 0,
+          totalVehicles: vehCount || 0,
+          totalRepairJobs: jobCount || 0,
+          completedRepairs: completedJobCount || 0,
+          totalRevenue: totalInvoiced,
+          totalCollected: totalCollected,
+          totalSpareParts: partCount || 0,
+          totalStockUnits: totalStockUnits
         }
       }
     })

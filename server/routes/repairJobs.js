@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { query } from '../db.js'
+import { supabase } from '../db.js'
 
 const router = Router()
 
@@ -7,14 +7,16 @@ const router = Router()
 router.get('/', async (req, res) => {
   try {
     const { mechanicId } = req.query
-    let sql = 'SELECT * FROM repair_orders ORDER BY id DESC'
-    let params = []
+    let query = supabase.from('repair_orders').select('*').order('id', { ascending: false })
+
     if (mechanicId) {
-      sql = 'SELECT * FROM repair_orders WHERE mechanic_id = ? ORDER BY id DESC'
-      params = [mechanicId]
+      query = supabase.from('repair_orders').select('*').eq('mechanic_id', mechanicId).order('id', { ascending: false })
     }
-    const rows = await query.all(sql, params)
-    const jobs = rows.map((r) => ({
+
+    const { data: rows, error } = await query
+    if (error) throw error
+
+    const jobs = (rows || []).map((r) => ({
       id: r.id,
       orderNumber: r.order_number,
       customer: r.customer,
@@ -29,7 +31,7 @@ router.get('/', async (req, res) => {
       estimatedCost: r.estimated_cost,
       actualCost: r.actual_cost,
       status: r.status,
-      createdAt: r.created_at ? r.created_at.split(' ')[0] : 'Today'
+      createdAt: r.created_at ? r.created_at.split('T')[0] : 'Today'
     }))
     res.json({ data: jobs })
   } catch (err) {
@@ -41,17 +43,33 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { customer, customerId, vehicle, vehicleId, plate, mechanic, mechanicId, problem, diagnosis, estimatedCost, status } = req.body
-    const count = await query.get('SELECT COUNT(*) as cnt FROM repair_orders')
-    const orderNumber = `RO-2026-${String((count?.cnt || 0) + 41).padStart(4, '0')}`
+    const { count } = await supabase.from('repair_orders').select('*', { count: 'exact', head: true })
+    const orderNumber = `RO-2026-${String((count || 0) + 41).padStart(4, '0')}`
 
-    const result = await query.run(
-      'INSERT INTO repair_orders (order_number, customer_id, customer, vehicle_id, vehicle, plate, mechanic_id, mechanic, problem_description, diagnosis, estimated_cost, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [orderNumber, customerId || 1, customer, vehicleId || 1, vehicle, plate, mechanicId || 1, mechanic, problem, diagnosis || '', estimatedCost || '$350', status || 'Pending']
-    )
+    const { data: inserted, error } = await supabase
+      .from('repair_orders')
+      .insert({
+        order_number: orderNumber,
+        customer_id: customerId || 1,
+        customer,
+        vehicle_id: vehicleId || 1,
+        vehicle,
+        plate,
+        mechanic_id: mechanicId || 1,
+        mechanic,
+        problem_description: problem,
+        diagnosis: diagnosis || '',
+        estimated_cost: estimatedCost || '$350',
+        status: status || 'Pending'
+      })
+      .select()
+      .single()
+
+    if (error) throw error
 
     res.status(201).json({
       data: {
-        id: result.lastID,
+        id: inserted.id,
         orderNumber,
         customer,
         customerId,
@@ -76,11 +94,22 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { status, diagnosis, actualCost, mechanic, estimatedCost } = req.body
-    await query.run(
-      'UPDATE repair_orders SET status = COALESCE(?, status), diagnosis = COALESCE(?, diagnosis), actual_cost = COALESCE(?, actual_cost), mechanic = COALESCE(?, mechanic), estimated_cost = COALESCE(?, estimated_cost), updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [status, diagnosis, actualCost, mechanic, estimatedCost, req.params.id]
-    )
-    const updated = await query.get('SELECT * FROM repair_orders WHERE id = ?', [req.params.id])
+    const updateData = {}
+    if (status !== undefined) updateData.status = status
+    if (diagnosis !== undefined) updateData.diagnosis = diagnosis
+    if (actualCost !== undefined) updateData.actual_cost = actualCost
+    if (mechanic !== undefined) updateData.mechanic = mechanic
+    if (estimatedCost !== undefined) updateData.estimated_cost = estimatedCost
+
+    const { data: updated, error } = await supabase
+      .from('repair_orders')
+      .update(updateData)
+      .eq('id', req.params.id)
+      .select()
+      .single()
+
+    if (error) throw error
+
     res.json({
       data: {
         id: updated.id,
@@ -97,7 +126,7 @@ router.put('/:id', async (req, res) => {
         estimatedCost: updated.estimated_cost,
         actualCost: updated.actual_cost,
         status: updated.status,
-        createdAt: updated.created_at ? updated.created_at.split(' ')[0] : 'Today'
+        createdAt: updated.created_at ? updated.created_at.split('T')[0] : 'Today'
       }
     })
   } catch (err) {

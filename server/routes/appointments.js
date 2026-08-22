@@ -1,13 +1,19 @@
 import { Router } from 'express'
-import { query } from '../db.js'
+import { supabase } from '../db.js'
 
 const router = Router()
 
 // GET all appointments
 router.get('/', async (req, res) => {
   try {
-    const rows = await query.all('SELECT * FROM appointments ORDER BY scheduled_date ASC, scheduled_time ASC')
-    const appointments = rows.map((r) => ({
+    const { data: rows, error } = await supabase
+      .from('appointments')
+      .select('*')
+      .order('scheduled_date', { ascending: true })
+
+    if (error) throw error
+
+    const appointments = (rows || []).map((r) => ({
       id: r.id,
       code: r.appointment_code,
       customer: r.customer,
@@ -33,18 +39,37 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { customer, customerId, vehicle, vehicleId, plate, mechanic, mechanicId, service, date, time, status, notes } = req.body
-    const count = await query.get('SELECT COUNT(*) as cnt FROM appointments')
-    const code = `APT-2026-${String((count?.cnt || 0) + 1).padStart(3, '0')}`
 
-    const result = await query.run(
-      'INSERT INTO appointments (appointment_code, customer_id, customer, vehicle_id, vehicle, plate, mechanic_id, mechanic, service, scheduled_date, scheduled_time, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [code, customerId || 1, customer, vehicleId || 1, vehicle, plate, mechanicId || 1, mechanic, service, date, time || '09:00', status || 'Scheduled', notes || '']
-    )
+    // Generate appointment code
+    const { count } = await supabase.from('appointments').select('*', { count: 'exact', head: true })
+    const code = `APT-2026-${String((count || 0) + 1).padStart(3, '0')}`
+
+    const { data: inserted, error } = await supabase
+      .from('appointments')
+      .insert({
+        appointment_code: code,
+        customer_id: customerId || 1,
+        customer,
+        vehicle_id: vehicleId || 1,
+        vehicle,
+        plate,
+        mechanic_id: mechanicId || 1,
+        mechanic,
+        service,
+        scheduled_date: date,
+        scheduled_time: time || '09:00',
+        status: status || 'Scheduled',
+        notes: notes || ''
+      })
+      .select()
+      .single()
+
+    if (error) throw error
 
     res.status(201).json({
       data: {
-        id: result.lastID,
-        code,
+        id: inserted.id,
+        code: inserted.appointment_code,
         customer,
         customerId,
         vehicle,
@@ -68,11 +93,24 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { status, mechanic, mechanicId, date, time, notes, service } = req.body
-    await query.run(
-      'UPDATE appointments SET status = COALESCE(?, status), mechanic = COALESCE(?, mechanic), mechanic_id = COALESCE(?, mechanic_id), scheduled_date = COALESCE(?, scheduled_date), scheduled_time = COALESCE(?, scheduled_time), service = COALESCE(?, service), notes = COALESCE(?, notes), updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [status, mechanic, mechanicId, date, time, service, notes, req.params.id]
-    )
-    const updated = await query.get('SELECT * FROM appointments WHERE id = ?', [req.params.id])
+    const updateData = {}
+    if (status !== undefined) updateData.status = status
+    if (mechanic !== undefined) updateData.mechanic = mechanic
+    if (mechanicId !== undefined) updateData.mechanic_id = mechanicId
+    if (date !== undefined) updateData.scheduled_date = date
+    if (time !== undefined) updateData.scheduled_time = time
+    if (service !== undefined) updateData.service = service
+    if (notes !== undefined) updateData.notes = notes
+
+    const { data: updated, error } = await supabase
+      .from('appointments')
+      .update(updateData)
+      .eq('id', req.params.id)
+      .select()
+      .single()
+
+    if (error) throw error
+
     res.json({
       data: {
         id: updated.id,
@@ -99,7 +137,12 @@ router.put('/:id', async (req, res) => {
 // DELETE cancel appointment
 router.delete('/:id', async (req, res) => {
   try {
-    await query.run('UPDATE appointments SET status = "Cancelled", updated_at = CURRENT_TIMESTAMP WHERE id = ?', [req.params.id])
+    const { error } = await supabase
+      .from('appointments')
+      .update({ status: 'Cancelled' })
+      .eq('id', req.params.id)
+
+    if (error) throw error
     res.json({ success: true, message: 'Appointment cancelled' })
   } catch (err) {
     res.status(500).json({ error: err.message })

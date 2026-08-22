@@ -1,13 +1,19 @@
 import { Router } from 'express'
-import { query } from '../db.js'
+import { supabase } from '../db.js'
 
 const router = Router()
 
 // GET all spare parts
 router.get('/', async (req, res) => {
   try {
-    const rows = await query.all('SELECT * FROM spare_parts ORDER BY id DESC')
-    const items = rows.map((r) => ({
+    const { data: rows, error } = await supabase
+      .from('spare_parts')
+      .select('*')
+      .order('id', { ascending: false })
+
+    if (error) throw error
+
+    const items = (rows || []).map((r) => ({
       id: r.id,
       partCode: r.part_code,
       name: r.name,
@@ -31,20 +37,35 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { name, category, brand, unitPrice, stockQty, minThreshold, supplier, supplierId, location, partCode } = req.body
-    const count = await query.get('SELECT COUNT(*) as cnt FROM spare_parts')
-    const finalCode = partCode || `PT-${String((count?.cnt || 0) + 100).padStart(4, '0')}`
+    const { count } = await supabase.from('spare_parts').select('*', { count: 'exact', head: true })
+    const finalCode = partCode || `PT-${String((count || 0) + 100).padStart(4, '0')}`
     const qty = parseInt(stockQty, 10) || 0
     const min = parseInt(minThreshold, 10) || 5
     const status = qty === 0 ? 'Out of Stock' : qty <= min ? 'Low Stock' : 'In Stock'
 
-    const result = await query.run(
-      'INSERT INTO spare_parts (part_code, name, category, brand, unit_price, stock_quantity, min_stock, supplier_id, supplier, location, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [finalCode, name, category, brand, unitPrice || 0, qty, min, supplierId || 1, supplier, location || 'Shelf A-01', status]
-    )
+    const { data: inserted, error } = await supabase
+      .from('spare_parts')
+      .insert({
+        part_code: finalCode,
+        name,
+        category,
+        brand,
+        unit_price: unitPrice || 0,
+        stock_quantity: qty,
+        min_stock: min,
+        supplier_id: supplierId || null,
+        supplier,
+        location: location || 'Shelf A-01',
+        status
+      })
+      .select()
+      .single()
+
+    if (error) throw error
 
     res.status(201).json({
       data: {
-        id: result.lastID,
+        id: inserted.id,
         partCode: finalCode,
         name,
         category,
@@ -71,11 +92,26 @@ router.put('/:id', async (req, res) => {
     const min = parseInt(minThreshold, 10) || 5
     const status = qty === 0 ? 'Out of Stock' : qty <= min ? 'Low Stock' : 'In Stock'
 
-    await query.run(
-      'UPDATE spare_parts SET name = ?, category = ?, brand = ?, unit_price = ?, stock_quantity = ?, min_stock = ?, supplier = ?, supplier_id = ?, location = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [name, category, brand, unitPrice, qty, min, supplier, supplierId || 1, location, status, req.params.id]
-    )
-    const updated = await query.get('SELECT * FROM spare_parts WHERE id = ?', [req.params.id])
+    const { data: updated, error } = await supabase
+      .from('spare_parts')
+      .update({
+        name,
+        category,
+        brand,
+        unit_price: unitPrice,
+        stock_quantity: qty,
+        min_stock: min,
+        supplier,
+        supplier_id: supplierId || null,
+        location,
+        status
+      })
+      .eq('id', req.params.id)
+      .select()
+      .single()
+
+    if (error) throw error
+
     res.json({
       data: {
         id: updated.id,
@@ -101,8 +137,14 @@ router.put('/:id', async (req, res) => {
 router.post('/:id/adjust', async (req, res) => {
   try {
     const { quantity, type, notes } = req.body
-    const part = await query.get('SELECT * FROM spare_parts WHERE id = ?', [req.params.id])
-    if (!part) return res.status(404).json({ error: 'Part not found' })
+
+    const { data: part, error: fetchErr } = await supabase
+      .from('spare_parts')
+      .select('*')
+      .eq('id', req.params.id)
+      .single()
+
+    if (fetchErr || !part) return res.status(404).json({ error: 'Part not found' })
 
     const qtyChange = parseInt(quantity, 10) || 0
     const newQty = type === 'Stock In'
@@ -110,8 +152,20 @@ router.post('/:id/adjust', async (req, res) => {
       : Math.max(0, part.stock_quantity - qtyChange)
     const newStatus = newQty === 0 ? 'Out of Stock' : newQty <= part.min_stock ? 'Low Stock' : 'In Stock'
 
-    await query.run('UPDATE spare_parts SET stock_quantity = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [newQty, newStatus, req.params.id])
-    await query.run('INSERT INTO inventory_transactions (spare_part_id, type, quantity, notes) VALUES (?, ?, ?, ?)', [req.params.id, type, qtyChange, notes || ''])
+    const { error: updateErr } = await supabase
+      .from('spare_parts')
+      .update({ stock_quantity: newQty, status: newStatus })
+      .eq('id', req.params.id)
+
+    if (updateErr) throw updateErr
+
+    // Log the inventory transaction
+    await supabase.from('inventory_transactions').insert({
+      spare_part_id: parseInt(req.params.id),
+      type,
+      quantity: qtyChange,
+      notes: notes || ''
+    })
 
     res.json({
       data: {
@@ -136,7 +190,8 @@ router.post('/:id/adjust', async (req, res) => {
 // DELETE spare part
 router.delete('/:id', async (req, res) => {
   try {
-    await query.run('DELETE FROM spare_parts WHERE id = ?', [req.params.id])
+    const { error } = await supabase.from('spare_parts').delete().eq('id', req.params.id)
+    if (error) throw error
     res.json({ success: true, message: 'Spare part removed' })
   } catch (err) {
     res.status(500).json({ error: err.message })

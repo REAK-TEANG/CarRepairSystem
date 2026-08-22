@@ -7,8 +7,8 @@
 
 export const API_CONFIG = {
   // Toggle this to TRUE when connecting to the live backend API
-  USE_REAL_API: false,
-  BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
+  USE_REAL_API: true,
+  BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
   TIMEOUT: 10000,
 }
 
