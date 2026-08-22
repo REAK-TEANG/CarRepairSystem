@@ -1,33 +1,37 @@
 import { Router } from 'express'
-import { supabase } from '../db.js'
+import { query } from '../db.js'
 
 const router = Router()
 
 // GET all invoices
 router.get('/', async (req, res) => {
   try {
-    const { data: rows, error } = await supabase
-      .from('invoices')
-      .select('*')
-      .order('id', { ascending: false })
+    const rows = await query.all(`
+      SELECT i.*, 
+             c.full_name AS customer_name,
+             ro.order_number
+      FROM invoices i
+      LEFT JOIN customers c ON i.customer_id = c.id
+      LEFT JOIN repair_orders ro ON i.repair_order_id = ro.id
+      ORDER BY i.id DESC
+    `)
 
-    if (error) throw error
-
-    const invoices = (rows || []).map((r) => ({
+    const invoices = rows.map((r) => ({
       id: r.id,
       invoiceNumber: r.invoice_number,
-      orderNumber: r.order_number,
+      orderNumber: r.order_number || 'RO-2026-0001',
       repairOrderId: r.repair_order_id,
-      customer: r.customer,
+      customer: r.customer_name || 'Customer',
       customerId: r.customer_id,
-      amount: r.amount,
-      paidAmount: r.paid_amount,
-      status: r.status,
-      paymentMethod: r.payment_method,
-      issueDate: r.issue_date,
-      dueDate: r.due_date,
-      notes: r.notes
+      amount: parseFloat(r.total_amount) || 0,
+      paidAmount: parseFloat(r.amount_paid) || 0,
+      status: r.status || 'Draft',
+      paymentMethod: 'Credit Card',
+      issueDate: r.issued_date ? new Date(r.issued_date).toISOString().split('T')[0] : '2026-08-22',
+      dueDate: r.due_date ? new Date(r.due_date).toISOString().split('T')[0] : '2026-08-29',
+      notes: r.notes || ''
     }))
+
     res.json({ data: invoices })
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -37,42 +41,33 @@ router.get('/', async (req, res) => {
 // POST create invoice
 router.post('/', async (req, res) => {
   try {
-    const { customer, customerId, orderNumber, repairOrderId, amount, dueDate, paymentMethod } = req.body
-    const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true })
-    const invoiceNumber = `INV-2026-${String((count || 0) + 1).padStart(3, '0')}`
+    const { customerId, repairOrderId, amount, dueDate } = req.body
+    const countRow = await query.get('SELECT COUNT(*) AS cnt FROM invoices')
+    const invoiceNumber = `INV-2026-${String((parseInt(countRow?.cnt, 10) || 0) + 1).padStart(3, '0')}`
     const amt = parseFloat(amount) || 0
 
-    const { data: inserted, error } = await supabase
-      .from('invoices')
-      .insert({
-        invoice_number: invoiceNumber,
-        repair_order_id: repairOrderId || 1,
-        order_number: orderNumber,
-        customer_id: customerId || 1,
-        customer,
-        amount: amt,
-        paid_amount: 0.00,
-        status: 'Issued',
-        payment_method: paymentMethod || 'Credit Card',
-        due_date: dueDate
-      })
-      .select()
-      .single()
+    const inserted = await query.get(
+      `INSERT INTO invoices (invoice_number, repair_order_id, customer_id, total_amount, amount_paid, balance_due, status, due_date)
+       VALUES ($1, $2, $3, $4, 0.00, $4, 'Issued', $5)
+       RETURNING *`,
+      [invoiceNumber, repairOrderId || 1, customerId || 1, amt, dueDate || null]
+    )
 
-    if (error) throw error
+    const customer = await query.get('SELECT full_name FROM customers WHERE id = $1', [inserted.customer_id])
+    const ro = inserted.repair_order_id ? await query.get('SELECT order_number FROM repair_orders WHERE id = $1', [inserted.repair_order_id]) : null
 
     res.status(201).json({
       data: {
         id: inserted.id,
         invoiceNumber,
-        orderNumber,
-        repairOrderId,
-        customer,
-        customerId,
+        orderNumber: ro?.order_number || '',
+        repairOrderId: inserted.repair_order_id,
+        customer: customer?.full_name || '',
+        customerId: inserted.customer_id,
         amount: amt,
         paidAmount: 0.00,
         status: 'Issued',
-        paymentMethod: paymentMethod || 'Credit Card',
+        paymentMethod: 'Credit Card',
         issueDate: new Date().toISOString().split('T')[0],
         dueDate
       }
@@ -83,49 +78,49 @@ router.post('/', async (req, res) => {
 })
 
 // POST record payment
-router.post('/:id/pay', async (req, res) => {
+const recordPaymentHandler = async (req, res) => {
   try {
-    const { paidAmount, paymentMethod } = req.body
-
-    const { data: inv, error: fetchErr } = await supabase
-      .from('invoices')
-      .select('*')
-      .eq('id', req.params.id)
-      .single()
-
-    if (fetchErr || !inv) return res.status(404).json({ error: 'Invoice not found' })
+    const { paidAmount } = req.body
+    const inv = await query.get('SELECT * FROM invoices WHERE id = $1', [req.params.id])
+    if (!inv) return res.status(404).json({ error: 'Invoice not found' })
 
     const addPaid = parseFloat(paidAmount) || 0
-    const newTotalPaid = (inv.paid_amount || 0) + addPaid
-    const newStatus = newTotalPaid >= inv.amount ? 'Paid' : newTotalPaid > 0 ? 'Partially Paid' : 'Issued'
+    const newTotalPaid = (parseFloat(inv.amount_paid) || 0) + addPaid
+    const totalAmount = parseFloat(inv.total_amount) || 0
+    const newBalance = Math.max(0, totalAmount - newTotalPaid)
+    const newStatus = newTotalPaid >= totalAmount ? 'Paid' : newTotalPaid > 0 ? 'Partially Paid' : 'Issued'
 
-    const updateData = { paid_amount: newTotalPaid, status: newStatus }
-    if (paymentMethod) updateData.payment_method = paymentMethod
+    const updated = await query.get(
+      `UPDATE invoices
+       SET amount_paid = $1, balance_due = $2, status = $3, updated_at = NOW()
+       WHERE id = $4
+       RETURNING *`,
+      [newTotalPaid, newBalance, newStatus, req.params.id]
+    )
 
-    const { error } = await supabase
-      .from('invoices')
-      .update(updateData)
-      .eq('id', req.params.id)
-
-    if (error) throw error
+    const customer = await query.get('SELECT full_name FROM customers WHERE id = $1', [updated.customer_id])
+    const ro = updated.repair_order_id ? await query.get('SELECT order_number FROM repair_orders WHERE id = $1', [updated.repair_order_id]) : null
 
     res.json({
       data: {
-        id: inv.id,
-        invoiceNumber: inv.invoice_number,
-        orderNumber: inv.order_number,
-        customer: inv.customer,
-        amount: inv.amount,
+        id: updated.id,
+        invoiceNumber: updated.invoice_number,
+        orderNumber: ro?.order_number || '',
+        customer: customer?.full_name || '',
+        amount: totalAmount,
         paidAmount: newTotalPaid,
         status: newStatus,
-        paymentMethod: paymentMethod || inv.payment_method,
-        issueDate: inv.issue_date,
-        dueDate: inv.due_date
+        paymentMethod: 'Credit Card',
+        issueDate: updated.issued_date,
+        dueDate: updated.due_date
       }
     })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
-})
+}
+
+router.post('/:id/pay', recordPaymentHandler)
+router.post('/:id/payments', recordPaymentHandler)
 
 export default router

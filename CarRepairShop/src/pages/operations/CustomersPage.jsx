@@ -74,10 +74,11 @@ export default function CustomersPage() {
     setIsDeleteOpen(false)
   }
 
-  const filtered = customers.filter((c) =>
-    c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.phone.includes(searchQuery) ||
-    c.code.toLowerCase().includes(searchQuery.toLowerCase())
+  const customerList = Array.isArray(customers) ? customers : []
+  const filtered = customerList.filter((c) =>
+    (c?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (c?.phone || '').includes(searchQuery) ||
+    (c?.code || '').toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   return (

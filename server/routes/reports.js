@@ -1,25 +1,17 @@
 import { Router } from 'express'
-import { supabase } from '../db.js'
+import { query } from '../db.js'
 
 const router = Router()
 
 // GET reports overview & analytics
 router.get('/', async (req, res) => {
   try {
-    const { count: custCount } = await supabase.from('customers').select('*', { count: 'exact', head: true })
-    const { count: vehCount } = await supabase.from('vehicles').select('*', { count: 'exact', head: true })
-    const { count: jobCount } = await supabase.from('repair_orders').select('*', { count: 'exact', head: true })
-    const { count: completedJobCount } = await supabase.from('repair_orders').select('*', { count: 'exact', head: true }).eq('status', 'Completed')
-    const { count: partCount } = await supabase.from('spare_parts').select('*', { count: 'exact', head: true })
-
-    // Get invoice totals
-    const { data: invRows } = await supabase.from('invoices').select('amount, paid_amount')
-    const totalInvoiced = (invRows || []).reduce((sum, r) => sum + (r.amount || 0), 0)
-    const totalCollected = (invRows || []).reduce((sum, r) => sum + (r.paid_amount || 0), 0)
-
-    // Get total stock units
-    const { data: partRows } = await supabase.from('spare_parts').select('stock_quantity')
-    const totalStockUnits = (partRows || []).reduce((sum, r) => sum + (r.stock_quantity || 0), 0)
+    const custCount = await query.get('SELECT COUNT(*) AS cnt FROM customers')
+    const vehCount = await query.get('SELECT COUNT(*) AS cnt FROM vehicles')
+    const jobCount = await query.get('SELECT COUNT(*) AS cnt FROM repair_orders')
+    const completedJobCount = await query.get("SELECT COUNT(*) AS cnt FROM repair_orders WHERE status = 'Completed'")
+    const invStats = await query.get('SELECT COALESCE(SUM(total_amount), 0) AS total_invoiced, COALESCE(SUM(amount_paid), 0) AS total_collected FROM invoices')
+    const partStats = await query.get('SELECT COUNT(*) AS cnt, COALESCE(SUM(stock_quantity), 0) AS total_units FROM spare_parts')
 
     const reportsList = [
       { id: 1, title: 'Monthly Revenue & Profit Breakdown', category: 'Financial', date: 'August 2026', format: 'PDF / Excel' },
@@ -33,14 +25,14 @@ router.get('/', async (req, res) => {
       data: {
         reports: reportsList,
         metrics: {
-          totalCustomers: custCount || 0,
-          totalVehicles: vehCount || 0,
-          totalRepairJobs: jobCount || 0,
-          completedRepairs: completedJobCount || 0,
-          totalRevenue: totalInvoiced,
-          totalCollected: totalCollected,
-          totalSpareParts: partCount || 0,
-          totalStockUnits: totalStockUnits
+          totalCustomers: parseInt(custCount?.cnt, 10) || 0,
+          totalVehicles: parseInt(vehCount?.cnt, 10) || 0,
+          totalRepairJobs: parseInt(jobCount?.cnt, 10) || 0,
+          completedRepairs: parseInt(completedJobCount?.cnt, 10) || 0,
+          totalRevenue: parseFloat(invStats?.total_invoiced) || 0,
+          totalCollected: parseFloat(invStats?.total_collected) || 0,
+          totalSpareParts: parseInt(partStats?.cnt, 10) || 0,
+          totalStockUnits: parseInt(partStats?.total_units, 10) || 0
         }
       }
     })

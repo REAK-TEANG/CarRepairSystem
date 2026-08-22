@@ -1,38 +1,52 @@
 import { Router } from 'express'
-import { supabase } from '../db.js'
+import { query } from '../db.js'
 
 const router = Router()
 
-// GET all repair jobs (with optional mechanicId filter)
+// GET all repair jobs
 router.get('/', async (req, res) => {
   try {
     const { mechanicId } = req.query
-    let query = supabase.from('repair_orders').select('*').order('id', { ascending: false })
+    let sql = `
+      SELECT ro.*, 
+             c.full_name AS customer_name,
+             v.vehicle_number, v.brand, v.model,
+             u.full_name AS mechanic_name
+      FROM repair_orders ro
+      LEFT JOIN customers c ON ro.customer_id = c.id
+      LEFT JOIN vehicles v ON ro.vehicle_id = v.id
+      LEFT JOIN employees e ON ro.mechanic_id = e.id
+      LEFT JOIN users u ON e.user_id = u.id
+    `
+    let params = []
 
     if (mechanicId) {
-      query = supabase.from('repair_orders').select('*').eq('mechanic_id', mechanicId).order('id', { ascending: false })
+      sql += ` WHERE ro.mechanic_id = $1 `
+      params.push(mechanicId)
     }
 
-    const { data: rows, error } = await query
-    if (error) throw error
+    sql += ` ORDER BY ro.id DESC`
 
-    const jobs = (rows || []).map((r) => ({
+    const rows = await query.all(sql, params)
+
+    const jobs = rows.map((r) => ({
       id: r.id,
       orderNumber: r.order_number,
-      customer: r.customer,
+      customer: r.customer_name || 'Customer',
       customerId: r.customer_id,
-      vehicle: r.vehicle,
+      vehicle: r.brand ? `${r.brand} ${r.model || ''}`.trim() : 'Vehicle',
       vehicleId: r.vehicle_id,
-      plate: r.plate,
-      mechanic: r.mechanic,
+      plate: r.vehicle_number || '',
+      mechanic: r.mechanic_name || 'Mechanic',
       mechanicId: r.mechanic_id,
-      problem: r.problem_description,
-      diagnosis: r.diagnosis,
-      estimatedCost: r.estimated_cost,
-      actualCost: r.actual_cost,
-      status: r.status,
-      createdAt: r.created_at ? r.created_at.split('T')[0] : 'Today'
+      problem: r.problem_description || '',
+      diagnosis: r.diagnosis || '',
+      estimatedCost: r.estimated_cost ? `$${r.estimated_cost}` : '$350.00',
+      actualCost: r.actual_cost ? `$${r.actual_cost}` : '',
+      status: r.status || 'Pending',
+      createdAt: r.created_at ? new Date(r.created_at).toISOString().split('T')[0] : 'Today'
     }))
+
     res.json({ data: jobs })
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -42,46 +56,45 @@ router.get('/', async (req, res) => {
 // POST create repair job
 router.post('/', async (req, res) => {
   try {
-    const { customer, customerId, vehicle, vehicleId, plate, mechanic, mechanicId, problem, diagnosis, estimatedCost, status } = req.body
-    const { count } = await supabase.from('repair_orders').select('*', { count: 'exact', head: true })
-    const orderNumber = `RO-2026-${String((count || 0) + 41).padStart(4, '0')}`
+    const { customerId, vehicleId, mechanicId, problem, diagnosis, estimatedCost, status } = req.body
+    const countRow = await query.get('SELECT COUNT(*) AS cnt FROM repair_orders')
+    const orderNumber = `RO-2026-${String((parseInt(countRow?.cnt, 10) || 0) + 41).padStart(4, '0')}`
 
-    const { data: inserted, error } = await supabase
-      .from('repair_orders')
-      .insert({
-        order_number: orderNumber,
-        customer_id: customerId || 1,
-        customer,
-        vehicle_id: vehicleId || 1,
-        vehicle,
-        plate,
-        mechanic_id: mechanicId || 1,
-        mechanic,
-        problem_description: problem,
-        diagnosis: diagnosis || '',
-        estimated_cost: estimatedCost || '$350',
-        status: status || 'Pending'
-      })
-      .select()
-      .single()
+    const costNum = parseFloat(String(estimatedCost || '350').replace(/[^0-9.]/g, '')) || 350.00
 
-    if (error) throw error
+    const inserted = await query.get(
+      `INSERT INTO repair_orders (order_number, customer_id, vehicle_id, mechanic_id, problem_description, diagnosis, estimated_cost, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING *`,
+      [
+        orderNumber,
+        customerId || 1,
+        vehicleId || 1,
+        mechanicId || null,
+        problem || null,
+        diagnosis || null,
+        costNum,
+        status || 'Pending'
+      ]
+    )
+
+    const customer = await query.get('SELECT full_name FROM customers WHERE id = $1', [inserted.customer_id])
+    const vehicle = await query.get('SELECT vehicle_number, brand, model FROM vehicles WHERE id = $1', [inserted.vehicle_id])
 
     res.status(201).json({
       data: {
         id: inserted.id,
         orderNumber,
-        customer,
-        customerId,
-        vehicle,
-        vehicleId,
-        plate,
-        mechanic,
-        mechanicId,
-        problem,
-        diagnosis,
-        estimatedCost: estimatedCost || '$350',
-        status: status || 'Pending',
+        customer: customer?.full_name || '',
+        customerId: inserted.customer_id,
+        vehicle: vehicle ? `${vehicle.brand || ''} ${vehicle.model || ''}`.trim() : '',
+        vehicleId: inserted.vehicle_id,
+        plate: vehicle?.vehicle_number || '',
+        mechanicId: inserted.mechanic_id,
+        problem: inserted.problem_description,
+        diagnosis: inserted.diagnosis,
+        estimatedCost: `$${inserted.estimated_cost}`,
+        status: inserted.status,
         createdAt: new Date().toISOString().split('T')[0]
       }
     })
@@ -90,45 +103,72 @@ router.post('/', async (req, res) => {
   }
 })
 
-// PUT update repair job (e.g. status, diagnosis, cost)
+// PUT update repair job
 router.put('/:id', async (req, res) => {
   try {
-    const { status, diagnosis, actualCost, mechanic, estimatedCost } = req.body
-    const updateData = {}
-    if (status !== undefined) updateData.status = status
-    if (diagnosis !== undefined) updateData.diagnosis = diagnosis
-    if (actualCost !== undefined) updateData.actual_cost = actualCost
-    if (mechanic !== undefined) updateData.mechanic = mechanic
-    if (estimatedCost !== undefined) updateData.estimated_cost = estimatedCost
+    const { status, diagnosis, actualCost, estimatedCost, mechanicId, notes } = req.body
+    const actualNum = actualCost ? parseFloat(String(actualCost).replace(/[^0-9.]/g, '')) : null
+    const estNum = estimatedCost ? parseFloat(String(estimatedCost).replace(/[^0-9.]/g, '')) : null
 
-    const { data: updated, error } = await supabase
-      .from('repair_orders')
-      .update(updateData)
-      .eq('id', req.params.id)
-      .select()
-      .single()
+    const updated = await query.get(
+      `UPDATE repair_orders
+       SET status = COALESCE($1, status),
+           diagnosis = COALESCE($2, diagnosis),
+           actual_cost = COALESCE($3, actual_cost),
+           estimated_cost = COALESCE($4, estimated_cost),
+           mechanic_id = COALESCE($5, mechanic_id),
+           notes = COALESCE($6, notes),
+           updated_at = NOW()
+       WHERE id = $7
+       RETURNING *`,
+      [status, diagnosis, actualNum, estNum, mechanicId, notes, req.params.id]
+    )
 
-    if (error) throw error
+    const customer = await query.get('SELECT full_name FROM customers WHERE id = $1', [updated.customer_id])
+    const vehicle = await query.get('SELECT vehicle_number, brand, model FROM vehicles WHERE id = $1', [updated.vehicle_id])
 
     res.json({
       data: {
         id: updated.id,
         orderNumber: updated.order_number,
-        customer: updated.customer,
+        customer: customer?.full_name || '',
         customerId: updated.customer_id,
-        vehicle: updated.vehicle,
+        vehicle: vehicle ? `${vehicle.brand || ''} ${vehicle.model || ''}`.trim() : '',
         vehicleId: updated.vehicle_id,
-        plate: updated.plate,
-        mechanic: updated.mechanic,
+        plate: vehicle?.vehicle_number || '',
         mechanicId: updated.mechanic_id,
         problem: updated.problem_description,
         diagnosis: updated.diagnosis,
-        estimatedCost: updated.estimated_cost,
-        actualCost: updated.actual_cost,
+        estimatedCost: updated.estimated_cost ? `$${updated.estimated_cost}` : '',
+        actualCost: updated.actual_cost ? `$${updated.actual_cost}` : '',
         status: updated.status,
-        createdAt: updated.created_at ? updated.created_at.split('T')[0] : 'Today'
+        createdAt: updated.created_at ? new Date(updated.created_at).toISOString().split('T')[0] : 'Today'
       }
     })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// PATCH update status
+router.patch('/:id/status', async (req, res) => {
+  try {
+    const { status } = req.body
+    const updated = await query.get(
+      `UPDATE repair_orders SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+      [status, req.params.id]
+    )
+    res.json({ data: updated })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// DELETE repair job
+router.delete('/:id', async (req, res) => {
+  try {
+    await query.run('DELETE FROM repair_orders WHERE id = $1', [req.params.id])
+    res.json({ success: true, message: 'Repair order deleted' })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }

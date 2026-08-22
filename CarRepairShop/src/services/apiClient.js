@@ -52,7 +52,8 @@ class ApiClient {
       throw error
     }
 
-    return response.json()
+    const resData = await response.json()
+    return resData && resData.data !== undefined ? resData.data : resData
   }
 
   get(endpoint, headers = {}) {

@@ -1,34 +1,36 @@
 import { Router } from 'express'
-import { supabase } from '../db.js'
+import { query } from '../db.js'
 
 const router = Router()
 
 // GET all vehicles
 router.get('/', async (req, res) => {
   try {
-    const { data: rows, error } = await supabase
-      .from('vehicles')
-      .select('*')
-      .order('id', { ascending: false })
+    const rows = await query.all(`
+      SELECT v.*, c.full_name AS customer_name
+      FROM vehicles v
+      LEFT JOIN customers c ON v.customer_id = c.id
+      ORDER BY v.id DESC
+    `)
 
-    if (error) throw error
-
-    const vehicles = (rows || []).map((r) => ({
+    const vehicles = rows.map((r) => ({
       id: r.id,
       number: r.vehicle_number,
-      vin: r.vin,
-      brand: r.brand,
-      model: r.model,
-      year: r.year,
-      color: r.color,
-      fuelType: r.fuel_type,
-      mileage: r.mileage,
-      owner: r.owner,
+      vin: r.vin || '',
+      brand: r.brand || '',
+      model: r.model || '',
+      year: r.year || 2022,
+      color: r.color || '',
+      fuelType: r.fuel_type || 'Gasoline',
+      mileage: r.mileage || 0,
+      owner: r.customer_name || 'Owner',
       ownerId: r.customer_id,
-      notes: r.notes
+      notes: r.notes || ''
     }))
+
     res.json({ data: vehicles })
   } catch (err) {
+    console.error('[API Vehicles Get Error]:', err)
     res.status(500).json({ error: err.message })
   }
 })
@@ -36,43 +38,45 @@ router.get('/', async (req, res) => {
 // POST create vehicle
 router.post('/', async (req, res) => {
   try {
-    const { number, vin, brand, model, year, color, fuelType, mileage, owner, ownerId } = req.body
+    const { number, vin, brand, model, year, color, fuelType, mileage, ownerId, notes } = req.body
 
-    const { data: inserted, error } = await supabase
-      .from('vehicles')
-      .insert({
-        customer_id: ownerId || 1,
-        vehicle_number: number,
-        vin,
-        brand,
-        model,
-        year,
-        color,
-        fuel_type: fuelType || 'Gasoline',
-        mileage: mileage || 0,
-        owner
-      })
-      .select()
-      .single()
+    const inserted = await query.get(
+      `INSERT INTO vehicles (customer_id, vehicle_number, vin, brand, model, year, color, fuel_type, mileage, notes)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       RETURNING *`,
+      [
+        ownerId || 1,
+        number,
+        vin || null,
+        brand || null,
+        model || null,
+        year ? parseInt(year, 10) : null,
+        color || null,
+        fuelType || 'Gasoline',
+        mileage ? parseInt(mileage, 10) : 0,
+        notes || null
+      ]
+    )
 
-    if (error) throw error
+    const customer = await query.get('SELECT full_name FROM customers WHERE id = $1', [inserted.customer_id])
 
     res.status(201).json({
       data: {
         id: inserted.id,
-        number,
-        vin,
-        brand,
-        model,
-        year,
-        color,
-        fuelType,
-        mileage,
-        owner,
-        ownerId
+        number: inserted.vehicle_number,
+        vin: inserted.vin || '',
+        brand: inserted.brand || '',
+        model: inserted.model || '',
+        year: inserted.year,
+        color: inserted.color || '',
+        fuelType: inserted.fuel_type,
+        mileage: inserted.mileage,
+        owner: customer?.full_name || '',
+        ownerId: inserted.customer_id
       }
     })
   } catch (err) {
+    console.error('[API Vehicle Create Error]:', err)
     res.status(500).json({ error: err.message })
   }
 })
@@ -80,40 +84,52 @@ router.post('/', async (req, res) => {
 // PUT update vehicle
 router.put('/:id', async (req, res) => {
   try {
-    const { number, vin, brand, model, year, color, fuelType, mileage, owner, ownerId } = req.body
+    const { number, vin, brand, model, year, color, fuelType, mileage, ownerId, notes } = req.body
 
-    const { data: updated, error } = await supabase
-      .from('vehicles')
-      .update({
-        vehicle_number: number,
+    const updated = await query.get(
+      `UPDATE vehicles
+       SET vehicle_number = COALESCE($1, vehicle_number),
+           vin = COALESCE($2, vin),
+           brand = COALESCE($3, brand),
+           model = COALESCE($4, model),
+           year = COALESCE($5, year),
+           color = COALESCE($6, color),
+           fuel_type = COALESCE($7, fuel_type),
+           mileage = COALESCE($8, mileage),
+           customer_id = COALESCE($9, customer_id),
+           notes = COALESCE($10, notes),
+           updated_at = NOW()
+       WHERE id = $11
+       RETURNING *`,
+      [
+        number,
         vin,
         brand,
         model,
-        year,
+        year ? parseInt(year, 10) : null,
         color,
-        fuel_type: fuelType,
-        mileage,
-        owner,
-        customer_id: ownerId || 1
-      })
-      .eq('id', req.params.id)
-      .select()
-      .single()
+        fuelType,
+        mileage ? parseInt(mileage, 10) : null,
+        ownerId,
+        notes,
+        req.params.id
+      ]
+    )
 
-    if (error) throw error
+    const customer = await query.get('SELECT full_name FROM customers WHERE id = $1', [updated.customer_id])
 
     res.json({
       data: {
         id: updated.id,
         number: updated.vehicle_number,
-        vin: updated.vin,
-        brand: updated.brand,
-        model: updated.model,
+        vin: updated.vin || '',
+        brand: updated.brand || '',
+        model: updated.model || '',
         year: updated.year,
-        color: updated.color,
+        color: updated.color || '',
         fuelType: updated.fuel_type,
         mileage: updated.mileage,
-        owner: updated.owner,
+        owner: customer?.full_name || '',
         ownerId: updated.customer_id
       }
     })
@@ -125,8 +141,7 @@ router.put('/:id', async (req, res) => {
 // DELETE vehicle
 router.delete('/:id', async (req, res) => {
   try {
-    const { error } = await supabase.from('vehicles').delete().eq('id', req.params.id)
-    if (error) throw error
+    await query.run('DELETE FROM vehicles WHERE id = $1', [req.params.id])
     res.json({ success: true, message: 'Vehicle removed successfully' })
   } catch (err) {
     res.status(500).json({ error: err.message })

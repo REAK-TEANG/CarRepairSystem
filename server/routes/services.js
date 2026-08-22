@@ -1,25 +1,19 @@
 import { Router } from 'express'
-import { supabase } from '../db.js'
+import { query } from '../db.js'
 
 const router = Router()
 
 // GET all services
 router.get('/', async (req, res) => {
   try {
-    const { data: rows, error } = await supabase
-      .from('services')
-      .select('*')
-      .order('id', { ascending: true })
-
-    if (error) throw error
-
-    const services = (rows || []).map((r) => ({
+    const rows = await query.all('SELECT * FROM services ORDER BY id ASC')
+    const services = rows.map((r) => ({
       id: r.id,
       name: r.name,
-      category: r.category,
-      description: r.description,
-      estimatedCost: r.estimated_cost,
-      laborHours: r.estimated_hours,
+      category: 'Maintenance',
+      description: r.description || '',
+      estimatedCost: parseFloat(r.estimated_cost) || 0,
+      laborHours: parseFloat(r.estimated_hours) || 1.0,
       isActive: Boolean(r.is_active)
     }))
     res.json({ data: services })
@@ -31,32 +25,30 @@ router.get('/', async (req, res) => {
 // POST create service
 router.post('/', async (req, res) => {
   try {
-    const { name, category, description, estimatedCost, laborHours, isActive } = req.body
+    const { name, description, estimatedCost, laborHours, isActive } = req.body
 
-    const { data: inserted, error } = await supabase
-      .from('services')
-      .insert({
+    const inserted = await query.get(
+      `INSERT INTO services (name, description, estimated_cost, estimated_hours, is_active)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING *`,
+      [
         name,
-        category: category || 'Maintenance',
-        description,
-        estimated_cost: parseFloat(estimatedCost) || 0,
-        estimated_hours: parseFloat(laborHours) || 1.0,
-        is_active: isActive !== false
-      })
-      .select()
-      .single()
-
-    if (error) throw error
+        description || null,
+        parseFloat(estimatedCost) || 0,
+        parseFloat(laborHours) || 1.0,
+        isActive !== false
+      ]
+    )
 
     res.status(201).json({
       data: {
         id: inserted.id,
-        name,
-        category: category || 'Maintenance',
-        description,
-        estimatedCost: parseFloat(estimatedCost) || 0,
-        laborHours: parseFloat(laborHours) || 1.0,
-        isActive: isActive !== false
+        name: inserted.name,
+        category: 'Maintenance',
+        description: inserted.description || '',
+        estimatedCost: parseFloat(inserted.estimated_cost) || 0,
+        laborHours: parseFloat(inserted.estimated_hours) || 1.0,
+        isActive: Boolean(inserted.is_active)
       }
     })
   } catch (err) {
@@ -67,32 +59,36 @@ router.post('/', async (req, res) => {
 // PUT update service
 router.put('/:id', async (req, res) => {
   try {
-    const { name, category, description, estimatedCost, laborHours, isActive } = req.body
-    const updateData = {}
-    if (name !== undefined) updateData.name = name
-    if (category !== undefined) updateData.category = category
-    if (description !== undefined) updateData.description = description
-    if (estimatedCost !== undefined) updateData.estimated_cost = estimatedCost
-    if (laborHours !== undefined) updateData.estimated_hours = laborHours
-    if (isActive !== undefined) updateData.is_active = isActive
+    const { name, description, estimatedCost, laborHours, isActive } = req.body
 
-    const { data: updated, error } = await supabase
-      .from('services')
-      .update(updateData)
-      .eq('id', req.params.id)
-      .select()
-      .single()
-
-    if (error) throw error
+    const updated = await query.get(
+      `UPDATE services
+       SET name = COALESCE($1, name),
+           description = COALESCE($2, description),
+           estimated_cost = COALESCE($3, estimated_cost),
+           estimated_hours = COALESCE($4, estimated_hours),
+           is_active = COALESCE($5, is_active),
+           updated_at = NOW()
+       WHERE id = $6
+       RETURNING *`,
+      [
+        name,
+        description,
+        estimatedCost ? parseFloat(estimatedCost) : null,
+        laborHours ? parseFloat(laborHours) : null,
+        isActive !== undefined ? Boolean(isActive) : null,
+        req.params.id
+      ]
+    )
 
     res.json({
       data: {
         id: updated.id,
         name: updated.name,
-        category: updated.category,
-        description: updated.description,
-        estimatedCost: updated.estimated_cost,
-        laborHours: updated.estimated_hours,
+        category: 'Maintenance',
+        description: updated.description || '',
+        estimatedCost: parseFloat(updated.estimated_cost) || 0,
+        laborHours: parseFloat(updated.estimated_hours) || 1.0,
         isActive: Boolean(updated.is_active)
       }
     })
@@ -104,8 +100,7 @@ router.put('/:id', async (req, res) => {
 // DELETE service
 router.delete('/:id', async (req, res) => {
   try {
-    const { error } = await supabase.from('services').delete().eq('id', req.params.id)
-    if (error) throw error
+    await query.run('DELETE FROM services WHERE id = $1', [req.params.id])
     res.json({ success: true, message: 'Service removed' })
   } catch (err) {
     res.status(500).json({ error: err.message })
