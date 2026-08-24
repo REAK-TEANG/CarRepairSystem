@@ -20,7 +20,7 @@ export default function StatCard({ title, value, icon: Icon, trend, trendLabel, 
           <div className="flex items-center gap-1">
             <span
               className={`inline-flex items-center gap-0.5 font-medium ${
-                trend >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
+                trend >= 0 ? 'text-emerald-600 dark:text-[#13F287]' : 'text-red-600 dark:text-red-400'
               }`}
             >
               {trend >= 0 ? <TrendUp size={13} weight="bold" /> : <TrendDown size={13} weight="bold" />}

@@ -236,12 +236,12 @@ export default function EmployeesPage() {
                         onClick={() => handleToggleAttendanceClick(emp)}
                         className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all ${
                           emp.attendanceToday === 'Present'
-                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:scale-105'
+                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-[#13F287] border border-emerald-500/20 hover:scale-105'
                             : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:scale-105'
                         }`}
                         title="Click to toggle Present / On Leave"
                       >
-                        <span className={`w-1.5 h-1.5 rounded-full ${emp.attendanceToday === 'Present' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                        <span className={`w-1.5 h-1.5 rounded-full ${emp.attendanceToday === 'Present' ? 'bg-emerald-500 dark:bg-[#13F287]' : 'bg-amber-500'}`} />
                         {emp.attendanceToday}
                       </button>
                     </td>

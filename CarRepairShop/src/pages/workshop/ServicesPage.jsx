@@ -163,8 +163,8 @@ export default function ServicesPage() {
                         onClick={() => handleToggleActive(s)}
                         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold transition-colors ${
                           s.isActive
-                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                            : 'bg-zinc-500/10 text-zinc-500 border border-zinc-500/20'
+                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-[#13F287] border border-emerald-500/20'
+                            : 'bg-app-hover text-app-muted border border-app-border'
                         }`}
                         title="Click to toggle active status"
                       >

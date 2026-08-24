@@ -14,9 +14,9 @@
   --text-primary: #111827;      /* Primary text */
   --text-secondary: #4B5563;    /* Secondary text */
   --text-muted: #6B7280;        /* Muted caption text */
-  --accent-primary: #2563EB;    /* Precision Blue */
-  --accent-hover: #1D4ED8;      /* Deepened Blue on hover */
-  --accent-secondary: #3B82F6;  /* Secondary Blue */
+  --accent-primary: #16A34A;    /* Primary Accent Green */
+  --accent-hover: #15803D;      /* Hover Green */
+  --accent-secondary: #10B981;  /* Emerald tint */
   --accent-text: #FFFFFF;       /* White text on accent */
   --sidebar-bg: #FFFFFF;        /* Clean sidebar */
   --sidebar-border: #E2E4E9;    /* Sidebar border */
@@ -28,26 +28,27 @@
 
 html.dark {
   /* ============================================================ */
-  /* REFINED OBSIDIAN DARK MODE THEME TOKENS                      */
+  /* EXACT OBSIDIAN & ELECTRIC LIME THEME TOKENS                  */
+  /* (As specified in ui_ux_guidelines.md)                        */
   /* ============================================================ */
-  --bg-canvas: #0F1318;         /* Deep graphite slate */
-  --bg-card: #161C24;           /* Solid card surface */
-  --bg-hover: #1F2633;          /* Subtle hover background */
-  --bg-input: #121720;          /* Clean dark inputs */
-  --border-color: #273142;      /* Border separation */
-  --text-primary: #F3F4F6;      /* Off-white text */
-  --text-secondary: #9CA3AF;    /* Soft gray secondary text */
-  --text-muted: #6B7280;        /* Muted caption text */
-  --accent-primary: #3B82F6;    /* Precision Blue */
-  --accent-hover: #2563EB;      /* Darkened Blue on hover */
-  --accent-secondary: #60A5FA;  /* Accent tint */
-  --accent-text: #FFFFFF;       /* White text on accent */
-  --sidebar-bg: #0F1318;        /* Deep graphite sidebar */
-  --sidebar-border: #273142;    /* Sidebar border */
-  --sidebar-hover: #161C24;     /* Sidebar hover item */
-  --sidebar-text: #9CA3AF;      /* Sidebar link text */
-  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.35);
-  --shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.25);
+  --bg-canvas: #101214;         /* Deep charcoal black for main background */
+  --bg-card: #282F35;           /* Dark slate gray for widget containers, sidebars, header */
+  --bg-hover: #1E2328;          /* Subtly darker tone for hover states */
+  --bg-input: #1E2328;          /* Form input fields */
+  --border-color: #323B43;      /* Clean 1px border divider */
+  --text-primary: #F8FAFC;      /* Bright white for headings, metric values & primary text */
+  --text-secondary: #A0AEC0;    /* Muted slate for subheadings, captions & labels */
+  --text-muted: #8A99AD;        /* Caption text */
+  --accent-primary: #B5FF57;    /* Electric Lime primary accent */
+  --accent-hover: #a5f540;      /* Slightly deeper Lime on hover */
+  --accent-secondary: #13F287;  /* Mint / Emerald Neon secondary accent */
+  --accent-text: #101214;       /* Deep charcoal text contrast inside Lime/Mint pills */
+  --sidebar-bg: #282F35;        /* Dark slate gray sidebar */
+  --sidebar-border: #323B43;    /* Sidebar border */
+  --sidebar-hover: #1E2328;     /* Sidebar hover item */
+  --sidebar-text: #A0AEC0;      /* Sidebar link text */
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.45);
+  --shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.35);
 }
 
 @layer base {

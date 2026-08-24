@@ -109,7 +109,7 @@ export default function AdminDashboard() {
                       cx="50"
                       cy="50"
                       r="38"
-                      stroke="#10B981"
+                      stroke="var(--accent-secondary, #13F287)"
                       strokeWidth="12"
                       strokeDasharray="238"
                       strokeDashoffset="180"
@@ -134,10 +134,10 @@ export default function AdminDashboard() {
                   </div>
                   <div className="flex items-center justify-between p-2.5 bg-app-hover rounded-xl border border-app-border/40">
                     <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                      <span className="w-2.5 h-2.5 rounded-full bg-app-accentLight" />
                       <span className="text-xs font-normal text-app-text">Brakes & Suspension</span>
                     </div>
-                    <span className="text-xs font-medium text-emerald-500">${(totalRevenue * 0.3).toFixed(2)}</span>
+                    <span className="text-xs font-medium text-app-accentLight">${(totalRevenue * 0.3).toFixed(2)}</span>
                   </div>
                   <div className="flex items-center justify-between p-2.5 bg-app-hover rounded-xl border border-app-border/40">
                     <div className="flex items-center gap-2">
@@ -176,12 +176,13 @@ export default function AdminDashboard() {
                   <svg className="w-full h-full" viewBox="0 0 200 60" preserveAspectRatio="none">
                     <path
                       d="M0,50 Q40,20 80,40 T160,10 T200,30 L200,60 L0,60 Z"
-                      fill="rgba(37, 99, 235, 0.12)"
+                      fill="var(--accent-primary)"
+                      fillOpacity="0.15"
                     />
                     <path
                       d="M0,50 Q40,20 80,40 T160,10 T200,30"
                       fill="none"
-                      stroke="var(--accent-primary, #3b82f6)"
+                      stroke="var(--accent-primary)"
                       strokeWidth="2.5"
                     />
                   </svg>
