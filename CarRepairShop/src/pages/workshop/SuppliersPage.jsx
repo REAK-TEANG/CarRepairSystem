@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { MagnifyingGlass, Plus, PencilSimple, Trash, Phone, Buildings, Star, Eye } from '@phosphor-icons/react'
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from '../../hooks/useSuppliers'
 import { useAuth } from '../../context/AuthContext'
-import Modal from '../../components/ui/Modal'
+import { Modal, ConfirmDialog } from '../../components/ui'
 
 export default function SuppliersPage() {
   const { can } = useAuth()
@@ -416,28 +416,19 @@ export default function SuppliersPage() {
         )}
       </Modal>
 
-      {/* Delete Confirmation */}
-      <Modal isOpen={isDeleteOpen} onClose={() => setIsDeleteOpen(false)} title="Confirm Supplier Removal">
-        <div className="space-y-4 text-xs">
-          <p className="text-app-text">
-            Are you sure you want to remove <span className="font-bold">{selectedSupplier?.name}</span>?
-          </p>
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
-              onClick={() => setIsDeleteOpen(false)}
-              className="px-3.5 py-2 rounded-lg text-app-muted hover:bg-app-hover transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleDelete}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
-            >
-              Delete Supplier
-            </button>
-          </div>
-        </div>
-      </Modal>
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        onConfirm={handleDelete}
+        title="Confirm Supplier Removal"
+        message={
+          <>
+            Are you sure you want to remove supplier <span className="font-bold">{selectedSupplier?.name}</span>?
+          </>
+        }
+        confirmText="Delete Supplier"
+      />
     </div>
   )
 }

@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { MagnifyingGlass, Plus, PencilSimple, Trash, Eye, Phone, EnvelopeSimple, MapPin } from '@phosphor-icons/react'
+import { MagnifyingGlass, Plus, PencilSimple, Trash, Eye, Phone, EnvelopeSimple, MapPin, User } from '@phosphor-icons/react'
 import { useCustomers, useCreateCustomer, useUpdateCustomer, useDeleteCustomer } from '../../hooks/useCustomers'
 import { useAuth } from '../../context/AuthContext'
-import Modal from '../../components/ui/Modal'
+import { Modal, ConfirmDialog } from '../../components/ui'
 
 export default function CustomersPage() {
   const { can } = useAuth()
@@ -134,10 +134,7 @@ export default function CustomersPage() {
                   <tr key={c.id} className="hover:bg-app-hover/60 transition-colors group">
                     <td className="px-6 py-3.5 font-mono font-semibold text-app-accent">{c.code}</td>
                     <td className="px-6 py-3.5">
-                      <div className="flex items-center gap-3">
-                        <img src={c.avatar} alt={c.name} className="w-7 h-7 rounded-full object-cover ring-1 ring-app-border" />
-                        <span className="font-semibold text-app-text">{c.name}</span>
-                      </div>
+                      <span className="font-semibold text-app-text">{c.name}</span>
                     </td>
                     <td className="px-6 py-3.5 text-app-muted hidden md:table-cell">
                       <span className="inline-flex items-center gap-1.5">
@@ -325,7 +322,9 @@ export default function CustomersPage() {
         {selectedCustomer && (
           <div className="space-y-4 text-xs">
             <div className="flex items-center gap-3 p-3 bg-app-hover/50 rounded-lg border border-app-border">
-              <img src={selectedCustomer.avatar} alt={selectedCustomer.name} className="w-12 h-12 rounded-full object-cover ring-2 ring-app-accent/30" />
+              <div className="w-10 h-10 rounded-lg bg-app-accent/15 flex items-center justify-center text-app-accent flex-shrink-0">
+                <User size={22} weight="bold" />
+              </div>
               <div>
                 <h3 className="text-sm font-bold text-app-text">{selectedCustomer.name}</h3>
                 <p className="font-mono text-app-accent font-semibold">{selectedCustomer.code}</p>
@@ -365,27 +364,18 @@ export default function CustomersPage() {
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <Modal isOpen={isDeleteOpen} onClose={() => setIsDeleteOpen(false)} title="Confirm Deletion">
-        <div className="space-y-4 text-xs">
-          <p className="text-app-text">
+      <ConfirmDialog
+        isOpen={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        onConfirm={handleDelete}
+        title="Confirm Deletion"
+        message={
+          <>
             Are you sure you want to delete customer <span className="font-bold">{selectedCustomer?.name}</span> ({selectedCustomer?.code})? This action cannot be undone.
-          </p>
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
-              onClick={() => setIsDeleteOpen(false)}
-              className="px-3.5 py-2 rounded-lg text-app-muted hover:bg-app-hover transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleDelete}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
-            >
-              Delete Customer
-            </button>
-          </div>
-        </div>
-      </Modal>
+          </>
+        }
+        confirmText="Delete Customer"
+      />
     </div>
   )
 }

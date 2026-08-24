@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { MagnifyingGlass, Plus, PencilSimple, Trash, Eye, Wrench, Star, Phone, EnvelopeSimple } from '@phosphor-icons/react'
 import { useMechanics, useCreateMechanic, useUpdateMechanic, useDeleteMechanic } from '../../hooks/useMechanics'
 import { useAuth } from '../../context/AuthContext'
-import Modal from '../../components/ui/Modal'
+import { Modal, ConfirmDialog } from '../../components/ui'
 
 const statusFilters = ['All', 'Active', 'On Leave', 'Terminated']
 
@@ -476,28 +476,19 @@ export default function MechanicsPage() {
         )}
       </Modal>
 
-      {/* Delete Confirmation */}
-      <Modal isOpen={isDeleteOpen} onClose={() => setIsDeleteOpen(false)} title="Confirm Mechanic Removal">
-        <div className="space-y-4 text-xs">
-          <p className="text-app-text">
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        onConfirm={handleDelete}
+        title="Confirm Mechanic Removal"
+        message={
+          <>
             Are you sure you want to remove <span className="font-bold">{selectedMechanic?.name}</span> ({selectedMechanic?.code})?
-          </p>
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
-              onClick={() => setIsDeleteOpen(false)}
-              className="px-3.5 py-2 rounded-lg text-app-muted hover:bg-app-hover transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleDelete}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
-            >
-              Delete Mechanic
-            </button>
-          </div>
-        </div>
-      </Modal>
+          </>
+        }
+        confirmText="Delete Mechanic"
+      />
     </div>
   )
 }

@@ -3,7 +3,7 @@ import { MagnifyingGlass, Plus, PencilSimple, Trash, Eye, GasPump, Car, User, Id
 import { useVehicles, useCreateVehicle, useUpdateVehicle, useDeleteVehicle } from '../../hooks/useVehicles'
 import { useCustomers } from '../../hooks/useCustomers'
 import { useAuth } from '../../context/AuthContext'
-import Modal from '../../components/ui/Modal'
+import { Modal, ImageUpload, ConfirmDialog } from '../../components/ui'
 
 export default function VehiclesPage() {
   const { can } = useAuth()
@@ -35,6 +35,7 @@ export default function VehiclesPage() {
     mileage: 0,
     owner: '',
     ownerId: '',
+    image: '',
   })
 
   const handleOpenAdd = () => {
@@ -51,6 +52,7 @@ export default function VehiclesPage() {
       mileage: 25000,
       owner: defaultOwner,
       ownerId: defaultOwnerId,
+      image: '',
     })
     setIsAddOpen(true)
   }
@@ -68,6 +70,7 @@ export default function VehiclesPage() {
       mileage: v.mileage,
       owner: v.owner,
       ownerId: v.ownerId,
+      image: v.image || '',
     })
     setIsEditOpen(true)
   }
@@ -171,8 +174,23 @@ export default function VehiclesPage() {
                   <tr key={v.id} className="hover:bg-app-hover/60 transition-colors group">
                     <td className="px-6 py-3.5 font-mono font-semibold text-app-accent">{v.number}</td>
                     <td className="px-6 py-3.5">
-                      <p className="font-semibold text-app-text">{v.brand} {v.model}</p>
-                      <p className="text-[10px] text-app-muted">{v.year} · {v.color}</p>
+                      <div className="flex items-center gap-3">
+                        {v.image ? (
+                          <img
+                            src={v.image}
+                            alt={`${v.brand} ${v.model}`}
+                            className="w-10 h-10 rounded-lg object-cover ring-1 ring-app-border bg-app-hover flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-app-hover border border-app-border flex items-center justify-center text-app-muted flex-shrink-0">
+                            <Car size={20} weight="duotone" />
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-semibold text-app-text">{v.brand} {v.model}</p>
+                          <p className="text-[10px] text-app-muted">{v.year} · {v.color}</p>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-6 py-3.5 text-app-muted hidden lg:table-cell">
                       <span className="inline-flex items-center gap-1.5">
@@ -330,6 +348,14 @@ export default function VehiclesPage() {
             </select>
           </div>
 
+          {/* Vehicle Photo Upload */}
+          <ImageUpload
+            value={formData.image}
+            onChange={(img) => setFormData((prev) => ({ ...prev, image: img }))}
+            label="Vehicle Photo"
+            shape="card"
+          />
+
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
             <button
               type="button"
@@ -452,6 +478,14 @@ export default function VehiclesPage() {
             </select>
           </div>
 
+          {/* Vehicle Photo Upload */}
+          <ImageUpload
+            value={formData.image}
+            onChange={(img) => setFormData((prev) => ({ ...prev, image: img }))}
+            label="Vehicle Photo"
+            shape="card"
+          />
+
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
             <button
               type="button"
@@ -474,20 +508,43 @@ export default function VehiclesPage() {
       <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title="Vehicle Specification Sheet">
         {selectedVehicle && (
           <div className="space-y-4 text-xs">
-            <div className="p-4 bg-app-hover/50 rounded-lg border border-app-border flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-app-accent/15 flex items-center justify-center text-app-accent">
-                  <Car size={22} weight="bold" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-app-text">{selectedVehicle.brand} {selectedVehicle.model}</h3>
-                  <p className="font-mono text-app-accent font-semibold">{selectedVehicle.number}</p>
+            {selectedVehicle.image ? (
+              <div className="relative rounded-xl overflow-hidden border border-app-border h-48 bg-app-input">
+                <img
+                  src={selectedVehicle.image}
+                  alt={`${selectedVehicle.brand} ${selectedVehicle.model}`}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-4">
+                  <div className="flex items-center justify-between w-full">
+                    <div>
+                      <h3 className="text-base font-bold text-white tracking-tight">
+                        {selectedVehicle.brand} {selectedVehicle.model}
+                      </h3>
+                      <p className="font-mono text-xs font-semibold text-white/90">{selectedVehicle.number}</p>
+                    </div>
+                    <span className="text-xs px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-sm text-white font-medium border border-white/10">
+                      {selectedVehicle.year}
+                    </span>
+                  </div>
                 </div>
               </div>
-              <span className="text-xs px-2.5 py-1 rounded-md bg-app-hover text-app-muted font-medium">
-                {selectedVehicle.year}
-              </span>
-            </div>
+            ) : (
+              <div className="p-4 bg-app-hover/50 rounded-xl border border-app-border flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-app-accent/15 flex items-center justify-center text-app-accent flex-shrink-0">
+                    <Car size={22} weight="bold" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-app-text">{selectedVehicle.brand} {selectedVehicle.model}</h3>
+                    <p className="font-mono text-app-accent font-semibold">{selectedVehicle.number}</p>
+                  </div>
+                </div>
+                <span className="text-xs px-2.5 py-1 rounded-md bg-app-hover text-app-muted font-medium">
+                  {selectedVehicle.year}
+                </span>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 bg-app-input rounded-lg border border-app-border">
@@ -526,28 +583,19 @@ export default function VehiclesPage() {
         )}
       </Modal>
 
-      {/* Delete Confirmation */}
-      <Modal isOpen={isDeleteOpen} onClose={() => setIsDeleteOpen(false)} title="Confirm Vehicle Deletion">
-        <div className="space-y-4 text-xs">
-          <p className="text-app-text">
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        onConfirm={handleDelete}
+        title="Confirm Vehicle Deletion"
+        message={
+          <>
             Are you sure you want to remove vehicle <span className="font-bold">{selectedVehicle?.number}</span> ({selectedVehicle?.brand} {selectedVehicle?.model})?
-          </p>
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
-              onClick={() => setIsDeleteOpen(false)}
-              className="px-3.5 py-2 rounded-lg text-app-muted hover:bg-app-hover transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleDelete}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
-            >
-              Delete Vehicle
-            </button>
-          </div>
-        </div>
-      </Modal>
+          </>
+        }
+        confirmText="Delete Vehicle"
+      />
     </div>
   )
 }

@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { MagnifyingGlass, Plus, PencilSimple, Trash, Eye, Phone, CheckCircle } from '@phosphor-icons/react'
 import { useEmployees, useCreateEmployee, useUpdateEmployee, useToggleAttendance, useDeleteEmployee } from '../../hooks/useEmployees'
 import { useAuth } from '../../context/AuthContext'
-import StatusBadge from '../../components/ui/StatusBadge'
-import Modal from '../../components/ui/Modal'
+import { Modal, StatusBadge, ImageUpload, ConfirmDialog } from '../../components/ui'
 
 export default function EmployeesPage() {
   const { can } = useAuth()
@@ -34,6 +33,7 @@ export default function EmployeesPage() {
     baseSalary: '$3,500/mo',
     attendanceToday: 'Present',
     status: 'Active',
+    image: '',
   })
 
   const handleOpenAdd = () => {
@@ -46,6 +46,7 @@ export default function EmployeesPage() {
       baseSalary: '$3,500/mo',
       attendanceToday: 'Present',
       status: 'Active',
+      image: '',
     })
     setIsAddOpen(true)
   }
@@ -61,6 +62,7 @@ export default function EmployeesPage() {
       baseSalary: emp.baseSalary,
       attendanceToday: emp.attendanceToday,
       status: emp.status,
+      image: emp.image || '',
     })
     setIsEditOpen(true)
   }
@@ -205,9 +207,13 @@ export default function EmployeesPage() {
                     <td className="px-6 py-3.5 font-mono font-semibold text-app-accent">{emp.empCode}</td>
                     <td className="px-6 py-3.5">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 bg-app-accent/15 border border-app-accent/30 rounded-md flex items-center justify-center text-app-accent font-bold text-[10px]">
-                          {emp.name.split(' ').map((n) => n[0]).join('')}
-                        </div>
+                        {emp.image ? (
+                          <img src={emp.image} alt={emp.name} className="w-8 h-8 rounded-full object-cover border border-app-border" />
+                        ) : (
+                          <div className="w-8 h-8 bg-app-accent/15 border border-app-accent/30 rounded-full flex items-center justify-center text-app-accent font-bold text-xs">
+                            {emp.name.split(' ').map((n) => n[0]).join('').substring(0, 2)}
+                          </div>
+                        )}
                         <div>
                           <p className="font-semibold text-app-text">{emp.name}</p>
                           <p className="text-[10px] text-app-muted">{emp.email}</p>
@@ -290,6 +296,13 @@ export default function EmployeesPage() {
               className="w-full px-3 py-2 bg-app-input border border-app-border rounded-lg text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
+          
+          <ImageUpload
+            value={formData.image}
+            onChange={(img) => setFormData((prev) => ({ ...prev, image: img }))}
+            label="Profile Photo (Optional)"
+            shape="circle"
+          />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">Role Title</label>
@@ -379,6 +392,13 @@ export default function EmployeesPage() {
               className="w-full px-3 py-2 bg-app-input border border-app-border rounded-lg text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
+          
+          <ImageUpload
+            value={formData.image}
+            onChange={(img) => setFormData((prev) => ({ ...prev, image: img }))}
+            label="Profile Photo (Optional)"
+            shape="circle"
+          />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">Role Title</label>
@@ -447,9 +467,18 @@ export default function EmployeesPage() {
         {selectedEmp && (
           <div className="space-y-4 text-xs">
             <div className="p-3 bg-app-hover/50 rounded-lg border border-app-border flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-bold text-app-text">{selectedEmp.name}</h3>
-                <p className="font-mono text-app-accent font-semibold">{selectedEmp.empCode}</p>
+              <div className="flex items-center gap-3">
+                {selectedEmp.image ? (
+                  <img src={selectedEmp.image} alt={selectedEmp.name} className="w-10 h-10 rounded-full object-cover border border-app-border" />
+                ) : (
+                  <div className="w-10 h-10 bg-app-accent/15 border border-app-accent/30 rounded-full flex items-center justify-center text-app-accent font-bold text-sm">
+                    {selectedEmp.name.split(' ').map((n) => n[0]).join('').substring(0, 2)}
+                  </div>
+                )}
+                <div>
+                  <h3 className="text-sm font-bold text-app-text">{selectedEmp.name}</h3>
+                  <p className="font-mono text-app-accent font-semibold">{selectedEmp.empCode}</p>
+                </div>
               </div>
               <StatusBadge status={selectedEmp.status} />
             </div>
@@ -476,28 +505,19 @@ export default function EmployeesPage() {
         )}
       </Modal>
 
-      {/* Delete Confirmation */}
-      <Modal isOpen={isDeleteOpen} onClose={() => setIsDeleteOpen(false)} title="Confirm Staff Removal">
-        <div className="space-y-4 text-xs">
-          <p className="text-app-text">
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        onConfirm={handleDelete}
+        title="Confirm Staff Removal"
+        message={
+          <>
             Are you sure you want to remove <span className="font-bold">{selectedEmp?.name}</span> ({selectedEmp?.empCode}) from active personnel?
-          </p>
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
-              onClick={() => setIsDeleteOpen(false)}
-              className="px-3.5 py-2 rounded-lg text-app-muted hover:bg-app-hover transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleDelete}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
-            >
-              Delete Staff
-            </button>
-          </div>
-        </div>
-      </Modal>
+          </>
+        }
+        confirmText="Delete Staff"
+      />
     </div>
   )
 }

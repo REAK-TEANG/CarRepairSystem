@@ -21,7 +21,8 @@ const PORT = process.env.PORT || 5000
 
 // Middleware
 app.use(cors({ origin: '*' }))
-app.use(express.json())
+app.use(express.json({ limit: '50mb' }))
+app.use(express.urlencoded({ limit: '50mb', extended: true }))
 
 // Request logger
 app.use((req, res, next) => {
@@ -29,9 +30,27 @@ app.use((req, res, next) => {
   next()
 })
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', database: 'connected (supabase/postgresql)', timestamp: new Date().toISOString() })
+// Health check endpoint with live DB ping
+app.get('/api/health', async (req, res) => {
+  const start = Date.now()
+  try {
+    const ping = await query.get('SELECT NOW() as server_time, current_database() as db_name')
+    res.json({
+      status: 'ok',
+      database: 'connected (PostgreSQL / pgAdmin)',
+      databaseName: ping?.db_name || 'carrepair',
+      latencyMs: Date.now() - start,
+      serverTime: ping?.server_time,
+      timestamp: new Date().toISOString()
+    })
+  } catch (err) {
+    res.status(503).json({
+      status: 'error',
+      database: 'disconnected',
+      error: err.message,
+      timestamp: new Date().toISOString()
+    })
+  }
 })
 
 // Mount REST API routes

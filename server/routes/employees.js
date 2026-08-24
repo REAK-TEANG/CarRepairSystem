@@ -23,7 +23,8 @@ router.get('/', async (req, res) => {
       email: r.email || '',
       baseSalary: r.salary ? `$${r.salary}/mo` : '$3,500/mo',
       attendanceToday: 'Present',
-      status: r.employment_status || 'Active'
+      status: r.employment_status || 'Active',
+      image: r.photo_url || ''
     }))
 
     res.json({ data: employees })
@@ -35,7 +36,7 @@ router.get('/', async (req, res) => {
 // POST create employee
 router.post('/', async (req, res) => {
   try {
-    const { name, roleTitle, phone, email, baseSalary, status, specialization, experience } = req.body
+    const { name, roleTitle, phone, email, baseSalary, status, specialization, experience, image, photoUrl } = req.body
     const countRow = await query.get('SELECT COUNT(*) AS cnt FROM employees')
     const empCode = `EMP-${String((parseInt(countRow?.cnt, 10) || 0) + 1).padStart(3, '0')}`
 
@@ -48,13 +49,29 @@ router.post('/', async (req, res) => {
     )
 
     const salaryNum = parseFloat(String(baseSalary || '3500').replace(/[^0-9.]/g, '')) || 3500
+    const finalPhoto = image || photoUrl || null
 
-    const inserted = await query.get(
-      `INSERT INTO employees (user_id, employee_code, position, specialization, experience_years, salary, employment_status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING *`,
-      [user.id, empCode, roleTitle || 'Staff', specialization || null, experience ? parseInt(experience, 10) : 0, salaryNum, status || 'Active']
-    )
+    let inserted = null
+    try {
+      inserted = await query.get(
+        `INSERT INTO employees (user_id, employee_code, position, specialization, experience_years, salary, employment_status, photo_url)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         RETURNING *`,
+        [user.id, empCode, roleTitle || 'Staff', specialization || null, experience ? parseInt(experience, 10) : 0, salaryNum, status || 'Active', finalPhoto]
+      )
+    } catch (dbErr) {
+      if (dbErr.message && dbErr.message.includes('photo_url')) {
+        await query.run('ALTER TABLE employees ADD COLUMN IF NOT EXISTS photo_url TEXT;')
+        inserted = await query.get(
+          `INSERT INTO employees (user_id, employee_code, position, specialization, experience_years, salary, employment_status, photo_url)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+           RETURNING *`,
+          [user.id, empCode, roleTitle || 'Staff', specialization || null, experience ? parseInt(experience, 10) : 0, salaryNum, status || 'Active', finalPhoto]
+        )
+      } else {
+        throw dbErr
+      }
+    }
 
     res.status(201).json({
       data: {
@@ -67,10 +84,12 @@ router.post('/', async (req, res) => {
         email: email || '',
         baseSalary: `$${inserted.salary}/mo`,
         attendanceToday: 'Present',
-        status: inserted.employment_status
+        status: inserted.employment_status,
+        image: inserted.photo_url || ''
       }
     })
   } catch (err) {
+    console.error('[API Employee Create Error]:', err)
     res.status(500).json({ error: err.message })
   }
 })
@@ -78,19 +97,41 @@ router.post('/', async (req, res) => {
 // PUT update employee
 router.put('/:id', async (req, res) => {
   try {
-    const { name, roleTitle, phone, email, baseSalary, status } = req.body
+    const { name, roleTitle, phone, email, baseSalary, status, image, photoUrl } = req.body
     const salaryNum = baseSalary ? parseFloat(String(baseSalary).replace(/[^0-9.]/g, '')) : null
+    const finalPhoto = image || photoUrl || null
 
-    const emp = await query.get(
-      `UPDATE employees
-       SET position = COALESCE($1, position),
-           salary = COALESCE($2, salary),
-           employment_status = COALESCE($3, employment_status),
-           updated_at = NOW()
-       WHERE id = $4
-       RETURNING *`,
-      [roleTitle, salaryNum, status, req.params.id]
-    )
+    let emp = null
+    try {
+      emp = await query.get(
+        `UPDATE employees
+         SET position = COALESCE($1, position),
+             salary = COALESCE($2, salary),
+             employment_status = COALESCE($3, employment_status),
+             photo_url = COALESCE($4, photo_url),
+             updated_at = NOW()
+         WHERE id = $5
+         RETURNING *`,
+        [roleTitle, salaryNum, status, finalPhoto, req.params.id]
+      )
+    } catch (dbErr) {
+      if (dbErr.message && dbErr.message.includes('photo_url')) {
+        await query.run('ALTER TABLE employees ADD COLUMN IF NOT EXISTS photo_url TEXT;')
+        emp = await query.get(
+          `UPDATE employees
+           SET position = COALESCE($1, position),
+               salary = COALESCE($2, salary),
+               employment_status = COALESCE($3, employment_status),
+               photo_url = COALESCE($4, photo_url),
+               updated_at = NOW()
+           WHERE id = $5
+           RETURNING *`,
+          [roleTitle, salaryNum, status, finalPhoto, req.params.id]
+        )
+      } else {
+        throw dbErr
+      }
+    }
 
     if (emp?.user_id) {
       await query.run(
@@ -115,10 +156,12 @@ router.put('/:id', async (req, res) => {
         email: email || '',
         baseSalary: `$${emp.salary}/mo`,
         attendanceToday: 'Present',
-        status: emp.employment_status
+        status: emp.employment_status,
+        image: emp.photo_url || ''
       }
     })
   } catch (err) {
+    console.error('[API Employee Update Error]:', err)
     res.status(500).json({ error: err.message })
   }
 })

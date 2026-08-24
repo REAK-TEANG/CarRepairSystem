@@ -120,7 +120,7 @@ CREATE TABLE IF NOT EXISTS vehicles (
     engine_number  VARCHAR(100),
     fuel_type      fuel_type DEFAULT 'Gasoline',
     mileage        INT DEFAULT 0,
-    photo_url      VARCHAR(500),
+    photo_url      TEXT,
     notes          TEXT,
     created_at     TIMESTAMPTZ DEFAULT NOW(),
     updated_at     TIMESTAMPTZ DEFAULT NOW()

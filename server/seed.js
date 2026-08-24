@@ -78,22 +78,22 @@ async function seedData() {
 
     // 4. Vehicles
     const vehicles = [
-      ['CUST-001', 'ABC-1234', '1HGCR2F83HA001234', 'Toyota', 'Camry', 2022, 'Midnight Blue', 'Gasoline', 34500, 'Regular 5k mile service schedule.'],
-      ['CUST-002', 'XYZ-5678', 'WBA3A5C58DF105678', 'BMW', '330i', 2021, 'Alpine White', 'Gasoline', 28000, 'Requires synthetic 0W-20 oil.'],
-      ['CUST-003', 'DEF-9012', '1FADP5CU8GA009012', 'Ford', 'F-150', 2020, 'Shadow Black', 'Gasoline', 62000, 'Heavy duty towing package.'],
-      ['CUST-004', 'GHI-3456', 'JH4CU2F68CC003456', 'Honda', 'Civic', 2023, 'Sonic Gray', 'Gasoline', 15200, 'New tires installed last month.'],
-      ['CUST-005', 'JKL-7890', 'WAUZZZF27HA007890', 'Audi', 'A4', 2022, 'Ibis White', 'Gasoline', 24100, 'Extended warranty active.'],
-      ['CUST-006', 'MNO-4321', '5N1AL0MM8EC123456', 'Tesla', 'Model 3', 2023, 'Pearl White', 'Electric', 18500, 'Annual battery & brake fluid check.'],
-      ['CUST-007', 'PQR-8765', '2HKRM4H78MH654321', 'Mercedes-Benz', 'C300', 2021, 'Obsidian Black', 'Gasoline', 41200, 'Scheduled for transmission service.']
+      ['CUST-001', 'ABC-1234', '1HGCR2F83HA001234', 'Toyota', 'Camry', 2022, 'Midnight Blue', 'Gasoline', 34500, 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=600&auto=format&fit=crop&q=80', 'Regular 5k mile service schedule.'],
+      ['CUST-002', 'XYZ-5678', 'WBA3A5C58DF105678', 'BMW', '330i', 2021, 'Alpine White', 'Gasoline', 28000, 'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&auto=format&fit=crop&q=80', 'Requires synthetic 0W-20 oil.'],
+      ['CUST-003', 'DEF-9012', '1FADP5CU8GA009012', 'Ford', 'F-150', 2020, 'Shadow Black', 'Gasoline', 62000, 'https://images.unsplash.com/photo-1559416523-140ddc3d238c?w=600&auto=format&fit=crop&q=80', 'Heavy duty towing package.'],
+      ['CUST-004', 'GHI-3456', 'JH4CU2F68CC003456', 'Honda', 'Civic', 2023, 'Sonic Gray', 'Gasoline', 15200, 'https://images.unsplash.com/photo-1606016159991-dfe4f2746ad5?w=600&auto=format&fit=crop&q=80', 'New tires installed last month.'],
+      ['CUST-005', 'JKL-7890', 'WAUZZZF27HA007890', 'Audi', 'A4', 2022, 'Ibis White', 'Gasoline', 24100, 'https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?w=600&auto=format&fit=crop&q=80', 'Extended warranty active.'],
+      ['CUST-006', 'MNO-4321', '5N1AL0MM8EC123456', 'Tesla', 'Model 3', 2023, 'Pearl White', 'Electric', 18500, 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=600&auto=format&fit=crop&q=80', 'Annual battery & brake fluid check.'],
+      ['CUST-007', 'PQR-8765', '2HKRM4H78MH654321', 'Mercedes-Benz', 'C300', 2021, 'Obsidian Black', 'Gasoline', 41200, 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=600&auto=format&fit=crop&q=80', 'Scheduled for transmission service.']
     ];
 
-    for (const [custCode, plate, vin, brand, model, year, color, fuel, miles, notes] of vehicles) {
+    for (const [custCode, plate, vin, brand, model, year, color, fuel, miles, photo, notes] of vehicles) {
       const cId = custMap[custCode] || fallbackCustId;
       await query.run(
-        `INSERT INTO vehicles (customer_id, vehicle_number, vin, brand, model, year, color, fuel_type, mileage, notes)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        `INSERT INTO vehicles (customer_id, vehicle_number, vin, brand, model, year, color, fuel_type, mileage, photo_url, notes)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
          ON CONFLICT DO NOTHING`,
-        [cId, plate, vin, brand, model, year, color, fuel, miles, notes]
+        [cId, plate, vin, brand, model, year, color, fuel, miles, photo, notes]
       );
     }
     console.log('✅ Vehicles seeded');

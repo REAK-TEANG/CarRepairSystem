@@ -3,8 +3,7 @@ import { MagnifyingGlass, Plus, PencilSimple, Trash, Warning, ArrowUp, ArrowDown
 import { useInventory, useCreatePart, useUpdatePart, useAdjustStock, useDeletePart } from '../../hooks/useInventory'
 import { useSuppliers } from '../../hooks/useSuppliers'
 import { useAuth } from '../../context/AuthContext'
-import StatusBadge from '../../components/ui/StatusBadge'
-import Modal from '../../components/ui/Modal'
+import { Modal, StatusBadge, ConfirmDialog } from '../../components/ui'
 
 export default function InventoryPage() {
   const { can } = useAuth()
@@ -596,28 +595,19 @@ export default function InventoryPage() {
         )}
       </Modal>
 
-      {/* Delete Confirmation */}
-      <Modal isOpen={isDeleteOpen} onClose={() => setIsDeleteOpen(false)} title="Confirm Part Deletion">
-        <div className="space-y-4 text-xs">
-          <p className="text-app-text">
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        onConfirm={handleDelete}
+        title="Confirm Part Deletion"
+        message={
+          <>
             Are you sure you want to delete <span className="font-bold">{selectedPart?.name}</span> ({selectedPart?.partCode})?
-          </p>
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
-              onClick={() => setIsDeleteOpen(false)}
-              className="px-3.5 py-2 rounded-lg text-app-muted hover:bg-app-hover transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleDelete}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
-            >
-              Delete Part
-            </button>
-          </div>
-        </div>
-      </Modal>
+          </>
+        }
+        confirmText="Delete Part"
+      />
     </div>
   )
 }

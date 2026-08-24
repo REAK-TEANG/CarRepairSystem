@@ -3,17 +3,29 @@ import { apiClient, API_CONFIG } from './apiClient'
 const STORAGE_KEY = 'demo_vehicles'
 
 export const initialVehicles = [
-  { id: 1, number: 'ABC-1234', vin: '1HGCR2F83HA001234', brand: 'Toyota', model: 'Camry', year: 2022, color: 'White', engineNumber: '2AR-FE-98765', fuelType: 'Gasoline', mileage: 45200, ownerId: 1, owner: 'John Smith' },
-  { id: 2, number: 'XYZ-5678', vin: '2HGFC2F58HH005678', brand: 'Honda', model: 'Civic', year: 2021, color: 'Black', engineNumber: 'L15BA-12345', fuelType: 'Gasoline', mileage: 32100, ownerId: 2, owner: 'Sarah Davis' },
-  { id: 3, number: 'DEF-9012', vin: '1FTFW1ED4MFA09012', brand: 'Ford', model: 'F-150', year: 2023, color: 'Blue', engineNumber: 'ECO-V6-44332', fuelType: 'Gasoline', mileage: 18500, ownerId: 3, owner: 'Robert Lee' },
-  { id: 4, number: 'GHI-3456', vin: '5UXTY5C03N9B03456', brand: 'BMW', model: 'X3', year: 2022, color: 'Silver', engineNumber: 'B48-87654', fuelType: 'Gasoline', mileage: 28900, ownerId: 4, owner: 'Emily Chen' },
-  { id: 5, number: 'JKL-7890', vin: '5NPE24AF9LH007890', brand: 'Hyundai', model: 'Sonata', year: 2020, color: 'Gray', engineNumber: 'G4NG-54321', fuelType: 'Hybrid', mileage: 61300, ownerId: 5, owner: 'David Park' },
+  { id: 1, number: 'ABC-1234', vin: '1HGCR2F83HA001234', brand: 'Toyota', model: 'Camry', year: 2022, color: 'White', engineNumber: '2AR-FE-98765', fuelType: 'Gasoline', mileage: 45200, ownerId: 1, owner: 'John Smith', image: 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=600&auto=format&fit=crop&q=80' },
+  { id: 2, number: 'XYZ-5678', vin: '2HGFC2F58HH005678', brand: 'Honda', model: 'Civic', year: 2021, color: 'Black', engineNumber: 'L15BA-12345', fuelType: 'Gasoline', mileage: 32100, ownerId: 2, owner: 'Sarah Davis', image: 'https://images.unsplash.com/photo-1606016159991-dfe4f2746ad5?w=600&auto=format&fit=crop&q=80' },
+  { id: 3, number: 'DEF-9012', vin: '1FTFW1ED4MFA09012', brand: 'Ford', model: 'F-150', year: 2023, color: 'Blue', engineNumber: 'ECO-V6-44332', fuelType: 'Gasoline', mileage: 18500, ownerId: 3, owner: 'Robert Lee', image: 'https://images.unsplash.com/photo-1559416523-140ddc3d238c?w=600&auto=format&fit=crop&q=80' },
+  { id: 4, number: 'GHI-3456', vin: '5UXTY5C03N9B03456', brand: 'BMW', model: 'X3', year: 2022, color: 'Silver', engineNumber: 'B48-87654', fuelType: 'Gasoline', mileage: 28900, ownerId: 4, owner: 'Emily Chen', image: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&auto=format&fit=crop&q=80' },
+  { id: 5, number: 'JKL-7890', vin: '5NPE24AF9LH007890', brand: 'Hyundai', model: 'Sonata', year: 2020, color: 'Gray', engineNumber: 'G4NG-54321', fuelType: 'Hybrid', mileage: 61300, ownerId: 5, owner: 'David Park', image: 'https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?w=600&auto=format&fit=crop&q=80' },
 ]
 
 function getLocalData() {
   const data = localStorage.getItem(STORAGE_KEY)
   if (data) {
-    try { return JSON.parse(data) } catch { /* fallback */ }
+    try {
+      const parsed = JSON.parse(data)
+      if (Array.isArray(parsed)) {
+        return parsed.map((item) => {
+          if (!item.image) {
+            const init = initialVehicles.find((v) => v.id === item.id)
+            if (init?.image) return { ...item, image: init.image }
+          }
+          return item
+        })
+      }
+      return parsed
+    } catch { /* fallback */ }
   }
   return initialVehicles
 }

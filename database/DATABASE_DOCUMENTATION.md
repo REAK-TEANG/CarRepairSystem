@@ -284,7 +284,7 @@
 | `engine_number` | VARCHAR(100) | — | Engine serial number |
 | `fuel_type` | fuel_type | DEFAULT 'Gasoline' | Type of fuel used |
 | `mileage` | INT | DEFAULT 0 | Current odometer reading |
-| `photo_url` | VARCHAR(500) | — | URL to uploaded vehicle photo |
+| `photo_url` | TEXT | — | URL or Base64 data of uploaded vehicle photo |
 | `notes` | TEXT | — | Additional notes |
 | `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Record creation timestamp |
 | `updated_at` | TIMESTAMPTZ | DEFAULT NOW(), auto-trigger | Last modification timestamp |

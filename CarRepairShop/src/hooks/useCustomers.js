@@ -28,7 +28,6 @@ export function useCreateCustomer() {
         registrationDate: new Date().toISOString().split('T')[0],
         vehiclesCount: 0,
         totalSpent: '$0.00',
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
         ...newCustomer,
       }
 

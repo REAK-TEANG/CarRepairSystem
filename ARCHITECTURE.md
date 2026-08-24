@@ -10,7 +10,7 @@
 ┌──────────────────────────────────────────────────────────────────────────────────┐
 │                             CLIENT APPLICATION (Browser)                         │
 │                                                                                  │
-│   React 19 + Vite 8 │ Tailwind CSS │ TanStack React Query 5 │ React Router DOM 7  │
+│   React 19 + Vite 8 │ Tailwind CSS │ TanStack React Query 5 │ React Router DOM 7 │
 │                                                                                  │
 │   ┌──────────────────┐  ┌───────────────────┐  ┌─────────────────────────────┐   │
 │   │   AuthContext    │  │   ThemeContext    │  │        ToastContext         │   │
@@ -19,7 +19,7 @@
 │             │                     │                           │                  │
 │             ▼                     ▼                           ▼                  │
 │   ┌──────────────────────────────────────────────────────────────────────────┐   │
-│   │              Domain Pages & Views (Organized by Sub-System)              │   │
+│   │              Domain Pages & Lazy-Loaded Route Views                      │   │
 │   │    /dashboards      /operations        /workshop        /management      │   │
 │   └───────────────────────────────────┬──────────────────────────────────────┘   │
 │                                       │                                          │
@@ -35,21 +35,25 @@
 │   │     Dynamic API Switch (`USE_REAL_API`) · Mock Fallback · RESTful Endpoints   │
 │   └───────────────────────────────────┬──────────────────────────────────────┘   │
 └───────────────────────────────────────┼──────────────────────────────────────────┘
-                                        │ RESTful JSON over HTTP / HTTPS
-                                        │ + Real-Time WebSocket (Pusher / Echo)
+                                        │ RESTful JSON over HTTP (Port 5000)
+                                        │ (50MB payload limit for high-res photos)
                                         ▼
 ┌──────────────────────────────────────────────────────────────────────────────────┐
-│                               BACKEND API SERVER                                 │
+│                             NODE.JS BACKEND SERVER (`server/`)                   │
 │                                                                                  │
-│   Laravel (PHP) │ Laravel Sanctum (SPA Auth) │ Laravel Reverb (WebSockets)       │
+│   Express.js │ CORS │ pg (node-postgres Pool) │ Auto-Migration Self-Healing      │
 │                                                                                  │
 │   ┌──────────────────────────────────────────────────────────────────────────┐   │
-│   │                      Eloquent ORM & Migrations                           │   │
+│   │             Modular REST API Routers (`server/routes/`)                  │   │
+│   │   /api/auth       /api/appointments   /api/repair-jobs    /api/customers │   │
+│   │   /api/vehicles   /api/inventory      /api/invoices       /api/employees │   │
+│   │   /api/mechanics  /api/services       /api/suppliers      /api/reports   │   │
 │   └───────────────────────────────────┬──────────────────────────────────────┘   │
 │                                       │                                          │
 │                                       ▼                                          │
 │                          ┌─────────────────────────┐                             │
-│                          │  PostgreSQL / Supabase  │                             │
+│                          │  PostgreSQL / pgAdmin   │                             │
+│                          │  (Database: 'carrepair')│                             │
 │                          └─────────────────────────┘                             │
 └──────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -63,23 +67,22 @@
 | Concern | Technology | Version | Purpose |
 |---|---|---|---|
 | **Core Framework** | React | 19.x | Component lifecycle, UI rendering |
-| **Build & Tooling** | Vite | 8.x | Lightning-fast HMR and production bundle optimization |
+| **Build & Tooling** | Vite | 8.x | Lightning-fast HMR, manual chunking & production bundle optimization |
 | **Styling & Design Tokens** | Tailwind CSS | 3.4 | Modern utility design with custom theme CSS variables |
 | **Iconography** | Phosphor Icons | `@phosphor-icons/react` | Unified, weight-adjustable icon system |
-| **Client Routing** | React Router DOM | 7.x | Declarative, role-guarded SPA routing |
+| **Client Routing** | React Router DOM | 7.x | Declarative, role-guarded lazy-loaded SPA routing |
 | **Server State & Cache** | TanStack React Query | 5.x | Optimistic caching, background revalidation, mutations |
 | **Notifications** | Custom Context | React Context | Non-intrusive micro-toasts for real-time CRUD feedback |
 | **Class Composition** | `clsx` | Latest | Conditional and dynamic class merging |
 
-### Backend (Server API — Scaffolded & Planned)
+### Backend (Server API — Node.js & PostgreSQL)
 
 | Concern | Technology | Purpose |
 |---|---|---|
-| **API Framework** | Laravel (PHP) | RESTful API endpoints and business logic validation |
-| **Authentication** | Laravel Sanctum | Token-based SPA session authentication |
-| **Database ORM** | Eloquent ORM | Relational schema management, transactions, hooks |
-| **Relational Database** | PostgreSQL / Supabase | Primary database targeting [`schema_supabase.sql`](file:///d:/CarRepairSystem/database/schema_supabase.sql) |
-| **Real-time Engine** | Laravel Reverb / Pusher | Event broadcasting to invalidate frontend cache queries |
+| **API Server Engine** | Express.js (Node.js) | RESTful API endpoints, request routing, JSON body parsing (50MB limit) |
+| **Database Client** | `pg` (node-postgres) | Connection pool (`pg.Pool`), transaction handling, parameterised queries |
+| **Auto-Migration** | Self-Healing Schema (`db.js`) | Startup verification and auto-migration of missing columns (`photo_url TEXT`) |
+| **Relational Database** | PostgreSQL / pgAdmin | Relational persistence (`schema_postgres.sql` / `schema_supabase.sql`) |
 
 ---
 
@@ -101,6 +104,8 @@ CarRepairShop/
 │   │   └── ui/
 │   │       ├── Logo.jsx          # Geometric line-style SVG vector logo
 │   │       ├── Modal.jsx         # Accessible, animated modal dialog component
+│   │       ├── ConfirmDialog.jsx # Reusable deletion & confirmation dialog
+│   │       ├── ImageUpload.jsx   # Drag & drop / file picker Base64 image uploader
 │   │       ├── StatCard.jsx      # Reusable dashboard metric card with trends
 │   │       └── StatusBadge.jsx   # Contextual color-coded status badge
 │   ├── context/                  # Global application state providers
@@ -121,7 +126,7 @@ CarRepairShop/
 │   │   └── useVehicles.js        # Create/Update/Delete vehicle mutations
 │   ├── layouts/
 │   │   └── AppLayout.jsx         # Shell layout: Sidebar + TopBar + Scrollable <Outlet />
-│   ├── pages/                    # Domain-Driven Page Modules
+│   ├── pages/                    # Domain-Driven Page Modules (Lazy Loaded)
 │   │   ├── index.js              # Central barrel export for all domain views
 │   │   ├── auth/                 # Authentication & Security Views
 │   │   │   ├── LoginPage.jsx
@@ -158,11 +163,11 @@ CarRepairShop/
 │   │   ├── serviceCatalogService.js
 │   │   ├── settingsService.js
 │   │   └── supplierService.js
-│   ├── App.jsx                   # React Router route definitions & global provider tree
+│   ├── App.jsx                   # React Router route definitions with Suspense lazy loading
 │   ├── main.jsx                  # React 19 application mount point
 │   └── index.css                 # Tailwind directives, CSS variable themes & keyframes
 ├── tailwind.config.js            # Tailwind custom extensions & color schemes
-├── vite.config.js                # Vite build and react plugin configurations
+├── vite.config.js                # Vite build and manual vendor code-splitting
 └── package.json                  # Dependencies and build scripts
 ```
 
@@ -228,25 +233,25 @@ All data operations are decoupled through the service layer in `CarRepairShop/sr
   - Located in [**`apiClient.js`**](file:///D:/carrepairsystem/CarRepairShop/src/services/apiClient.js#L9):
     ```javascript
     export const API_CONFIG = {
-      BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
-      USE_REAL_API: false, // Set to true when backend Laravel API is running
+      BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+      USE_REAL_API: true, // Connects to Node.js Express backend
     }
     ```
 - **Seamless Database Synchronization**:
-  - When `USE_REAL_API: true` is toggled, all query and mutation hooks send standard RESTful HTTP requests (`GET`, `POST`, `PUT`, `DELETE`) to the backend with Sanctum authorization headers while keeping all optimistic UI benefits intact.
+  - When `USE_REAL_API: true` is enabled, all query and mutation hooks send standard RESTful HTTP requests (`GET`, `POST`, `PUT`, `DELETE`) to the Express backend while keeping all optimistic UI benefits intact.
 
 ---
 
 ## 7. Database Entity Mapping
 
-The database schema is defined in [`database/schema_supabase.sql`](file:///d:/CarRepairSystem/database/schema_supabase.sql) and maps 1-to-1 with the frontend services:
+The database schema is defined in [`database/schema_postgres.sql`](file:///d:/CarRepairSystem/database/schema_postgres.sql) and [`database/schema_supabase.sql`](file:///d:/CarRepairSystem/database/schema_supabase.sql):
 
 | System Domain | Database Tables | Frontend Service & Hook |
 |---|---|---|
 | **Authentication & RBAC** | `roles`, `users`, `user_sessions` | `AuthContext.jsx` |
 | **Staff & HR** | `employees`, `employee_attendance`, `employee_schedules` | `employeeService.js` / `useEmployees.js` |
 | **Customer Registry** | `customers` | `customerService.js` / `useCustomers.js` |
-| **Vehicle Registry** | `vehicles` | `vehicleService.js` / `useVehicles.js` |
+| **Vehicle Registry** | `vehicles` (supports `photo_url TEXT`) | `vehicleService.js` / `useVehicles.js` |
 | **Appointment Booking** | `appointments` | `appointmentService.js` / `useAppointments.js` |
 | **Repair Work Orders** | `repair_orders`, `repair_services`, `repair_parts` | `repairJobService.js` / `useRepairJobs.js` |
 | **Service Catalog** | `services` | `serviceCatalogService.js` / `useServicesCatalog.js` |
@@ -260,22 +265,20 @@ The database schema is defined in [`database/schema_supabase.sql`](file:///d:/Ca
 
 ## 8. Development & Verification Commands
 
-To run and verify the organized system:
-
 ```bash
-# Navigate to frontend project
-cd D:\carrepairsystem\CarRepairShop
-
-# Start local development server
+# 1. Start backend server (Express + PostgreSQL)
+cd D:\CarRepairSystem\server
 npm run dev
 
-# Run ESLint validation
-npm run lint
+# 2. Start frontend development server (Vite)
+cd D:\CarRepairSystem\CarRepairShop
+npm run dev
 
-# Build production bundle
+# 3. Verify production build & chunk distribution
 npm run build
 ```
 
 ---
 
-*Last updated: August 22, 2026 — Architecture & Domain-Driven File Organization Refactor.*
+*Last updated: August 24, 2026 — Architecture, Node.js + PostgreSQL Backend Integration, and Design System Alignment.*
+

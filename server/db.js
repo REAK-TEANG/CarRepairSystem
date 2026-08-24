@@ -68,6 +68,25 @@ export async function initializeDatabase() {
       }
     } else {
       console.log(`[DB] PostgreSQL database tables verified.`);
+      // Ensure photo_url column exists and is TEXT in vehicles table
+      try {
+        await client.query(`
+          ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS photo_url TEXT;
+          ALTER TABLE vehicles ALTER COLUMN photo_url TYPE TEXT;
+        `);
+      } catch (err) {
+        console.log(`[DB] Note: Could not auto-migrate photo_url on vehicles table: ${err.message}`);
+      }
+      
+      // Ensure photo_url column exists and is TEXT in employees table
+      try {
+        await client.query(`
+          ALTER TABLE employees ADD COLUMN IF NOT EXISTS photo_url TEXT;
+          ALTER TABLE employees ALTER COLUMN photo_url TYPE TEXT;
+        `);
+      } catch (err) {
+        console.log(`[DB] Note: Could not auto-migrate photo_url on employees table: ${err.message}`);
+      }
     }
 
     client.release();
