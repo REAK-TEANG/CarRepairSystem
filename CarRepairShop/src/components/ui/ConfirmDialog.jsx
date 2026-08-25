@@ -1,31 +1,22 @@
 import Modal from './Modal'
 import { Warning } from '@phosphor-icons/react'
+import { useTranslation } from 'react-i18next'
 
-/**
- * Reusable Confirmation & Deletion Dialog Component.
- *
- * @param {Object} props
- * @param {boolean} props.isOpen - Controls modal visibility
- * @param {function} props.onClose - Triggered on cancel or dismiss
- * @param {function} props.onConfirm - Triggered when user confirms the action
- * @param {string} [props.title='Confirm Action'] - Modal title
- * @param {string} props.message - Descriptive warning / confirmation message
- * @param {string} [props.confirmText='Delete'] - Text for the confirm button
- * @param {string} [props.cancelText='Cancel'] - Text for the cancel button
- * @param {'danger'|'warning'|'primary'} [props.variant='danger'] - Visual style of confirm button
- * @param {boolean} [props.isLoading=false] - Disables buttons while processing
- */
 export default function ConfirmDialog({
   isOpen,
   onClose,
   onConfirm,
-  title = 'Confirm Action',
+  title,
   message,
-  confirmText = 'Delete',
-  cancelText = 'Cancel',
+  confirmText,
+  cancelText,
   variant = 'danger',
   isLoading = false,
 }) {
+  const { t } = useTranslation()
+  const resolvedTitle = title || t('common.confirm')
+  const resolvedConfirmText = confirmText || (variant === 'danger' ? t('common.delete') : t('common.confirm'))
+  const resolvedCancelText = cancelText || t('common.cancel')
   const getButtonClass = () => {
     switch (variant) {
       case 'danger':
@@ -38,7 +29,7 @@ export default function ConfirmDialog({
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} maxWidth="max-w-md">
+    <Modal isOpen={isOpen} onClose={onClose} title={resolvedTitle} maxWidth="max-w-md">
       <div className="space-y-4 text-xs font-sans">
         <div className="flex items-start gap-3">
           {variant === 'danger' && (
@@ -58,7 +49,7 @@ export default function ConfirmDialog({
             disabled={isLoading}
             className="px-3.5 py-2 rounded-lg text-app-muted hover:bg-app-hover hover:text-app-text transition-colors disabled:opacity-50"
           >
-            {cancelText}
+            {resolvedCancelText}
           </button>
           <button
             type="button"
@@ -66,7 +57,7 @@ export default function ConfirmDialog({
             disabled={isLoading}
             className={`px-4 py-2 font-semibold rounded-lg transition-colors shadow-subtle disabled:opacity-50 ${getButtonClass()}`}
           >
-            {isLoading ? 'Processing...' : confirmText}
+            {isLoading ? t('common.loading') : resolvedConfirmText}
           </button>
         </div>
       </div>

@@ -92,3 +92,32 @@ export function useRecordPayment() {
     },
   })
 }
+
+export function useDeleteInvoice() {
+  const queryClient = useQueryClient()
+  const { addToast } = useToast()
+
+  return useMutation({
+    mutationFn: (id) => invoiceService.delete(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: QUERY_KEY })
+      const previous = queryClient.getQueryData(QUERY_KEY) || []
+
+      queryClient.setQueryData(
+        QUERY_KEY,
+        previous.filter((inv) => inv.id !== id)
+      )
+      addToast('Invoice archived and removed', 'success')
+      return { previous }
+    },
+    onError: (err, id, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(QUERY_KEY, context.previous)
+      }
+      addToast('Failed to delete invoice', 'warning')
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY })
+    },
+  })
+}

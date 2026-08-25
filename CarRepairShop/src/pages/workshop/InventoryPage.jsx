@@ -1,11 +1,15 @@
 import { useState } from 'react'
-import { MagnifyingGlass, Plus, PencilSimple, Trash, Warning, ArrowUp, ArrowDown, Funnel, Eye } from '@phosphor-icons/react'
+import { MagnifyingGlass, Plus, PencilSimple, Trash, ArrowUp, ArrowDown, Eye } from '@phosphor-icons/react'
+import { useTranslation } from 'react-i18next'
 import { useInventory, useCreatePart, useUpdatePart, useAdjustStock, useDeletePart } from '../../hooks/useInventory'
 import { useSuppliers } from '../../hooks/useSuppliers'
 import { useAuth } from '../../context/AuthContext'
-import { Modal, StatusBadge, ConfirmDialog } from '../../components/ui'
+import { Modal, StatusBadge, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton } from '../../components/ui'
+
+const stockStatusOptions = ['All Stock', 'In Stock', 'Low Stock', 'Out of Stock']
 
 export default function InventoryPage() {
+  const { t } = useTranslation()
   const { can } = useAuth()
   const { data: items = [], isLoading } = useInventory()
   const { data: suppliers = [] } = useSuppliers()
@@ -17,6 +21,7 @@ export default function InventoryPage() {
 
   const [searchQuery, setSearchQuery] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('All')
+  const [stockFilter, setStockFilter] = useState('All Stock')
 
   // Modals
   const [isAddOpen, setIsAddOpen] = useState(false)
@@ -25,53 +30,48 @@ export default function InventoryPage() {
   const [isViewOpen, setIsViewOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [selectedPart, setSelectedPart] = useState(null)
-  const [adjustType, setAdjustType] = useState('Stock In')
 
-  // Form
+  // Adjust Form
+  const [adjustType, setAdjustType] = useState('Stock In')
+  const [adjustQty, setAdjustQty] = useState(1)
+  const [adjustNotes, setAdjustNotes] = useState('')
+
+  // Form State
   const [formData, setFormData] = useState({
     partCode: '',
     name: '',
-    category: 'Brakes',
     brand: '',
-    unitPrice: 50,
-    stockQty: 20,
-    minThreshold: 10,
-    location: 'Shelf A-01',
-    supplier: 'AutoParts Direct',
+    category: 'Engine',
+    stockQty: 0,
+    minThreshold: 5,
+    unitPrice: 0.0,
+    costPrice: 0.0,
+    supplier: '',
+    supplierId: '',
+    location: 'Shelf A-1',
   })
 
-  // Stock Adjustment Form
-  const [adjustQty, setAdjustQty] = useState(10)
-  const [adjustNotes, setAdjustNotes] = useState('')
-
   const handleOpenAdd = () => {
+    const defaultSup = suppliers[0]
     setFormData({
-      partCode: '',
+      partCode: `PRT-2026-${String(items.length + 1).padStart(3, '0')}`,
       name: '',
-      category: 'Brakes',
       brand: '',
-      unitPrice: 45,
-      stockQty: 20,
-      minThreshold: 8,
-      location: 'Shelf A-01',
-      supplier: suppliers[0] ? suppliers[0].name : 'AutoParts Direct',
+      category: 'Engine',
+      stockQty: 10,
+      minThreshold: 5,
+      unitPrice: 45.0,
+      costPrice: 28.0,
+      supplier: defaultSup ? defaultSup.name : 'Bosch Auto Parts',
+      supplierId: defaultSup ? defaultSup.id : '',
+      location: 'Shelf A-1',
     })
     setIsAddOpen(true)
   }
 
   const handleOpenEdit = (p) => {
     setSelectedPart(p)
-    setFormData({
-      partCode: p.partCode,
-      name: p.name,
-      category: p.category,
-      brand: p.brand,
-      unitPrice: p.unitPrice,
-      stockQty: p.stockQty,
-      minThreshold: p.minThreshold,
-      location: p.location,
-      supplier: p.supplier,
-    })
+    setFormData({ ...p })
     setIsEditOpen(true)
   }
 
@@ -107,13 +107,13 @@ export default function InventoryPage() {
     setIsEditOpen(false)
   }
 
-  const handleAdjustSubmit = async (e) => {
+  const handleAdjust = async (e) => {
     e.preventDefault()
     if (!selectedPart) return
     adjustStockMutation.mutate({
       id: selectedPart.id,
-      quantity: adjustQty,
       type: adjustType,
+      quantity: Number(adjustQty),
       notes: adjustNotes,
     })
     setIsAdjustOpen(false)
@@ -125,108 +125,139 @@ export default function InventoryPage() {
     setIsDeleteOpen(false)
   }
 
-  const categories = ['All', ...new Set(items.map((i) => i.category))]
+  const categories = ['All', ...new Set(items.map((p) => p.category).filter(Boolean))]
 
-  const filtered = items.filter((item) => {
+  const filtered = items.filter((p) => {
+    const q = searchQuery.toLowerCase()
     const matchesSearch =
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.partCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.brand.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCategory = categoryFilter === 'All' || item.category === categoryFilter
-    return matchesSearch && matchesCategory
+      (p?.name || '').toLowerCase().includes(q) ||
+      (p?.partCode || '').toLowerCase().includes(q) ||
+      (p?.brand || '').toLowerCase().includes(q) ||
+      (p?.supplier || '').toLowerCase().includes(q) ||
+      (p?.location || '').toLowerCase().includes(q)
+
+    const matchesCat = categoryFilter === 'All' || p.category === categoryFilter
+
+    let matchesStock = true
+    if (stockFilter === 'In Stock') matchesStock = p.stockQty > p.minThreshold
+    else if (stockFilter === 'Low Stock') matchesStock = p.stockQty <= p.minThreshold && p.stockQty > 0
+    else if (stockFilter === 'Out of Stock') matchesStock = p.stockQty === 0
+
+    return matchesSearch && matchesCat && matchesStock
   })
 
-  const lowStockCount = items.filter((i) => i.stockQty <= i.minThreshold).length
-
   return (
-    <div className="space-y-6 text-app-text font-sans">
+    <div className="space-y-6 font-sans text-app-text animate-fade-in">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">Spare Parts Inventory</h1>
-          <p className="text-xs text-app-muted mt-1">{items.length} parts cataloged · {lowStockCount} low stock alerts</p>
+          <h1 className="text-xl font-bold tracking-tight text-app-text">{t('titles.sparePartsInventory')}</h1>
+          <p className="text-xs text-app-muted mt-1">{items.length} {t('inventory.subtitle')}</p>
         </div>
         {can('inventory', 'create') && (
           <button
             onClick={handleOpenAdd}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover text-app-accentText font-semibold rounded-lg text-xs transition-colors shadow-subtle"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover text-app-accentText text-xs font-semibold rounded-xl transition-colors shadow-subtle"
           >
             <Plus size={16} weight="bold" />
-            Add Spare Part
+            {t('inventory.addPart')}
           </button>
         )}
       </div>
 
-      {/* Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-app-card rounded-xl border border-app-border p-4 shadow-card">
-          <p className="text-[10px] text-app-muted font-semibold uppercase tracking-wider mb-1">Total Cataloged Parts</p>
-          <p className="text-xl font-bold tabular-nums text-app-text">{items.length}</p>
+      {/* Category and Status Filters */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setCategoryFilter(cat)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-colors ${
+                categoryFilter === cat
+                  ? 'bg-app-accent text-app-accentText shadow-subtle'
+                  : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover hover:text-app-text'
+              }`}
+            >
+              {cat === 'All' ? t('common.all') : cat}
+            </button>
+          ))}
         </div>
-        <div className="bg-app-card rounded-xl border border-app-border p-4 shadow-card">
-          <p className="text-[10px] text-app-muted font-semibold uppercase tracking-wider mb-1">Low Stock Alerts</p>
-          <p className="text-xl font-bold tabular-nums text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-            {lowStockCount > 0 && <Warning size={18} weight="fill" />}
-            {lowStockCount} items
-          </p>
-        </div>
-        <div className="bg-app-card rounded-xl border border-app-border p-4 shadow-card">
-          <p className="text-[10px] text-app-muted font-semibold uppercase tracking-wider mb-1">Total Units In Stock</p>
-          <p className="text-xl font-bold tabular-nums text-app-accent">
-            {items.reduce((sum, i) => sum + i.stockQty, 0)} units
-          </p>
-        </div>
-      </div>
 
-      {/* Category Pills */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
-        <span className="text-xs text-app-muted flex items-center gap-1 mr-1">
-          <Funnel size={14} /> Filter:
-        </span>
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setCategoryFilter(cat)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              categoryFilter === cat
-                ? 'bg-app-accent text-app-accentText shadow-subtle'
-                : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover hover:text-app-text'
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          <span className="text-xs text-app-muted flex items-center gap-1 mr-1">{t('common.status')}:</span>
+          {stockStatusOptions.map((st) => (
+            <button
+              key={st}
+              onClick={() => setStockFilter(st)}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-medium whitespace-nowrap transition-colors ${
+                stockFilter === st
+                  ? 'bg-app-hover text-app-text border border-app-border font-semibold'
+                  : 'text-app-muted hover:text-app-text'
+              }`}
+            >
+              {st === 'All Stock' ? t('common.all') : t(`status.${st}`, st)}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Table */}
-      <div className="bg-app-card rounded-xl border border-app-border shadow-card overflow-hidden">
-        <div className="p-4 border-b border-app-border">
-          <div className="relative max-w-md">
+      <div className="bg-app-card rounded-2xl border border-app-border shadow-card overflow-hidden">
+        <div className="p-4 border-b border-app-border flex items-center justify-between gap-3">
+          <div className="relative flex-1 max-w-md">
             <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
             <input
               type="text"
-              placeholder="Search part name, code, brand..."
+              placeholder={t('common.quickSearch')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-lg text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-xl text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
             />
           </div>
+          {(searchQuery || categoryFilter !== 'All' || stockFilter !== 'All Stock') && (
+            <button
+              onClick={() => {
+                setSearchQuery('')
+                setCategoryFilter('All')
+                setStockFilter('All Stock')
+              }}
+              className="text-xs text-app-muted hover:text-app-text px-2 py-1 transition-colors"
+            >
+              {t('common.cancel')}
+            </button>
+          )}
         </div>
 
         <div className="overflow-x-auto">
           {isLoading && items.length === 0 ? (
-            <div className="p-8 text-center text-xs text-app-muted">Loading spare parts inventory...</div>
+            <TableSkeleton rows={6} columns={8} />
+          ) : filtered.length === 0 ? (
+            <EmptyState
+              title={t('common.noRecords')}
+              description={t('common.noData')}
+              actionText={searchQuery || categoryFilter !== 'All' || stockFilter !== 'All Stock' ? t('common.filter') : undefined}
+              onAction={
+                searchQuery || categoryFilter !== 'All' || stockFilter !== 'All Stock'
+                  ? () => {
+                      setSearchQuery('')
+                      setCategoryFilter('All')
+                      setStockFilter('All Stock')
+                    }
+                  : undefined
+              }
+            />
           ) : (
             <table className="w-full text-xs">
               <thead>
                 <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                  <th className="px-6 py-3 font-semibold">Part Code</th>
-                  <th className="px-6 py-3 font-semibold">Part Details</th>
-                  <th className="px-6 py-3 font-semibold hidden md:table-cell">Category</th>
-                  <th className="px-6 py-3 font-semibold hidden lg:table-cell">Location</th>
-                  <th className="px-6 py-3 font-semibold">Stock Qty</th>
-                  <th className="px-6 py-3 font-semibold">Unit Price</th>
-                  <th className="px-6 py-3 font-semibold">Status</th>
-                  <th className="px-6 py-3 font-semibold text-right">Actions</th>
+                  <th className="px-6 py-3 font-semibold">{t('inventory.partCode')}</th>
+                  <th className="px-6 py-3 font-semibold">{t('inventory.partName')}</th>
+                  <th className="px-6 py-3 font-semibold hidden md:table-cell">{t('inventory.category')}</th>
+                  <th className="px-6 py-3 font-semibold hidden lg:table-cell">{t('inventory.location')}</th>
+                  <th className="px-6 py-3 font-semibold">{t('inventory.stockQty')}</th>
+                  <th className="px-6 py-3 font-semibold">{t('inventory.sellingPrice')}</th>
+                  <th className="px-6 py-3 font-semibold">{t('common.status')}</th>
+                  <th className="px-6 py-3 font-semibold text-right">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-app-border">
@@ -235,20 +266,26 @@ export default function InventoryPage() {
                     <td className="px-6 py-3.5 font-mono font-semibold text-app-accent">{part.partCode}</td>
                     <td className="px-6 py-3.5">
                       <p className="font-semibold text-app-text">{part.name}</p>
-                      <p className="text-[10px] text-app-muted">{part.brand} · Supplier: {part.supplier}</p>
+                      <p className="text-[10px] text-app-muted">
+                        {part.brand} · {t('inventory.supplier')}: {part.supplier}
+                      </p>
                     </td>
                     <td className="px-6 py-3.5 text-app-muted hidden md:table-cell">{part.category}</td>
                     <td className="px-6 py-3.5 text-app-muted hidden lg:table-cell font-mono">{part.location}</td>
                     <td className="px-6 py-3.5">
-                      <span className={`font-bold tabular-nums ${part.stockQty <= part.minThreshold ? 'text-red-600 dark:text-red-400' : 'text-app-text'}`}>
+                      <span
+                        className={`font-bold tabular-nums ${part.stockQty <= part.minThreshold ? 'text-red-600 dark:text-red-400' : 'text-app-text'}`}
+                      >
                         {part.stockQty}
                       </span>
                       <span className="text-[10px] text-app-muted ml-1">(min {part.minThreshold})</span>
                     </td>
-                    <td className="px-6 py-3.5 font-semibold text-app-text tabular-nums">${Number(part.unitPrice).toFixed(2)}</td>
+                    <td className="px-6 py-3.5 font-semibold text-app-text tabular-nums">
+                      ${Number(part.unitPrice).toFixed(2)}
+                    </td>
                     <td className="px-6 py-3.5">
                       <StatusBadge
-                        status={part.status}
+                        status={part.stockQty === 0 ? 'Out of Stock' : part.stockQty <= part.minThreshold ? 'Low Stock' : 'In Stock'}
                         variant={part.stockQty === 0 ? 'danger' : part.stockQty <= part.minThreshold ? 'warning' : 'success'}
                       />
                     </td>
@@ -256,8 +293,8 @@ export default function InventoryPage() {
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => handleOpenView(part)}
-                          className="p-1.5 rounded-md text-app-muted hover:text-app-text hover:bg-app-hover transition-colors"
-                          title="View details"
+                          className="p-1.5 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors"
+                          title={t('common.view')}
                         >
                           <Eye size={15} />
                         </button>
@@ -266,21 +303,21 @@ export default function InventoryPage() {
                             <button
                               onClick={() => handleOpenAdjust(part, 'Stock In')}
                               title="Stock In (+)"
-                              className="p-1.5 rounded-md text-emerald-600 dark:text-emerald-400 hover:bg-app-hover transition-colors"
+                              className="p-1.5 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-app-hover transition-colors"
                             >
                               <ArrowUp size={15} weight="bold" />
                             </button>
                             <button
                               onClick={() => handleOpenAdjust(part, 'Stock Out')}
                               title="Stock Out (-)"
-                              className="p-1.5 rounded-md text-amber-600 dark:text-amber-400 hover:bg-app-hover transition-colors"
+                              className="p-1.5 rounded-lg text-amber-600 dark:text-amber-400 hover:bg-app-hover transition-colors"
                             >
                               <ArrowDown size={15} weight="bold" />
                             </button>
                             <button
                               onClick={() => handleOpenEdit(part)}
-                              title="Edit Part"
-                              className="p-1.5 rounded-md text-app-muted hover:text-app-text hover:bg-app-hover transition-colors"
+                              title={t('common.edit')}
+                              className="p-1.5 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors"
                             >
                               <PencilSimple size={15} />
                             </button>
@@ -289,8 +326,8 @@ export default function InventoryPage() {
                         {can('inventory', 'delete') && (
                           <button
                             onClick={() => handleOpenDelete(part)}
-                            title="Delete Part"
-                            className="p-1.5 rounded-md text-app-muted hover:text-red-500 hover:bg-app-hover transition-colors"
+                            title={t('common.delete')}
+                            className="p-1.5 rounded-lg text-app-muted hover:text-red-500 hover:bg-app-hover transition-colors"
                           >
                             <Trash size={15} />
                           </button>
@@ -306,40 +343,41 @@ export default function InventoryPage() {
       </div>
 
       {/* Add Part Modal */}
-      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title="Add New Spare Part">
+      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('inventory.createPart')}>
         <form onSubmit={handleCreate} className="space-y-4 text-xs">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">Part Name *</label>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.partName')} *</label>
               <input
                 type="text"
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="e.g. Ceramic Front Brake Pads"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-lg text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">Part Code / SKU</label>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.partCode')}</label>
               <input
                 type="text"
                 value={formData.partCode}
                 onChange={(e) => setFormData({ ...formData, partCode: e.target.value })}
                 placeholder="Auto-generated if empty"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-lg text-app-text focus:outline-none focus:border-app-accent font-mono"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-mono"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">Category</label>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.category')}</label>
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-lg text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
               >
+                <option value="Engine">Engine</option>
                 <option value="Brakes">Brakes</option>
                 <option value="Fluids">Fluids</option>
                 <option value="Filters">Filters</option>
@@ -350,194 +388,191 @@ export default function InventoryPage() {
               </select>
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">Brand / OEM</label>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.brand')}</label>
               <input
                 type="text"
                 value={formData.brand}
                 onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                placeholder="Brembo, Mobil 1..."
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-lg text-app-text focus:outline-none focus:border-app-accent"
+                placeholder="Bosch, Denso, Mobil..."
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">Unit Price ($)</label>
-              <input
-                type="number"
-                step="0.01"
-                required
-                value={formData.unitPrice}
-                onChange={(e) => setFormData({ ...formData, unitPrice: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-lg text-app-text focus:outline-none focus:border-app-accent"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-app-muted font-medium mb-1">Initial Stock Qty</label>
-              <input
-                type="number"
-                value={formData.stockQty}
-                onChange={(e) => setFormData({ ...formData, stockQty: parseInt(e.target.value, 10) || 0 })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-lg text-app-text focus:outline-none focus:border-app-accent"
-              />
-            </div>
-            <div>
-              <label className="block text-app-muted font-medium mb-1">Min. Alert Threshold</label>
-              <input
-                type="number"
-                value={formData.minThreshold}
-                onChange={(e) => setFormData({ ...formData, minThreshold: parseInt(e.target.value, 10) || 5 })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-lg text-app-text focus:outline-none focus:border-app-accent"
-              />
-            </div>
-            <div>
-              <label className="block text-app-muted font-medium mb-1">Warehouse Location</label>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.location')}</label>
               <input
                 type="text"
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                placeholder="Shelf B-04"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-lg text-app-text focus:outline-none focus:border-app-accent font-mono"
+                placeholder="Shelf A-1"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
 
-          <div>
-            <label className="block text-app-muted font-medium mb-1">Primary Supplier</label>
-            <select
-              value={formData.supplier}
-              onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-lg text-app-text focus:outline-none focus:border-app-accent"
-            >
-              {suppliers.map((s) => (
-                <option key={s.id} value={s.name}>{s.name}</option>
-              ))}
-            </select>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <div>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.stockQty')}</label>
+              <input
+                type="number"
+                value={formData.stockQty}
+                onChange={(e) => setFormData({ ...formData, stockQty: Number(e.target.value) })}
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              />
+            </div>
+            <div>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.minStock')}</label>
+              <input
+                type="number"
+                value={formData.minThreshold}
+                onChange={(e) => setFormData({ ...formData, minThreshold: Number(e.target.value) })}
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              />
+            </div>
+            <div>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.unitCost')} ($)</label>
+              <input
+                type="number"
+                step="0.01"
+                value={formData.costPrice}
+                onChange={(e) => setFormData({ ...formData, costPrice: Number(e.target.value) })}
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              />
+            </div>
+            <div>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.sellingPrice')} ($)</label>
+              <input
+                type="number"
+                step="0.01"
+                value={formData.unitPrice}
+                onChange={(e) => setFormData({ ...formData, unitPrice: Number(e.target.value) })}
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-semibold"
+              />
+            </div>
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
             <button
               type="button"
               onClick={() => setIsAddOpen(false)}
-              className="px-3.5 py-2 rounded-lg text-app-muted hover:bg-app-hover transition-colors"
+              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-app-accent hover:bg-app-accentHover text-app-accentText font-semibold rounded-lg transition-colors shadow-subtle"
-            >
-              Save Spare Part
-            </button>
+            <LoadingButton type="submit" loading={createPartMutation.isPending}>
+              {t('inventory.createPart')}
+            </LoadingButton>
           </div>
         </form>
       </Modal>
 
       {/* Edit Part Modal */}
-      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title={`Edit Part: ${selectedPart?.partCode}`}>
+      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title={`${t('inventory.editPart')}: ${selectedPart?.partCode}`}>
         <form onSubmit={handleUpdate} className="space-y-4 text-xs">
-          <div>
-            <label className="block text-app-muted font-medium mb-1">Part Name *</label>
-            <input
-              type="text"
-              required
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-lg text-app-text focus:outline-none focus:border-app-accent"
-            />
-          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">Brand</label>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.partName')} *</label>
+              <input
+                type="text"
+                required
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              />
+            </div>
+            <div>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.brand')}</label>
               <input
                 type="text"
                 value={formData.brand}
                 onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-lg text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.stockQty')}</label>
+              <input
+                type="number"
+                value={formData.stockQty}
+                onChange={(e) => setFormData({ ...formData, stockQty: Number(e.target.value) })}
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-semibold"
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">Unit Price ($)</label>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.unitCost')} ($)</label>
+              <input
+                type="number"
+                step="0.01"
+                value={formData.costPrice}
+                onChange={(e) => setFormData({ ...formData, costPrice: Number(e.target.value) })}
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              />
+            </div>
+            <div>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.sellingPrice')} ($)</label>
               <input
                 type="number"
                 step="0.01"
                 value={formData.unitPrice}
-                onChange={(e) => setFormData({ ...formData, unitPrice: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-lg text-app-text focus:outline-none focus:border-app-accent"
+                onChange={(e) => setFormData({ ...formData, unitPrice: Number(e.target.value) })}
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-semibold"
               />
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-app-muted font-medium mb-1">Min. Alert Threshold</label>
-              <input
-                type="number"
-                value={formData.minThreshold}
-                onChange={(e) => setFormData({ ...formData, minThreshold: parseInt(e.target.value, 10) || 5 })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-lg text-app-text focus:outline-none focus:border-app-accent"
-              />
-            </div>
-            <div>
-              <label className="block text-app-muted font-medium mb-1">Location</label>
-              <input
-                type="text"
-                value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-lg text-app-text focus:outline-none focus:border-app-accent font-mono"
-              />
-            </div>
-          </div>
+
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
             <button
               type="button"
               onClick={() => setIsEditOpen(false)}
-              className="px-3.5 py-2 rounded-lg text-app-muted hover:bg-app-hover transition-colors"
+              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-app-accent hover:bg-app-accentHover text-app-accentText font-semibold rounded-lg transition-colors shadow-subtle"
-            >
-              Save Changes
-            </button>
+            <LoadingButton type="submit" loading={updatePartMutation.isPending}>
+              {t('common.saveChanges')}
+            </LoadingButton>
           </div>
         </form>
       </Modal>
 
-      {/* Stock Adjustment Modal */}
-      <Modal isOpen={isAdjustOpen} onClose={() => setIsAdjustOpen(false)} title={`${adjustType}: ${selectedPart?.name}`}>
-        <form onSubmit={handleAdjustSubmit} className="space-y-4 text-xs">
-          <div className="p-3 bg-app-hover/50 rounded-lg border border-app-border flex items-center justify-between">
-            <div>
-              <p className="font-mono text-app-accent font-semibold">{selectedPart?.partCode}</p>
-              <p className="text-app-muted">Current Stock: <span className="font-bold text-app-text">{selectedPart?.stockQty} units</span></p>
-            </div>
+      {/* Adjust Stock Modal */}
+      <Modal
+        isOpen={isAdjustOpen}
+        onClose={() => setIsAdjustOpen(false)}
+        title={`${adjustType}: ${selectedPart?.name}`}
+      >
+        <form onSubmit={handleAdjust} className="space-y-4 text-xs">
+          <div className="p-3 bg-app-hover/50 rounded-xl border border-app-border">
+            <p className="text-app-muted">
+              {t('inventory.partCode')}: <span className="font-mono text-app-accent font-semibold">{selectedPart?.partCode}</span>
+            </p>
+            <p className="text-app-muted mt-0.5">
+              {t('inventory.stockQty')}: <span className="font-bold text-app-text">{selectedPart?.stockQty}</span>
+            </p>
           </div>
 
           <div>
-            <label className="block text-app-muted font-medium mb-1">
-              {adjustType === 'Stock In' ? 'Quantity to Add (+)' : 'Quantity to Remove (-)'}
-            </label>
+            <label className="block text-app-muted font-medium mb-1">{t('common.qty')} *</label>
             <input
               type="number"
               min="1"
               required
               value={adjustQty}
-              onChange={(e) => setAdjustQty(parseInt(e.target.value, 10) || 1)}
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-lg text-app-text font-bold text-base focus:outline-none focus:border-app-accent"
+              onChange={(e) => setAdjustQty(e.target.value)}
+              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-semibold"
             />
           </div>
 
           <div>
-            <label className="block text-app-muted font-medium mb-1">Reason / Reference PO #</label>
-            <input
-              type="text"
+            <label className="block text-app-muted font-medium mb-1">{t('common.notes')}</label>
+            <textarea
+              rows={2}
               value={adjustNotes}
               onChange={(e) => setAdjustNotes(e.target.value)}
-              placeholder="e.g. PO-2026-88 Received from supplier"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-lg text-app-text focus:outline-none focus:border-app-accent"
+              placeholder="e.g. Delivery order #PO-9918 received"
+              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
 
@@ -545,68 +580,59 @@ export default function InventoryPage() {
             <button
               type="button"
               onClick={() => setIsAdjustOpen(false)}
-              className="px-3.5 py-2 rounded-lg text-app-muted hover:bg-app-hover transition-colors"
+              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
-            <button
-              type="submit"
-              className={`px-4 py-2 text-white font-semibold rounded-lg transition-colors ${
-                adjustType === 'Stock In' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-amber-600 hover:bg-amber-700'
-              }`}
-            >
-              Confirm {adjustType}
-            </button>
+            <LoadingButton type="submit" loading={adjustStockMutation.isPending}>
+              {t('common.saveChanges')}
+            </LoadingButton>
           </div>
         </form>
       </Modal>
 
       {/* View Part Modal */}
-      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title="Spare Part Specification">
+      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('inventory.title')}>
         {selectedPart && (
           <div className="space-y-4 text-xs">
-            <div className="p-3 bg-app-hover/50 rounded-lg border border-app-border flex items-center justify-between">
+            <div className="flex items-center justify-between p-3 bg-app-hover/50 rounded-xl border border-app-border">
               <div>
-                <h3 className="text-sm font-bold text-app-text">{selectedPart.name}</h3>
                 <p className="font-mono text-app-accent font-semibold">{selectedPart.partCode}</p>
+                <h3 className="text-sm font-bold text-app-text mt-0.5">{selectedPart.name}</h3>
               </div>
-              <StatusBadge status={selectedPart.status} />
+              <StatusBadge status={selectedPart.stockQty === 0 ? 'Out of Stock' : selectedPart.stockQty <= selectedPart.minThreshold ? 'Low Stock' : 'In Stock'} />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-app-input rounded-lg border border-app-border">
-                <p className="text-[10px] text-app-muted uppercase font-semibold">Brand / Manufacturer</p>
+              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+                <p className="text-[10px] text-app-muted uppercase font-semibold">{t('inventory.stockQty')}</p>
+                <p className="text-sm font-bold text-app-text mt-0.5">{selectedPart.stockQty} units</p>
+              </div>
+              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+                <p className="text-[10px] text-app-muted uppercase font-semibold">{t('inventory.sellingPrice')}</p>
+                <p className="text-sm font-bold text-app-accent mt-0.5">${Number(selectedPart.unitPrice).toFixed(2)}</p>
+              </div>
+              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+                <p className="text-[10px] text-app-muted uppercase font-semibold">{t('inventory.brand')}</p>
                 <p className="font-semibold text-app-text mt-0.5">{selectedPart.brand}</p>
               </div>
-              <div className="p-3 bg-app-input rounded-lg border border-app-border">
-                <p className="text-[10px] text-app-muted uppercase font-semibold">Unit Price</p>
-                <p className="font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">${Number(selectedPart.unitPrice).toFixed(2)}</p>
-              </div>
-              <div className="p-3 bg-app-input rounded-lg border border-app-border">
-                <p className="text-[10px] text-app-muted uppercase font-semibold">Current Stock Qty</p>
-                <p className="font-bold text-app-accent mt-0.5">{selectedPart.stockQty} units</p>
-              </div>
-              <div className="p-3 bg-app-input rounded-lg border border-app-border">
-                <p className="text-[10px] text-app-muted uppercase font-semibold">Storage Location</p>
-                <p className="font-mono font-semibold text-app-text mt-0.5">{selectedPart.location}</p>
+              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+                <p className="text-[10px] text-app-muted uppercase font-semibold">{t('inventory.location')}</p>
+                <p className="font-mono text-app-text mt-0.5">{selectedPart.location}</p>
               </div>
             </div>
           </div>
         )}
       </Modal>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Confirmation */}
       <ConfirmDialog
         isOpen={isDeleteOpen}
         onClose={() => setIsDeleteOpen(false)}
         onConfirm={handleDelete}
-        title="Confirm Part Deletion"
-        message={
-          <>
-            Are you sure you want to delete <span className="font-bold">{selectedPart?.name}</span> ({selectedPart?.partCode})?
-          </>
-        }
-        confirmText="Delete Part"
+        title={t('common.delete')}
+        message={t('inventory.confirmDelete')}
+        confirmText={t('common.delete')}
       />
     </div>
   )

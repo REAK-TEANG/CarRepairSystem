@@ -25,4 +25,20 @@ export const settingsService = {
     }
     return Promise.resolve({ ...initialWorkshopSettings, ...payload })
   },
+
+  async getPermissionsMatrix() {
+    if (API_CONFIG.USE_REAL_API) {
+      const res = await apiClient.get('/settings/permissions')
+      return res?.data || res
+    }
+    return Promise.resolve(null)
+  },
+
+  async updatePermissionsMatrix(matrix) {
+    if (API_CONFIG.USE_REAL_API) {
+      return apiClient.put('/settings/permissions', matrix)
+    }
+    return Promise.resolve({ success: true, data: matrix })
+  },
 }
+

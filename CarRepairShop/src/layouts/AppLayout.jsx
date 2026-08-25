@@ -25,7 +25,7 @@ export default function AppLayout() {
         />
 
         {/* Page Content Viewport */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-[var(--bg-canvas)] text-[var(--text-primary)] transition-colors duration-250">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-6 bg-[var(--bg-canvas)] text-[var(--text-primary)] transition-colors duration-250">
           <div className="max-w-7xl mx-auto animate-fade-in pb-12">
             <Outlet />
           </div>

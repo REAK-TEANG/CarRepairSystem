@@ -80,52 +80,58 @@ export default function App() {
                       <Route path="admin/dashboard" element={<AdminDashboard />} />
                     </Route>
 
-                    <Route element={<ProtectedRoute allowedRoles={['mechanic']} />}>
+                    <Route element={<ProtectedRoute allowedRoles={['admin', 'mechanic', 'manager']} />}>
                       <Route path="mechanic/dashboard" element={<MechanicDashboard />} />
                     </Route>
 
                     {/* Operations */}
-                    <Route element={<ProtectedRoute allowedRoles={['admin', 'manager', 'service_advisor']} />}>
+                    <Route element={<ProtectedRoute module="appointments" />}>
                       <Route path="appointments" element={<AppointmentsPage />} />
                     </Route>
 
-                    <Route element={<ProtectedRoute allowedRoles={['admin', 'manager', 'service_advisor', 'mechanic']} />}>
+                    <Route element={<ProtectedRoute module="repair_jobs" />}>
                       <Route path="repair-jobs" element={<RepairJobsPage />} />
                     </Route>
 
-                    <Route element={<ProtectedRoute allowedRoles={['admin', 'manager', 'service_advisor', 'cashier']} />}>
+                    <Route element={<ProtectedRoute module="customers" />}>
                       <Route path="customers" element={<CustomersPage />} />
                     </Route>
 
-                    <Route element={<ProtectedRoute allowedRoles={['admin', 'manager', 'service_advisor', 'mechanic']} />}>
+                    <Route element={<ProtectedRoute module="vehicles" />}>
                       <Route path="vehicles" element={<VehiclesPage />} />
                     </Route>
 
                     {/* Workshop & Supply */}
-                    <Route element={<ProtectedRoute allowedRoles={['admin', 'manager', 'storekeeper', 'mechanic']} />}>
+                    <Route element={<ProtectedRoute module="inventory" />}>
                       <Route path="inventory" element={<InventoryPage />} />
                     </Route>
 
-                    <Route element={<ProtectedRoute allowedRoles={['admin', 'manager', 'storekeeper']} />}>
+                    <Route element={<ProtectedRoute module="suppliers" />}>
                       <Route path="suppliers" element={<SuppliersPage />} />
                     </Route>
 
-                    <Route element={<ProtectedRoute allowedRoles={['admin', 'manager', 'service_advisor']} />}>
+                    <Route element={<ProtectedRoute module="services" />}>
                       <Route path="services" element={<ServicesPage />} />
+                    </Route>
+
+                    <Route element={<ProtectedRoute module="mechanics" />}>
                       <Route path="mechanics" element={<MechanicsPage />} />
                     </Route>
 
                     {/* Management & Finance */}
-                    <Route element={<ProtectedRoute allowedRoles={['admin', 'manager', 'service_advisor', 'cashier']} />}>
+                    <Route element={<ProtectedRoute module="invoices" />}>
                       <Route path="invoices" element={<InvoicesPage />} />
                     </Route>
 
-                    <Route element={<ProtectedRoute allowedRoles={['admin', 'manager']} />}>
+                    <Route element={<ProtectedRoute module="employees" />}>
                       <Route path="employees" element={<EmployeesPage />} />
+                    </Route>
+
+                    <Route element={<ProtectedRoute module="reports" />}>
                       <Route path="reports" element={<ReportsPage />} />
                     </Route>
 
-                    <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+                    <Route element={<ProtectedRoute module="settings" />}>
                       <Route path="settings" element={<SettingsPage />} />
                     </Route>
                   </Route>

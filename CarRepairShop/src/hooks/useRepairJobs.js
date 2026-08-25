@@ -72,3 +72,32 @@ export function useUpdateRepairJob() {
     },
   })
 }
+
+export function useDeleteRepairJob() {
+  const queryClient = useQueryClient()
+  const { addToast } = useToast()
+
+  return useMutation({
+    mutationFn: (id) => repairJobService.delete(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['repair_jobs'] })
+      const previous = queryClient.getQueryData(['repair_jobs', {}]) || []
+
+      queryClient.setQueryData(
+        ['repair_jobs', {}],
+        previous.filter((item) => item.id !== id)
+      )
+      addToast('Work order removed', 'success')
+      return { previous }
+    },
+    onError: (err, id, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['repair_jobs', {}], context.previous)
+      }
+      addToast('Failed to delete work order', 'warning')
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['repair_jobs'] })
+    },
+  })
+}

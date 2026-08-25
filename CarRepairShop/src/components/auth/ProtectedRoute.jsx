@@ -1,16 +1,26 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-export default function ProtectedRoute({ allowedRoles }) {
-  const { user } = useAuth();
+export default function ProtectedRoute({ allowedRoles, module }) {
+  const { user, can } = useAuth();
 
-  // If user is not logged in, redirect to login (if we had one)
+  // If user is not logged in, redirect to login
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  // Check if user's role is in the allowedRoles array
-  if (!allowedRoles.includes(user.role)) {
+  // System Administrator permanently retains 100% root access across all routes and pages
+  if (user.role === 'admin') {
+    return <Outlet />;
+  }
+
+  // Dynamic RBAC: If module is specified, verify read permission dynamically from matrix
+  if (module && !can(module, 'read')) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  // Fallback / explicit role whitelist
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
     return <Navigate to="/unauthorized" replace />;
   }
 

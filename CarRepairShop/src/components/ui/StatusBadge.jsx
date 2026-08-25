@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { useTranslation } from 'react-i18next'
 
 const variants = {
   success:  'bg-emerald-500/10 text-emerald-700 dark:text-[#13F287] border border-emerald-500/20',
@@ -27,10 +28,15 @@ const statusMap = {
   'Present':           'success',
   'On Leave':          'warning',
   'Terminated':        'danger',
+  'Low Stock':         'warning',
+  'Out of Stock':      'danger',
+  'In Stock':          'success',
 }
 
 export default function StatusBadge({ status, variant, className }) {
+  const { t } = useTranslation()
   const resolvedVariant = variant || statusMap[status] || 'neutral'
+  const translatedStatus = t(`status.${status}`, status)
 
   return (
     <span
@@ -47,7 +53,7 @@ export default function StatusBadge({ status, variant, className }) {
         resolvedVariant === 'danger' ? 'bg-red-500' :
         resolvedVariant === 'info' ? 'bg-sky-500' : 'bg-app-muted'
       )} />
-      {status}
+      {translatedStatus}
     </span>
   )
 }

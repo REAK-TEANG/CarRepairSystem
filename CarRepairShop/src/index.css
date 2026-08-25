@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Kantumruy+Pro:ital,wght@0,100..700;1,100..700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -41,7 +43,7 @@ html.dark {
   --text-muted: #8A99AD;        /* Caption text */
   --accent-primary: #B5FF57;    /* Electric Lime primary accent */
   --accent-hover: #a5f540;      /* Slightly deeper Lime on hover */
-  --accent-secondary: #13F287;  /* Mint / Emerald Neon secondary accent */
+  --accent-secondary: #13F287;  /* Mint / Latin secondary accent */
   --accent-text: #101214;       /* Deep charcoal text contrast inside Lime/Mint pills */
   --sidebar-bg: #282F35;        /* Dark slate gray sidebar */
   --sidebar-border: #323B43;    /* Sidebar border */
@@ -58,8 +60,12 @@ html.dark {
     box-sizing: border-box;
   }
 
+  html, body, #root, button, input, select, textarea, p, span, h1, h2, h3, h4, h5, h6, table, tr, th, td, a, label {
+    font-family: "Kantumruy Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  }
+
   html {
-    font-size: 16px;
+    font-size: 17.5px;
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -69,12 +75,15 @@ html.dark {
   }
 
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: var(--bg-canvas);
     color: var(--text-primary);
     min-height: 100vh;
-    line-height: 1.5;
+    line-height: 1.65;
     transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .font-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
   }
 
   .tabular-nums {
