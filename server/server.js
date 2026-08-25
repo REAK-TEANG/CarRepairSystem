@@ -1,6 +1,6 @@
 import express from 'express'
 import cors from 'cors'
-import { initializeDatabase } from './db.js'
+import { initializeDatabase, query } from './db.js'
 
 import authRoutes from './routes/auth.js'
 import customerRoutes from './routes/customers.js'
@@ -80,17 +80,29 @@ app.use((err, req, res, next) => {
 async function startServer() {
   try {
     await initializeDatabase()
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log(`====================================================`)
       console.log(`🚗 Car Repair Backend Server running on http://localhost:${PORT}`)
       console.log(`📡 REST API Endpoints active at http://localhost:${PORT}/api/*`)
       console.log(`💾 Local PostgreSQL (pgAdmin) Database connected`)
       console.log(`====================================================`)
     })
+
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.error(`\n⚠️  [Port Conflict] Port ${PORT} is already in use by another running instance.`)
+        console.error(`   To free port ${PORT} in PowerShell, run:`)
+        console.error(`   Get-NetTCPConnection -LocalPort ${PORT} | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }\n`)
+      } else {
+        console.error('Server error:', err)
+      }
+      process.exit(1)
+    })
   } catch (err) {
     console.error('Failed to start backend server:', err)
     process.exit(1)
   }
 }
+
 
 startServer()

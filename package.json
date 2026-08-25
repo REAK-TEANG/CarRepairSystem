@@ -1,4 +1,14 @@
 {
+  "name": "car-repair-system",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev:backend": "cd server && npm run dev",
+    "dev:frontend": "cd CarRepairShop && npm run dev",
+    "free:port": "powershell -Command \"Get-NetTCPConnection -LocalPort 5000 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }\"",
+    "build": "cd CarRepairShop && npm run build",
+    "start": "cd server && npm start"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3"
   }
