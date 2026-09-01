@@ -31,15 +31,22 @@ app.use(
 )
 
 // 2. CORS Whitelist Configuration
-const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://localhost:4173')
+const allowedOrigins = (process.env.CORS_ORIGIN || '*')
   .split(',')
   .map((o) => o.trim())
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, Postman) or matched origins
-      if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*') || origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      // Allow requests with no origin (like mobile apps, curl, Postman), wildcard, or matched origins
+      if (
+        !origin ||
+        allowedOrigins.includes('*') ||
+        allowedOrigins.includes(origin) ||
+        origin.includes('vercel.app') ||
+        origin.includes('localhost') ||
+        origin.includes('127.0.0.1')
+      ) {
         callback(null, true)
       } else {
         callback(new Error(`CORS policy blocked access from origin: ${origin}`))

@@ -5,10 +5,15 @@
  * Automatically injects authorization headers and handles session expiration gracefully.
  */
 
+const defaultBaseUrl =
+  typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'
+    ? 'https://carrepair-backend.onrender.com/api'
+    : 'http://localhost:5000/api'
+
 export const API_CONFIG = {
   USE_REAL_API: true,
-  BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
-  TIMEOUT: 10000,
+  BASE_URL: import.meta.env.VITE_API_URL || defaultBaseUrl,
+  TIMEOUT: 15000,
 }
 
 class ApiClient {
