@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: carrepair-backend
+    runtime: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node server.js
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DB_HOST
+        placeholder: "Your Supabase Host (e.g. db.xxxx.supabase.co)"
+      - key: DB_PORT
+        value: 5432
+      - key: DB_NAME
+        value: postgres
+      - key: DB_USER
+        value: postgres
+      - key: DB_PASSWORD
+        placeholder: "Your Supabase Database Password"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        value: "*"
