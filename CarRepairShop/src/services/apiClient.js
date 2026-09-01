@@ -2,17 +2,31 @@
  * Centralized API Client & Service Gateway
  *
  * Configured for secure RESTful communication with the backend API (JWT Bearer Auth).
- * Automatically injects authorization headers and handles session expiration gracefully.
+ * Automatically injects authorization headers, logs endpoints, and resolves production URLs.
  */
 
-const defaultBaseUrl =
-  typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'
-    ? 'https://carrepair-backend.onrender.com/api'
-    : 'http://localhost:5000/api'
+export function getApiBaseUrl() {
+  const envUrl = import.meta.env.VITE_API_URL
+  const isBrowser = typeof window !== 'undefined'
+  const isLocal = isBrowser && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+
+  // In production (Vercel or custom domain), always ensure we use the live Render API
+  if (isBrowser && !isLocal) {
+    if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
+      return envUrl.replace(/\/+$/, '')
+    }
+    return 'https://carrepair-backend.onrender.com/api'
+  }
+
+  // In local development, use localhost
+  return (envUrl || 'http://localhost:5000/api').replace(/\/+$/, '')
+}
 
 export const API_CONFIG = {
   USE_REAL_API: true,
-  BASE_URL: import.meta.env.VITE_API_URL || defaultBaseUrl,
+  get BASE_URL() {
+    return getApiBaseUrl()
+  },
   TIMEOUT: 15000,
 }
 
@@ -52,7 +66,9 @@ class ApiClient {
       throw new Error(`Real API is currently disabled. Using local mock services for: ${endpoint}`)
     }
 
-    const url = `${this.config.BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`
+    const baseUrl = this.config.BASE_URL
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`
+    const url = `${baseUrl}${cleanEndpoint}`
     const headers = this.getHeaders(options.headers)
 
     const response = await fetch(url, {
