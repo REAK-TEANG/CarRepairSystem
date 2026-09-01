@@ -13,13 +13,13 @@ services:
       - key: PORT
         value: "10000"
       - key: DB_HOST
-        sync: false
+        value: "aws-0-ap-southeast-1.pooler.supabase.com"
       - key: DB_PORT
-        value: "5432"
+        value: "6543"
       - key: DB_NAME
         value: postgres
       - key: DB_USER
-        value: postgres
+        value: "postgres.jfhrrncdpyhwqoikbhgn"
       - key: DB_PASSWORD
         sync: false
       - key: JWT_SECRET
