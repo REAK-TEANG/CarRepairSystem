@@ -2,11 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { repairJobService } from '../services/repairJobService'
 import { useToast } from '../context/ToastContext'
 
-export function useRepairJobs(params = {}) {
+export function useRepairJobs(params = {}, options = {}) {
   return useQuery({
     queryKey: ['repair_jobs', params],
     queryFn: () => repairJobService.getAll(params),
     staleTime: 1000 * 60 * 5,
+    ...options,
   })
 }
 
@@ -29,7 +30,7 @@ export function useCreateRepairJob() {
       }
 
       queryClient.setQueryData(['repair_jobs', {}], [optimisticItem, ...previous])
-      addToast(`Work Order ${optimisticItem.orderNumber} created`, 'success')
+      addToast(`Work Order ${optimisticItem.orderNumber} created (Stock automatically adjusted)`, 'success')
       return { previous }
     },
     onError: (err, newJob, context) => {
@@ -40,6 +41,8 @@ export function useCreateRepairJob() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['repair_jobs'] })
+      queryClient.invalidateQueries({ queryKey: ['inventory'] })
+      queryClient.invalidateQueries({ queryKey: ['inventory_transactions'] })
     },
   })
 }
@@ -69,6 +72,8 @@ export function useUpdateRepairJob() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['repair_jobs'] })
+      queryClient.invalidateQueries({ queryKey: ['inventory'] })
+      queryClient.invalidateQueries({ queryKey: ['inventory_transactions'] })
     },
   })
 }
@@ -98,6 +103,8 @@ export function useDeleteRepairJob() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['repair_jobs'] })
+      queryClient.invalidateQueries({ queryKey: ['inventory'] })
+      queryClient.invalidateQueries({ queryKey: ['inventory_transactions'] })
     },
   })
 }

@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { MagnifyingGlass, Plus, PencilSimple, Trash, Eye, CheckCircle, XCircle } from '@phosphor-icons/react'
+import { MagnifyingGlass, Plus, PencilSimple, Trash, Eye, CheckCircle, XCircle, Package } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useServicesCatalog, useCreateService, useUpdateService, useDeleteService } from '../../hooks/useServicesCatalog'
+import { useInventory } from '../../hooks/useInventory'
 import { useAuth } from '../../context/AuthContext'
 import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton } from '../../components/ui'
 
@@ -11,6 +12,7 @@ export default function ServicesPage() {
   const { t } = useTranslation()
   const { can } = useAuth()
   const { data: services = [], isLoading } = useServicesCatalog()
+  const { data: inventory = [] } = useInventory()
   const createServiceMutation = useCreateService()
   const updateServiceMutation = useUpdateService()
   const deleteServiceMutation = useDeleteService()
@@ -26,7 +28,7 @@ export default function ServicesPage() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [selectedService, setSelectedService] = useState(null)
 
-  // Form
+  // Form State
   const [formData, setFormData] = useState({
     name: '',
     category: 'Routine Maintenance',
@@ -34,7 +36,12 @@ export default function ServicesPage() {
     laborHours: 1.0,
     estimatedCost: 80.0,
     isActive: true,
+    requiredParts: [],
   })
+
+  // Selected spare part to add in modal
+  const [selectedPartId, setSelectedPartId] = useState('')
+  const [selectedPartQty, setSelectedPartQty] = useState(1)
 
   const handleOpenAdd = () => {
     setFormData({
@@ -44,13 +51,21 @@ export default function ServicesPage() {
       laborHours: 1.0,
       estimatedCost: 80.0,
       isActive: true,
+      requiredParts: [],
     })
+    setSelectedPartId('')
+    setSelectedPartQty(1)
     setIsAddOpen(true)
   }
 
   const handleOpenEdit = (s) => {
     setSelectedService(s)
-    setFormData({ ...s })
+    setFormData({
+      ...s,
+      requiredParts: Array.isArray(s.requiredParts) ? [...s.requiredParts] : [],
+    })
+    setSelectedPartId('')
+    setSelectedPartQty(1)
     setIsEditOpen(true)
   }
 
@@ -68,6 +83,43 @@ export default function ServicesPage() {
     updateServiceMutation.mutate({
       id: s.id,
       data: { isActive: !s.isActive },
+    })
+  }
+
+  const handleAddPartToForm = () => {
+    if (!selectedPartId) return
+    const part = inventory.find((p) => String(p.id) === String(selectedPartId))
+    if (!part) return
+
+    const existingIndex = formData.requiredParts.findIndex((p) => String(p.sparePartId || p.id) === String(part.id))
+    let updatedParts = [...formData.requiredParts]
+
+    if (existingIndex >= 0) {
+      updatedParts[existingIndex] = {
+        ...updatedParts[existingIndex],
+        quantity: Number(selectedPartQty),
+      }
+    } else {
+      updatedParts.push({
+        sparePartId: part.id,
+        partCode: part.partCode,
+        name: part.name,
+        brand: part.brand,
+        unitPrice: part.unitPrice,
+        stockQuantity: part.stockQty,
+        quantity: Number(selectedPartQty),
+      })
+    }
+
+    setFormData({ ...formData, requiredParts: updatedParts })
+    setSelectedPartId('')
+    setSelectedPartQty(1)
+  }
+
+  const handleRemovePartFromForm = (sparePartId) => {
+    setFormData({
+      ...formData,
+      requiredParts: formData.requiredParts.filter((p) => String(p.sparePartId || p.id) !== String(sparePartId)),
     })
   }
 
@@ -100,7 +152,12 @@ export default function ServicesPage() {
       !query ||
       (s?.name || '').toLowerCase().includes(query) ||
       (s?.category || '').toLowerCase().includes(query) ||
-      (s?.description || '').toLowerCase().includes(query)
+      (s?.description || '').toLowerCase().includes(query) ||
+      (s?.requiredParts || []).some(
+        (p) =>
+          (p?.name || '').toLowerCase().includes(query) ||
+          (p?.partCode || '').toLowerCase().includes(query)
+      )
 
     const matchesCat = categoryFilter === 'All' || s.category === categoryFilter
 
@@ -216,6 +273,7 @@ export default function ServicesPage() {
                 <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
                   <th className="px-6 py-3 font-semibold">{t('services.serviceName')}</th>
                   <th className="px-6 py-3 hidden md:table-cell font-semibold">{t('services.category')}</th>
+                  <th className="px-6 py-3 font-semibold">Auto Stock-Out Parts</th>
                   <th className="px-6 py-3 hidden lg:table-cell font-semibold">{t('services.estimatedHours')}</th>
                   <th className="px-6 py-3 font-semibold">{t('services.standardPrice')}</th>
                   <th className="px-6 py-3 font-semibold">{t('common.status')}</th>
@@ -227,9 +285,27 @@ export default function ServicesPage() {
                   <tr key={s.id} className="hover:bg-app-hover/60 transition-colors group">
                     <td className="px-6 py-3.5">
                       <p className="font-semibold text-app-text">{s.name}</p>
-                      <p className="text-[10px] text-app-muted truncate max-w-sm">{s.description}</p>
+                      <p className="text-[10px] text-app-muted truncate max-w-xs">{s.description || 'Standard service procedure'}</p>
                     </td>
                     <td className="px-6 py-3.5 text-app-muted hidden md:table-cell">{s.category}</td>
+                    <td className="px-6 py-3.5">
+                      {s.requiredParts && s.requiredParts.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5 max-w-xs">
+                          {s.requiredParts.map((p, idx) => (
+                            <span
+                              key={idx}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 text-[10px] font-medium"
+                              title={`${p.name} (${p.partCode}) - Qty: ${p.quantity}`}
+                            >
+                              <Package size={12} />
+                              <span>{p.quantity}x {p.partCode || p.name}</span>
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-[11px] text-app-muted italic">Labor only (No parts)</span>
+                      )}
+                    </td>
                     <td className="px-6 py-3.5 text-app-muted tabular-nums hidden lg:table-cell">{s.laborHours} hrs</td>
                     <td className="px-6 py-3.5 font-bold text-app-text tabular-nums">
                       ${Number(s.estimatedCost || 0).toFixed(2)}
@@ -352,6 +428,77 @@ export default function ServicesPage() {
               className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
+
+          {/* Required Parts (Bill of Materials / Auto Stock-Out) */}
+          <div className="p-3 bg-app-hover/40 border border-app-border rounded-xl space-y-2.5">
+            <div className="flex items-center justify-between">
+              <label className="font-semibold text-app-text flex items-center gap-1.5">
+                <Package size={15} className="text-amber-500" />
+                Required Spare Parts (Auto Stock-Out)
+              </label>
+              <span className="text-[10px] text-app-muted">Parts auto-deducted when service is used</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <select
+                value={selectedPartId}
+                onChange={(e) => setSelectedPartId(e.target.value)}
+                className="flex-1 px-3 py-1.5 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent text-xs"
+              >
+                <option value="">-- Select Spare Part from Inventory --</option>
+                {inventory.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} ({p.partCode}) - Stock: {p.stockQty} - ${Number(p.unitPrice || 0).toFixed(2)}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="number"
+                min="1"
+                value={selectedPartQty}
+                onChange={(e) => setSelectedPartQty(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                className="w-16 px-2 py-1.5 bg-app-input border border-app-border rounded-xl text-app-text text-center text-xs"
+                placeholder="Qty"
+              />
+              <button
+                type="button"
+                onClick={handleAddPartToForm}
+                disabled={!selectedPartId}
+                className="px-3 py-1.5 bg-app-accent disabled:opacity-50 text-app-accentText font-semibold rounded-xl text-xs flex items-center gap-1"
+              >
+                <Plus size={14} weight="bold" /> Add
+              </button>
+            </div>
+
+            {formData.requiredParts.length > 0 ? (
+              <div className="space-y-1.5 pt-1">
+                {formData.requiredParts.map((p, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-2 bg-app-card rounded-lg border border-app-border text-xs"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold">
+                        {p.quantity}x
+                      </span>
+                      <span className="font-medium text-app-text">{p.name}</span>
+                      <span className="text-[10px] text-app-muted">({p.partCode})</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePartFromForm(p.sparePartId || p.id)}
+                      className="text-rose-500 hover:text-rose-600 p-1"
+                    >
+                      <Trash size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[11px] text-app-muted italic">No inventory parts attached yet. Service is pure labor.</p>
+            )}
+          </div>
+
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
             <button
               type="button"
@@ -426,6 +573,77 @@ export default function ServicesPage() {
               className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
+
+          {/* Required Parts (Bill of Materials / Auto Stock-Out) */}
+          <div className="p-3 bg-app-hover/40 border border-app-border rounded-xl space-y-2.5">
+            <div className="flex items-center justify-between">
+              <label className="font-semibold text-app-text flex items-center gap-1.5">
+                <Package size={15} className="text-amber-500" />
+                Required Spare Parts (Auto Stock-Out)
+              </label>
+              <span className="text-[10px] text-app-muted">Parts auto-deducted when service is used</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <select
+                value={selectedPartId}
+                onChange={(e) => setSelectedPartId(e.target.value)}
+                className="flex-1 px-3 py-1.5 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent text-xs"
+              >
+                <option value="">-- Select Spare Part from Inventory --</option>
+                {inventory.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} ({p.partCode}) - Stock: {p.stockQty} - ${Number(p.unitPrice || 0).toFixed(2)}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="number"
+                min="1"
+                value={selectedPartQty}
+                onChange={(e) => setSelectedPartQty(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                className="w-16 px-2 py-1.5 bg-app-input border border-app-border rounded-xl text-app-text text-center text-xs"
+                placeholder="Qty"
+              />
+              <button
+                type="button"
+                onClick={handleAddPartToForm}
+                disabled={!selectedPartId}
+                className="px-3 py-1.5 bg-app-accent disabled:opacity-50 text-app-accentText font-semibold rounded-xl text-xs flex items-center gap-1"
+              >
+                <Plus size={14} weight="bold" /> Add
+              </button>
+            </div>
+
+            {formData.requiredParts.length > 0 ? (
+              <div className="space-y-1.5 pt-1">
+                {formData.requiredParts.map((p, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-2 bg-app-card rounded-lg border border-app-border text-xs"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold">
+                        {p.quantity}x
+                      </span>
+                      <span className="font-medium text-app-text">{p.name}</span>
+                      <span className="text-[10px] text-app-muted">({p.partCode})</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePartFromForm(p.sparePartId || p.id)}
+                      className="text-rose-500 hover:text-rose-600 p-1"
+                    >
+                      <Trash size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[11px] text-app-muted italic">No inventory parts attached yet. Service is pure labor.</p>
+            )}
+          </div>
+
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
             <button
               type="button"
@@ -456,6 +674,36 @@ export default function ServicesPage() {
             <div className="p-3 bg-app-input rounded-xl border border-app-border">
               <p className="text-[10px] text-app-muted uppercase font-semibold">{t('services.description')}</p>
               <p className="text-app-text mt-1">{selectedService.description || 'Standard workshop procedure.'}</p>
+            </div>
+
+            {/* Bill of Materials list */}
+            <div className="p-3 bg-app-card rounded-xl border border-app-border space-y-2">
+              <p className="text-[10px] text-app-muted uppercase font-semibold flex items-center gap-1">
+                <Package size={14} className="text-amber-500" />
+                Required Spare Parts (Auto Stock-Out)
+              </p>
+              {selectedService.requiredParts && selectedService.requiredParts.length > 0 ? (
+                <div className="space-y-1.5">
+                  {selectedService.requiredParts.map((p, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-app-hover/50 border border-app-border">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold">
+                          {p.quantity}x
+                        </span>
+                        <span className="font-semibold text-app-text">{p.name}</span>
+                        <span className="text-app-muted text-[10px]">({p.partCode})</span>
+                      </div>
+                      <div className="text-right">
+                        <span className={`text-[11px] font-semibold ${p.stockQuantity > 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                          {p.stockQuantity > 0 ? `${p.stockQuantity} in stock` : 'Out of stock'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-app-muted italic text-[11px]">No parts required for this service.</p>
+              )}
             </div>
           </div>
         )}

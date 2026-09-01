@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { MagnifyingGlass, Plus, PencilSimple, Trash, ArrowUp, ArrowDown, Eye } from '@phosphor-icons/react'
+import { MagnifyingGlass, Plus, PencilSimple, Trash, ArrowUp, ArrowDown, Eye, Package, ClockCounterClockwise } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
-import { useInventory, useCreatePart, useUpdatePart, useAdjustStock, useDeletePart } from '../../hooks/useInventory'
+import { useInventory, useInventoryTransactions, useCreatePart, useUpdatePart, useAdjustStock, useDeletePart } from '../../hooks/useInventory'
 import { useSuppliers } from '../../hooks/useSuppliers'
 import { useAuth } from '../../context/AuthContext'
-import { Modal, StatusBadge, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton } from '../../components/ui'
+import { Modal, StatusBadge, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, ImageUpload } from '../../components/ui'
 
 const stockStatusOptions = ['All Stock', 'In Stock', 'Low Stock', 'Out of Stock']
 
@@ -13,12 +13,14 @@ export default function InventoryPage() {
   const { can } = useAuth()
   const { data: items = [], isLoading } = useInventory()
   const { data: suppliers = [] } = useSuppliers()
+  const { data: transactions = [], isLoading: txLoading } = useInventoryTransactions()
 
   const createPartMutation = useCreatePart()
   const updatePartMutation = useUpdatePart()
   const adjustStockMutation = useAdjustStock()
   const deletePartMutation = useDeletePart()
 
+  const [activeTab, setActiveTab] = useState('inventory') // 'inventory' | 'transactions'
   const [searchQuery, setSearchQuery] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('All')
   const [stockFilter, setStockFilter] = useState('All Stock')
@@ -49,6 +51,7 @@ export default function InventoryPage() {
     supplier: '',
     supplierId: '',
     location: 'Shelf A-1',
+    image: '',
   })
 
   const handleOpenAdd = () => {
@@ -65,13 +68,27 @@ export default function InventoryPage() {
       supplier: defaultSup ? defaultSup.name : 'Bosch Auto Parts',
       supplierId: defaultSup ? defaultSup.id : '',
       location: 'Shelf A-1',
+      image: '',
     })
     setIsAddOpen(true)
   }
 
   const handleOpenEdit = (p) => {
     setSelectedPart(p)
-    setFormData({ ...p })
+    setFormData({
+      partCode: p.partCode || '',
+      name: p.name || '',
+      brand: p.brand || '',
+      category: p.category || 'Engine',
+      stockQty: p.stockQty || 0,
+      minThreshold: p.minThreshold || 5,
+      unitPrice: p.unitPrice || 0,
+      costPrice: p.costPrice || 0,
+      supplier: p.supplier || '',
+      supplierId: p.supplierId || '',
+      location: p.location || '',
+      image: p.image || '',
+    })
     setIsEditOpen(true)
   }
 
@@ -165,41 +182,72 @@ export default function InventoryPage() {
         )}
       </div>
 
-      {/* Category and Status Filters */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setCategoryFilter(cat)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-colors ${
-                categoryFilter === cat
-                  ? 'bg-app-accent text-app-accentText shadow-subtle'
-                  : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover hover:text-app-text'
-              }`}
-            >
-              {cat === 'All' ? t('common.all') : cat}
-            </button>
-          ))}
-        </div>
+      {/* View Switcher Tabs */}
+      <div className="flex items-center gap-2 border-b border-app-border pb-3">
+        <button
+          onClick={() => setActiveTab('inventory')}
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
+            activeTab === 'inventory'
+              ? 'bg-app-accent text-app-accentText shadow-subtle'
+              : 'text-app-muted hover:text-app-text hover:bg-app-hover'
+          }`}
+        >
+          <Package size={16} weight="bold" />
+          <span>Spare Parts Catalog</span>
+          <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/10 dark:bg-white/10">{items.length}</span>
+        </button>
 
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
-          <span className="text-xs text-app-muted flex items-center gap-1 mr-1">{t('common.status')}:</span>
-          {stockStatusOptions.map((st) => (
-            <button
-              key={st}
-              onClick={() => setStockFilter(st)}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-medium whitespace-nowrap transition-colors ${
-                stockFilter === st
-                  ? 'bg-app-hover text-app-text border border-app-border font-semibold'
-                  : 'text-app-muted hover:text-app-text'
-              }`}
-            >
-              {st === 'All Stock' ? t('common.all') : t(`status.${st}`, st)}
-            </button>
-          ))}
-        </div>
+        <button
+          onClick={() => setActiveTab('transactions')}
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
+            activeTab === 'transactions'
+              ? 'bg-app-accent text-app-accentText shadow-subtle'
+              : 'text-app-muted hover:text-app-text hover:bg-app-hover'
+          }`}
+        >
+          <ClockCounterClockwise size={16} weight="bold" />
+          <span>Stock Movement & Auto Stock-Out Logs</span>
+          <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/10 dark:bg-white/10">{transactions.length}</span>
+        </button>
       </div>
+
+      {activeTab === 'inventory' ? (
+        <>
+          {/* Category and Status Filters */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setCategoryFilter(cat)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-colors ${
+                    categoryFilter === cat
+                      ? 'bg-app-accent text-app-accentText shadow-subtle'
+                      : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover hover:text-app-text'
+                  }`}
+                >
+                  {cat === 'All' ? t('common.all') : cat}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2 overflow-x-auto pb-1">
+              <span className="text-xs text-app-muted flex items-center gap-1 mr-1">{t('common.status')}:</span>
+              {stockStatusOptions.map((st) => (
+                <button
+                  key={st}
+                  onClick={() => setStockFilter(st)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium whitespace-nowrap transition-colors ${
+                    stockFilter === st
+                      ? 'bg-app-hover text-app-text border border-app-border font-semibold'
+                      : 'text-app-muted hover:text-app-text'
+                  }`}
+                >
+                  {st === 'All Stock' ? t('common.all') : t(`status.${st}`, st)}
+                </button>
+              ))}
+            </div>
+          </div>
 
       {/* Table */}
       <div className="bg-app-card rounded-2xl border border-app-border shadow-card overflow-hidden">
@@ -265,10 +313,25 @@ export default function InventoryPage() {
                   <tr key={part.id} className="hover:bg-app-hover/60 transition-colors group">
                     <td className="px-6 py-3.5 font-mono font-semibold text-app-accent">{part.partCode}</td>
                     <td className="px-6 py-3.5">
-                      <p className="font-semibold text-app-text">{part.name}</p>
-                      <p className="text-[10px] text-app-muted">
-                        {part.brand} · {t('inventory.supplier')}: {part.supplier}
-                      </p>
+                      <div className="flex items-center gap-3">
+                        {part.image ? (
+                          <img
+                            src={part.image}
+                            alt={part.name}
+                            className="w-10 h-10 rounded-xl object-cover border border-app-border bg-app-card flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-xl bg-app-hover border border-app-border flex items-center justify-center flex-shrink-0 text-app-muted">
+                            <Package size={20} />
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-semibold text-app-text">{part.name}</p>
+                          <p className="text-[10px] text-app-muted">
+                            {part.brand} · {t('inventory.supplier')}: {part.supplier}
+                          </p>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-6 py-3.5 text-app-muted hidden md:table-cell">{part.category}</td>
                     <td className="px-6 py-3.5 text-app-muted hidden lg:table-cell font-mono">{part.location}</td>
@@ -300,17 +363,34 @@ export default function InventoryPage() {
                         </button>
                         {can('inventory', 'update') && (
                           <>
+                            {part.stockQty <= part.minThreshold && (
+                              <button
+                                onClick={() =>
+                                  adjustStockMutation.mutate({
+                                    id: part.id,
+                                    type: 'Stock In',
+                                    quantity: 10,
+                                    notes: `Quick Reorder Restock from ${part.supplier || 'Supplier'}`,
+                                  })
+                                }
+                                title="1-Click Quick Restock (+10 from Supplier)"
+                                className="px-2 py-1 rounded-lg text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 transition-colors flex items-center gap-1 cursor-pointer"
+                              >
+                                <ArrowUp size={12} weight="bold" />
+                                <span>+10</span>
+                              </button>
+                            )}
                             <button
                               onClick={() => handleOpenAdjust(part, 'Stock In')}
                               title="Stock In (+)"
-                              className="p-1.5 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-app-hover transition-colors"
+                              className="p-1.5 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-app-hover transition-colors cursor-pointer"
                             >
                               <ArrowUp size={15} weight="bold" />
                             </button>
                             <button
                               onClick={() => handleOpenAdjust(part, 'Stock Out')}
                               title="Stock Out (-)"
-                              className="p-1.5 rounded-lg text-amber-600 dark:text-amber-400 hover:bg-app-hover transition-colors"
+                              className="p-1.5 rounded-lg text-amber-600 dark:text-amber-400 hover:bg-app-hover transition-colors cursor-pointer"
                             >
                               <ArrowDown size={15} weight="bold" />
                             </button>
@@ -341,6 +421,86 @@ export default function InventoryPage() {
           )}
         </div>
       </div>
+    </>
+  ) : (
+    /* Stock Movement & Auto Stock-Out Transactions View */
+    <div className="bg-app-card rounded-2xl border border-app-border shadow-card overflow-hidden">
+      <div className="p-4 border-b border-app-border flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-bold text-app-text flex items-center gap-2">
+            <ClockCounterClockwise size={16} className="text-app-accent" />
+            Stock Movement & Auto Stock-Out History
+          </h2>
+          <p className="text-[11px] text-app-muted mt-0.5">Real-time audit trail of parts consumed by services, jobs, and manual adjustments</p>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
+        {txLoading && transactions.length === 0 ? (
+          <TableSkeleton rows={6} columns={6} />
+        ) : transactions.length === 0 ? (
+          <EmptyState
+            title="No inventory transactions recorded"
+            description="Stock movements and auto stock-outs for services will automatically appear here."
+          />
+        ) : (
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
+                <th className="px-6 py-3 font-semibold">Part Code / Item</th>
+                <th className="px-6 py-3 font-semibold">Type</th>
+                <th className="px-6 py-3 font-semibold">Quantity</th>
+                <th className="px-6 py-3 font-semibold">Reason / Reference</th>
+                <th className="px-6 py-3 hidden sm:table-cell font-semibold">Performed By</th>
+                <th className="px-6 py-3 font-semibold text-right">Date & Time</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-app-border">
+              {transactions.map((tx) => (
+                <tr key={tx.id} className="hover:bg-app-hover/60 transition-colors">
+                  <td className="px-6 py-3.5">
+                    <p className="font-semibold text-app-text">{tx.partName}</p>
+                    <p className="font-mono text-[10px] text-app-accent">{tx.partCode}</p>
+                  </td>
+                  <td className="px-6 py-3.5">
+                    <span
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
+                        tx.type === 'Stock Out'
+                          ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
+                          : tx.type === 'Stock In'
+                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                          : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20'
+                      }`}
+                    >
+                      {tx.type === 'Stock Out' ? <ArrowDown size={12} weight="bold" /> : <ArrowUp size={12} weight="bold" />}
+                      {tx.type}
+                    </span>
+                  </td>
+                  <td className="px-6 py-3.5 font-bold tabular-nums text-app-text">
+                    {tx.type === 'Stock Out' ? `-${tx.quantity}` : `+${tx.quantity}`} units
+                  </td>
+                  <td className="px-6 py-3.5">
+                    <p className="text-app-text font-medium max-w-sm">{tx.notes || 'Routine stock operation'}</p>
+                    {tx.referenceType && (
+                      <span className="text-[10px] text-app-muted uppercase font-mono">
+                        Ref: {tx.referenceType} #{tx.referenceId}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-6 py-3.5 text-app-muted hidden sm:table-cell">
+                    {tx.performedBy}
+                  </td>
+                  <td className="px-6 py-3.5 text-right font-mono text-[11px] text-app-muted">
+                    {tx.createdAt ? new Date(tx.createdAt).toLocaleString() : 'Recent'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  )}
 
       {/* Add Part Modal */}
       <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('inventory.createPart')}>
@@ -409,6 +569,41 @@ export default function InventoryPage() {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.supplier')}</label>
+              <select
+                value={formData.supplierId}
+                onChange={(e) => {
+                  const sup = suppliers.find((s) => String(s.id) === e.target.value)
+                  setFormData({
+                    ...formData,
+                    supplierId: e.target.value,
+                    supplier: sup ? sup.name : formData.supplier,
+                  })
+                }}
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              >
+                <option value="">Select Supplier</option>
+                {suppliers.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.location')}</label>
+              <input
+                type="text"
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                placeholder="Shelf A-1"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              />
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('inventory.stockQty')}</label>
@@ -448,6 +643,15 @@ export default function InventoryPage() {
                 className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-semibold"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-app-muted font-medium mb-1">Part Photo / Image (Optional)</label>
+            <ImageUpload
+              value={formData.image}
+              onChange={(url) => setFormData({ ...formData, image: url })}
+              label=""
+            />
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
@@ -492,6 +696,57 @@ export default function InventoryPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.category')}</label>
+              <select
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              >
+                <option value="Engine">Engine</option>
+                <option value="Brakes">Brakes</option>
+                <option value="Fluids">Fluids</option>
+                <option value="Filters">Filters</option>
+                <option value="Ignition">Ignition</option>
+                <option value="Electrical">Electrical</option>
+                <option value="Tires">Tires</option>
+                <option value="Suspension">Suspension</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.supplier')}</label>
+              <select
+                value={formData.supplierId}
+                onChange={(e) => {
+                  const sup = suppliers.find((s) => String(s.id) === e.target.value)
+                  setFormData({
+                    ...formData,
+                    supplierId: e.target.value,
+                    supplier: sup ? sup.name : formData.supplier,
+                  })
+                }}
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              >
+                <option value="">Select Supplier</option>
+                {suppliers.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.location')}</label>
+              <input
+                type="text"
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
               <label className="block text-app-muted font-medium mb-1">{t('inventory.stockQty')}</label>
               <input
                 type="number"
@@ -520,6 +775,15 @@ export default function InventoryPage() {
                 className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-semibold"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-app-muted font-medium mb-1">Part Photo / Image (Optional)</label>
+            <ImageUpload
+              value={formData.image}
+              onChange={(url) => setFormData({ ...formData, image: url })}
+              label=""
+            />
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
@@ -595,6 +859,16 @@ export default function InventoryPage() {
       <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('inventory.title')}>
         {selectedPart && (
           <div className="space-y-4 text-xs">
+            {selectedPart.image && (
+              <div className="w-full h-44 rounded-xl overflow-hidden border border-app-border bg-app-card">
+                <img
+                  src={selectedPart.image}
+                  alt={selectedPart.name}
+                  className="w-full h-full object-contain bg-black/5 dark:bg-white/5"
+                />
+              </div>
+            )}
+
             <div className="flex items-center justify-between p-3 bg-app-hover/50 rounded-xl border border-app-border">
               <div>
                 <p className="font-mono text-app-accent font-semibold">{selectedPart.partCode}</p>
@@ -617,8 +891,16 @@ export default function InventoryPage() {
                 <p className="font-semibold text-app-text mt-0.5">{selectedPart.brand}</p>
               </div>
               <div className="p-3 bg-app-input rounded-xl border border-app-border">
+                <p className="text-[10px] text-app-muted uppercase font-semibold">{t('inventory.category')}</p>
+                <p className="font-semibold text-app-text mt-0.5">{selectedPart.category}</p>
+              </div>
+              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+                <p className="text-[10px] text-app-muted uppercase font-semibold">{t('inventory.supplier')}</p>
+                <p className="text-app-text mt-0.5">{selectedPart.supplier || 'N/A'}</p>
+              </div>
+              <div className="p-3 bg-app-input rounded-xl border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold">{t('inventory.location')}</p>
-                <p className="font-mono text-app-text mt-0.5">{selectedPart.location}</p>
+                <p className="font-mono text-app-text mt-0.5">{selectedPart.location || 'N/A'}</p>
               </div>
             </div>
           </div>

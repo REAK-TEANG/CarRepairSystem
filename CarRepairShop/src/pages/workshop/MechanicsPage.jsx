@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { MagnifyingGlass, Plus, PencilSimple, Trash, Eye, Wrench } from '@phosphor-icons/react'
+import { MagnifyingGlass, Plus, PencilSimple, Trash, Eye, Wrench, Car, UsersThree } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useMechanics, useCreateMechanic, useUpdateMechanic, useDeleteMechanic } from '../../hooks/useMechanics'
 import { useAuth } from '../../context/AuthContext'
 import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton } from '../../components/ui'
+import RepairPipelineTracker from '../../components/workshop/RepairPipelineTracker'
 
 const statusFilters = ['All', 'Active', 'On Leave', 'Terminated']
 
@@ -15,6 +16,7 @@ export default function MechanicsPage() {
   const updateMechanicMutation = useUpdateMechanic()
   const deleteMechanicMutation = useDeleteMechanic()
 
+  const [activeTab, setActiveTab] = useState('pipeline') // 'pipeline' | 'roster'
   const [searchQuery, setSearchQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState('All')
 
@@ -108,9 +110,13 @@ export default function MechanicsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-app-text">{t('titles.mechanicsStaffRoster')}</h1>
-          <p className="text-xs text-app-muted mt-1">{mechanics.length} {t('mechanics.subtitle')}</p>
+          <p className="text-xs text-app-muted mt-1">
+            {activeTab === 'pipeline'
+              ? 'Real-time vehicle repair pipeline from Diagnosing to Completion with 1-click progression'
+              : `${mechanics.length} ${t('mechanics.subtitle')}`}
+          </p>
         </div>
-        {can('mechanics', 'create') && (
+        {can('mechanics', 'create') && activeTab === 'roster' && (
           <button
             onClick={handleOpenAdd}
             className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover text-app-accentText font-semibold rounded-xl text-xs transition-colors shadow-subtle"
@@ -121,7 +127,39 @@ export default function MechanicsPage() {
         )}
       </div>
 
-      {/* Filter Tabs */}
+      {/* View Switcher Tabs */}
+      <div className="flex items-center gap-2 border-b border-app-border pb-3">
+        <button
+          onClick={() => setActiveTab('pipeline')}
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
+            activeTab === 'pipeline'
+              ? 'bg-app-accent text-app-accentText shadow-subtle'
+              : 'text-app-muted hover:text-app-text hover:bg-app-hover'
+          }`}
+        >
+          <Car size={16} weight="bold" />
+          <span>Vehicle Repair Pipeline Tracker</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('roster')}
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
+            activeTab === 'roster'
+              ? 'bg-app-accent text-app-accentText shadow-subtle'
+              : 'text-app-muted hover:text-app-text hover:bg-app-hover'
+          }`}
+        >
+          <UsersThree size={16} weight="bold" />
+          <span>Mechanics Staff Roster</span>
+          <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/10 dark:bg-white/10">{mechanics.length}</span>
+        </button>
+      </div>
+
+      {activeTab === 'pipeline' ? (
+        <RepairPipelineTracker />
+      ) : (
+        <>
+          {/* Filter Tabs */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
         {statusFilters.map((st) => {
           const count = st === 'All' ? mechanics.length : mechanics.filter((m) => m.status === st).length
@@ -275,6 +313,8 @@ export default function MechanicsPage() {
           )}
         </div>
       </div>
+      </>
+      )}
 
       {/* Add Mechanic Modal */}
       <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('mechanics.createMechanic')}>

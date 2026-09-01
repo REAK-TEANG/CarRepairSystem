@@ -30,14 +30,18 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes cache
-      retry: 1,
+      retry: (failureCount, error) => {
+        if (error?.status === 401 || error?.status === 403) return false
+        return failureCount < 1
+      },
     },
   },
 })
 
 // Helper to determine the default landing page for each of the 6 RBAC roles
 function RoleBasedHome() {
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
+  if (loading) return <LoadingSpinner />
   if (!user) return <Navigate to="/login" replace />
 
   switch (user.role) {

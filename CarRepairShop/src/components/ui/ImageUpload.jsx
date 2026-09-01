@@ -15,6 +15,7 @@ export default function ImageUpload({
   value = '',
   onChange,
   label = 'Image Photo (Optional)',
+  uploadText = 'Upload Photo',
   shape = 'card',
   className = '',
 }) {
@@ -100,7 +101,7 @@ export default function ImageUpload({
           <div className="flex-1 space-y-1">
             <label className="flex items-center justify-center gap-1.5 px-3 py-2 border border-dashed border-app-border hover:border-app-accent rounded-lg bg-app-input hover:bg-app-hover cursor-pointer transition-colors text-xs text-app-muted hover:text-app-text">
               <UploadSimple size={14} weight="bold" className="text-app-accent" />
-              <span>{value ? 'Change Photo' : 'Upload Vehicle Photo'}</span>
+              <span>{value ? 'Change Photo' : uploadText}</span>
               <input
                 ref={fileInputRef}
                 type="file"

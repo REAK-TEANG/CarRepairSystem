@@ -1,12 +1,24 @@
 import { Router } from 'express'
 import { query } from '../db.js'
+import { authenticateToken, requirePermission } from '../middleware/auth.js'
 
 const router = Router()
 
+// All supplier routes require a valid authenticated JWT
+router.use(authenticateToken)
+
 // GET all suppliers
-router.get('/', async (req, res) => {
+router.get('/', requirePermission('suppliers', 'read'), async (req, res) => {
   try {
-    const rows = await query.all('SELECT * FROM suppliers ORDER BY id DESC')
+    const rows = await query.all(`
+      SELECT s.*, 
+             COUNT(sp.id) AS parts_count,
+             COALESCE(STRING_AGG(DISTINCT sp.category, ', '), 'OEM Parts, Fluids') AS categories_list
+      FROM suppliers s
+      LEFT JOIN spare_parts sp ON sp.supplier_id = s.id
+      GROUP BY s.id
+      ORDER BY s.id DESC
+    `)
     const suppliers = rows.map((r) => ({
       id: r.id,
       name: r.name,
@@ -14,26 +26,29 @@ router.get('/', async (req, res) => {
       phone: r.phone || '',
       email: r.email || '',
       address: r.address || '',
-      categories: 'OEM Parts, Fluids',
+      categories: r.categories_list || 'OEM Parts, Fluids',
       rating: 4.9,
-      activeOrders: 0
+      activeOrders: parseInt(r.parts_count, 10) || 0,
     }))
     res.json({ data: suppliers })
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    res.status(500).json({ error: 'Failed to fetch suppliers', message: err.message })
   }
 })
 
 // POST create supplier
-router.post('/', async (req, res) => {
+router.post('/', requirePermission('suppliers', 'create'), async (req, res) => {
   try {
     const { name, contactPerson, phone, email, address } = req.body
+    if (!name || !String(name).trim()) {
+      return res.status(400).json({ error: 'Supplier name is required' })
+    }
 
     const inserted = await query.get(
       `INSERT INTO suppliers (name, contact_name, phone, email, address)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [name, contactPerson || null, phone || null, email || null, address || null]
+      [name.trim(), contactPerson || null, phone || null, email || null, address || null]
     )
 
     res.status(201).json({
@@ -46,16 +61,16 @@ router.post('/', async (req, res) => {
         address: inserted.address || '',
         categories: 'OEM Parts, Fluids',
         rating: 4.9,
-        activeOrders: 0
-      }
+        activeOrders: 0,
+      },
     })
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    res.status(500).json({ error: 'Failed to create supplier', message: err.message })
   }
 })
 
 // PUT update supplier
-router.put('/:id', async (req, res) => {
+router.put('/:id', requirePermission('suppliers', 'update'), async (req, res) => {
   try {
     const { name, contactPerson, phone, email, address } = req.body
 
@@ -72,6 +87,10 @@ router.put('/:id', async (req, res) => {
       [name, contactPerson, phone, email, address, req.params.id]
     )
 
+    if (!updated) {
+      return res.status(404).json({ error: 'Supplier not found' })
+    }
+
     res.json({
       data: {
         id: updated.id,
@@ -82,21 +101,26 @@ router.put('/:id', async (req, res) => {
         address: updated.address || '',
         categories: 'OEM Parts, Fluids',
         rating: 4.9,
-        activeOrders: 0
-      }
+        activeOrders: 0,
+      },
     })
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    res.status(500).json({ error: 'Failed to update supplier', message: err.message })
   }
 })
 
 // DELETE supplier
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requirePermission('suppliers', 'delete'), async (req, res) => {
   try {
+    const exists = await query.get('SELECT id FROM suppliers WHERE id = $1', [req.params.id])
+    if (!exists) {
+      return res.status(404).json({ error: 'Supplier not found' })
+    }
+
     await query.run('DELETE FROM suppliers WHERE id = $1', [req.params.id])
-    res.json({ success: true, message: 'Supplier removed' })
+    res.json({ success: true, message: 'Supplier removed successfully' })
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    res.status(500).json({ error: 'Failed to delete supplier', message: err.message })
   }
 })
 

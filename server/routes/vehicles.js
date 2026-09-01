@@ -1,10 +1,14 @@
 import { Router } from 'express'
 import { query } from '../db.js'
+import { authenticateToken, requirePermission } from '../middleware/auth.js'
 
 const router = Router()
 
+// All vehicle routes require a valid authenticated JWT
+router.use(authenticateToken)
+
 // GET all vehicles
-router.get('/', async (req, res) => {
+router.get('/', requirePermission('vehicles', 'read'), async (req, res) => {
   try {
     const rows = await query.all(`
       SELECT v.*, c.full_name AS customer_name
@@ -26,13 +30,13 @@ router.get('/', async (req, res) => {
       image: r.photo_url || r.image || '',
       owner: r.customer_name || 'Owner',
       ownerId: r.customer_id,
-      notes: r.notes || ''
+      notes: r.notes || '',
     }))
 
     res.json({ data: vehicles })
   } catch (err) {
     console.error('[API Vehicles Get Error]:', err)
-    res.status(500).json({ error: err.message })
+    res.status(500).json({ error: 'Failed to fetch vehicles', message: err.message })
   }
 })
 
@@ -52,9 +56,13 @@ async function resolveCustomerId(ownerId) {
 }
 
 // POST create vehicle
-router.post('/', async (req, res) => {
+router.post('/', requirePermission('vehicles', 'create'), async (req, res) => {
   try {
     const { number, vin, brand, model, year, color, fuelType, mileage, ownerId, notes, image, photoUrl } = req.body
+
+    if (!number || !String(number).trim()) {
+      return res.status(400).json({ error: 'Vehicle license plate number is required' })
+    }
 
     const targetCustomerId = await resolveCustomerId(ownerId)
     const validFuels = ['Gasoline', 'Diesel', 'Electric', 'Hybrid', 'LPG']
@@ -68,7 +76,7 @@ router.post('/', async (req, res) => {
          RETURNING *`,
         [
           targetCustomerId,
-          number,
+          number.trim(),
           vin || null,
           brand || null,
           model || null,
@@ -77,11 +85,10 @@ router.post('/', async (req, res) => {
           normalizedFuel,
           mileage ? parseInt(mileage, 10) : 0,
           image || photoUrl || null,
-          notes || null
+          notes || null,
         ]
       )
     } catch (dbErr) {
-      // If photo_url column was missing, add it and retry
       if (dbErr.message && dbErr.message.includes('photo_url')) {
         await query.run('ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS photo_url TEXT;')
         inserted = await query.get(
@@ -90,7 +97,7 @@ router.post('/', async (req, res) => {
            RETURNING *`,
           [
             targetCustomerId,
-            number,
+            number.trim(),
             vin || null,
             brand || null,
             model || null,
@@ -99,7 +106,7 @@ router.post('/', async (req, res) => {
             normalizedFuel,
             mileage ? parseInt(mileage, 10) : 0,
             image || photoUrl || null,
-            notes || null
+            notes || null,
           ]
         )
       } else {
@@ -122,8 +129,8 @@ router.post('/', async (req, res) => {
         mileage: inserted.mileage,
         image: inserted.photo_url || '',
         owner: customer?.full_name || '',
-        ownerId: inserted.customer_id
-      }
+        ownerId: inserted.customer_id,
+      },
     })
   } catch (err) {
     console.error('[API Vehicle Create Error]:', err)
@@ -132,13 +139,13 @@ router.post('/', async (req, res) => {
 })
 
 // PUT update vehicle
-router.put('/:id', async (req, res) => {
+router.put('/:id', requirePermission('vehicles', 'update'), async (req, res) => {
   try {
     const { number, vin, brand, model, year, color, fuelType, mileage, ownerId, notes, image, photoUrl } = req.body
 
     const targetCustomerId = ownerId ? await resolveCustomerId(ownerId) : null
     const validFuels = ['Gasoline', 'Diesel', 'Electric', 'Hybrid', 'LPG']
-    const normalizedFuel = fuelType ? (validFuels.find((f) => f.toLowerCase() === fuelType.toLowerCase()) || 'Gasoline') : null
+    const normalizedFuel = fuelType ? validFuels.find((f) => f.toLowerCase() === fuelType.toLowerCase()) || 'Gasoline' : null
 
     const updated = await query.get(
       `UPDATE vehicles
@@ -168,9 +175,13 @@ router.put('/:id', async (req, res) => {
         targetCustomerId,
         image || photoUrl || null,
         notes,
-        req.params.id
+        req.params.id,
       ]
     )
+
+    if (!updated) {
+      return res.status(404).json({ error: 'Vehicle not found' })
+    }
 
     const customer = await query.get('SELECT full_name FROM customers WHERE id = $1', [updated?.customer_id])
 
@@ -187,8 +198,8 @@ router.put('/:id', async (req, res) => {
         mileage: updated.mileage,
         image: updated.photo_url || '',
         owner: customer?.full_name || '',
-        ownerId: updated.customer_id
-      }
+        ownerId: updated.customer_id,
+      },
     })
   } catch (err) {
     console.error('[API Vehicle Update Error]:', err)
@@ -197,12 +208,17 @@ router.put('/:id', async (req, res) => {
 })
 
 // DELETE vehicle
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requirePermission('vehicles', 'delete'), async (req, res) => {
   try {
+    const exists = await query.get('SELECT id FROM vehicles WHERE id = $1', [req.params.id])
+    if (!exists) {
+      return res.status(404).json({ error: 'Vehicle not found' })
+    }
+
     await query.run('DELETE FROM vehicles WHERE id = $1', [req.params.id])
     res.json({ success: true, message: 'Vehicle removed successfully' })
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    res.status(500).json({ error: 'Failed to delete vehicle', message: err.message })
   }
 })
 

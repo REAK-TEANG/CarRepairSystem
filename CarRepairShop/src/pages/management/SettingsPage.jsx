@@ -34,9 +34,8 @@ import {
   Translate,
 } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
-import { settingsService, initialWorkshopSettings } from '../../services/settingsService'
+import { settingsService } from '../../services/settingsService'
 import { useAuth, DEFAULT_PERMISSIONS_MATRIX } from '../../context/AuthContext'
-import { LanguageSwitcher } from '../../components/ui'
 
 const MODULE_DEFINITIONS = [
   // Operations Category
@@ -181,9 +180,8 @@ export default function SettingsPage() {
 
   const [activeTab, setActiveTab] = useState('permissions') // 'permissions' | 'profile' | 'billing' | 'language' | 'security'
   const [selectedRole, setSelectedRole] = useState('manager')
-  const [localMatrix, setLocalMatrix] = useState(permissionsMatrix)
+  const [localMatrix, setLocalMatrix] = useState(() => permissionsMatrix)
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('All')
 
   const [settings, setSettings] = useState({
     shopName: '',
@@ -205,22 +203,18 @@ export default function SettingsPage() {
     settingsService.getSettings().then((data) => {
       if (data) {
         setSettings({
-          shopName: data.shopName || initialWorkshopSettings.shopName,
-          taxRate: data.taxRate ?? initialWorkshopSettings.taxRate,
-          currency: data.currency || initialWorkshopSettings.currency,
-          businessHours: data.businessHours || initialWorkshopSettings.businessHours,
-          contactPhone: data.contactPhone || initialWorkshopSettings.contactPhone,
-          contactEmail: data.contactEmail || initialWorkshopSettings.contactEmail,
-          address: data.address || initialWorkshopSettings.address,
+          shopName: data.shopName || '',
+          taxRate: data.taxRate ?? 0,
+          currency: data.currency || 'USD ($)',
+          businessHours: data.businessHours || '',
+          contactPhone: data.contactPhone || '',
+          contactEmail: data.contactEmail || '',
+          address: data.address || '',
           autoBackupDaily: data.autoBackupDaily ?? true,
         })
       }
     })
   }, [])
-
-  useEffect(() => {
-    setLocalMatrix(permissionsMatrix)
-  }, [permissionsMatrix])
 
   // Detect unsaved changes in permissions
   const hasUnsavedChanges = useMemo(() => {
@@ -371,39 +365,17 @@ export default function SettingsPage() {
     }
   }
 
-  // Filter modules by search and category
+  // Filter modules by search
   const filteredModules = useMemo(() => {
     return MODULE_DEFINITIONS.filter((mod) => {
       const label = t(mod.titleKey)
-      const matchesSearch =
+      return (
         !searchQuery ||
         label.toLowerCase().includes(searchQuery.toLowerCase()) ||
         mod.desc.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesCat = selectedCategory === 'All' || mod.category === selectedCategory
-      return matchesSearch && matchesCat
+      )
     })
-  }, [searchQuery, selectedCategory, t])
-
-  // Count active permissions for selected role
-  const roleStats = useMemo(() => {
-    let totalGranted = 0
-    let readCount = 0
-    let writeCount = 0
-    let deleteCount = 0
-
-    MODULE_DEFINITIONS.forEach((mod) => {
-      const perms = localMatrix[mod.key]?.[selectedRole] || []
-      totalGranted += perms.length
-      if (perms.includes('read')) readCount++
-      if (perms.includes('create') || perms.includes('update')) writeCount++
-      if (perms.includes('delete')) deleteCount++
-    })
-
-    const maxPerms = MODULE_DEFINITIONS.length * 4
-    const percentage = Math.round((totalGranted / maxPerms) * 100)
-
-    return { totalGranted, maxPerms, percentage, readCount, writeCount, deleteCount }
-  }, [localMatrix, selectedRole])
+  }, [searchQuery, t])
 
   // JSON Import Handler
   const handleImportConfig = (e) => {
@@ -425,14 +397,12 @@ export default function SettingsPage() {
         setImportStatus({ type: 'success', message: 'Backup configuration imported successfully!' })
         setTimeout(() => setImportStatus(null), 4000)
       } catch (err) {
-        setImportStatus({ type: 'error', message: 'Invalid JSON configuration file.' })
+        setImportStatus({ type: 'error', message: err?.message || 'Invalid JSON configuration file.' })
         setTimeout(() => setImportStatus(null), 4000)
       }
     }
     reader.readAsText(file)
   }
-
-  const activeRoleObj = EDITABLE_ROLES.find((r) => r.role === selectedRole)
 
   return (
     <div className="space-y-6 text-app-text font-sans max-w-6xl mx-auto pb-16 transition-colors duration-200">

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MagnifyingGlass, Plus, PencilSimple, Trash, Eye, Phone, EnvelopeSimple, MapPin, User } from '@phosphor-icons/react'
+import { MagnifyingGlass, Plus, PencilSimple, Trash, Eye, MapPin, User } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useCustomers, useCreateCustomer, useUpdateCustomer, useDeleteCustomer } from '../../hooks/useCustomers'
 import { useAuth } from '../../context/AuthContext'

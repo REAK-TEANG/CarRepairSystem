@@ -1,11 +1,30 @@
-import { Link } from 'react-router-dom'
-import { ShieldWarning, ArrowLeft } from '@phosphor-icons/react'
+import { useNavigate } from 'react-router-dom'
+import { ShieldWarning, ArrowLeft, SignOut } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../../context/AuthContext'
+import { useAuth, ROLE_PROFILES } from '../../context/AuthContext'
 
 export default function UnauthorizedPage() {
   const { t } = useTranslation()
-  const { user } = useAuth()
+  const navigate = useNavigate()
+  const { user, logout } = useAuth()
+
+  const handleGoHome = () => {
+    const roleRoutes = {
+      admin: '/admin/dashboard',
+      manager: '/admin/dashboard',
+      mechanic: '/mechanic/dashboard',
+      service_advisor: '/appointments',
+      cashier: '/invoices',
+      storekeeper: '/inventory',
+    }
+    const target = user?.defaultRoute || (user?.role && (roleRoutes[user.role] || ROLE_PROFILES[user.role]?.defaultRoute)) || '/login'
+    navigate(target, { replace: true })
+  }
+
+  const handleSignOut = () => {
+    logout()
+    navigate('/login', { replace: true })
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-app-bg text-app-text font-sans transition-colors duration-200">
@@ -16,17 +35,26 @@ export default function UnauthorizedPage() {
 
         <h1 className="text-xl font-bold text-app-text">{t('auth.unauthorizedTitle')}</h1>
         <p className="text-xs text-app-muted mt-2 leading-relaxed">
-          {t('auth.unauthorizedDesc')} <span className="font-semibold text-app-accent font-mono">({user?.role})</span>
+          {t('auth.unauthorizedDesc')}{' '}
+          <span className="font-semibold text-app-accent font-mono">({user?.role || 'Guest'})</span>
         </p>
 
-        <div className="mt-6 pt-6 border-t border-app-border flex items-center justify-center gap-3">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover text-app-accentText font-semibold rounded-xl text-xs transition-colors shadow-subtle"
+        <div className="mt-6 pt-6 border-t border-app-border flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button
+            onClick={handleGoHome}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-app-accent hover:bg-app-accentHover text-app-accentText font-semibold rounded-xl text-xs transition-colors shadow-subtle cursor-pointer"
           >
             <ArrowLeft size={16} weight="bold" />
             {t('auth.backToHome')}
-          </Link>
+          </button>
+
+          <button
+            onClick={handleSignOut}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-app-hover hover:bg-app-border text-app-text font-semibold rounded-xl text-xs transition-colors border border-app-border cursor-pointer"
+          >
+            <SignOut size={16} weight="bold" className="text-rose-500" />
+            {t('common.signOut')} / {t('common.signIn')}
+          </button>
         </div>
       </div>
     </div>

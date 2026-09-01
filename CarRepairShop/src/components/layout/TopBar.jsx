@@ -8,7 +8,6 @@ import {
   Moon,
   Sun,
   ArrowClockwise,
-  Check,
   Wrench,
   User,
   Car,
@@ -54,13 +53,13 @@ export default function TopBar({ onToggleSidebar }) {
   const searchRef = useRef(null)
   const mobileSearchRef = useRef(null)
 
-  const { user, switchRole, allRoles } = useAuth()
+  const { user, can, logout } = useAuth()
   const { isDark, toggleTheme } = useTheme()
 
-  const { data: customers = [] } = useCustomers()
-  const { data: vehicles = [] } = useVehicles()
-  const { data: repairJobs = [] } = useRepairJobs()
-  const { data: inventory = [] } = useInventory()
+  const { data: customers = [] } = useCustomers({ enabled: Boolean(user && can('customers', 'read')) })
+  const { data: vehicles = [] } = useVehicles({ enabled: Boolean(user && can('vehicles', 'read')) })
+  const { data: repairJobs = [] } = useRepairJobs({}, { enabled: Boolean(user && can('repair_jobs', 'read')) })
+  const { data: inventory = [] } = useInventory({ enabled: Boolean(user && can('inventory', 'read')) })
 
   const currentTitle = routeTitleKeys[location.pathname] ? t(routeTitleKeys[location.pathname]) : t('nav.dashboards')
 
@@ -148,13 +147,10 @@ export default function TopBar({ onToggleSidebar }) {
     navigate(path)
   }
 
-  const handleRoleChange = (newRole) => {
-    switchRole(newRole)
+  const handleSignOut = () => {
     setProfileOpen(false)
-    const targetProfile = allRoles.find((r) => r.role === newRole)
-    if (targetProfile?.defaultRoute) {
-      navigate(targetProfile.defaultRoute)
-    }
+    logout()
+    navigate('/login', { replace: true })
   }
 
   return (
@@ -357,51 +353,91 @@ export default function TopBar({ onToggleSidebar }) {
 
           {/* Bell Notifications */}
           <div className="relative">
-            <button
-              onClick={() => {
-                setNotifOpen(!notifOpen)
-                setProfileOpen(false)
-              }}
-              className="relative p-1.5 sm:p-2 rounded-xl text-app-muted hover:bg-app-card hover:text-app-text transition-all"
-              aria-label="Notifications"
-            >
-              <Bell size={17} weight={notifOpen ? 'fill' : 'bold'} />
-              <span className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-app-card" />
-            </button>
+            {(() => {
+              const activeRepairAlerts = repairJobs
+                .filter((j) => j.status === 'Diagnosing' || j.status === 'Repairing' || j.status === 'Waiting for Parts')
+                .slice(0, 3)
+                .map((j) => ({
+                  id: `job-${j.id}`,
+                  title: `${j.orderNumber} ${j.status.toLowerCase()}`,
+                  desc: `${j.customer || 'Customer'} · ${j.vehicle || 'Vehicle'} (${j.mechanic || 'Assigned'})`,
+                  color: j.status === 'Waiting for Parts' ? 'bg-amber-500' : 'bg-blue-500',
+                  path: '/repair-jobs',
+                }))
 
-            {notifOpen && (
-              <div className="absolute right-0 mt-3 w-72 sm:w-80 bg-app-card border border-app-border rounded-2xl shadow-card py-2 z-50 animate-fade-in max-w-[calc(100vw-1.5rem)]">
-                <div className="px-4 py-2.5 border-b border-app-border flex items-center justify-between">
-                  <h3 className="text-xs font-bold text-app-text uppercase tracking-wider">{t('common.liveAlerts')}</h3>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-semibold font-mono">
-                    2 {t('common.active')}
-                  </span>
-                </div>
-                <div className="divide-y divide-app-border text-xs">
-                  <div className="p-3.5 hover:bg-app-hover transition-colors flex items-start gap-2.5">
-                    <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold text-app-text">RO-2026-0042 in progress</p>
-                      <p className="text-[10px] text-app-muted mt-0.5">Assigned to Master Tech Mike Johnson</p>
+              const lowStockAlerts = inventory
+                .filter((p) => (Number(p.stockQty) || 0) <= (Number(p.minThreshold) || 5))
+                .slice(0, 3)
+                .map((p) => ({
+                  id: `part-${p.id}`,
+                  title: `${p.name} low stock`,
+                  desc: `${p.stockQty} units remaining (min: ${p.minThreshold || 5})`,
+                  color: 'bg-amber-500',
+                  path: '/inventory',
+                }))
+
+              const liveAlerts = [...activeRepairAlerts, ...lowStockAlerts]
+
+              return (
+                <>
+                  <button
+                    onClick={() => {
+                      setNotifOpen(!notifOpen)
+                      setProfileOpen(false)
+                    }}
+                    className="relative p-1.5 sm:p-2 rounded-xl text-app-muted hover:bg-app-card hover:text-app-text transition-all"
+                    aria-label="Notifications"
+                  >
+                    <Bell size={17} weight={notifOpen ? 'fill' : 'bold'} />
+                    {liveAlerts.length > 0 && (
+                      <span className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-app-card" />
+                    )}
+                  </button>
+
+                  {notifOpen && (
+                    <div className="absolute right-0 mt-3 w-72 sm:w-80 bg-app-card border border-app-border rounded-2xl shadow-card py-2 z-50 animate-fade-in max-w-[calc(100vw-1.5rem)]">
+                      <div className="px-4 py-2.5 border-b border-app-border flex items-center justify-between">
+                        <h3 className="text-xs font-bold text-app-text uppercase tracking-wider">{t('common.liveAlerts')}</h3>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-semibold font-mono">
+                          {liveAlerts.length} {t('common.active')}
+                        </span>
+                      </div>
+                      <div className="divide-y divide-app-border text-xs max-h-72 overflow-y-auto">
+                        {liveAlerts.length === 0 ? (
+                          <div className="p-4 text-center text-xs text-app-muted">
+                            {t('common.noRecords')}
+                          </div>
+                        ) : (
+                          liveAlerts.map((alert) => (
+                            <div
+                              key={alert.id}
+                              onClick={() => {
+                                setNotifOpen(false)
+                                navigate(alert.path)
+                              }}
+                              className="p-3.5 hover:bg-app-hover transition-colors flex items-start gap-2.5 cursor-pointer"
+                            >
+                              <div className={`w-2 h-2 rounded-full ${alert.color} mt-1.5 flex-shrink-0`} />
+                              <div className="truncate flex-1">
+                                <p className="font-semibold text-app-text truncate">{alert.title}</p>
+                                <p className="text-[10px] text-app-muted mt-0.5 truncate">{alert.desc}</p>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <div className="p-3.5 hover:bg-app-hover transition-colors flex items-start gap-2.5">
-                    <div className="w-2 h-2 rounded-full bg-amber-500 mt-1.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold text-app-text">Ceramic Brake Pads low stock</p>
-                      <p className="text-[10px] text-app-muted mt-0.5">24 units remaining (reorder suggested)</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+                  )}
+                </>
+              )
+            })()}
           </div>
         </div>
 
         {/* Divider */}
         <div className="w-px h-6 bg-app-border mx-0.5 sm:mx-1" />
 
-        {/* Profile & 6-Role Switcher Menu */}
+        {/* User Profile Menu */}
         <div className="relative">
           <button
             onClick={() => {
@@ -412,60 +448,39 @@ export default function TopBar({ onToggleSidebar }) {
           >
             <div className="relative">
               <div className="w-8 h-8 bg-app-accent/15 border border-app-accent/30 rounded-xl flex items-center justify-center text-app-accent font-bold text-xs shadow-subtle">
-                {user.name.split(' ').map((n) => n[0]).join('')}
+                {user?.name ? user.name.split(' ').map((n) => n[0]).join('') : '?'}
               </div>
               <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-[var(--bg-card)]" />
             </div>
             <div className="hidden md:block text-left">
-              <p className="text-xs font-bold text-app-text leading-tight">{user.name}</p>
+              <p className="text-xs font-bold text-app-text leading-tight">{user?.name || 'User'}</p>
               <p className="text-[10px] text-app-muted font-medium uppercase tracking-wider">
-                {t(`roles.${user.role}`, user.roleTitle)}
+                {user ? t(`roles.${user.role}`, user.roleTitle) : ''}
               </p>
             </div>
             <CaretDown size={13} weight="bold" className="text-app-muted hidden md:block" />
           </button>
 
           {profileOpen && (
-            <div className="absolute right-0 mt-3 w-64 sm:w-72 bg-app-card border border-app-border rounded-2xl shadow-card py-2 z-50 animate-fade-in text-xs max-w-[calc(100vw-1.5rem)]">
-              <div className="px-4 py-2.5 border-b border-app-border flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] font-bold text-app-muted uppercase tracking-wider">{t('common.switchRole')}</p>
-                  <p className="text-[11px] text-app-muted">{t('common.instantRbac')}</p>
+            <div className="absolute right-0 mt-3 w-56 sm:w-64 bg-app-card border border-app-border rounded-2xl shadow-card py-2 z-50 animate-fade-in text-xs max-w-[calc(100vw-1.5rem)]">
+              <div className="px-4 py-3 border-b border-app-border">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-app-accent/15 border border-app-accent/30 rounded-xl flex items-center justify-center text-app-accent font-bold text-sm flex-shrink-0">
+                    {user?.name ? user.name.split(' ').map((n) => n[0]).join('') : '?'}
+                  </div>
+                  <div className="truncate flex-1 min-w-0">
+                    <p className="font-bold text-app-text truncate">{user?.name || 'User'}</p>
+                    <p className="text-[11px] text-app-muted truncate">{user?.email || ''}</p>
+                    <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full bg-app-accent/10 text-app-accent font-semibold">
+                      {user ? t(`roles.${user.role}`, user.roleTitle) : ''}
+                    </span>
+                  </div>
                 </div>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-app-hover text-app-muted">{t('common.demo')}</span>
               </div>
 
-              <div className="py-1 max-h-64 overflow-y-auto px-1">
-                {allRoles.map((r) => {
-                  const isCurrent = r.role === user.role
-                  return (
-                    <button
-                      key={r.role}
-                      onClick={() => handleRoleChange(r.role)}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors text-left my-0.5 ${
-                        isCurrent
-                          ? 'bg-app-accent/12 text-app-accent font-bold ring-1 ring-app-accent/30'
-                          : 'text-app-text hover:bg-app-hover'
-                      }`}
-                    >
-                      <div className="truncate mr-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold">{r.name}</span>
-                          <span className="text-[9px] font-mono px-1 rounded bg-app-hover text-app-muted">
-                            {r.role}
-                          </span>
-                        </div>
-                        <p className="text-[10px] text-app-muted truncate">{t(`roles.${r.role}`, r.roleTitle)}</p>
-                      </div>
-                      {isCurrent && <Check size={14} weight="bold" className="text-app-accent flex-shrink-0" />}
-                    </button>
-                  )
-                })}
-              </div>
-
-              <div className="border-t border-app-border pt-1 mt-1 px-1">
+              <div className="p-1.5">
                 <button
-                  onClick={() => navigate('/login')}
+                  onClick={handleSignOut}
                   className="w-full flex items-center gap-2 px-3.5 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors font-medium text-xs"
                 >
                   <SignOut size={15} />

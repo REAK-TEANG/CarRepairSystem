@@ -4,11 +4,12 @@ import { useToast } from '../context/ToastContext'
 
 const QUERY_KEY = ['inventory']
 
-export function useInventory() {
+export function useInventory(options = {}) {
   return useQuery({
     queryKey: QUERY_KEY,
     queryFn: () => inventoryService.getAll(),
     staleTime: 1000 * 60 * 5,
+    ...options,
   })
 }
 
@@ -147,5 +148,14 @@ export function useDeletePart() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY })
     },
+  })
+}
+
+export function useInventoryTransactions(options = {}) {
+  return useQuery({
+    queryKey: ['inventory_transactions'],
+    queryFn: () => inventoryService.getTransactions(),
+    staleTime: 1000 * 60 * 2,
+    ...options,
   })
 }

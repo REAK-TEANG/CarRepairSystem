@@ -69,6 +69,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
   }
 
   const isItemVisible = (item) => {
+    if (!user) return false
     if (user.role === 'admin') return true
     if (item.module === 'admin_dashboard') {
       return user.role === 'admin' || user.role === 'manager'
@@ -170,14 +171,14 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
           <div className="flex items-center gap-2.5 overflow-hidden">
             <div className="relative flex-shrink-0">
               <div className="w-8 h-8 rounded-xl bg-app-accent/15 border border-app-accent/30 flex items-center justify-center text-app-accent font-bold text-xs">
-                {user.name.split(' ').map((n) => n[0]).join('')}
+                {user?.name ? user.name.split(' ').map((n) => n[0]).join('') : '?'}
               </div>
               <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-[var(--sidebar-bg)]" />
             </div>
             <div className="text-xs truncate">
-              <p className="font-bold text-app-text leading-tight truncate">{user.name}</p>
+              <p className="font-bold text-app-text leading-tight truncate">{user?.name || ''}</p>
               <p className="text-[10px] text-app-muted font-medium uppercase tracking-wider">
-                {t(`roles.${user.role}`, user.roleTitle)}
+                {user ? t(`roles.${user.role}`, user.roleTitle) : ''}
               </p>
             </div>
           </div>

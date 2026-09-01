@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { MagnifyingGlass, Plus, PencilSimple, Trash, Eye, Phone, CheckCircle, User } from '@phosphor-icons/react'
+import { MagnifyingGlass, Plus, PencilSimple, Trash, Eye, CheckCircle } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useEmployees, useCreateEmployee, useUpdateEmployee, useToggleAttendance, useDeleteEmployee } from '../../hooks/useEmployees'
 import { useAuth } from '../../context/AuthContext'
-import { Modal, ImageUpload, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton } from '../../components/ui'
+import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton } from '../../components/ui'
 
 const attendanceFilters = ['All Attendance', 'Present', 'On Leave']
 

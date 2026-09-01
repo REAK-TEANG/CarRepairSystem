@@ -1,11 +1,23 @@
 import { useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, Navigate, useLocation } from 'react-router-dom'
 import Sidebar from '../components/layout/Sidebar'
 import TopBar from '../components/layout/TopBar'
+import { useAuth } from '../context/AuthContext'
+import { LoadingSpinner } from '../components/ui'
 
 export default function AppLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+  const { user, loading } = useAuth()
+  const location = useLocation()
+
+  if (loading) {
+    return <LoadingSpinner />
+  }
+
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--bg-canvas)] text-[var(--text-primary)] transition-colors duration-250 font-sans">

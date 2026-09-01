@@ -1,6 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { settingsService } from '../services/settingsService'
+import { authService } from '../services/authService'
+import { apiClient } from '../services/apiClient'
 
 export const ROLES = {
   ADMIN: 'admin',
@@ -17,7 +19,7 @@ export const ROLE_PROFILES = {
     name: 'Jane Doe',
     role: 'admin',
     roleTitle: 'System Administrator',
-    email: 'admin@workshop.com',
+    email: 'admin@carrepair.com',
     defaultRoute: '/admin/dashboard',
     badgeColor: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
   },
@@ -173,9 +175,18 @@ export const PERMISSIONS_MATRIX = DEFAULT_PERMISSIONS_MATRIX
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  // Load saved role or default to 'admin'
-  const [currentRole, setCurrentRole] = useState(() => {
-    return localStorage.getItem('demo_role') || ROLES.ADMIN
+  // Current user state
+  const [currentUser, setCurrentUser] = useState(() => {
+    const token = localStorage.getItem('auth_token')
+    const savedUser = localStorage.getItem('auth_user')
+    if (token && savedUser) {
+      try {
+        return JSON.parse(savedUser)
+      } catch {
+        // fallback
+      }
+    }
+    return null
   })
 
   // Dynamic permission matrix state
@@ -191,30 +202,145 @@ export function AuthProvider({ children }) {
     return DEFAULT_PERMISSIONS_MATRIX
   })
 
-  // Sync permissions matrix from backend database on initial mount
+  const [loading, setLoading] = useState(false)
+
+  // Validate or initialize session on mount
   useEffect(() => {
-    settingsService.getPermissionsMatrix().then((matrix) => {
-      if (matrix && typeof matrix === 'object') {
-        setPermissionsMatrix((prev) => ({ ...prev, ...matrix }))
-        localStorage.setItem('workshop_permissions_matrix', JSON.stringify(matrix))
-      }
-    }).catch(() => {
-      // ignore network errors on startup
-    })
+    const token = apiClient.getToken()
+    if (token) {
+      authService
+        .getMe()
+        .then((userData) => {
+          if (userData) {
+            const roleKey = (userData.role || 'admin').toLowerCase().replace(/\s+/g, '_')
+            const profileFallback = ROLE_PROFILES[roleKey] || ROLE_PROFILES.admin
+            const mergedUser = {
+              ...profileFallback,
+              ...userData,
+              role: roleKey,
+              badgeColor: profileFallback.badgeColor,
+              defaultRoute: profileFallback.defaultRoute,
+            }
+            setCurrentUser(mergedUser)
+            localStorage.setItem('auth_user', JSON.stringify(mergedUser))
+            localStorage.setItem('demo_role', roleKey)
+          } else {
+            authService.logout()
+            setCurrentUser(null)
+          }
+        })
+        .catch(() => {
+          // Token expired or invalid
+          authService.logout()
+          setCurrentUser(null)
+        })
+    }
+
+    // Sync permissions matrix from backend database on initial mount
+    settingsService
+      .getPermissionsMatrix()
+      .then((matrix) => {
+        if (matrix && typeof matrix === 'object') {
+          setPermissionsMatrix((prev) => ({ ...prev, ...matrix }))
+          localStorage.setItem('workshop_permissions_matrix', JSON.stringify(matrix))
+        }
+      })
+      .catch(() => {
+        // ignore network errors on startup
+      })
+
+    // Listen for session expiration events
+    const handleAuthExpired = () => {
+      authService.logout()
+      setCurrentUser(null)
+    }
+
+    window.addEventListener('auth:expired', handleAuthExpired)
+    return () => {
+      window.removeEventListener('auth:expired', handleAuthExpired)
+    }
   }, [])
 
-  const user = ROLE_PROFILES[currentRole] || ROLE_PROFILES.admin
+  // Login handler
+  const login = async (username, password) => {
+    setLoading(true)
+    // Clear any previous session first
+    authService.logout()
+    setCurrentUser(null)
 
-  const switchRole = (newRole) => {
-    if (ROLE_PROFILES[newRole]) {
-      setCurrentRole(newRole)
-      localStorage.setItem('demo_role', newRole)
+    try {
+      const res = await authService.login(username, password)
+      if (res?.user) {
+        const roleKey = (res.user.role || 'admin').toLowerCase().replace(/\s+/g, '_')
+        const profileFallback = ROLE_PROFILES[roleKey] || ROLE_PROFILES.admin
+        const mergedUser = {
+          ...profileFallback,
+          ...res.user,
+          role: roleKey,
+          badgeColor: profileFallback.badgeColor,
+          defaultRoute: profileFallback.defaultRoute,
+        }
+        setCurrentUser(mergedUser)
+        localStorage.setItem('auth_user', JSON.stringify(mergedUser))
+        localStorage.setItem('demo_role', roleKey)
+        return { success: true, user: mergedUser }
+      }
+      return { success: false, error: 'Login failed' }
+    } catch (err) {
+      return { success: false, error: err.message || 'Invalid username or password' }
+    } finally {
+      setLoading(false)
     }
   }
 
+  // Role Switching: Always logs out the previous session first, then logs in as the new role
+  const switchRole = useCallback(async (newRole) => {
+    setLoading(true)
+    // 1. Explicitly log out the active session first
+    authService.logout()
+    setCurrentUser(null)
+
+    // 2. Log in as the requested role
+    const cleanRole = (newRole || 'admin').toLowerCase().replace(/\s+/g, '_')
+    try {
+      const res = await authService.quickLogin(cleanRole)
+      if (res?.user) {
+        const profileFallback = ROLE_PROFILES[cleanRole] || ROLE_PROFILES.admin
+        const mergedUser = {
+          ...profileFallback,
+          ...res.user,
+          role: cleanRole,
+          badgeColor: profileFallback.badgeColor,
+          defaultRoute: profileFallback.defaultRoute,
+        }
+        setCurrentUser(mergedUser)
+        localStorage.setItem('auth_user', JSON.stringify(mergedUser))
+        localStorage.setItem('demo_role', cleanRole)
+        return mergedUser
+      }
+    } catch (err) {
+      console.error('Role login failed for:', cleanRole, err)
+      // Client-side fallback if server is unreachable
+      if (ROLE_PROFILES[cleanRole]) {
+        const fallbackUser = ROLE_PROFILES[cleanRole]
+        setCurrentUser(fallbackUser)
+        localStorage.setItem('auth_user', JSON.stringify(fallbackUser))
+        localStorage.setItem('demo_role', cleanRole)
+        return fallbackUser
+      }
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  // Logout handler
+  const logout = useCallback(() => {
+    authService.logout()
+    setCurrentUser(null)
+  }, [])
+
   // Save new full matrix
   const savePermissionsMatrix = async (newMatrix) => {
-    // Ensure admin permanently has full control on all modules
     const sanitizedMatrix = { ...newMatrix }
     Object.keys(sanitizedMatrix).forEach((mod) => {
       if (!sanitizedMatrix[mod]) sanitizedMatrix[mod] = {}
@@ -271,21 +397,26 @@ export function AuthProvider({ children }) {
 
   // Dynamic Permission evaluation helper
   const can = (moduleName, action = 'read') => {
+    if (!currentUser) return false
     // Admin always has 100% full system control
-    if (user.role === 'admin') return true
+    if (currentUser.role === 'admin') return true
 
     const modulePerms = permissionsMatrix[moduleName]
     if (!modulePerms) return false
-    const rolePerms = modulePerms[user.role] || []
+    const rolePerms = modulePerms[currentUser.role] || []
     return rolePerms.includes(action)
   }
 
   return (
     <AuthContext.Provider
       value={{
-        user,
-        role: user.role,
+        user: currentUser,
+        role: currentUser?.role || 'admin',
+        isAuthenticated: Boolean(currentUser),
+        loading,
+        login,
         switchRole,
+        logout,
         can,
         permissionsMatrix,
         updateRolePermission,
@@ -306,4 +437,3 @@ export function useAuth() {
   }
   return context
 }
-

@@ -1,10 +1,14 @@
 import { Router } from 'express'
 import { query } from '../db.js'
+import { authenticateToken, requirePermission, hashPassword } from '../middleware/auth.js'
 
 const router = Router()
 
+// All employee routes require a valid authenticated JWT
+router.use(authenticateToken)
+
 // GET all employees
-router.get('/', async (req, res) => {
+router.get('/', requirePermission('employees', 'read'), async (req, res) => {
   try {
     const rows = await query.all(`
       SELECT e.*, u.full_name, u.phone, u.email
@@ -24,28 +28,34 @@ router.get('/', async (req, res) => {
       baseSalary: r.salary ? `$${r.salary}/mo` : '$3,500/mo',
       attendanceToday: 'Present',
       status: r.employment_status || 'Active',
-      image: r.photo_url || ''
+      image: r.photo_url || '',
     }))
 
     res.json({ data: employees })
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    res.status(500).json({ error: 'Failed to fetch employees', message: err.message })
   }
 })
 
 // POST create employee
-router.post('/', async (req, res) => {
+router.post('/', requirePermission('employees', 'create'), async (req, res) => {
   try {
-    const { name, roleTitle, phone, email, baseSalary, status, specialization, experience, image, photoUrl } = req.body
+    const { name, roleTitle, phone, email, baseSalary, status, specialization, experience, image, photoUrl, password } = req.body
+    if (!name || !String(name).trim()) {
+      return res.status(400).json({ error: 'Employee name is required' })
+    }
+
     const countRow = await query.get('SELECT COUNT(*) AS cnt FROM employees')
     const empCode = `EMP-${String((parseInt(countRow?.cnt, 10) || 0) + 1).padStart(3, '0')}`
 
     const username = `emp_${Date.now()}`
+    const secureHash = await hashPassword(password || 'password123')
+
     const user = await query.get(
       `INSERT INTO users (username, email, password_hash, full_name, phone, role_id)
-       VALUES ($1, $2, $3, $4, $5, 2)
+       VALUES ($1, $2, $3, $4, $5, 4)
        RETURNING *`,
-      [username, email || `${username}@carrepair.com`, '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', name, phone || null]
+      [username, email || `${username}@carrepair.com`, secureHash, name.trim(), phone || null]
     )
 
     const salaryNum = parseFloat(String(baseSalary || '3500').replace(/[^0-9.]/g, '')) || 3500
@@ -85,17 +95,17 @@ router.post('/', async (req, res) => {
         baseSalary: `$${inserted.salary}/mo`,
         attendanceToday: 'Present',
         status: inserted.employment_status,
-        image: inserted.photo_url || ''
-      }
+        image: inserted.photo_url || '',
+      },
     })
   } catch (err) {
     console.error('[API Employee Create Error]:', err)
-    res.status(500).json({ error: err.message })
+    res.status(500).json({ error: 'Failed to create employee', message: err.message })
   }
 })
 
 // PUT update employee
-router.put('/:id', async (req, res) => {
+router.put('/:id', requirePermission('employees', 'update'), async (req, res) => {
   try {
     const { name, roleTitle, phone, email, baseSalary, status, image, photoUrl } = req.body
     const salaryNum = baseSalary ? parseFloat(String(baseSalary).replace(/[^0-9.]/g, '')) : null
@@ -133,6 +143,10 @@ router.put('/:id', async (req, res) => {
       }
     }
 
+    if (!emp) {
+      return res.status(404).json({ error: 'Employee not found' })
+    }
+
     if (emp?.user_id) {
       await query.run(
         `UPDATE users
@@ -157,32 +171,36 @@ router.put('/:id', async (req, res) => {
         baseSalary: `$${emp.salary}/mo`,
         attendanceToday: 'Present',
         status: emp.employment_status,
-        image: emp.photo_url || ''
-      }
+        image: emp.photo_url || '',
+      },
     })
   } catch (err) {
     console.error('[API Employee Update Error]:', err)
-    res.status(500).json({ error: err.message })
+    res.status(500).json({ error: 'Failed to update employee', message: err.message })
   }
 })
 
 // POST toggle attendance
-router.post('/:id/toggle-attendance', async (req, res) => {
+router.post('/:id/toggle-attendance', requirePermission('employees', 'update'), async (req, res) => {
   res.json({ success: true, message: 'Attendance toggled' })
 })
 
 // DELETE employee
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requirePermission('employees', 'delete'), async (req, res) => {
   try {
     const emp = await query.get('SELECT user_id FROM employees WHERE id = $1', [req.params.id])
+    if (!emp) {
+      return res.status(404).json({ error: 'Employee not found' })
+    }
+
     if (emp?.user_id) {
       await query.run('DELETE FROM users WHERE id = $1', [emp.user_id])
     } else {
       await query.run('DELETE FROM employees WHERE id = $1', [req.params.id])
     }
-    res.json({ success: true, message: 'Employee removed' })
+    res.json({ success: true, message: 'Employee removed successfully' })
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    res.status(500).json({ error: 'Failed to delete employee', message: err.message })
   }
 })
 

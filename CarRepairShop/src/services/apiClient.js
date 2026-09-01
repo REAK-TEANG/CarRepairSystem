@@ -1,12 +1,11 @@
 /**
  * Centralized API Client & Service Gateway
  *
- * Configured for RESTful communication with the backend API (Laravel Sanctum / Supabase).
- * Includes mock data fallback to allow immediate UI development and easy swapping to live API endpoints.
+ * Configured for secure RESTful communication with the backend API (JWT Bearer Auth).
+ * Automatically injects authorization headers and handles session expiration gracefully.
  */
 
 export const API_CONFIG = {
-  // Toggle this to TRUE when connecting to the live backend API
   USE_REAL_API: true,
   BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
   TIMEOUT: 10000,
@@ -19,6 +18,18 @@ class ApiClient {
 
   getToken() {
     return localStorage.getItem('auth_token') || ''
+  }
+
+  setToken(token) {
+    if (token) {
+      localStorage.setItem('auth_token', token)
+    } else {
+      localStorage.removeItem('auth_token')
+    }
+  }
+
+  clearToken() {
+    localStorage.removeItem('auth_token')
   }
 
   getHeaders(customHeaders = {}) {
@@ -46,9 +57,17 @@ class ApiClient {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-      const error = new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`)
+      const errorMsg = errorData.message || errorData.error || `HTTP ${response.status}: ${response.statusText}`
+      const error = new Error(errorMsg)
       error.status = response.status
       error.data = errorData
+
+      // Broadcast auth expiration or unauthorized access
+      if (response.status === 401 && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/quick-login')) {
+        this.clearToken()
+        window.dispatchEvent(new CustomEvent('auth:expired', { detail: { message: errorMsg } }))
+      }
+
       throw error
     }
 
@@ -61,15 +80,15 @@ class ApiClient {
   }
 
   post(endpoint, body, headers = {}) {
-    return this.request(endpoint, { method: 'POST', body: JSON.stringify(body), headers })
+    return this.request(endpoint, { method: 'POST', body: body ? JSON.stringify(body) : undefined, headers })
   }
 
   put(endpoint, body, headers = {}) {
-    return this.request(endpoint, { method: 'PUT', body: JSON.stringify(body), headers })
+    return this.request(endpoint, { method: 'PUT', body: body ? JSON.stringify(body) : undefined, headers })
   }
 
   patch(endpoint, body, headers = {}) {
-    return this.request(endpoint, { method: 'PATCH', body: JSON.stringify(body), headers })
+    return this.request(endpoint, { method: 'PATCH', body: body ? JSON.stringify(body) : undefined, headers })
   }
 
   delete(endpoint, headers = {}) {

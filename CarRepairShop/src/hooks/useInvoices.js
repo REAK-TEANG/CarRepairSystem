@@ -4,11 +4,12 @@ import { useToast } from '../context/ToastContext'
 
 const QUERY_KEY = ['invoices']
 
-export function useInvoices() {
+export function useInvoices(options = {}) {
   return useQuery({
     queryKey: QUERY_KEY,
     queryFn: () => invoiceService.getAll(),
     staleTime: 1000 * 60 * 5,
+    ...options,
   })
 }
 

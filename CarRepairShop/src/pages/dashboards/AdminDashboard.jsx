@@ -2,17 +2,13 @@ import {
   CurrencyDollar,
   Wrench,
   Users,
-  DotsThreeVertical,
   Phone,
   TrendUp,
-  CheckCircle,
   Package,
-  User,
   Plus,
   CalendarBlank,
   Receipt,
   ArrowUpRight,
-  ShieldCheck,
 } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -313,23 +309,29 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-between p-2.5 bg-app-hover rounded-xl border border-app-border/40">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-app-accent" />
-                    <span className="text-xs font-medium text-app-text">{t('repairJobs.workPerformed')} (60%)</span>
+                    <span className="text-xs font-medium text-app-text">
+                      {t('common.paid')} ({totalRevenue > 0 ? Math.round((totalPaid / totalRevenue) * 100) : 0}%)
+                    </span>
                   </div>
-                  <span className="text-xs font-bold text-app-accent tabular-nums">${(totalRevenue * 0.6).toFixed(2)}</span>
+                  <span className="text-xs font-bold text-app-accent tabular-nums">${totalPaid.toFixed(2)}</span>
                 </div>
                 <div className="flex items-center justify-between p-2.5 bg-app-hover rounded-xl border border-app-border/40">
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-app-accentLight" />
-                    <span className="text-xs font-medium text-app-text">{t('nav.inventory')} (30%)</span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                    <span className="text-xs font-medium text-app-text">
+                      {t('invoices.balanceDue')} ({totalRevenue > 0 ? Math.round((Math.max(0, totalRevenue - totalPaid) / totalRevenue) * 100) : 0}%)
+                    </span>
                   </div>
-                  <span className="text-xs font-bold text-app-accentLight tabular-nums">${(totalRevenue * 0.3).toFixed(2)}</span>
+                  <span className="text-xs font-bold text-amber-500 tabular-nums">${Math.max(0, totalRevenue - totalPaid).toFixed(2)}</span>
                 </div>
                 <div className="flex items-center justify-between p-2.5 bg-app-hover rounded-xl border border-app-border/40">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-sky-500" />
-                    <span className="text-xs font-medium text-app-text">{t('nav.services')} (10%)</span>
+                    <span className="text-xs font-medium text-app-text">{t('nav.inventory')} ({totalParts} {t('common.total')})</span>
                   </div>
-                  <span className="text-xs font-bold text-app-text tabular-nums">${(totalRevenue * 0.1).toFixed(2)}</span>
+                  <span className="text-xs font-bold text-app-text tabular-nums">
+                    ${inventory.reduce((sum, p) => sum + (Number(p.unitPrice) || 0) * (Number(p.stockQty) || 0), 0).toFixed(2)}
+                  </span>
                 </div>
               </div>
             </div>

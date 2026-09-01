@@ -1,9 +1,13 @@
+import bcrypt from 'bcryptjs';
 import { pool, query } from './db.js';
 
 async function seedData() {
-  console.log('🌱 Starting database seeding with realistic data...');
+  console.log('🌱 Starting database seeding with realistic data and secure bcrypt passwords...');
 
   try {
+    const passwordHash = await bcrypt.hash('password123', 10);
+    const adminPasswordHash = await bcrypt.hash('admin123', 10);
+
     // 1. Roles
     const roles = [
       ['Admin', 'Full system access and configuration'],
@@ -21,36 +25,76 @@ async function seedData() {
     }
     console.log('✅ Roles seeded');
 
-    // 2. Users & Employees (Mechanics, Service Advisors, Managers)
+    // Get live role ID mapping
+    const roleRows = await query.all('SELECT id, name FROM roles ORDER BY id ASC');
+    const roleMap = {};
+    roleRows.forEach((r) => {
+      roleMap[r.name.toLowerCase().replace(/\s+/g, '_')] = r.id;
+    });
+
+    const adminRoleId = roleMap['admin'] || 1;
+    const managerRoleId = roleMap['manager'] || 2;
+    const advisorRoleId = roleMap['service_advisor'] || 3;
+    const mechanicRoleId = roleMap['mechanic'] || 4;
+    const cashierRoleId = roleMap['cashier'] || 5;
+    const storekeeperRoleId = roleMap['storekeeper'] || 6;
+
+    // 2. Default Role User Accounts (for testing and direct login)
+    const roleUsers = [
+      { username: 'admin', email: 'admin@carrepair.com', hash: adminPasswordHash, name: 'System Administrator', roleId: adminRoleId, phone: '(555) 019-1000' },
+      { username: 'manager', email: 'manager@workshop.com', hash: passwordHash, name: 'Marcus Vance', roleId: managerRoleId, phone: '(555) 019-2000' },
+      { username: 'advisor', email: 'advisor@workshop.com', hash: passwordHash, name: 'Sarah Jenkins', roleId: advisorRoleId, phone: '(555) 019-3000' },
+      { username: 'mechanic', email: 'mike@workshop.com', hash: passwordHash, name: 'Mike Johnson', roleId: mechanicRoleId, phone: '(555) 019-4000' },
+      { username: 'cashier', email: 'cashier@workshop.com', hash: passwordHash, name: 'Emily Watson', roleId: cashierRoleId, phone: '(555) 019-5000' },
+      { username: 'storekeeper', email: 'store@workshop.com', hash: passwordHash, name: 'David Miller', roleId: storekeeperRoleId, phone: '(555) 019-6000' },
+    ];
+
+    for (const u of roleUsers) {
+      await query.run(
+        `INSERT INTO users (username, email, password_hash, full_name, phone, role_id, is_active)
+         VALUES ($1, $2, $3, $4, $5, $6, TRUE)
+         ON CONFLICT (username) DO UPDATE 
+         SET password_hash = EXCLUDED.password_hash, 
+             role_id = EXCLUDED.role_id,
+             full_name = EXCLUDED.full_name`,
+        [u.username, u.email, u.hash, u.name, u.phone, u.roleId]
+      );
+    }
+    console.log('✅ Core Role Accounts seeded with bcrypt hashes');
+
+    // 3. Named Employees
     const employeesData = [
-      { code: 'EMP-001', name: 'Jordan Hayes', email: 'jordan.h@workshop.com', phone: '(555) 111-2233', role: 'Mechanic', spec: 'Engine & Transmission', exp: 8, salary: 4500 },
-      { code: 'EMP-002', name: 'Elena Rostova', email: 'elena.r@workshop.com', phone: '(555) 222-3344', role: 'Mechanic', spec: 'Electrical & Diagnostics', exp: 6, salary: 4400 },
-      { code: 'EMP-003', name: 'Carlos Mendez', email: 'carlos.m@workshop.com', phone: '(555) 333-4455', role: 'Mechanic', spec: 'Brakes & Suspension', exp: 10, salary: 4800 },
-      { code: 'EMP-004', name: 'Liam Vance', email: 'liam.v@workshop.com', phone: '(555) 444-5566', role: 'Mechanic', spec: 'General Maintenance & Fluids', exp: 4, salary: 3600 },
-      { code: 'EMP-005', name: 'Daniel Craig', email: 'daniel.c@workshop.com', phone: '(555) 019-2001', role: 'Manager', spec: 'Workshop Operations', exp: 12, salary: 5800 },
-      { code: 'EMP-006', name: 'Kate Morrison', email: 'kate.m@workshop.com', phone: '(555) 019-2002', role: 'Service Advisor', spec: 'Customer Relations', exp: 5, salary: 4200 },
+      { code: 'EMP-001', name: 'Jordan Hayes', email: 'jordan.h@workshop.com', phone: '(555) 111-2233', role: 'Mechanic', roleId: mechanicRoleId, spec: 'Engine & Transmission', exp: 8, salary: 4500 },
+      { code: 'EMP-002', name: 'Elena Rostova', email: 'elena.r@workshop.com', phone: '(555) 222-3344', role: 'Mechanic', roleId: mechanicRoleId, spec: 'Electrical & Diagnostics', exp: 6, salary: 4400 },
+      { code: 'EMP-003', name: 'Carlos Mendez', email: 'carlos.m@workshop.com', phone: '(555) 333-4455', role: 'Mechanic', roleId: mechanicRoleId, spec: 'Brakes & Suspension', exp: 10, salary: 4800 },
+      { code: 'EMP-004', name: 'Liam Vance', email: 'liam.v@workshop.com', phone: '(555) 444-5566', role: 'Mechanic', roleId: mechanicRoleId, spec: 'General Maintenance & Fluids', exp: 4, salary: 3600 },
+      { code: 'EMP-005', name: 'Daniel Craig', email: 'daniel.c@workshop.com', phone: '(555) 019-2001', role: 'Manager', roleId: managerRoleId, spec: 'Workshop Operations', exp: 12, salary: 5800 },
+      { code: 'EMP-006', name: 'Kate Morrison', email: 'kate.m@workshop.com', phone: '(555) 019-2002', role: 'Service Advisor', roleId: advisorRoleId, spec: 'Customer Relations', exp: 5, salary: 4200 },
     ];
 
     for (const emp of employeesData) {
       const username = emp.name.toLowerCase().replace(/\s+/g, '_');
       const user = await query.get(
-        `INSERT INTO users (username, email, password_hash, full_name, phone, role_id)
-         VALUES ($1, $2, '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', $3, $4, 4)
-         ON CONFLICT (username) DO UPDATE SET full_name = EXCLUDED.full_name
+        `INSERT INTO users (username, email, password_hash, full_name, phone, role_id, is_active)
+         VALUES ($1, $2, $3, $4, $5, $6, TRUE)
+         ON CONFLICT (username) DO UPDATE 
+         SET full_name = EXCLUDED.full_name,
+             password_hash = EXCLUDED.password_hash,
+             role_id = EXCLUDED.role_id
          RETURNING id`,
-        [username, emp.email, emp.name, emp.phone]
+        [username, emp.email, passwordHash, emp.name, emp.phone, emp.roleId]
       );
 
       await query.run(
         `INSERT INTO employees (user_id, employee_code, position, specialization, experience_years, salary, employment_status)
          VALUES ($1, $2, $3, $4, $5, $6, 'Active')
-         ON CONFLICT (employee_code) DO UPDATE SET specialization = EXCLUDED.specialization, salary = EXCLUDED.salary`,
+         ON CONFLICT (employee_code) DO UPDATE SET specialization = EXCLUDED.specialization, salary = EXCLUDED.salary, position = EXCLUDED.position`,
         [user.id, emp.code, emp.role, emp.spec, emp.exp, emp.salary]
       );
     }
     console.log('✅ Employees & Mechanics seeded');
 
-    // 3. Customers
+    // 4. Customers
     const customers = [
       ['CUST-001', 'Alex Morgan', '(555) 234-5678', 'alex.m@example.com', '124 Maple Dr, Tech City', 'VIP customer, prefers OEM parts only.'],
       ['CUST-002', 'Sarah Jenkins', '(555) 876-5432', 'sarah.j@example.com', '789 Oak Ave, Springfield', 'Corporate fleet manager.'],
@@ -76,7 +120,7 @@ async function seedData() {
     customerRows.forEach(c => { custMap[c.customer_code] = c.id; });
     const fallbackCustId = customerRows[0]?.id || 1;
 
-    // 4. Vehicles
+    // 5. Vehicles
     const vehicles = [
       ['CUST-001', 'ABC-1234', '1HGCR2F83HA001234', 'Toyota', 'Camry', 2022, 'Midnight Blue', 'Gasoline', 34500, 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=600&auto=format&fit=crop&q=80', 'Regular 5k mile service schedule.'],
       ['CUST-002', 'XYZ-5678', 'WBA3A5C58DF105678', 'BMW', '330i', 2021, 'Alpine White', 'Gasoline', 28000, 'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&auto=format&fit=crop&q=80', 'Requires synthetic 0W-20 oil.'],
@@ -98,7 +142,7 @@ async function seedData() {
     }
     console.log('✅ Vehicles seeded');
 
-    // 5. Services Catalog
+    // 6. Services Catalog
     const services = [
       ['Full Synthetic Oil & Filter Service', 'Drain and refill with premium synthetic motor oil, replace OEM filter with multi-point inspection.', 89.99, 1.0],
       ['Front & Rear Brake Pad Replacement', 'Install premium ceramic brake pads and inspect brake calipers, rotors, and brake fluid lines.', 249.99, 2.5],
@@ -120,7 +164,7 @@ async function seedData() {
     }
     console.log('✅ Services catalog seeded');
 
-    // 6. Suppliers
+    // 7. Suppliers
     const suppliers = [
       ['Brembo OEM Distribution', 'Marco Rossi', '(555) 999-0011', 'orders@brembo-supply.com', '88 Performance Way, Los Angeles, CA'],
       ['Global Lubricants Corp', 'Tom Hardy', '(555) 888-9900', 'sales@globallube.com', '45 Refinery Way, Houston, TX'],
@@ -142,7 +186,7 @@ async function seedData() {
     const supplierRows = await query.all('SELECT id FROM suppliers ORDER BY id ASC');
     const sId = supplierRows[0]?.id || 1;
 
-    // 7. Spare Parts
+    // 8. Spare Parts
     const parts = [
       ['BP-7821', 'Ceramic Front Brake Pads', 'Brakes', 'Brembo', 64.99, 24, 8, sId, 'Shelf A-01'],
       ['BR-3321', 'Vented Brake Rotors (Pair)', 'Brakes', 'Brembo', 145.00, 12, 6, sId, 'Shelf A-04'],
@@ -187,7 +231,7 @@ async function seedData() {
     const m3 = empRows[2]?.id || m1;
     const m4 = empRows[3]?.id || m1;
 
-    // 8. Appointments
+    // 9. Appointments
     const appointments = [
       ['APT-2026-001', c1, v1, m1, '2026-08-24', '09:00', 'Confirmed', 'Customer requested multi-point safety inspection before road trip.'],
       ['APT-2026-002', c2, v2, m3, '2026-08-24', '11:00', 'Scheduled', 'Squeaking noise when applying brakes at low speeds.'],
@@ -212,7 +256,7 @@ async function seedData() {
     const a3 = aptRows[2]?.id || null;
     const a4 = aptRows[3]?.id || null;
 
-    // 9. Repair Orders
+    // 10. Repair Orders
     const repairOrders = [
       ['RO-2026-0041', a1, c1, v1, m1, 'Engine knocking noise at idle', 'Worn serpentine belt tensioner pulley and cylinder 2 misfire.', 420.00, 420.00, 'Repairing', 'Parts pulled from Shelf C-04.'],
       ['RO-2026-0042', a2, c2, v2, m3, 'Brake squeal and steering shudder during deceleration', 'Front rotors warped beyond spec (0.015 runout), pads at 2mm.', 380.00, 0.00, 'Waiting for Parts', 'Waiting on Brembo OEM rotors delivery.'],
@@ -232,7 +276,7 @@ async function seedData() {
 
     const roRows = await query.all('SELECT id, customer_id FROM repair_orders ORDER BY id ASC');
 
-    // 10. Invoices
+    // 11. Invoices
     if (roRows.length >= 4) {
       const invoices = [
         ['INV-2026-001', roRows[0].id, roRows[0].customer_id, 420.00, 420.00, 0.00, 'Paid', '2026-08-20', '2026-08-27'],
@@ -252,7 +296,7 @@ async function seedData() {
       console.log('✅ Invoices seeded');
     }
 
-    console.log('\n🎉 ALL TABLES POPULATED WITH SAMPLE DATA SUCCESSFULLY!');
+    console.log('\n🎉 ALL TABLES POPULATED WITH SAMPLE DATA & BCRYPT HASHES SUCCESSFULLY!');
     process.exit(0);
   } catch (err) {
     console.error('❌ Seeding failed:', err);

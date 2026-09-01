@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+CarRepairShop/node_modules/
+server/node_modules/
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+server/.env
+CarRepairShop/.env
+
+# Build outputs
+dist/
+CarRepairShop/dist/
+build/
+dist-ssr/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Editor & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

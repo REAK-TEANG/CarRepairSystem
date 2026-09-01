@@ -1,10 +1,14 @@
 import { Router } from 'express'
 import { query } from '../db.js'
+import { authenticateToken, requirePermission } from '../middleware/auth.js'
 
 const router = Router()
 
+// All appointment routes require a valid authenticated JWT
+router.use(authenticateToken)
+
 // GET all appointments
-router.get('/', async (req, res) => {
+router.get('/', requirePermission('appointments', 'read'), async (req, res) => {
   try {
     const rows = await query.all(`
       SELECT a.*, 
@@ -33,17 +37,17 @@ router.get('/', async (req, res) => {
       date: r.scheduled_date ? new Date(r.scheduled_date).toISOString().split('T')[0] : '',
       time: r.scheduled_time || '09:00',
       status: r.status || 'Scheduled',
-      notes: r.notes || ''
+      notes: r.notes || '',
     }))
 
     res.json({ data: appointments })
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    res.status(500).json({ error: 'Failed to fetch appointments', message: err.message })
   }
 })
 
 // POST create appointment
-router.post('/', async (req, res) => {
+router.post('/', requirePermission('appointments', 'create'), async (req, res) => {
   try {
     const { customerId, vehicleId, mechanicId, date, time, status, notes } = req.body
     const countRow = await query.get('SELECT COUNT(*) AS cnt FROM appointments')
@@ -61,7 +65,7 @@ router.post('/', async (req, res) => {
         date || new Date().toISOString().split('T')[0],
         time || '09:00',
         status || 'Scheduled',
-        notes || null
+        notes || null,
       ]
     )
 
@@ -82,17 +86,17 @@ router.post('/', async (req, res) => {
         date: inserted.scheduled_date,
         time: inserted.scheduled_time,
         status: inserted.status,
-        notes: inserted.notes
-      }
+        notes: inserted.notes,
+      },
     })
   } catch (err) {
     console.error('[API Appointment Create Error]:', err)
-    res.status(500).json({ error: err.message })
+    res.status(500).json({ error: 'Failed to create appointment', message: err.message })
   }
 })
 
 // PUT update appointment
-router.put('/:id', async (req, res) => {
+router.put('/:id', requirePermission('appointments', 'update'), async (req, res) => {
   try {
     const { status, mechanicId, date, time, notes } = req.body
 
@@ -108,6 +112,10 @@ router.put('/:id', async (req, res) => {
        RETURNING *`,
       [status, mechanicId, date, time, notes, req.params.id]
     )
+
+    if (!updated) {
+      return res.status(404).json({ error: 'Appointment not found' })
+    }
 
     const customer = await query.get('SELECT full_name FROM customers WHERE id = $1', [updated.customer_id])
     const vehicle = await query.get('SELECT vehicle_number, brand, model FROM vehicles WHERE id = $1', [updated.vehicle_id])
@@ -126,35 +134,43 @@ router.put('/:id', async (req, res) => {
         date: updated.scheduled_date,
         time: updated.scheduled_time,
         status: updated.status,
-        notes: updated.notes
-      }
+        notes: updated.notes,
+      },
     })
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    res.status(500).json({ error: 'Failed to update appointment', message: err.message })
   }
 })
 
 // PATCH update status
-router.patch('/:id/status', async (req, res) => {
+router.patch('/:id/status', requirePermission('appointments', 'update'), async (req, res) => {
   try {
     const { status } = req.body
     const updated = await query.get(
       `UPDATE appointments SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
       [status, req.params.id]
     )
+    if (!updated) {
+      return res.status(404).json({ error: 'Appointment not found' })
+    }
     res.json({ data: updated })
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    res.status(500).json({ error: 'Failed to update status', message: err.message })
   }
 })
 
 // DELETE cancel appointment
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requirePermission('appointments', 'delete'), async (req, res) => {
   try {
+    const exists = await query.get('SELECT id FROM appointments WHERE id = $1', [req.params.id])
+    if (!exists) {
+      return res.status(404).json({ error: 'Appointment not found' })
+    }
+
     await query.run(`UPDATE appointments SET status = 'Cancelled', updated_at = NOW() WHERE id = $1`, [req.params.id])
-    res.json({ success: true, message: 'Appointment cancelled' })
+    res.json({ success: true, message: 'Appointment cancelled successfully' })
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    res.status(500).json({ error: 'Failed to cancel appointment', message: err.message })
   }
 })
 

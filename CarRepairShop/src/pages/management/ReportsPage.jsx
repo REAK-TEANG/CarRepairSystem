@@ -6,7 +6,7 @@ import { useRepairJobs } from '../../hooks/useRepairJobs'
 import { useInventory } from '../../hooks/useInventory'
 import { useCustomers } from '../../hooks/useCustomers'
 import { useEmployees } from '../../hooks/useEmployees'
-import { EmptyState, CardSkeleton } from '../../components/ui'
+import { CardSkeleton } from '../../components/ui'
 
 export default function ReportsPage() {
   const { t } = useTranslation()
