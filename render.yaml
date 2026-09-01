@@ -11,17 +11,17 @@ services:
       - key: NODE_ENV
         value: production
       - key: PORT
-        value: 10000
+        value: "10000"
       - key: DB_HOST
-        placeholder: "Your Supabase Host (e.g. db.xxxx.supabase.co)"
+        sync: false
       - key: DB_PORT
-        value: 5432
+        value: "5432"
       - key: DB_NAME
         value: postgres
       - key: DB_USER
         value: postgres
       - key: DB_PASSWORD
-        placeholder: "Your Supabase Database Password"
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: CORS_ORIGIN
