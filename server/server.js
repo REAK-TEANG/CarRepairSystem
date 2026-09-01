@@ -90,6 +90,16 @@ app.use((req, res, next) => {
   next()
 })
 
+// Root welcome endpoint
+app.get('/', (req, res) => {
+  res.json({
+    message: '🚗 Car Repair Management Backend API is running successfully!',
+    status: 'online',
+    healthCheck: '/api/health',
+    timestamp: new Date().toISOString(),
+  })
+})
+
 // Health check endpoint with live DB ping
 app.get('/api/health', async (req, res) => {
   const start = Date.now()
