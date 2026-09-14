@@ -19,7 +19,7 @@ export function getApiBaseUrl() {
   }
 
   // In local development, use localhost
-  return (envUrl || 'http://localhost:5000/api').replace(/\/+$/, '')
+  return (envUrl || 'http://localhost:8000/api').replace(/\/+$/, '')
 }
 
 export const API_CONFIG = {
@@ -67,7 +67,22 @@ class ApiClient {
     }
 
     const baseUrl = this.config.BASE_URL
-    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`
+    let cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`
+    
+    if (options.params) {
+      const searchParams = new URLSearchParams()
+      Object.entries(options.params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          searchParams.append(key, value)
+        }
+      })
+      const qs = searchParams.toString()
+      if (qs) {
+        cleanEndpoint += (cleanEndpoint.includes('?') ? '&' : '?') + qs
+      }
+      delete options.params
+    }
+
     const url = `${baseUrl}${cleanEndpoint}`
     const headers = this.getHeaders(options.headers)
 
@@ -96,24 +111,24 @@ class ApiClient {
     return resData && resData.data !== undefined ? resData.data : resData
   }
 
-  get(endpoint, headers = {}) {
-    return this.request(endpoint, { method: 'GET', headers })
+  get(endpoint, config = {}) {
+    return this.request(endpoint, { method: 'GET', ...config })
   }
 
-  post(endpoint, body, headers = {}) {
-    return this.request(endpoint, { method: 'POST', body: body ? JSON.stringify(body) : undefined, headers })
+  post(endpoint, body, config = {}) {
+    return this.request(endpoint, { method: 'POST', body: body ? JSON.stringify(body) : undefined, ...config })
   }
 
-  put(endpoint, body, headers = {}) {
-    return this.request(endpoint, { method: 'PUT', body: body ? JSON.stringify(body) : undefined, headers })
+  put(endpoint, body, config = {}) {
+    return this.request(endpoint, { method: 'PUT', body: body ? JSON.stringify(body) : undefined, ...config })
   }
 
-  patch(endpoint, body, headers = {}) {
-    return this.request(endpoint, { method: 'PATCH', body: body ? JSON.stringify(body) : undefined, headers })
+  patch(endpoint, body, config = {}) {
+    return this.request(endpoint, { method: 'PATCH', body: body ? JSON.stringify(body) : undefined, ...config })
   }
 
-  delete(endpoint, headers = {}) {
-    return this.request(endpoint, { method: 'DELETE', headers })
+  delete(endpoint, config = {}) {
+    return this.request(endpoint, { method: 'DELETE', ...config })
   }
 }
 

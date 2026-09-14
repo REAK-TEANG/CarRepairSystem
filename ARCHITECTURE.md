@@ -39,9 +39,9 @@
                                         │ (50MB payload limit for high-res photos)
                                         ▼
 ┌──────────────────────────────────────────────────────────────────────────────────┐
-│                             NODE.JS BACKEND SERVER (`server/`)                   │
+│                             PURE PHP BACKEND API (`api/`)                        │
 │                                                                                  │
-│   Express.js │ CORS │ pg (node-postgres Pool) │ Auto-Migration Self-Healing      │
+│   Vanilla PHP 8.3 │ PDO (PostgreSQL) │ Custom JWT Auth │ Front Controller        │
 │                                                                                  │
 │   ┌──────────────────────────────────────────────────────────────────────────┐   │
 │   │             Modular REST API Routers (`server/routes/`)                  │   │
@@ -75,14 +75,14 @@
 | **Notifications** | Custom Context | React Context | Non-intrusive micro-toasts for real-time CRUD feedback |
 | **Class Composition** | `clsx` | Latest | Conditional and dynamic class merging |
 
-### Backend (Server API — Node.js & PostgreSQL)
+### Backend (Server API — Pure PHP & PostgreSQL)
 
 | Concern | Technology | Purpose |
 |---|---|---|
-| **API Server Engine** | Express.js (Node.js) | RESTful API endpoints, request routing, JSON body parsing (50MB limit) |
-| **Database Client** | `pg` (node-postgres) | Connection pool (`pg.Pool`), transaction handling, parameterised queries |
-| **Auto-Migration** | Self-Healing Schema (`db.js`) | Startup verification and auto-migration of missing columns (`photo_url TEXT`) |
-| **Relational Database** | PostgreSQL / pgAdmin | Relational persistence (`schema_postgres.sql` / `schema_supabase.sql`) |
+| **API Server Engine** | Vanilla PHP 8.3 | Front Controller routing, JSON request parsing, and response formatting |
+| **Database Client** | PHP `PDO` (pdo_pgsql) | Secure database connections using Prepared Statements |
+| **Authentication** | Custom PHP JWT | Pure PHP HMAC SHA256 implementation for signing and verifying tokens |
+| **Relational Database** | PostgreSQL / pgAdmin | Relational persistence |
 
 ---
 
@@ -233,12 +233,12 @@ All data operations are decoupled through the service layer in `CarRepairShop/sr
   - Located in [**`apiClient.js`**](file:///D:/carrepairsystem/CarRepairShop/src/services/apiClient.js#L9):
     ```javascript
     export const API_CONFIG = {
-      BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
-      USE_REAL_API: true, // Connects to Node.js Express backend
+      BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
+      USE_REAL_API: true, // Connects to PHP backend
     }
     ```
 - **Seamless Database Synchronization**:
-  - When `USE_REAL_API: true` is enabled, all query and mutation hooks send standard RESTful HTTP requests (`GET`, `POST`, `PUT`, `DELETE`) to the Express backend while keeping all optimistic UI benefits intact.
+  - When `USE_REAL_API: true` is enabled, all query and mutation hooks send standard RESTful HTTP requests (`GET`, `POST`, `PUT`, `DELETE`) to the PHP backend while keeping all optimistic UI benefits intact.
 
 ---
 
@@ -266,9 +266,9 @@ The database schema is defined in [`database/schema_postgres.sql`](file:///d:/Ca
 ## 8. Development & Verification Commands
 
 ```bash
-# 1. Start backend server (Express + PostgreSQL)
-cd D:\CarRepairSystem\server
-npm run dev
+# 1. Start backend server (Pure PHP Built-in Server)
+cd D:\CarRepairSystem
+php -S localhost:8000 -t api
 
 # 2. Start frontend development server (Vite)
 cd D:\CarRepairSystem\CarRepairShop
@@ -280,5 +280,5 @@ npm run build
 
 ---
 
-*Last updated: August 24, 2026 — Architecture, Node.js + PostgreSQL Backend Integration, and Design System Alignment.*
+*Last updated: September 14, 2026 — Architecture updated to feature React JSX Frontend with a Pure PHP + PostgreSQL Backend.*
 
