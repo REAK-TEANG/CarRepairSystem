@@ -22,11 +22,9 @@ function loadEnv($path) {
     }
 }
 
-// Load env from the root directory if exists (fallback to server/.env during transition)
+// Load env from the root directory if exists
 if (file_exists(__DIR__ . '/../../.env')) {
     loadEnv(__DIR__ . '/../../.env');
-} else if (file_exists(__DIR__ . '/../../server/.env')) {
-    loadEnv(__DIR__ . '/../../server/.env');
 }
 
 $host = getenv('DB_HOST') ?: 'localhost';

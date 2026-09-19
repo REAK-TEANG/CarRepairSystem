@@ -35,7 +35,7 @@
 │   │     Dynamic API Switch (`USE_REAL_API`) · Mock Fallback · RESTful Endpoints   │
 │   └───────────────────────────────────┬──────────────────────────────────────┘   │
 └───────────────────────────────────────┼──────────────────────────────────────────┘
-                                        │ RESTful JSON over HTTP (Port 5000)
+                                        │ RESTful JSON over HTTP (Port 8000)
                                         │ (50MB payload limit for high-res photos)
                                         ▼
 ┌──────────────────────────────────────────────────────────────────────────────────┐
@@ -44,7 +44,7 @@
 │   Vanilla PHP 8.3 │ PDO (PostgreSQL) │ Custom JWT Auth │ Front Controller        │
 │                                                                                  │
 │   ┌──────────────────────────────────────────────────────────────────────────┐   │
-│   │             Modular REST API Routers (`server/routes/`)                  │   │
+│   │             Modular REST API Routers (`api/routes/`)                     │   │
 │   │   /api/auth       /api/appointments   /api/repair-jobs    /api/customers │   │
 │   │   /api/vehicles   /api/inventory      /api/invoices       /api/employees │   │
 │   │   /api/mechanics  /api/services       /api/suppliers      /api/reports   │   │
@@ -173,11 +173,41 @@ CarRepairShop/
 
 ---
 
-## 4. Role-Based Access Control (RBAC) Architecture
+## 4. Backend Architecture & Directory Layout
+
+The backend codebase in `api/` follows a **Modular Front-Controller File Architecture** using pure PHP, avoiding complex frameworks for lightweight performance.
+
+```
+api/
+├── config/
+│   └── db.php                  # Database connection and queries setup (PDO)
+├── routes/                     # Domain-Driven API Routers
+│   ├── appointments.php
+│   ├── auth.php
+│   ├── customers.php
+│   ├── employees.php
+│   ├── inventory.php
+│   ├── invoices.php
+│   ├── mechanics.php
+│   ├── repairJobs.php
+│   ├── reports.php
+│   ├── serviceReminders.php
+│   ├── services.php
+│   ├── settings.php
+│   ├── suppliers.php
+│   └── vehicles.php
+├── utils/
+│   └── jwt.php                 # Custom PHP JWT implementation for auth
+└── index.php                   # Front Controller: unified API entry point and global routing
+```
+
+---
+
+## 5. Role-Based Access Control (RBAC) Architecture
 
 The system enforces access control according to [`rbac_roles_permissions.md`](file:///d:/CarRepairSystem/rbac_roles_permissions.md) across **6 distinct roles**:
 
-### 4.1 System Roles Summary
+### 5.1 System Roles Summary
 
 | Role ID | Role Code | Role Name | Primary Domain | Default Home Route |
 |:---:|:---|:---|:---|:---|
@@ -188,7 +218,7 @@ The system enforces access control according to [`rbac_roles_permissions.md`](fi
 | **5** | `cashier` | Cashier | Invoicing, payment collection, cash receipts | `/invoices` |
 | **6** | `storekeeper` | Inventory Manager | Spare parts, stock-in/out, supplier orders | `/inventory` |
 
-### 4.2 Three-Tier RBAC Enforcement
+### 5.2 Three-Tier RBAC Enforcement
 
 1. **Client Route Guard ([`ProtectedRoute.jsx`](file:///D:/carrepairsystem/CarRepairShop/src/components/auth/ProtectedRoute.jsx))**:
    - Compares the active `user.role` against `allowedRoles`.
@@ -201,7 +231,7 @@ The system enforces access control according to [`rbac_roles_permissions.md`](fi
 
 ---
 
-## 5. State Management & Optimistic UI Strategy
+## 6. State Management & Optimistic UI Strategy
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
@@ -225,7 +255,7 @@ The system enforces access control according to [`rbac_roles_permissions.md`](fi
 
 ---
 
-## 6. API Integration & Real Data Room
+## 7. API Integration & Real Data Room
 
 All data operations are decoupled through the service layer in `CarRepairShop/src/services/`.
 
@@ -242,7 +272,7 @@ All data operations are decoupled through the service layer in `CarRepairShop/sr
 
 ---
 
-## 7. Database Entity Mapping
+## 8. Database Entity Mapping
 
 The database schema is defined in [`database/schema_postgres.sql`](file:///d:/CarRepairSystem/database/schema_postgres.sql) and [`database/schema_supabase.sql`](file:///d:/CarRepairSystem/database/schema_supabase.sql):
 
@@ -263,7 +293,7 @@ The database schema is defined in [`database/schema_postgres.sql`](file:///d:/Ca
 
 ---
 
-## 8. Development & Verification Commands
+## 9. Development & Verification Commands
 
 ```bash
 # 1. Start backend server (Pure PHP Built-in Server)

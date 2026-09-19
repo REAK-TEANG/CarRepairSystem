@@ -145,6 +145,6 @@ Buttons for actions restricted to certain roles (e.g. `Add Staff`, `Delete Custo
 
 ## 8. Backend & API Conventions
 
-* **Payload Limits:** Express configured with `express.json({ limit: '50mb' })` and `express.urlencoded({ limit: '50mb', extended: true })` to support image uploads.
-* **Database Resiliency:** `photo_url TEXT` auto-migrated on server startup in `server/db.js` for both `vehicles` and `employees` tables.
+* **Payload Limits:** PHP configured with `post_max_size = 50M` and `upload_max_filesize = 50M` to support high-res image uploads.
+* **Database Resiliency:** `photo_url TEXT` defined in PostgreSQL schema for both `vehicles` and `employees` tables.
 * **Optimistic UI:** React Query mutations use optimistic cache updates (`onMutate`) with automatic rollback (`onError`) and cache invalidation (`onSettled`) for instantaneous UI responsiveness.

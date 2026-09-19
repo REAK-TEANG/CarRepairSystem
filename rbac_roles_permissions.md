@@ -55,6 +55,7 @@ Legend:
 - **Scope:** Unrestricted system access across all 16 modules.
 - **Key Capabilities:**
   - Create, modify, or deactivate user accounts and assign roles.
+  - Configure system-wide RBAC permissions and capabilities.
   - Configure global workshop parameters (tax rates, currency, business hours, workshop info).
   - Perform database backups, restores, and audit log reviews.
   - Full CRUD on all data entities (Customers, Vehicles, Repair Orders, Inventory, Financials).
@@ -138,8 +139,8 @@ Legend:
 2. **Dynamic UI Element Pruning:** Buttons (e.g., "Delete Customer", "Add Service", "Process Refund") must check `user.role` before rendering.
 3. **Sidebar Filtering:** Navigation links are filtered at render time using `filteredNav = navLinks.filter(item => item.roles.includes(user.role))`.
 
-### 5.2 Backend Control Layer (Laravel Sanctum & Middleware)
-1. **API Route Guards:** Every API endpoint must be protected by `auth:sanctum` middleware and a custom `role:<roles>` policy middleware.
+### 5.2 Backend Control Layer (Custom PHP JWT & Front-Controller)
+1. **API Route Guards:** Every API endpoint must be protected by the JWT authentication middleware and a custom `role:<roles>` policy verification in the PHP backend.
 2. **Data Scoping:** 
    - Mechanics fetching `/api/repair-orders` receive **only** orders assigned to their `employee_id` unless requested by `admin`/`manager`/`service_advisor`.
    - Cashiers fetching `/api/invoices` receive financial summaries, but cannot view technical mechanic notes.
