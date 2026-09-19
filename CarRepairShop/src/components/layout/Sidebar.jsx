@@ -1,7 +1,8 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../../context/AuthContext'
-import Logo from '../ui/Logo'
+import { useAuth } from '@/context/AuthContext'
+import { Button } from '@/components/ui/button'
+import Logo from '@/components/ui/Logo'
 import {
   SquaresFour,
   Users,
@@ -103,12 +104,14 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
 
         {/* Mobile close button */}
         {mobileOpen && (
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onCloseMobile}
-            className="p-1.5 rounded-lg text-app-muted hover:bg-[var(--sidebar-hover)] hover:text-app-text lg:hidden"
+            className="h-8 w-8 text-muted-foreground lg:hidden"
           >
             <X size={18} weight="bold" />
-          </button>
+          </Button>
         )}
       </div>
 
@@ -183,13 +186,15 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
             </div>
           </div>
         )}
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={onToggle}
-          className="p-2 rounded-xl text-app-muted hover:bg-[var(--sidebar-hover)] hover:text-app-text transition-colors flex-shrink-0 hidden lg:block"
+          className="h-8 w-8 text-muted-foreground hidden lg:flex shrink-0"
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? <CaretRight size={16} weight="bold" /> : <CaretLeft size={16} weight="bold" />}
-        </button>
+        </Button>
       </div>
     </aside>
   )

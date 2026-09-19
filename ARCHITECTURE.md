@@ -175,13 +175,45 @@ CarRepairShop/
 
 ## 4. Backend Architecture & Directory Layout
 
-The backend codebase in `api/` follows a **Modular Front-Controller File Architecture** using pure PHP, avoiding complex frameworks for lightweight performance.
+The backend codebase in `api/` follows a clean **MVC (Model-View-Controller)** architecture using pure Vanilla PHP 8.3, with clear separation of responsibilities across three layers.
 
 ```
 api/
 ├── config/
-│   └── db.php                  # Database connection and queries setup (PDO)
-├── routes/                     # Domain-Driven API Routers
+│   └── db.php                      # Database connection (PDO) & global query helpers
+├── middleware/
+│   └── AuthMiddleware.php          # JWT Bearer token validation & role enforcement
+├── models/                         # DATA LAYER — all DB queries live here only
+│   ├── AppointmentModel.php
+│   ├── AuthModel.php
+│   ├── CustomerModel.php
+│   ├── EmployeeModel.php
+│   ├── InventoryModel.php
+│   ├── InvoiceModel.php
+│   ├── MechanicModel.php
+│   ├── RepairJobModel.php          # Includes autoStockOut() business logic
+│   ├── ReportModel.php
+│   ├── ServiceModel.php
+│   ├── ServiceReminderModel.php
+│   ├── SettingsModel.php
+│   ├── SupplierModel.php
+│   └── VehicleModel.php
+├── controllers/                    # CONTROLLER LAYER — HTTP request/response only
+│   ├── AppointmentController.php
+│   ├── AuthController.php
+│   ├── CustomerController.php
+│   ├── EmployeeController.php
+│   ├── InventoryController.php
+│   ├── InvoiceController.php
+│   ├── MechanicController.php
+│   ├── RepairJobController.php
+│   ├── ReportController.php
+│   ├── ServiceController.php
+│   ├── ServiceReminderController.php
+│   ├── SettingsController.php
+│   ├── SupplierController.php
+│   └── VehicleController.php
+├── routes/                         # THIN ROUTERS — URL dispatch only (≤ 20 lines each)
 │   ├── appointments.php
 │   ├── auth.php
 │   ├── customers.php
@@ -197,8 +229,20 @@ api/
 │   ├── suppliers.php
 │   └── vehicles.php
 ├── utils/
-│   └── jwt.php                 # Custom PHP JWT implementation for auth
-└── index.php                   # Front Controller: unified API entry point and global routing
+│   └── jwt.php                     # Custom PHP HMAC-SHA256 JWT implementation
+└── index.php                       # Front Controller: boots middleware, dispatches to routes
+```
+
+### MVC Request Flow
+
+```
+HTTP Request
+    → index.php (Front Controller)
+    → AuthMiddleware::requireAuth()  (validates JWT)
+    → routes/*.php (thin router, ≤ 20 lines)
+    → Controller method (validates input, coordinates)
+    → Model static method (executes SQL, formats result)
+    → JSON Response
 ```
 
 ---

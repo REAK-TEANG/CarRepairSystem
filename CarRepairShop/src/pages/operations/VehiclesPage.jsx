@@ -26,14 +26,14 @@ import {
   FileText,
 } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
-import { useVehicles, useCreateVehicle, useUpdateVehicle, useDeleteVehicle } from '../../hooks/useVehicles'
-import { useCustomers } from '../../hooks/useCustomers'
-import { useRepairJobs, useCreateRepairJob } from '../../hooks/useRepairJobs'
-import { useMechanics } from '../../hooks/useMechanics'
-import { useServicesCatalog } from '../../hooks/useServicesCatalog'
-import { useAuth } from '../../context/AuthContext'
-import { useToast } from '../../context/ToastContext'
-import { Modal, ImageUpload, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, StatusBadge } from '../../components/ui'
+import { useVehicles, useCreateVehicle, useUpdateVehicle, useDeleteVehicle } from '@/hooks/useVehicles'
+import { useCustomers } from '@/hooks/useCustomers'
+import { useRepairJobs, useCreateRepairJob } from '@/hooks/useRepairJobs'
+import { useMechanics } from '@/hooks/useMechanics'
+import { useServicesCatalog } from '@/hooks/useServicesCatalog'
+import { useAuth } from '@/context/AuthContext'
+import { useToast } from '@/context/ToastContext'
+import { Modal, ImageUpload, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, StatusBadge } from '@/components/ui'
 
 const fuelOptions = ['All', 'Petrol', 'Diesel', 'Hybrid', 'Electric']
 

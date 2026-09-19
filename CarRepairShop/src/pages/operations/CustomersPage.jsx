@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { MagnifyingGlass, Plus, PencilSimple, Trash, Eye, MapPin, User } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
-import { useCustomers, useCreateCustomer, useUpdateCustomer, useDeleteCustomer } from '../../hooks/useCustomers'
-import { useAuth } from '../../context/AuthContext'
-import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton } from '../../components/ui'
+import { useCustomers, useCreateCustomer, useUpdateCustomer, useDeleteCustomer } from '@/hooks/useCustomers'
+import { useAuth } from '@/context/AuthContext'
+import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton } from '@/components/ui'
 
 export default function CustomersPage() {
   const { t } = useTranslation()

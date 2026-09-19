@@ -16,13 +16,15 @@ import {
 } from '@phosphor-icons/react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../../context/AuthContext'
-import { useTheme } from '../../context/ThemeContext'
-import { useCustomers } from '../../hooks/useCustomers'
-import { useVehicles } from '../../hooks/useVehicles'
-import { useRepairJobs } from '../../hooks/useRepairJobs'
-import { useInventory } from '../../hooks/useInventory'
-import LanguageSwitcher from '../ui/LanguageSwitcher'
+import { useAuth } from '@/context/AuthContext'
+import { useTheme } from '@/context/ThemeContext'
+import { useCustomers } from '@/hooks/useCustomers'
+import { useVehicles } from '@/hooks/useVehicles'
+import { useRepairJobs } from '@/hooks/useRepairJobs'
+import { useInventory } from '@/hooks/useInventory'
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 const routeTitleKeys = {
   '/admin/dashboard': 'titles.adminOverview',
@@ -157,13 +159,7 @@ export default function TopBar({ onToggleSidebar }) {
     <header className="sticky top-0 flex items-center justify-between h-16 sm:h-20 px-3 sm:px-6 lg:px-8 bg-[var(--bg-card)]/90 backdrop-blur-md border-b border-[var(--border-color)] text-[var(--text-primary)] z-20 font-sans transition-colors duration-200">
       {/* Left: Sidebar Toggle + Breadcrumb + Global Search */}
       <div className="flex items-center gap-2 sm:gap-4 lg:gap-6 min-w-0">
-        <button
-          onClick={onToggleSidebar}
-          className="p-2 rounded-xl text-app-muted hover:bg-app-hover hover:text-app-text transition-colors lg:hidden flex-shrink-0"
-          aria-label="Toggle navigation menu"
-        >
-          <List size={22} weight="bold" />
-        </button>
+        <Button variant="ghost" size="icon" onClick={onToggleSidebar} className="lg:hidden shrink-0 h-9 w-9" aria-label="Toggle navigation menu"><List size={22} weight="bold" /></Button>
 
         {/* Page Title / Breadcrumb Path */}
         <div className="flex items-center gap-2 text-xs text-app-muted min-w-0">
@@ -190,12 +186,7 @@ export default function TopBar({ onToggleSidebar }) {
           />
           <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
             {searchQuery ? (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="text-app-muted hover:text-app-text p-0.5 rounded"
-              >
-                <X size={13} weight="bold" />
-              </button>
+              <Button variant="ghost" size="icon" onClick={() => setSearchQuery('')} className="h-5 w-5"><X size={13} weight="bold" /></Button>
             ) : (
               <span className="text-[10px] font-mono bg-app-hover border border-app-border px-1.5 py-0.5 rounded text-app-muted select-none hidden lg:inline">
                 ⌘K
@@ -226,18 +217,14 @@ export default function TopBar({ onToggleSidebar }) {
                         {t('nav.repairJobs')}
                       </p>
                       {matchingJobs.map((j) => (
-                        <button
-                          key={j.id}
-                          onClick={() => handleSelectResult('/repair-jobs')}
-                          className="w-full px-4 py-2 hover:bg-app-hover flex items-center gap-2.5 text-left transition-colors"
-                        >
+                        <Button variant="ghost" key={j.id} onClick={() => handleSelectResult('/repair-jobs')} className="w-full h-auto px-4 py-2 flex items-center gap-2.5 text-left rounded-none justify-start font-normal">
                           <Wrench size={15} className="text-app-accent flex-shrink-0" />
                           <div className="truncate flex-1">
                             <span className="font-mono font-bold text-app-accent mr-2">{j.orderNumber}</span>
                             <span className="text-app-text font-medium">{j.customer}</span>
                             <span className="text-[10px] text-app-muted ml-1.5">({j.vehicle})</span>
                           </div>
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   )}
@@ -249,17 +236,13 @@ export default function TopBar({ onToggleSidebar }) {
                         {t('nav.customers')}
                       </p>
                       {matchingCustomers.map((c) => (
-                        <button
-                          key={c.id}
-                          onClick={() => handleSelectResult('/customers')}
-                          className="w-full px-4 py-2 hover:bg-app-hover flex items-center gap-2.5 text-left transition-colors"
-                        >
+                        <Button variant="ghost" key={c.id} onClick={() => handleSelectResult('/customers')} className="w-full h-auto px-4 py-2 flex items-center gap-2.5 text-left rounded-none justify-start font-normal">
                           <User size={15} className="text-emerald-500 flex-shrink-0" />
                           <div className="truncate flex-1">
                             <span className="font-semibold text-app-text">{c.name}</span>
                             <span className="text-[10px] text-app-muted ml-2 font-mono">{c.phone}</span>
                           </div>
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   )}
@@ -271,11 +254,7 @@ export default function TopBar({ onToggleSidebar }) {
                         {t('nav.vehicles')}
                       </p>
                       {matchingVehicles.map((v) => (
-                        <button
-                          key={v.id}
-                          onClick={() => handleSelectResult('/vehicles')}
-                          className="w-full px-4 py-2 hover:bg-app-hover flex items-center gap-2.5 text-left transition-colors"
-                        >
+                        <Button variant="ghost" key={v.id} onClick={() => handleSelectResult('/vehicles')} className="w-full h-auto px-4 py-2 flex items-center gap-2.5 text-left rounded-none justify-start font-normal">
                           <Car size={15} className="text-sky-500 flex-shrink-0" />
                           <div className="truncate flex-1">
                             <span className="font-mono font-bold text-app-accent mr-2">{v.number}</span>
@@ -284,7 +263,7 @@ export default function TopBar({ onToggleSidebar }) {
                             </span>
                             <span className="text-[10px] text-app-muted ml-1.5">({v.owner})</span>
                           </div>
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   )}
@@ -296,17 +275,13 @@ export default function TopBar({ onToggleSidebar }) {
                         {t('nav.inventory')}
                       </p>
                       {matchingParts.map((p) => (
-                        <button
-                          key={p.id}
-                          onClick={() => handleSelectResult('/inventory')}
-                          className="w-full px-4 py-2 hover:bg-app-hover flex items-center gap-2.5 text-left transition-colors"
-                        >
+                        <Button variant="ghost" key={p.id} onClick={() => handleSelectResult('/inventory')} className="w-full h-auto px-4 py-2 flex items-center gap-2.5 text-left rounded-none justify-start font-normal">
                           <Package size={15} className="text-amber-500 flex-shrink-0" />
                           <div className="truncate flex-1">
                             <span className="font-semibold text-app-text">{p.name}</span>
                             <span className="text-[10px] text-app-muted ml-2">({p.stockQty} in stock)</span>
                           </div>
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   )}
@@ -320,13 +295,7 @@ export default function TopBar({ onToggleSidebar }) {
       {/* Right Action Icons & User Profile */}
       <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
         {/* Mobile Search Icon Button */}
-        <button
-          onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
-          className="p-2 rounded-xl text-app-muted hover:bg-app-hover hover:text-app-text transition-all sm:hidden"
-          title={t('common.quickSearch')}
-        >
-          <MagnifyingGlass size={18} weight="bold" />
-        </button>
+        <Button variant="ghost" size="icon" onClick={() => setMobileSearchOpen(!mobileSearchOpen)} className="sm:hidden h-9 w-9 text-muted-foreground" title={t('common.quickSearch')}><MagnifyingGlass size={18} weight="bold" /></Button>
 
         {/* Language Switcher */}
         <LanguageSwitcher />
@@ -334,22 +303,10 @@ export default function TopBar({ onToggleSidebar }) {
         {/* Theme and Alerts controls */}
         <div className="flex items-center gap-0.5 sm:gap-1 bg-app-hover/50 border border-app-border p-0.5 sm:p-1 rounded-2xl">
           {/* Theme Switcher Button */}
-          <button
-            onClick={toggleTheme}
-            className="p-1.5 sm:p-2 rounded-xl text-app-muted hover:bg-app-card hover:text-app-text transition-all"
-            title={isDark ? t('common.lightMode') : t('common.darkMode')}
-          >
-            {isDark ? <Sun size={17} weight="bold" className="text-amber-400" /> : <Moon size={17} weight="bold" />}
-          </button>
+          <Button variant="ghost" size="icon" onClick={toggleTheme} className="h-8 w-8 text-muted-foreground" title={isDark ? t('common.lightMode') : t('common.darkMode')}>{isDark ? <Sun size={17} weight="bold" className="text-amber-400" /> : <Moon size={17} weight="bold" />}</Button>
 
           {/* Refresh Button (desktop only) */}
-          <button
-            className="p-2 rounded-xl text-app-muted hover:bg-app-card hover:text-app-text transition-all hidden sm:block"
-            title={t('common.refresh')}
-            onClick={() => window.location.reload()}
-          >
-            <ArrowClockwise size={17} weight="bold" />
-          </button>
+          <Button variant="ghost" size="icon" onClick={() => window.location.reload()} className="hidden sm:inline-flex h-8 w-8 text-muted-foreground" title={t('common.refresh')}><ArrowClockwise size={17} weight="bold" /></Button>
 
           {/* Bell Notifications */}
           <div className="relative">
@@ -479,13 +436,10 @@ export default function TopBar({ onToggleSidebar }) {
               </div>
 
               <div className="p-1.5">
-                <button
-                  onClick={handleSignOut}
-                  className="w-full flex items-center gap-2 px-3.5 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors font-medium text-xs"
-                >
+                <Button variant="ghost" onClick={handleSignOut} className="w-full flex items-center justify-start gap-2 h-9 text-destructive hover:bg-destructive/10 hover:text-destructive">
                   <SignOut size={15} />
                   {t('common.signOut')}
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -499,29 +453,14 @@ export default function TopBar({ onToggleSidebar }) {
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
                 <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
-                <input
-                  type="text"
-                  autoFocus
-                  placeholder={t('common.quickSearch')}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-9 py-2.5 bg-app-input border border-app-border rounded-xl text-xs text-app-text focus:outline-none focus:border-app-accent"
-                />
+                <Input type="text" autoFocus placeholder={t('common.quickSearch')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-9 pr-9 h-10 bg-app-input border border-app-border rounded-xl text-xs text-app-text focus:outline-none focus:border-app-accent" />
                 {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-app-muted p-0.5"
-                  >
-                    <X size={14} />
-                  </button>
+                  <Button variant="ghost" size="icon" onClick={() => setSearchQuery('')} className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground"><X size={14} /></Button>
                 )}
               </div>
-              <button
-                onClick={() => setMobileSearchOpen(false)}
-                className="px-3 py-2 text-xs font-semibold text-app-muted hover:text-app-text"
-              >
+              <Button variant="ghost" onClick={() => setMobileSearchOpen(false)} className="h-10 px-3 font-semibold text-muted-foreground">
                 {t('common.cancel')}
-              </button>
+              </Button>
             </div>
 
             {/* Live Search Results */}
@@ -532,43 +471,31 @@ export default function TopBar({ onToggleSidebar }) {
                 ) : (
                   <>
                     {matchingJobs.map((j) => (
-                      <button
-                        key={j.id}
-                        onClick={() => handleSelectResult('/repair-jobs')}
-                        className="w-full py-2.5 flex items-center gap-2.5 text-left"
-                      >
+                      <Button variant="ghost" key={j.id} onClick={() => handleSelectResult('/repair-jobs')} className="w-full h-auto py-2.5 flex items-center gap-2.5 text-left rounded-none justify-start font-normal px-2">
                         <Wrench size={16} className="text-app-accent flex-shrink-0" />
                         <div className="truncate flex-1">
                           <p className="font-semibold text-app-text">{j.orderNumber} · {j.customer}</p>
                           <p className="text-[10px] text-app-muted">{j.vehicle}</p>
                         </div>
-                      </button>
+                      </Button>
                     ))}
                     {matchingCustomers.map((c) => (
-                      <button
-                        key={c.id}
-                        onClick={() => handleSelectResult('/customers')}
-                        className="w-full py-2.5 flex items-center gap-2.5 text-left"
-                      >
+                      <Button variant="ghost" key={c.id} onClick={() => handleSelectResult('/customers')} className="w-full h-auto py-2.5 flex items-center gap-2.5 text-left rounded-none justify-start font-normal px-2">
                         <User size={16} className="text-emerald-500 flex-shrink-0" />
                         <div className="truncate flex-1">
                           <p className="font-semibold text-app-text">{c.name}</p>
                           <p className="text-[10px] text-app-muted font-mono">{c.phone}</p>
                         </div>
-                      </button>
+                      </Button>
                     ))}
                     {matchingVehicles.map((v) => (
-                      <button
-                        key={v.id}
-                        onClick={() => handleSelectResult('/vehicles')}
-                        className="w-full py-2.5 flex items-center gap-2.5 text-left"
-                      >
+                      <Button variant="ghost" key={v.id} onClick={() => handleSelectResult('/vehicles')} className="w-full h-auto py-2.5 flex items-center gap-2.5 text-left rounded-none justify-start font-normal px-2">
                         <Car size={16} className="text-sky-500 flex-shrink-0" />
                         <div className="truncate flex-1">
                           <p className="font-semibold text-app-text">{v.number} - {v.brand} {v.model}</p>
                           <p className="text-[10px] text-app-muted">{v.owner}</p>
                         </div>
-                      </button>
+                      </Button>
                     ))}
                   </>
                 )}

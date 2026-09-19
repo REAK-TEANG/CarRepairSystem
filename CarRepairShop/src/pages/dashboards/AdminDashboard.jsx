@@ -12,13 +12,13 @@ import {
 } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { CardSkeleton } from '../../components/ui'
-import { useInvoices } from '../../hooks/useInvoices'
-import { useCustomers } from '../../hooks/useCustomers'
-import { useRepairJobs } from '../../hooks/useRepairJobs'
-import { useInventory } from '../../hooks/useInventory'
-import { useEmployees } from '../../hooks/useEmployees'
-import { useAppointments } from '../../hooks/useAppointments'
+import { CardSkeleton } from '@/components/ui'
+import { useInvoices } from '@/hooks/useInvoices'
+import { useCustomers } from '@/hooks/useCustomers'
+import { useRepairJobs } from '@/hooks/useRepairJobs'
+import { useInventory } from '@/hooks/useInventory'
+import { useEmployees } from '@/hooks/useEmployees'
+import { useAppointments } from '@/hooks/useAppointments'
 
 export default function AdminDashboard() {
   const { t } = useTranslation()

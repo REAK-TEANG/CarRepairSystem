@@ -22,12 +22,12 @@ import {
   Plus,
   Copy,
 } from '@phosphor-icons/react'
-import { useRepairJobs, useUpdateRepairJob } from '../../hooks/useRepairJobs'
-import { useMechanics } from '../../hooks/useMechanics'
-import { useInventory } from '../../hooks/useInventory'
-import { useCreateInvoice } from '../../hooks/useInvoices'
-import { useToast } from '../../context/ToastContext'
-import { StatusBadge, Modal, LoadingButton } from '../ui'
+import { useRepairJobs, useUpdateRepairJob } from '@/hooks/useRepairJobs'
+import { useMechanics } from '@/hooks/useMechanics'
+import { useInventory } from '@/hooks/useInventory'
+import { useCreateInvoice } from '@/hooks/useInvoices'
+import { useToast } from '@/context/ToastContext'
+import { StatusBadge, Modal, LoadingButton } from '@/components/ui'
 
 const PIPELINE_STEPS = [
   {

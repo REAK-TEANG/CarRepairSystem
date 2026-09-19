@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { FileText, DownloadSimple, CurrencyDollar, Wrench, Package, Users } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
-import { useInvoices } from '../../hooks/useInvoices'
-import { useRepairJobs } from '../../hooks/useRepairJobs'
-import { useInventory } from '../../hooks/useInventory'
-import { useCustomers } from '../../hooks/useCustomers'
-import { useEmployees } from '../../hooks/useEmployees'
-import { CardSkeleton } from '../../components/ui'
+import { useInvoices } from '@/hooks/useInvoices'
+import { useRepairJobs } from '@/hooks/useRepairJobs'
+import { useInventory } from '@/hooks/useInventory'
+import { useCustomers } from '@/hooks/useCustomers'
+import { useEmployees } from '@/hooks/useEmployees'
+import { CardSkeleton } from '@/components/ui'
 
 export default function ReportsPage() {
   const { t } = useTranslation()

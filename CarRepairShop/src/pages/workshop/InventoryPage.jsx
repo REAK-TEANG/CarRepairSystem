@@ -1,10 +1,15 @@
 import { useState } from 'react'
 import { MagnifyingGlass, Plus, PencilSimple, Trash, ArrowUp, ArrowDown, Eye, Package, ClockCounterClockwise } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
-import { useInventory, useInventoryTransactions, useCreatePart, useUpdatePart, useAdjustStock, useDeletePart } from '../../hooks/useInventory'
-import { useSuppliers } from '../../hooks/useSuppliers'
-import { useAuth } from '../../context/AuthContext'
-import { Modal, StatusBadge, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, ImageUpload } from '../../components/ui'
+import { useInventory, useInventoryTransactions, useCreatePart, useUpdatePart, useAdjustStock, useDeletePart } from '@/hooks/useInventory'
+import { useSuppliers } from '@/hooks/useSuppliers'
+import { useAuth } from '@/context/AuthContext'
+import { StatusBadge, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, ImageUpload } from '@/components/ui'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 const stockStatusOptions = ['All Stock', 'In Stock', 'Low Stock', 'Out of Stock']
 
@@ -172,43 +177,34 @@ export default function InventoryPage() {
           <p className="text-xs text-app-muted mt-1">{items.length} {t('inventory.subtitle')}</p>
         </div>
         {can('inventory', 'create') && (
-          <button
-            onClick={handleOpenAdd}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover text-app-accentText text-xs font-semibold rounded-xl transition-colors shadow-subtle"
-          >
+          <Button onClick={handleOpenAdd} className="h-9 px-4 rounded-xl bg-app-accent hover:bg-app-accentHover text-white shadow-subtle">
             <Plus size={16} weight="bold" />
             {t('inventory.addPart')}
-          </button>
+          </Button>
         )}
       </div>
 
       {/* View Switcher Tabs */}
       <div className="flex items-center gap-2 border-b border-app-border pb-3">
-        <button
-          onClick={() => setActiveTab('inventory')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
+        <Button variant="ghost" onClick={() => setActiveTab('inventory')} className={`h-9 px-3.5 rounded-xl font-semibold ${
             activeTab === 'inventory'
               ? 'bg-app-accent text-app-accentText shadow-subtle'
               : 'text-app-muted hover:text-app-text hover:bg-app-hover'
-          }`}
-        >
+          }`}>
           <Package size={16} weight="bold" />
           <span>Spare Parts Catalog</span>
           <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/10 dark:bg-white/10">{items.length}</span>
-        </button>
+        </Button>
 
-        <button
-          onClick={() => setActiveTab('transactions')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
+        <Button variant="ghost" onClick={() => setActiveTab('transactions')} className={`h-9 px-3.5 rounded-xl font-semibold ${
             activeTab === 'transactions'
               ? 'bg-app-accent text-app-accentText shadow-subtle'
               : 'text-app-muted hover:text-app-text hover:bg-app-hover'
-          }`}
-        >
+          }`}>
           <ClockCounterClockwise size={16} weight="bold" />
           <span>Stock Movement & Auto Stock-Out Logs</span>
           <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/10 dark:bg-white/10">{transactions.length}</span>
-        </button>
+        </Button>
       </div>
 
       {activeTab === 'inventory' ? (
@@ -217,34 +213,26 @@ export default function InventoryPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
               {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setCategoryFilter(cat)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-colors ${
+                <Button variant="ghost" key={cat} onClick={() => setCategoryFilter(cat)} className={`h-8 px-3 rounded-xl whitespace-nowrap ${
                     categoryFilter === cat
                       ? 'bg-app-accent text-app-accentText shadow-subtle'
                       : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover hover:text-app-text'
-                  }`}
-                >
+                  }`}>
                   {cat === 'All' ? t('common.all') : cat}
-                </button>
+                </Button>
               ))}
             </div>
 
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
               <span className="text-xs text-app-muted flex items-center gap-1 mr-1">{t('common.status')}:</span>
               {stockStatusOptions.map((st) => (
-                <button
-                  key={st}
-                  onClick={() => setStockFilter(st)}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium whitespace-nowrap transition-colors ${
+                <Button variant="ghost" key={st} onClick={() => setStockFilter(st)} className={`h-7 px-2.5 rounded-lg whitespace-nowrap text-[11px] ${
                     stockFilter === st
                       ? 'bg-app-hover text-app-text border border-app-border font-semibold'
                       : 'text-app-muted hover:text-app-text'
-                  }`}
-                >
+                  }`}>
                   {st === 'All Stock' ? t('common.all') : t(`status.${st}`, st)}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -254,25 +242,20 @@ export default function InventoryPage() {
         <div className="p-4 border-b border-app-border flex items-center justify-between gap-3">
           <div className="relative flex-1 max-w-md">
             <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
-            <input
-              type="text"
-              placeholder={t('common.quickSearch')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-xl text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
-            />
+            <Input type="text" placeholder={t('common.quickSearch')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full h-9 pl-9 rounded-xl" />
           </div>
           {(searchQuery || categoryFilter !== 'All' || stockFilter !== 'All Stock') && (
-            <button
+            <Button
+              variant="ghost"
               onClick={() => {
                 setSearchQuery('')
                 setCategoryFilter('All')
                 setStockFilter('All Stock')
               }}
-              className="text-xs text-app-muted hover:text-app-text px-2 py-1 transition-colors"
+              className="h-8 px-2 text-xs text-app-muted hover:text-app-text"
             >
               {t('common.cancel')}
-            </button>
+            </Button>
           )}
         </div>
 
@@ -295,24 +278,11 @@ export default function InventoryPage() {
               }
             />
           ) : (
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                  <th className="px-6 py-3 font-semibold">{t('inventory.partCode')}</th>
-                  <th className="px-6 py-3 font-semibold">{t('inventory.partName')}</th>
-                  <th className="px-6 py-3 font-semibold hidden md:table-cell">{t('inventory.category')}</th>
-                  <th className="px-6 py-3 font-semibold hidden lg:table-cell">{t('inventory.location')}</th>
-                  <th className="px-6 py-3 font-semibold">{t('inventory.stockQty')}</th>
-                  <th className="px-6 py-3 font-semibold">{t('inventory.sellingPrice')}</th>
-                  <th className="px-6 py-3 font-semibold">{t('common.status')}</th>
-                  <th className="px-6 py-3 font-semibold text-right">{t('common.actions')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-app-border">
+            <Table className="w-full text-xs"><TableHeader><TableRow className="text-app-muted text-left border-b border-app-border bg-app-hover/50 hover:bg-app-hover/50"><TableHead className="px-6 py-3 font-semibold">{t('inventory.partCode')}</TableHead><TableHead className="px-6 py-3 font-semibold">{t('inventory.partName')}</TableHead><TableHead className="px-6 py-3 font-semibold hidden md:table-cell">{t('inventory.category')}</TableHead><TableHead className="px-6 py-3 font-semibold hidden lg:table-cell">{t('inventory.location')}</TableHead><TableHead className="px-6 py-3 font-semibold">{t('inventory.stockQty')}</TableHead><TableHead className="px-6 py-3 font-semibold">{t('inventory.sellingPrice')}</TableHead><TableHead className="px-6 py-3 font-semibold">{t('common.status')}</TableHead><TableHead className="px-6 py-3 font-semibold text-right">{t('common.actions')}</TableHead></TableRow></TableHeader><TableBody className="divide-y divide-app-border">
                 {filtered.map((part) => (
-                  <tr key={part.id} className="hover:bg-app-hover/60 transition-colors group">
-                    <td className="px-6 py-3.5 font-mono font-semibold text-app-accent">{part.partCode}</td>
-                    <td className="px-6 py-3.5">
+                  <TableRow key={part.id} className="hover:bg-app-hover/60 transition-colors group">
+                    <TableCell className="px-6 py-3.5 font-mono font-semibold text-app-accent">{part.partCode}</TableCell>
+                    <TableCell className="px-6 py-3.5">
                       <div className="flex items-center gap-3">
                         {part.image ? (
                           <img
@@ -332,39 +302,37 @@ export default function InventoryPage() {
                           </p>
                         </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-3.5 text-app-muted hidden md:table-cell">{part.category}</td>
-                    <td className="px-6 py-3.5 text-app-muted hidden lg:table-cell font-mono">{part.location}</td>
-                    <td className="px-6 py-3.5">
+                    </TableCell>
+                    <TableCell className="px-6 py-3.5 text-app-muted hidden md:table-cell">{part.category}</TableCell>
+                    <TableCell className="px-6 py-3.5 text-app-muted hidden lg:table-cell font-mono">{part.location}</TableCell>
+                    <TableCell className="px-6 py-3.5">
                       <span
                         className={`font-bold tabular-nums ${part.stockQty <= part.minThreshold ? 'text-red-600 dark:text-red-400' : 'text-app-text'}`}
                       >
                         {part.stockQty}
                       </span>
                       <span className="text-[10px] text-app-muted ml-1">(min {part.minThreshold})</span>
-                    </td>
-                    <td className="px-6 py-3.5 font-semibold text-app-text tabular-nums">
+                    </TableCell>
+                    <TableCell className="px-6 py-3.5 font-semibold text-app-text tabular-nums">
                       ${Number(part.unitPrice).toFixed(2)}
-                    </td>
-                    <td className="px-6 py-3.5">
+                    </TableCell>
+                    <TableCell className="px-6 py-3.5">
                       <StatusBadge
                         status={part.stockQty === 0 ? 'Out of Stock' : part.stockQty <= part.minThreshold ? 'Low Stock' : 'In Stock'}
                         variant={part.stockQty === 0 ? 'danger' : part.stockQty <= part.minThreshold ? 'warning' : 'success'}
                       />
-                    </td>
-                    <td className="px-6 py-3.5 text-right">
+                    </TableCell>
+                    <TableCell className="px-6 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => handleOpenView(part)}
-                          className="p-1.5 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors"
-                          title={t('common.view')}
-                        >
+                        <Button variant="ghost" size="icon" onClick={() => handleOpenView(part)} className="h-8 w-8 text-app-muted hover:text-app-text hover:bg-app-hover" title={t('common.view')}>
                           <Eye size={15} />
-                        </button>
+                        </Button>
                         {can('inventory', 'update') && (
                           <>
                             {part.stockQty <= part.minThreshold && (
-                              <button
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={() =>
                                   adjustStockMutation.mutate({
                                     id: part.id,
@@ -374,50 +342,33 @@ export default function InventoryPage() {
                                   })
                                 }
                                 title="1-Click Quick Restock (+10 from Supplier)"
-                                className="px-2 py-1 rounded-lg text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 transition-colors flex items-center gap-1 cursor-pointer"
+                                className="h-6 px-2 rounded-lg text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/30 hover:bg-emerald-500/20 flex items-center gap-1 cursor-pointer"
                               >
                                 <ArrowUp size={12} weight="bold" />
                                 <span>+10</span>
-                              </button>
+                              </Button>
                             )}
-                            <button
-                              onClick={() => handleOpenAdjust(part, 'Stock In')}
-                              title="Stock In (+)"
-                              className="p-1.5 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-app-hover transition-colors cursor-pointer"
-                            >
+                            <Button variant="ghost" size="icon" onClick={() => handleOpenAdjust(part, 'Stock In')} title="Stock In (+)" className="h-8 w-8 text-emerald-600 hover:bg-app-hover">
                               <ArrowUp size={15} weight="bold" />
-                            </button>
-                            <button
-                              onClick={() => handleOpenAdjust(part, 'Stock Out')}
-                              title="Stock Out (-)"
-                              className="p-1.5 rounded-lg text-amber-600 dark:text-amber-400 hover:bg-app-hover transition-colors cursor-pointer"
-                            >
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleOpenAdjust(part, 'Stock Out')} title="Stock Out (-)" className="h-8 w-8 text-amber-600 hover:bg-app-hover">
                               <ArrowDown size={15} weight="bold" />
-                            </button>
-                            <button
-                              onClick={() => handleOpenEdit(part)}
-                              title={t('common.edit')}
-                              className="p-1.5 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors"
-                            >
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(part)} title={t('common.edit')} className="h-8 w-8 text-app-muted hover:text-app-text hover:bg-app-hover">
                               <PencilSimple size={15} />
-                            </button>
+                            </Button>
                           </>
                         )}
                         {can('inventory', 'delete') && (
-                          <button
-                            onClick={() => handleOpenDelete(part)}
-                            title={t('common.delete')}
-                            className="p-1.5 rounded-lg text-app-muted hover:text-red-500 hover:bg-app-hover transition-colors"
-                          >
+                          <Button variant="ghost" size="icon" onClick={() => handleOpenDelete(part)} title={t('common.delete')} className="h-8 w-8 text-app-muted hover:text-red-500 hover:bg-app-hover">
                             <Trash size={15} />
-                          </button>
+                          </Button>
                         )}
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell></TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           )}
         </div>
       </div>
@@ -444,25 +395,14 @@ export default function InventoryPage() {
             description="Stock movements and auto stock-outs for services will automatically appear here."
           />
         ) : (
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                <th className="px-6 py-3 font-semibold">Part Code / Item</th>
-                <th className="px-6 py-3 font-semibold">Type</th>
-                <th className="px-6 py-3 font-semibold">Quantity</th>
-                <th className="px-6 py-3 font-semibold">Reason / Reference</th>
-                <th className="px-6 py-3 hidden sm:table-cell font-semibold">Performed By</th>
-                <th className="px-6 py-3 font-semibold text-right">Date & Time</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-app-border">
+          <Table className="w-full text-xs"><TableHeader><TableRow className="text-app-muted text-left border-b border-app-border bg-app-hover/50 hover:bg-app-hover/50"><TableHead className="px-6 py-3 font-semibold">Part Code / Item</TableHead><TableHead className="px-6 py-3 font-semibold">Type</TableHead><TableHead className="px-6 py-3 font-semibold">Quantity</TableHead><TableHead className="px-6 py-3 font-semibold">Reason / Reference</TableHead><TableHead className="px-6 py-3 hidden sm:table-cell font-semibold">Performed By</TableHead><TableHead className="px-6 py-3 font-semibold text-right">Date & Time</TableHead></TableRow></TableHeader><TableBody className="divide-y divide-app-border">
               {transactions.map((tx) => (
-                <tr key={tx.id} className="hover:bg-app-hover/60 transition-colors">
-                  <td className="px-6 py-3.5">
+                <TableRow key={tx.id} className="hover:bg-app-hover/60 transition-colors">
+                  <TableCell className="px-6 py-3.5">
                     <p className="font-semibold text-app-text">{tx.partName}</p>
                     <p className="font-mono text-[10px] text-app-accent">{tx.partCode}</p>
-                  </td>
-                  <td className="px-6 py-3.5">
+                  </TableCell>
+                  <TableCell className="px-6 py-3.5">
                     <span
                       className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
                         tx.type === 'Stock Out'
@@ -475,39 +415,39 @@ export default function InventoryPage() {
                       {tx.type === 'Stock Out' ? <ArrowDown size={12} weight="bold" /> : <ArrowUp size={12} weight="bold" />}
                       {tx.type}
                     </span>
-                  </td>
-                  <td className="px-6 py-3.5 font-bold tabular-nums text-app-text">
+                  </TableCell>
+                  <TableCell className="px-6 py-3.5 font-bold tabular-nums text-app-text">
                     {tx.type === 'Stock Out' ? `-${tx.quantity}` : `+${tx.quantity}`} units
-                  </td>
-                  <td className="px-6 py-3.5">
+                  </TableCell>
+                  <TableCell className="px-6 py-3.5">
                     <p className="text-app-text font-medium max-w-sm">{tx.notes || 'Routine stock operation'}</p>
                     {tx.referenceType && (
                       <span className="text-[10px] text-app-muted uppercase font-mono">
                         Ref: {tx.referenceType} #{tx.referenceId}
                       </span>
                     )}
-                  </td>
-                  <td className="px-6 py-3.5 text-app-muted hidden sm:table-cell">
+                  </TableCell>
+                  <TableCell className="px-6 py-3.5 text-app-muted hidden sm:table-cell">
                     {tx.performedBy}
-                  </td>
-                  <td className="px-6 py-3.5 text-right font-mono text-[11px] text-app-muted">
+                  </TableCell>
+                  <TableCell className="px-6 py-3.5 text-right font-mono text-[11px] text-app-muted">
                     {tx.createdAt ? new Date(tx.createdAt).toLocaleString() : 'Recent'}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         )}
       </div>
     </div>
   )}
 
       {/* Add Part Modal */}
-      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('inventory.createPart')}>
+      <Dialog open={isAddOpen} onOpenChange={(open) => { if(!open) setIsAddOpen(false); }}><DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{t('inventory.createPart')}</DialogTitle></DialogHeader>
         <form onSubmit={handleCreate} className="space-y-4 text-xs">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('inventory.partName')} *</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('inventory.partName')} *</Label>
               <input
                 type="text"
                 required
@@ -518,7 +458,7 @@ export default function InventoryPage() {
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('inventory.partCode')}</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('inventory.partCode')}</Label>
               <input
                 type="text"
                 value={formData.partCode}
@@ -531,7 +471,7 @@ export default function InventoryPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('inventory.category')}</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('inventory.category')}</Label>
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
@@ -548,7 +488,7 @@ export default function InventoryPage() {
               </select>
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('inventory.brand')}</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('inventory.brand')}</Label>
               <input
                 type="text"
                 value={formData.brand}
@@ -558,7 +498,7 @@ export default function InventoryPage() {
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('inventory.location')}</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('inventory.location')}</Label>
               <input
                 type="text"
                 value={formData.location}
@@ -571,7 +511,7 @@ export default function InventoryPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('inventory.supplier')}</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('inventory.supplier')}</Label>
               <select
                 value={formData.supplierId}
                 onChange={(e) => {
@@ -593,7 +533,7 @@ export default function InventoryPage() {
               </select>
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('inventory.location')}</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('inventory.location')}</Label>
               <input
                 type="text"
                 value={formData.location}
@@ -606,7 +546,7 @@ export default function InventoryPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('inventory.stockQty')}</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('inventory.stockQty')}</Label>
               <input
                 type="number"
                 value={formData.stockQty}
@@ -615,7 +555,7 @@ export default function InventoryPage() {
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('inventory.minStock')}</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('inventory.minStock')}</Label>
               <input
                 type="number"
                 value={formData.minThreshold}
@@ -624,7 +564,7 @@ export default function InventoryPage() {
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('inventory.unitCost')} ($)</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('inventory.unitCost')} ($)</Label>
               <input
                 type="number"
                 step="0.01"
@@ -634,7 +574,7 @@ export default function InventoryPage() {
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('inventory.sellingPrice')} ($)</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('inventory.sellingPrice')} ($)</Label>
               <input
                 type="number"
                 step="0.01"
@@ -646,7 +586,7 @@ export default function InventoryPage() {
           </div>
 
           <div>
-            <label className="block text-app-muted font-medium mb-1">Part Photo / Image (Optional)</label>
+            <Label className="block text-app-muted font-medium mb-1">Part Photo / Image (Optional)</Label>
             <ImageUpload
               value={formData.image}
               onChange={(url) => setFormData({ ...formData, image: url })}
@@ -655,26 +595,22 @@ export default function InventoryPage() {
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
-              type="button"
-              onClick={() => setIsAddOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
-            >
+            <Button variant="ghost" type="button" onClick={() => setIsAddOpen(false)} className="h-9 rounded-xl">
               {t('common.cancel')}
-            </button>
+            </Button>
             <LoadingButton type="submit" loading={createPartMutation.isPending}>
               {t('inventory.createPart')}
             </LoadingButton>
           </div>
         </form>
-      </Modal>
+      </DialogContent></Dialog>
 
       {/* Edit Part Modal */}
-      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title={`${t('inventory.editPart')}: ${selectedPart?.partCode}`}>
+      <Dialog open={isEditOpen} onOpenChange={(open) => { if(!open) setIsEditOpen(false); }}><DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{t('inventory.editPart')}: {selectedPart?.partCode}</DialogTitle></DialogHeader>
         <form onSubmit={handleUpdate} className="space-y-4 text-xs">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('inventory.partName')} *</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('inventory.partName')} *</Label>
               <input
                 type="text"
                 required
@@ -684,7 +620,7 @@ export default function InventoryPage() {
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('inventory.brand')}</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('inventory.brand')}</Label>
               <input
                 type="text"
                 value={formData.brand}
@@ -696,7 +632,7 @@ export default function InventoryPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('inventory.category')}</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('inventory.category')}</Label>
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
@@ -713,7 +649,7 @@ export default function InventoryPage() {
               </select>
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('inventory.supplier')}</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('inventory.supplier')}</Label>
               <select
                 value={formData.supplierId}
                 onChange={(e) => {
@@ -735,7 +671,7 @@ export default function InventoryPage() {
               </select>
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('inventory.location')}</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('inventory.location')}</Label>
               <input
                 type="text"
                 value={formData.location}
@@ -747,7 +683,7 @@ export default function InventoryPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('inventory.stockQty')}</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('inventory.stockQty')}</Label>
               <input
                 type="number"
                 value={formData.stockQty}
@@ -756,7 +692,7 @@ export default function InventoryPage() {
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('inventory.unitCost')} ($)</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('inventory.unitCost')} ($)</Label>
               <input
                 type="number"
                 step="0.01"
@@ -766,7 +702,7 @@ export default function InventoryPage() {
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('inventory.sellingPrice')} ($)</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('inventory.sellingPrice')} ($)</Label>
               <input
                 type="number"
                 step="0.01"
@@ -778,7 +714,7 @@ export default function InventoryPage() {
           </div>
 
           <div>
-            <label className="block text-app-muted font-medium mb-1">Part Photo / Image (Optional)</label>
+            <Label className="block text-app-muted font-medium mb-1">Part Photo / Image (Optional)</Label>
             <ImageUpload
               value={formData.image}
               onChange={(url) => setFormData({ ...formData, image: url })}
@@ -787,19 +723,15 @@ export default function InventoryPage() {
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
-              type="button"
-              onClick={() => setIsEditOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
-            >
+            <Button variant="ghost" type="button" onClick={() => setIsEditOpen(false)} className="h-9 rounded-xl">
               {t('common.cancel')}
-            </button>
+            </Button>
             <LoadingButton type="submit" loading={updatePartMutation.isPending}>
               {t('common.saveChanges')}
             </LoadingButton>
           </div>
         </form>
-      </Modal>
+      </DialogContent></Dialog>
 
       {/* Adjust Stock Modal */}
       <Modal
@@ -818,19 +750,12 @@ export default function InventoryPage() {
           </div>
 
           <div>
-            <label className="block text-app-muted font-medium mb-1">{t('common.qty')} *</label>
-            <input
-              type="number"
-              min="1"
-              required
-              value={adjustQty}
-              onChange={(e) => setAdjustQty(e.target.value)}
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-semibold"
-            />
+            <Label className="block text-app-muted font-medium mb-1">{t('common.qty')} *</Label>
+            <Input type="number" min="1" required value={adjustQty} onChange={(e) => setAdjustQty(e.target.value)} className="w-full h-9 rounded-xl" />
           </div>
 
           <div>
-            <label className="block text-app-muted font-medium mb-1">{t('common.notes')}</label>
+            <Label className="block text-app-muted font-medium mb-1">{t('common.notes')}</Label>
             <textarea
               rows={2}
               value={adjustNotes}
@@ -841,13 +766,9 @@ export default function InventoryPage() {
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
-              type="button"
-              onClick={() => setIsAdjustOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
-            >
+            <Button variant="ghost" type="button" onClick={() => setIsAdjustOpen(false)} className="h-9 rounded-xl">
               {t('common.cancel')}
-            </button>
+            </Button>
             <LoadingButton type="submit" loading={adjustStockMutation.isPending}>
               {t('common.saveChanges')}
             </LoadingButton>
@@ -856,7 +777,7 @@ export default function InventoryPage() {
       </Modal>
 
       {/* View Part Modal */}
-      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('inventory.title')}>
+      <Dialog open={isViewOpen} onOpenChange={(open) => { if(!open) setIsViewOpen(false); }}><DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>{t('inventory.title')}</DialogTitle></DialogHeader>
         {selectedPart && (
           <div className="space-y-4 text-xs">
             {selectedPart.image && (
@@ -905,7 +826,7 @@ export default function InventoryPage() {
             </div>
           </div>
         )}
-      </Modal>
+      </DialogContent></Dialog>
 
       {/* Delete Confirmation */}
       <ConfirmDialog

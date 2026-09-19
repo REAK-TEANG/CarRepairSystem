@@ -1,12 +1,12 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import AppLayout from './layouts/AppLayout'
-import { AuthProvider, useAuth } from './context/AuthContext'
-import { ThemeProvider } from './context/ThemeContext'
-import { ToastProvider } from './context/ToastContext'
-import ProtectedRoute from './components/auth/ProtectedRoute'
-import { LoadingSpinner } from './components/ui'
+import AppLayout from '@/layouts/AppLayout'
+import { AuthProvider, useAuth } from '@/context/AuthContext'
+import { ThemeProvider } from '@/context/ThemeContext'
+import { ToastProvider } from '@/context/ToastContext'
+import ProtectedRoute from '@/components/auth/ProtectedRoute'
+import { LoadingSpinner } from '@/components/ui'
 
 // Lazy-Loaded Page Modules
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'))

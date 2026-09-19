@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { ShieldWarning, ArrowLeft, SignOut } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
-import { useAuth, ROLE_PROFILES } from '../../context/AuthContext'
+import { useAuth, ROLE_PROFILES } from '@/context/AuthContext'
 
 export default function UnauthorizedPage() {
   const { t } = useTranslation()

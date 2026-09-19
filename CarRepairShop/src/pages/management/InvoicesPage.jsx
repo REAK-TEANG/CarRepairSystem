@@ -17,12 +17,12 @@ import {
   Printer,
 } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
-import { useInvoices, useCreateInvoice, useRecordPayment, useDeleteInvoice } from '../../hooks/useInvoices'
-import { useCustomers } from '../../hooks/useCustomers'
-import { useRepairJobs } from '../../hooks/useRepairJobs'
-import { useAuth } from '../../context/AuthContext'
-import { Modal, StatusBadge, EmptyState, ConfirmDialog, TableSkeleton, LoadingButton } from '../../components/ui'
-import InvoiceDocument from '../../components/invoices/InvoiceDocument'
+import { useInvoices, useCreateInvoice, useRecordPayment, useDeleteInvoice } from '@/hooks/useInvoices'
+import { useCustomers } from '@/hooks/useCustomers'
+import { useRepairJobs } from '@/hooks/useRepairJobs'
+import { useAuth } from '@/context/AuthContext'
+import { Modal, StatusBadge, EmptyState, ConfirmDialog, TableSkeleton, LoadingButton } from '@/components/ui'
+import InvoiceDocument from '@/components/invoices/InvoiceDocument'
 
 export default function InvoicesPage() {
   const { t } = useTranslation()

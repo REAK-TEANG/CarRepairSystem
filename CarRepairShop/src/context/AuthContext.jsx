@@ -1,8 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import { settingsService } from '../services/settingsService'
-import { authService } from '../services/authService'
-import { apiClient } from '../services/apiClient'
+import { settingsService } from '@/services/settingsService'
+import { authService } from '@/services/authService'
+import { apiClient } from '@/services/apiClient'
 
 export const ROLES = {
   ADMIN: 'admin',

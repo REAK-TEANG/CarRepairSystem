@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { serviceReminderService } from '../services/serviceReminderService'
-import { useToast } from '../context/ToastContext'
+import { serviceReminderService } from '@/services/serviceReminderService'
+import { useToast } from '@/context/ToastContext'
 
 export function useServiceReminders(params = {}, options = {}) {
   return useQuery({

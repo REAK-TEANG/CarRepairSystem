@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { repairJobService } from '../services/repairJobService'
-import { useToast } from '../context/ToastContext'
+import { repairJobService } from '@/services/repairJobService'
+import { useToast } from '@/context/ToastContext'
 
 export function useRepairJobs(params = {}, options = {}) {
   return useQuery({

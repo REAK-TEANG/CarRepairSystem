@@ -2,12 +2,16 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Eye, EyeSlash, SignIn, ShieldCheck, Key, ArrowLeft, CheckCircle } from '@phosphor-icons/react'
-import Logo from '../../components/ui/Logo'
-import LanguageSwitcher from '../../components/ui/LanguageSwitcher'
-import { Modal, LoadingButton } from '../../components/ui'
-import { useAuth, ROLE_PROFILES } from '../../context/AuthContext'
-import { authService } from '../../services/authService'
-import { useToast } from '../../context/ToastContext'
+import Logo from '@/components/ui/Logo'
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher'
+import { Modal, LoadingButton } from '@/components/ui'
+import { useAuth, ROLE_PROFILES } from '@/context/AuthContext'
+import { authService } from '@/services/authService'
+import { useToast } from '@/context/ToastContext'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
 
 export default function LoginPage() {
   const { t } = useTranslation()
@@ -216,7 +220,8 @@ export default function LoginPage() {
 
         {/* Right Floating Card */}
         <div className="lg:col-span-6 xl:col-span-5 flex justify-center lg:justify-end w-full">
-          <div className="w-full max-w-[440px] bg-white dark:bg-[#1E2328] rounded-[28px] sm:rounded-[36px] shadow-2xl shadow-emerald-950/30 border border-white/40 dark:border-gray-800 p-6 sm:p-9 md:p-10 transition-all">
+          <Card className="w-full max-w-[440px] rounded-[28px] sm:rounded-[36px] shadow-2xl shadow-emerald-950/30 border-white/40 dark:border-gray-800 p-2 sm:p-4 border-0">
+<CardContent className="pt-6">
             {/* Mobile Header Logo */}
             <div className="flex items-center justify-center gap-3 mb-6 lg:hidden">
               <div className="w-11 h-11 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-md shadow-emerald-600/30">
@@ -248,11 +253,10 @@ export default function LoginPage() {
 
               {/* Username Input */}
               <div>
-                <label htmlFor="username" className="sr-only">
+                <Label htmlFor="username" className="sr-only">
                   {t('auth.emailLabel')}
-                </label>
-                <input
-                  id="username"
+                </Label>
+                <Input id="username"
                   type="text"
                   required
                   value={form.username}
@@ -265,8 +269,7 @@ export default function LoginPage() {
               {/* Password Input */}
               <div className="space-y-1">
                 <div className="relative">
-                  <input
-                    id="password"
+                  <Input id="password"
                     type={showPassword ? 'text' : 'password'}
                     required
                     value={form.password}
@@ -274,33 +277,20 @@ export default function LoginPage() {
                     placeholder="Password"
                     className="w-full px-4 py-3 pr-11 bg-gray-50 dark:bg-gray-800/70 border border-gray-200 dark:border-gray-700 rounded-2xl text-xs sm:text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-1"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  >
+                  <Button variant="ghost" size="icon" type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground">
                     {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
-                  </button>
+                  </Button>
                 </div>
                 {/* Forgot Password link positioned right under password like in the design */}
                 <div className="flex justify-end pt-1">
-                  <button
-                    type="button"
-                    onClick={handleOpenForgot}
-                    className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium transition-colors cursor-pointer"
-                  >
+                  <Button variant="link" type="button" onClick={handleOpenForgot} className="px-0 h-auto text-xs text-emerald-600 dark:text-emerald-400">
                     {t('auth.forgotPassword')}
-                  </button>
+                  </Button>
                 </div>
               </div>
 
               {/* Login Button */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-semibold rounded-2xl text-sm shadow-md shadow-emerald-600/25 transition-all disabled:opacity-60 cursor-pointer mt-2"
-              >
+              <Button type="submit" disabled={loading} className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl">
                 {loading ? (
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
@@ -309,7 +299,7 @@ export default function LoginPage() {
                     <span>Login</span>
                   </>
                 )}
-              </button>
+              </Button>
 
               {/* OR Divider */}
               <div className="relative flex py-2 items-center my-1">
@@ -328,20 +318,14 @@ export default function LoginPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {Object.entries(ROLE_PROFILES).map(([key, prof]) => (
-                    <button
-                      key={key}
-                      type="button"
-                      disabled={loading}
-                      onClick={() => handleRoleQuickSelect(key)}
-                      className="flex flex-col items-start px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-800/70 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 border border-gray-200 dark:border-gray-700 hover:border-emerald-300 dark:hover:border-emerald-700 text-left transition-all group disabled:opacity-50 cursor-pointer"
-                    >
+                    <Button variant="outline" key={key} type="button" disabled={loading} onClick={() => handleRoleQuickSelect(key)} className="h-auto py-2 px-3 justify-start flex-col items-start gap-1 rounded-xl">
                       <span className="text-xs font-semibold text-gray-800 dark:text-gray-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                         {prof.name}
                       </span>
                       <span className="text-[10px] text-gray-500 dark:text-gray-400 truncate w-full">
                         {t(`roles.${key}`, prof.roleTitle)}
                       </span>
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </div>
@@ -349,18 +333,15 @@ export default function LoginPage() {
               {/* Card Footer */}
               <div className="text-center pt-3 text-xs text-gray-500 dark:text-gray-400">
                 <span>Don't have an account? </span>
-                <button
-                  type="button"
-                  onClick={() => addToast('Please contact your workshop administrator for account setup.', 'info')}
-                  className="text-emerald-600 dark:text-emerald-400 hover:underline font-semibold cursor-pointer"
-                >
+                <Button variant="link" type="button" onClick={() => addToast('Please contact your workshop administrator for account setup.', 'info')} className="px-1 h-auto text-emerald-600">
                   Sign Up
-                </button>
+                </Button>
               </div>
             </form>
-          </div>
-        </div>
-      </div>
+</CardContent>
+</Card>
+</div>
+</div>
 
       {/* Forgot & Reset Password Modal */}
       <Modal
@@ -386,11 +367,10 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label className="block text-app-muted font-medium mb-1.5">
+                <Label className="block text-app-muted font-medium mb-1.5">
                   {t('auth.emailLabel')} / Username *
-                </label>
-                <input
-                  type="text"
+                </Label>
+                <Input type="text"
                   required
                   value={forgotIdentifier}
                   onChange={(e) => setForgotIdentifier(e.target.value)}
@@ -400,13 +380,9 @@ export default function LoginPage() {
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-                <button
-                  type="button"
-                  onClick={() => setIsForgotOpen(false)}
-                  className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors font-medium cursor-pointer"
-                >
+                <Button variant="ghost" type="button" onClick={() => setIsForgotOpen(false)} className="rounded-xl">
                   {t('common.cancel')}
-                </button>
+                </Button>
                 <LoadingButton type="submit" loading={forgotLoading} className="bg-emerald-600 hover:bg-emerald-700 text-white">
                   {t('auth.requestResetCode')}
                 </LoadingButton>
@@ -430,11 +406,10 @@ export default function LoginPage() {
               )}
 
               <div>
-                <label className="block text-app-muted font-medium mb-1.5">
+                <Label className="block text-app-muted font-medium mb-1.5">
                   {t('auth.resetCodeLabel')} *
-                </label>
-                <input
-                  type="text"
+                </Label>
+                <Input type="text"
                   required
                   maxLength={6}
                   value={resetCode}
@@ -445,34 +420,28 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label className="block text-app-muted font-medium mb-1.5">
+                <Label className="block text-app-muted font-medium mb-1.5">
                   {t('auth.newPasswordLabel')} *
-                </label>
+                </Label>
                 <div className="relative">
-                  <input
-                    type={showNewPassword ? 'text' : 'password'}
+                  <Input type={showNewPassword ? 'text' : 'password'}
                     required
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder={t('auth.newPasswordPlaceholder')}
                     className="w-full px-3.5 py-2.5 pr-10 bg-app-input border border-app-border rounded-xl text-xs text-app-text focus:outline-none focus:border-emerald-500"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-app-muted hover:text-app-text transition-colors"
-                  >
+                  <Button variant="ghost" size="icon" type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground">
                     {showNewPassword ? <EyeSlash size={16} /> : <Eye size={16} />}
-                  </button>
+                  </Button>
                 </div>
               </div>
 
               <div>
-                <label className="block text-app-muted font-medium mb-1.5">
+                <Label className="block text-app-muted font-medium mb-1.5">
                   {t('auth.confirmPasswordLabel')} *
-                </label>
-                <input
-                  type={showNewPassword ? 'text' : 'password'}
+                </Label>
+                <Input type={showNewPassword ? 'text' : 'password'}
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}

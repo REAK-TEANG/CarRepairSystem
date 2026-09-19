@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { Outlet, Navigate, useLocation } from 'react-router-dom'
-import Sidebar from '../components/layout/Sidebar'
-import TopBar from '../components/layout/TopBar'
-import { useAuth } from '../context/AuthContext'
-import { LoadingSpinner } from '../components/ui'
+import Sidebar from '@/components/layout/Sidebar'
+import TopBar from '@/components/layout/TopBar'
+import { useAuth } from '@/context/AuthContext'
+import { LoadingSpinner } from '@/components/ui'
 
 export default function AppLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)

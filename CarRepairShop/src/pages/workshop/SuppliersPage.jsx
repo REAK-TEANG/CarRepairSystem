@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { MagnifyingGlass, Plus, PencilSimple, Trash, Buildings, Star, Eye } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
-import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from '../../hooks/useSuppliers'
-import { useAuth } from '../../context/AuthContext'
-import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton } from '../../components/ui'
+import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from '@/hooks/useSuppliers'
+import { useAuth } from '@/context/AuthContext'
+import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton } from '@/components/ui'
 
 export default function SuppliersPage() {
   const { t } = useTranslation()

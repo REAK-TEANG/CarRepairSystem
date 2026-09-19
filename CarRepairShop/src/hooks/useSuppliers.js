@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { supplierService } from '../services/supplierService'
-import { useToast } from '../context/ToastContext'
+import { supplierService } from '@/services/supplierService'
+import { useToast } from '@/context/ToastContext'
 
 const QUERY_KEY = ['suppliers']
 

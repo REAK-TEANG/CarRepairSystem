@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { inventoryService } from '../services/inventoryService'
-import { useToast } from '../context/ToastContext'
+import { inventoryService } from '@/services/inventoryService'
+import { useToast } from '@/context/ToastContext'
 
 const QUERY_KEY = ['inventory']
 

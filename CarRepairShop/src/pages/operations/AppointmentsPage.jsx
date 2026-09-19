@@ -14,15 +14,15 @@ import {
   Trash,
 } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
-import { useAppointments, useCreateAppointment, useUpdateAppointment, useCancelAppointment } from '../../hooks/useAppointments'
-import { useServiceReminders, useCreateServiceReminder, useUpdateServiceReminder, useDeleteServiceReminder } from '../../hooks/useServiceReminders'
-import { useCustomers } from '../../hooks/useCustomers'
-import { useVehicles } from '../../hooks/useVehicles'
-import { useMechanics } from '../../hooks/useMechanics'
-import { useServicesCatalog } from '../../hooks/useServicesCatalog'
-import { useAuth } from '../../context/AuthContext'
-import { useToast } from '../../context/ToastContext'
-import { Modal, StatusBadge, EmptyState, TableSkeleton, LoadingButton } from '../../components/ui'
+import { useAppointments, useCreateAppointment, useUpdateAppointment, useCancelAppointment } from '@/hooks/useAppointments'
+import { useServiceReminders, useCreateServiceReminder, useUpdateServiceReminder, useDeleteServiceReminder } from '@/hooks/useServiceReminders'
+import { useCustomers } from '@/hooks/useCustomers'
+import { useVehicles } from '@/hooks/useVehicles'
+import { useMechanics } from '@/hooks/useMechanics'
+import { useServicesCatalog } from '@/hooks/useServicesCatalog'
+import { useAuth } from '@/context/AuthContext'
+import { useToast } from '@/context/ToastContext'
+import { Modal, StatusBadge, EmptyState, TableSkeleton, LoadingButton } from '@/components/ui'
 
 const statusFilters = ['All', 'Scheduled', 'Confirmed', 'In Progress', 'Completed', 'Cancelled']
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']

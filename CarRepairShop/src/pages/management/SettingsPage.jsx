@@ -34,8 +34,8 @@ import {
   Translate,
 } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
-import { settingsService } from '../../services/settingsService'
-import { useAuth, DEFAULT_PERMISSIONS_MATRIX } from '../../context/AuthContext'
+import { settingsService } from '@/services/settingsService'
+import { useAuth, DEFAULT_PERMISSIONS_MATRIX } from '@/context/AuthContext'
 
 const MODULE_DEFINITIONS = [
   // Operations Category

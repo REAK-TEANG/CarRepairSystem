@@ -17,15 +17,15 @@ import {
   Receipt,
 } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
-import { useRepairJobs, useCreateRepairJob, useUpdateRepairJob, useDeleteRepairJob } from '../../hooks/useRepairJobs'
-import { useCustomers } from '../../hooks/useCustomers'
-import { useVehicles } from '../../hooks/useVehicles'
-import { useMechanics } from '../../hooks/useMechanics'
-import { useServicesCatalog } from '../../hooks/useServicesCatalog'
-import { useCreateInvoice } from '../../hooks/useInvoices'
-import { useAuth } from '../../context/AuthContext'
-import { useToast } from '../../context/ToastContext'
-import { Modal, StatusBadge, EmptyState, ConfirmDialog, TableSkeleton, LoadingButton } from '../../components/ui'
+import { useRepairJobs, useCreateRepairJob, useUpdateRepairJob, useDeleteRepairJob } from '@/hooks/useRepairJobs'
+import { useCustomers } from '@/hooks/useCustomers'
+import { useVehicles } from '@/hooks/useVehicles'
+import { useMechanics } from '@/hooks/useMechanics'
+import { useServicesCatalog } from '@/hooks/useServicesCatalog'
+import { useCreateInvoice } from '@/hooks/useInvoices'
+import { useAuth } from '@/context/AuthContext'
+import { useToast } from '@/context/ToastContext'
+import { Modal, StatusBadge, EmptyState, ConfirmDialog, TableSkeleton, LoadingButton } from '@/components/ui'
 
 const statusFilters = ['All', 'Pending', 'Diagnosing', 'Repairing', 'Waiting for Parts', 'Ready for Pickup', 'Completed']
 

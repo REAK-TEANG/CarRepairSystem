@@ -1,4 +1,4 @@
-import Modal from './Modal'
+import Modal from '@/components/ui/Modal'
 import { Warning } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 

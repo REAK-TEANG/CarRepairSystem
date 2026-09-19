@@ -1,4 +1,4 @@
-import { apiClient, API_CONFIG } from './apiClient'
+import { apiClient, API_CONFIG } from '@/services/apiClient'
 
 export const reportService = {
   async getDashboardMetrics() {

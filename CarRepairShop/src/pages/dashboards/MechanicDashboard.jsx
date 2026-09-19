@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { Wrench, CheckCircle, WarningCircle, User } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
-import { useRepairJobs } from '../../hooks/useRepairJobs'
-import { useMechanics } from '../../hooks/useMechanics'
-import { useAuth } from '../../context/AuthContext'
-import RepairPipelineTracker from '../../components/workshop/RepairPipelineTracker'
+import { useRepairJobs } from '@/hooks/useRepairJobs'
+import { useMechanics } from '@/hooks/useMechanics'
+import { useAuth } from '@/context/AuthContext'
+import RepairPipelineTracker from '@/components/workshop/RepairPipelineTracker'
 
 export default function MechanicDashboard() {
   const { t } = useTranslation()
