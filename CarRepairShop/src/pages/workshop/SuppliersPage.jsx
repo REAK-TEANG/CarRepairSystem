@@ -3,7 +3,13 @@ import { MagnifyingGlass, Plus, PencilSimple, Trash, Buildings, Star, Eye } from
 import { useTranslation } from 'react-i18next'
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from '@/hooks/useSuppliers'
 import { useAuth } from '@/context/AuthContext'
-import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton } from '@/components/ui'
+import { ConfirmDialog, EmptyState, TableSkeleton, LoadingButton } from '@/components/ui'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 export default function SuppliersPage() {
   const { t } = useTranslation()
@@ -100,41 +106,35 @@ export default function SuppliersPage() {
     <div className="space-y-6 text-app-text font-sans">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-app-text">{t('titles.suppliersProcurement')}</h1>
-          <p className="text-xs text-app-muted mt-1">{suppliers.length} {t('suppliers.subtitle')}</p>
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">{t('titles.suppliersProcurement')}</h1>
+          <Badge variant="outline" className="text-xs font-mono">{suppliers.length}</Badge>
         </div>
         {can('suppliers', 'create') && (
-          <button
-            onClick={handleOpenAdd}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover text-app-accentText font-semibold rounded-xl text-xs transition-colors shadow-subtle"
-          >
+          <Button onClick={handleOpenAdd} size="sm">
             <Plus size={16} weight="bold" />
             {t('suppliers.addSupplier')}
-          </button>
+          </Button>
         )}
       </div>
 
       {/* Main Table */}
       <div className="bg-app-card rounded-2xl border border-app-border shadow-card overflow-hidden transition-colors duration-200">
         <div className="p-4 border-b border-app-border flex items-center justify-between gap-3">
-          <div className="relative flex-1 max-w-md">
-            <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
-            <input
+          <div className="relative flex-1 max-w-sm">
+            <MagnifyingGlass size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <Input
               type="text"
               placeholder={t('common.quickSearch')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-xl text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+              className="pl-8"
             />
           </div>
           {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="text-xs text-app-muted hover:text-app-text px-2 py-1 transition-colors"
-            >
+            <Button variant="ghost" size="sm" onClick={() => setSearchQuery('')}>
               {t('common.cancel')}
-            </button>
+            </Button>
           )}
         </div>
 
@@ -149,21 +149,10 @@ export default function SuppliersPage() {
               onAction={searchQuery ? () => setSearchQuery('') : undefined}
             />
           ) : (
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                  <th className="px-6 py-3 font-semibold">{t('suppliers.companyName')}</th>
-                  <th className="px-6 py-3 font-semibold">{t('suppliers.contactPerson')}</th>
-                  <th className="px-6 py-3 hidden md:table-cell font-semibold">{t('suppliers.categories')}</th>
-                  <th className="px-6 py-3 hidden lg:table-cell font-semibold">{t('suppliers.paymentTerms')}</th>
-                  <th className="px-6 py-3 font-semibold">Rating</th>
-                  <th className="px-6 py-3 font-semibold text-right">{t('common.actions')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-app-border">
+            <Table className="w-full text-xs"><TableHeader><TableRow className="text-app-muted text-left border-b border-app-border bg-app-hover/50 hover:bg-app-hover/50"><TableHead className="px-6 py-3 font-semibold">{t('suppliers.companyName')}</TableHead><TableHead className="px-6 py-3 font-semibold">{t('suppliers.contactPerson')}</TableHead><TableHead className="px-6 py-3 hidden md:table-cell font-semibold">{t('suppliers.categories')}</TableHead><TableHead className="px-6 py-3 hidden lg:table-cell font-semibold">{t('suppliers.paymentTerms')}</TableHead><TableHead className="px-6 py-3 font-semibold">Rating</TableHead><TableHead className="px-6 py-3 font-semibold text-right">{t('common.actions')}</TableHead></TableRow></TableHeader><TableBody className="divide-y divide-app-border">
                 {filtered.map((s) => (
-                  <tr key={s.id} className="hover:bg-app-hover/60 transition-colors group">
-                    <td className="px-6 py-3.5">
+                  <TableRow key={s.id} className="hover:bg-app-hover/60 transition-colors group">
+                    <TableCell className="px-6 py-3.5">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-app-accent/15 flex items-center justify-center text-app-accent font-bold text-xs flex-shrink-0">
                           <Buildings size={16} />
@@ -173,61 +162,49 @@ export default function SuppliersPage() {
                           <p className="text-[10px] text-app-muted">{s.email || 'supplier@domain.com'}</p>
                         </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-3.5">
+                    </TableCell>
+                    <TableCell className="px-6 py-3.5">
                       <p className="font-medium text-app-text">{s.contactPerson}</p>
                       <p className="text-[10px] text-app-muted font-mono">{s.phone}</p>
-                    </td>
-                    <td className="px-6 py-3.5 text-app-muted hidden md:table-cell">{s.categories}</td>
-                    <td className="px-6 py-3.5 text-app-muted hidden lg:table-cell">{s.address || 'Net 30 Days'}</td>
-                    <td className="px-6 py-3.5">
+                    </TableCell>
+                    <TableCell className="px-6 py-3.5 text-app-muted hidden md:table-cell">{s.categories}</TableCell>
+                    <TableCell className="px-6 py-3.5 text-app-muted hidden lg:table-cell">{s.address || 'Net 30 Days'}</TableCell>
+                    <TableCell className="px-6 py-3.5">
                       <span className="inline-flex items-center gap-1 text-amber-500 font-semibold">
                         <Star size={13} weight="fill" />
                         {s.rating || 4.8}
                       </span>
-                    </td>
-                    <td className="px-6 py-3.5 text-right">
+                    </TableCell>
+                    <TableCell className="px-6 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => handleOpenView(s)}
-                          className="p-1.5 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors"
-                          title={t('common.view')}
-                        >
+                        <Button variant="ghost" size="icon" onClick={() => handleOpenView(s)} className="h-8 w-8 text-app-muted hover:text-app-text hover:bg-app-hover" title={t('common.view')}>
                           <Eye size={15} />
-                        </button>
+                        </Button>
                         {can('suppliers', 'update') && (
-                          <button
-                            onClick={() => handleOpenEdit(s)}
-                            className="p-1.5 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors"
-                            title={t('common.edit')}
-                          >
+                          <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(s)} className="h-8 w-8 text-app-muted hover:text-app-text hover:bg-app-hover" title={t('common.edit')}>
                             <PencilSimple size={15} />
-                          </button>
+                          </Button>
                         )}
                         {can('suppliers', 'delete') && (
-                          <button
-                            onClick={() => handleOpenDelete(s)}
-                            className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors"
-                            title={t('common.delete')}
-                          >
+                          <Button variant="ghost" size="icon" onClick={() => handleOpenDelete(s)} className="h-8 w-8 text-rose-500 hover:text-rose-500 hover:bg-rose-500/10" title={t('common.delete')}>
                             <Trash size={15} />
-                          </button>
+                          </Button>
                         )}
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           )}
         </div>
       </div>
 
       {/* Add Supplier Modal */}
-      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('suppliers.createSupplier')}>
+      <Dialog open={isAddOpen} onOpenChange={(open) => { if(!open) setIsAddOpen(false); }}><DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>{t('suppliers.createSupplier')}</DialogTitle></DialogHeader>
         <form onSubmit={handleCreate} className="space-y-4 text-xs">
           <div>
-            <label className="block text-app-muted font-medium mb-1">{t('suppliers.companyName')} *</label>
+            <Label className="block text-app-muted font-medium mb-1">{t('suppliers.companyName')} *</Label>
             <input
               type="text"
               required
@@ -239,7 +216,7 @@ export default function SuppliersPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('suppliers.contactPerson')}</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('suppliers.contactPerson')}</Label>
               <input
                 type="text"
                 value={formData.contactPerson}
@@ -249,7 +226,7 @@ export default function SuppliersPage() {
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('suppliers.phone')} *</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('suppliers.phone')} *</Label>
               <input
                 type="text"
                 required
@@ -262,7 +239,7 @@ export default function SuppliersPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('suppliers.email')}</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('suppliers.email')}</Label>
               <input
                 type="email"
                 value={formData.email}
@@ -272,7 +249,7 @@ export default function SuppliersPage() {
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('suppliers.categories')}</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('suppliers.categories')}</Label>
               <input
                 type="text"
                 value={formData.categories}
@@ -283,25 +260,21 @@ export default function SuppliersPage() {
             </div>
           </div>
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
-              type="button"
-              onClick={() => setIsAddOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
-            >
+            <Button variant="ghost" type="button" onClick={() => setIsAddOpen(false)} className="h-9 rounded-xl">
               {t('common.cancel')}
-            </button>
+            </Button>
             <LoadingButton type="submit" loading={createSupplierMutation.isPending}>
               {t('suppliers.createSupplier')}
             </LoadingButton>
           </div>
         </form>
-      </Modal>
+      </DialogContent></Dialog>
 
       {/* Edit Supplier Modal */}
-      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title={`${t('suppliers.editSupplier')}: ${selectedSupplier?.name}`}>
+      <Dialog open={isEditOpen} onOpenChange={(open) => { if(!open) setIsEditOpen(false); }}><DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>{t('suppliers.editSupplier')}: {selectedSupplier?.name}</DialogTitle></DialogHeader>
         <form onSubmit={handleUpdate} className="space-y-4 text-xs">
           <div>
-            <label className="block text-app-muted font-medium mb-1">{t('suppliers.companyName')} *</label>
+            <Label className="block text-app-muted font-medium mb-1">{t('suppliers.companyName')} *</Label>
             <input
               type="text"
               required
@@ -312,7 +285,7 @@ export default function SuppliersPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('suppliers.contactPerson')}</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('suppliers.contactPerson')}</Label>
               <input
                 type="text"
                 value={formData.contactPerson}
@@ -321,7 +294,7 @@ export default function SuppliersPage() {
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('suppliers.phone')} *</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('suppliers.phone')} *</Label>
               <input
                 type="text"
                 required
@@ -332,22 +305,18 @@ export default function SuppliersPage() {
             </div>
           </div>
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
-              type="button"
-              onClick={() => setIsEditOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
-            >
+            <Button variant="ghost" type="button" onClick={() => setIsEditOpen(false)} className="h-9 rounded-xl">
               {t('common.cancel')}
-            </button>
+            </Button>
             <LoadingButton type="submit" loading={updateSupplierMutation.isPending}>
               {t('common.saveChanges')}
             </LoadingButton>
           </div>
         </form>
-      </Modal>
+      </DialogContent></Dialog>
 
       {/* View Supplier Modal */}
-      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('suppliers.title')}>
+      <Dialog open={isViewOpen} onOpenChange={(open) => { if(!open) setIsViewOpen(false); }}><DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>{t('suppliers.title')}</DialogTitle></DialogHeader>
         {selectedSupplier && (
           <div className="space-y-4 text-xs">
             <div className="flex items-center gap-3 p-3 bg-app-hover/50 rounded-xl border border-app-border">
@@ -380,7 +349,7 @@ export default function SuppliersPage() {
             </div>
           </div>
         )}
-      </Modal>
+      </DialogContent></Dialog>
 
       {/* Delete Confirmation */}
       <ConfirmDialog

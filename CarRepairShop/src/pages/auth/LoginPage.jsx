@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Eye, EyeSlash, SignIn, ShieldCheck, Key, ArrowLeft, CheckCircle } from '@phosphor-icons/react'
 import Logo from '@/components/ui/Logo'
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher'
-import { Modal, LoadingButton } from '@/components/ui'
+import { LoadingButton } from '@/components/ui'
 import { useAuth, ROLE_PROFILES } from '@/context/AuthContext'
 import { authService } from '@/services/authService'
 import { useToast } from '@/context/ToastContext'
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 export default function LoginPage() {
   const { t } = useTranslation()
@@ -344,12 +345,14 @@ export default function LoginPage() {
 </div>
 
       {/* Forgot & Reset Password Modal */}
-      <Modal
-        isOpen={isForgotOpen}
-        onClose={() => setIsForgotOpen(false)}
-        title={forgotStep === 1 ? t('auth.forgotPasswordTitle') : t('auth.resetPassword')}
-      >
-        <div className="space-y-4 text-xs font-sans">
+      <Dialog open={isForgotOpen} onOpenChange={(open) => { if (!open) setIsForgotOpen(false); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {forgotStep === 1 ? t('auth.forgotPasswordTitle') : t('auth.resetPassword')}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 text-xs font-sans">
           {forgotError && (
             <div className="px-3.5 py-2.5 bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 rounded-xl font-medium">
               {forgotError}
@@ -415,7 +418,7 @@ export default function LoginPage() {
                   value={resetCode}
                   onChange={(e) => setResetCode(e.target.value)}
                   placeholder={t('auth.resetCodePlaceholder')}
-                  className="w-full px-3.5 py-2.5 bg-app-input border border-app-border rounded-xl text-xs text-app-text font-mono tracking-widest text-center text-sm focus:outline-none focus:border-emerald-500"
+                  className="w-full px-3.5 py-2.5 bg-app-input border border-app-border rounded-xl text-app-text font-mono tracking-widest text-center text-sm focus:outline-none focus:border-emerald-500"
                 />
               </div>
 
@@ -451,17 +454,19 @@ export default function LoginPage() {
               </div>
 
               <div className="flex items-center justify-between pt-3 border-t border-app-border">
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => {
                     setForgotStep(1)
                     setForgotError('')
                   }}
-                  className="flex items-center gap-1.5 px-3 py-2 text-app-muted hover:text-app-text hover:bg-app-hover rounded-xl transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 text-app-muted hover:text-app-text"
                 >
                   <ArrowLeft size={14} />
                   <span>{t('common.back')}</span>
-                </button>
+                </Button>
                 <LoadingButton type="submit" loading={forgotLoading} className="bg-emerald-600 hover:bg-emerald-700 text-white">
                   {t('auth.resetPasswordButton')}
                 </LoadingButton>
@@ -469,7 +474,8 @@ export default function LoginPage() {
             </form>
           )}
         </div>
-      </Modal>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

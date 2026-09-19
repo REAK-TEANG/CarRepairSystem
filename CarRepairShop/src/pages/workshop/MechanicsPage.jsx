@@ -7,6 +7,8 @@ import { ConfirmDialog, EmptyState, TableSkeleton, LoadingButton } from '@/compo
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import RepairPipelineTracker from '@/components/workshop/RepairPipelineTracker'
@@ -113,16 +115,12 @@ export default function MechanicsPage() {
     <div className="space-y-6 text-app-text font-sans">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-app-text">{t('titles.mechanicsStaffRoster')}</h1>
-          <p className="text-xs text-app-muted mt-1">
-            {activeTab === 'pipeline'
-              ? 'Real-time vehicle repair pipeline from Diagnosing to Completion with 1-click progression'
-              : `${mechanics.length} ${t('mechanics.subtitle')}`}
-          </p>
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">{t('titles.mechanicsStaffRoster')}</h1>
+          <Badge variant="outline" className="text-xs font-mono">{mechanics.length}</Badge>
         </div>
         {can('mechanics', 'create') && activeTab === 'roster' && (
-          <Button onClick={handleOpenAdd} className="h-9 px-4 rounded-xl bg-app-accent hover:bg-app-accentHover text-white shadow-subtle">
+          <Button onClick={handleOpenAdd} size="sm">
             <Plus size={16} weight="bold" />
             {t('mechanics.addMechanic')}
           </Button>
@@ -183,18 +181,24 @@ export default function MechanicsPage() {
       {/* Main Table */}
       <div className="bg-app-card rounded-2xl border border-app-border shadow-card overflow-hidden transition-colors duration-200">
         <div className="p-4 border-b border-app-border flex items-center justify-between gap-3">
-          <div className="relative flex-1 max-w-md">
-            <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
-            <Input type="text" placeholder={t('common.quickSearch')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full h-9 pl-9 rounded-xl" />
+          <div className="relative flex-1 max-w-sm">
+            <MagnifyingGlass size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <Input
+              type="text"
+              placeholder={t('common.quickSearch')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8"
+            />
           </div>
           {(searchQuery || activeFilter !== 'All') && (
             <Button
               variant="ghost"
+              size="sm"
               onClick={() => {
                 setSearchQuery('')
                 setActiveFilter('All')
               }}
-              className="h-8 px-2 text-xs text-app-muted hover:text-app-text"
             >
               {t('common.cancel')}
             </Button>
@@ -392,15 +396,19 @@ export default function MechanicsPage() {
             </div>
             <div>
               <Label className="block text-app-muted font-medium mb-1">{t('mechanics.status')}</Label>
-              <select
+              <Select
                 value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-semibold"
+                onValueChange={(val) => setFormData({ ...formData, status: val })}
               >
-                <option value="Active">{t('status.Active')}</option>
-                <option value="On Leave">{t('status.On Leave')}</option>
-                <option value="Terminated">{t('status.Terminated')}</option>
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={t('mechanics.status')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Active">{t('status.Active')}</SelectItem>
+                  <SelectItem value="On Leave">{t('status.On Leave')}</SelectItem>
+                  <SelectItem value="Terminated">{t('status.Terminated')}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">

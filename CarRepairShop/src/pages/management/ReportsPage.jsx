@@ -7,6 +7,7 @@ import { useInventory } from '@/hooks/useInventory'
 import { useCustomers } from '@/hooks/useCustomers'
 import { useEmployees } from '@/hooks/useEmployees'
 import { CardSkeleton } from '@/components/ui'
+import { Button } from '@/components/ui/button'
 
 export default function ReportsPage() {
   const { t } = useTranslation()
@@ -130,13 +131,13 @@ export default function ReportsPage() {
           <h1 className="text-xl font-bold tracking-tight text-app-text">{t('titles.analyticsReports')}</h1>
           <p className="text-xs text-app-muted mt-1">{t('reports.subtitle')}</p>
         </div>
-        <button
+        <Button
           onClick={handleExportAll}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover text-app-accentText font-semibold rounded-xl text-xs transition-colors shadow-subtle"
+          className="h-9 px-4 bg-app-accent hover:bg-app-accentHover text-white font-semibold rounded-xl text-xs shadow-subtle"
         >
           <DownloadSimple size={16} weight="bold" />
           {t('reports.exportReport')} (Full System Archive)
-        </button>
+        </Button>
       </div>
 
       {/* Metric Summary Bento Grid */}
@@ -199,17 +200,18 @@ export default function ReportsPage() {
       {/* Category Tabs */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
         {categories.map((cat) => (
-          <button
+          <Button
             key={cat}
+            variant="ghost"
             onClick={() => setSelectedCategory(cat)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-colors ${
+            className={`h-8 px-3 rounded-xl whitespace-nowrap text-xs ${
               selectedCategory === cat
-                ? 'bg-app-accent text-app-accentText shadow-subtle'
+                ? 'bg-app-accent text-white shadow-subtle hover:bg-app-accent hover:text-white'
                 : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover hover:text-app-text'
             }`}
           >
             {cat === 'All' ? t('common.all') : cat}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -238,13 +240,14 @@ export default function ReportsPage() {
               </div>
 
               <div className="flex items-center gap-2 self-end sm:self-center">
-                <button
+                <Button
+                  variant="outline"
                   onClick={() => handleExportData(report.title, report.data)}
-                  className="px-3 py-1.5 bg-app-hover hover:bg-app-border border border-app-border rounded-xl text-xs font-semibold text-app-text transition-colors flex items-center gap-1.5 shadow-subtle"
+                  className="h-8 px-3 rounded-xl text-xs font-semibold gap-1.5 shadow-subtle"
                 >
                   <DownloadSimple size={14} weight="bold" />
                   {t('common.export')}
-                </button>
+                </Button>
               </div>
             </div>
           ))}

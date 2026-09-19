@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Globe, Check, CaretDown } from '@phosphor-icons/react'
 import clsx from 'clsx'
+import { Button } from '@/components/ui/button'
 
 const languages = [
   { code: 'km', label: 'ភាសាខ្មែរ', flag: '🇰🇭', short: 'KH' },
@@ -36,20 +37,22 @@ export default function LanguageSwitcher({ variant = 'topbar', className }) {
         {languages.map((l) => {
           const isActive = i18n.language === l.code
           return (
-            <button
+            <Button
               key={l.code}
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => i18n.changeLanguage(l.code)}
               className={clsx(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all',
+                'flex items-center gap-1.5 px-3 py-1.5 h-auto rounded-lg text-xs font-semibold transition-all',
                 isActive
-                  ? 'bg-app-card text-app-accent shadow-sm border border-app-border ring-1 ring-app-accent/20'
+                  ? 'bg-app-card text-app-accent shadow-sm border border-app-border ring-1 ring-app-accent/20 hover:bg-app-card'
                   : 'text-app-muted hover:text-app-text hover:bg-app-card/50'
               )}
             >
               <span>{l.flag}</span>
               <span>{l.label}</span>
-            </button>
+            </Button>
           )
         })}
       </div>
@@ -58,16 +61,18 @@ export default function LanguageSwitcher({ variant = 'topbar', className }) {
 
   return (
     <div ref={dropdownRef} className={clsx('relative inline-block text-left', className)}>
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="sm"
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium text-app-text hover:bg-app-card transition-all border border-transparent hover:border-app-border"
+        className="flex items-center gap-1.5 px-2.5 py-1.5 h-auto rounded-xl text-xs font-medium text-app-text hover:bg-app-card transition-all border border-transparent hover:border-app-border"
         title={`Language: ${currentLang.label}`}
       >
         <span className="text-sm">{currentLang.flag}</span>
         <span className="font-semibold text-xs hidden sm:inline">{currentLang.short}</span>
         <CaretDown size={12} weight="bold" className="text-app-muted" />
-      </button>
+      </Button>
 
       {open && (
         <div className="absolute right-0 mt-2 w-44 bg-app-card border border-app-border rounded-2xl shadow-card py-1.5 z-50 animate-fade-in text-xs">
@@ -79,13 +84,15 @@ export default function LanguageSwitcher({ variant = 'topbar', className }) {
             {languages.map((l) => {
               const isSelected = i18n.language === l.code
               return (
-                <button
+                <Button
                   key={l.code}
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => handleSelect(l.code)}
                   className={clsx(
-                    'w-full flex items-center justify-between px-3.5 py-2 hover:bg-app-hover text-left transition-colors',
-                    isSelected && 'text-app-accent font-bold bg-app-accent/10'
+                    'w-full h-auto flex items-center justify-between px-3.5 py-2 hover:bg-app-hover text-left transition-colors rounded-none font-normal',
+                    isSelected && 'text-app-accent font-bold bg-app-accent/10 hover:bg-app-accent/15'
                   )}
                 >
                   <div className="flex items-center gap-2.5">
@@ -93,7 +100,7 @@ export default function LanguageSwitcher({ variant = 'topbar', className }) {
                     <span>{l.label}</span>
                   </div>
                   {isSelected && <Check size={14} weight="bold" className="text-app-accent" />}
-                </button>
+                </Button>
               )
             })}
           </div>

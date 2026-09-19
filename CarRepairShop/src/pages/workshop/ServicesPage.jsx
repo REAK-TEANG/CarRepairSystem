@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const statusOptions = ['All Status', 'Active Only', 'Inactive Only']
 
@@ -174,16 +175,18 @@ export default function ServicesPage() {
   })
 
   return (
-    <div className="space-y-6 text-app-text font-sans">
+    <div className="space-y-4 text-app-text font-sans">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold tracking-tight text-app-text">{t('titles.serviceCatalog')}</h1>
-          <p className="text-xs text-app-muted mt-1">{services.length} {t('services.subtitle')}</p>
+          <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-app-hover text-app-muted border border-app-border">
+            {services.length}
+          </span>
         </div>
         {can('services', 'create') && (
-          <Button onClick={handleOpenAdd} className="h-9 px-4 rounded-xl bg-app-accent hover:bg-app-accentHover text-white shadow-subtle">
-            <Plus size={16} weight="bold" />
+          <Button onClick={handleOpenAdd} size="sm" className="inline-flex items-center gap-1.5">
+            <Plus size={15} weight="bold" />
             {t('services.addService')}
           </Button>
         )}
@@ -211,10 +214,10 @@ export default function ServicesPage() {
 
       {/* Main Table */}
       <div className="bg-app-card rounded-2xl border border-app-border shadow-card overflow-hidden transition-colors duration-200">
-        <div className="p-4 border-b border-app-border flex items-center justify-between gap-3">
-          <div className="relative flex-1 max-w-md">
-            <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
-            <Input type="text" placeholder={t('common.quickSearch')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full h-9 pl-9 rounded-xl" />
+        <div className="p-3.5 border-b border-app-border flex items-center justify-between gap-3">
+          <div className="relative flex-1 max-w-sm">
+            <MagnifyingGlass size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <Input type="text" placeholder={t('common.quickSearch')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-8" />
           </div>
           {(searchQuery || categoryFilter !== 'All' || statusFilter !== 'All Status') && (
             <Button
@@ -338,18 +341,22 @@ export default function ServicesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <Label className="block text-app-muted font-medium mb-1">{t('services.category')}</Label>
-              <select
+              <Select
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                onValueChange={(val) => setFormData({ ...formData, category: val })}
               >
-                <option value="Routine Maintenance">Routine Maintenance</option>
-                <option value="Brake System">Brake System</option>
-                <option value="Engine & Transmission">Engine & Transmission</option>
-                <option value="Electrical Diagnostics">Electrical Diagnostics</option>
-                <option value="Suspension & Steering">Suspension & Steering</option>
-                <option value="HVAC & AC System">HVAC & AC System</option>
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Routine Maintenance">Routine Maintenance</SelectItem>
+                  <SelectItem value="Brake System">Brake System</SelectItem>
+                  <SelectItem value="Engine & Transmission">Engine & Transmission</SelectItem>
+                  <SelectItem value="Electrical Diagnostics">Electrical Diagnostics</SelectItem>
+                  <SelectItem value="Suspension & Steering">Suspension & Steering</SelectItem>
+                  <SelectItem value="HVAC & AC System">HVAC & AC System</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label className="block text-app-muted font-medium mb-1">{t('services.estimatedHours')}</Label>
@@ -394,19 +401,24 @@ export default function ServicesPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <select
-                value={selectedPartId}
-                onChange={(e) => setSelectedPartId(e.target.value)}
-                className="flex-1 px-3 py-1.5 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent text-xs"
-              >
-                <option value="">-- Select Spare Part from Inventory --</option>
-                {inventory.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} ({p.partCode}) - Stock: {p.stockQty} - ${Number(p.unitPrice || 0).toFixed(2)}
-                  </option>
-                ))}
-              </select>
-              <Input type="number" min="1" value={selectedPartQty} onChange={(e) => setSelectedPartQty(Math.max(1, parseInt(e.target.value, 10) || 1))} className="w-16 h-8 rounded-xl text-center" placeholder="Qty" />
+              <div className="flex-1">
+                <Select
+                  value={selectedPartId}
+                  onValueChange={(val) => setSelectedPartId(val)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="-- Select Spare Part from Inventory --" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {inventory.map((p) => (
+                      <SelectItem key={p.id} value={String(p.id)}>
+                        {p.name} ({p.partCode}) - Stock: {p.stockQty} - ${Number(p.unitPrice || 0).toFixed(2)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Input type="number" min="1" value={selectedPartQty} onChange={(e) => setSelectedPartQty(Math.max(1, parseInt(e.target.value, 10) || 1))} className="w-16 h-8 text-center" placeholder="Qty" />
               <Button type="button" onClick={handleAddPartToForm} disabled={!selectedPartId} className="h-8 px-3 rounded-xl bg-app-accent hover:bg-app-accent/80 text-white shadow-subtle">
                 <Plus size={14} weight="bold" /> Add
               </Button>
@@ -464,18 +476,22 @@ export default function ServicesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <Label className="block text-app-muted font-medium mb-1">{t('services.category')}</Label>
-              <select
+              <Select
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                onValueChange={(val) => setFormData({ ...formData, category: val })}
               >
-                <option value="Routine Maintenance">Routine Maintenance</option>
-                <option value="Brake System">Brake System</option>
-                <option value="Engine & Transmission">Engine & Transmission</option>
-                <option value="Electrical Diagnostics">Electrical Diagnostics</option>
-                <option value="Suspension & Steering">Suspension & Steering</option>
-                <option value="HVAC & AC System">HVAC & AC System</option>
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Routine Maintenance">Routine Maintenance</SelectItem>
+                  <SelectItem value="Brake System">Brake System</SelectItem>
+                  <SelectItem value="Engine & Transmission">Engine & Transmission</SelectItem>
+                  <SelectItem value="Electrical Diagnostics">Electrical Diagnostics</SelectItem>
+                  <SelectItem value="Suspension & Steering">Suspension & Steering</SelectItem>
+                  <SelectItem value="HVAC & AC System">HVAC & AC System</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label className="block text-app-muted font-medium mb-1">{t('services.estimatedHours')}</Label>
@@ -519,19 +535,24 @@ export default function ServicesPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <select
-                value={selectedPartId}
-                onChange={(e) => setSelectedPartId(e.target.value)}
-                className="flex-1 px-3 py-1.5 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent text-xs"
-              >
-                <option value="">-- Select Spare Part from Inventory --</option>
-                {inventory.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} ({p.partCode}) - Stock: {p.stockQty} - ${Number(p.unitPrice || 0).toFixed(2)}
-                  </option>
-                ))}
-              </select>
-              <Input type="number" min="1" value={selectedPartQty} onChange={(e) => setSelectedPartQty(Math.max(1, parseInt(e.target.value, 10) || 1))} className="w-16 h-8 rounded-xl text-center" placeholder="Qty" />
+              <div className="flex-1">
+                <Select
+                  value={selectedPartId}
+                  onValueChange={(val) => setSelectedPartId(val)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="-- Select Spare Part from Inventory --" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {inventory.map((p) => (
+                      <SelectItem key={p.id} value={String(p.id)}>
+                        {p.name} ({p.partCode}) - Stock: {p.stockQty} - ${Number(p.unitPrice || 0).toFixed(2)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Input type="number" min="1" value={selectedPartQty} onChange={(e) => setSelectedPartQty(Math.max(1, parseInt(e.target.value, 10) || 1))} className="w-16 h-8 text-center" placeholder="Qty" />
               <Button type="button" onClick={handleAddPartToForm} disabled={!selectedPartId} className="h-8 px-3 rounded-xl bg-app-accent hover:bg-app-accent/80 text-white shadow-subtle">
                 <Plus size={14} weight="bold" /> Add
               </Button>

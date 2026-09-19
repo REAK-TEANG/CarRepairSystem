@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { ShieldWarning, ArrowLeft, SignOut } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useAuth, ROLE_PROFILES } from '@/context/AuthContext'
+import { Button } from '@/components/ui/button'
 
 export default function UnauthorizedPage() {
   const { t } = useTranslation()
@@ -40,21 +41,22 @@ export default function UnauthorizedPage() {
         </p>
 
         <div className="mt-6 pt-6 border-t border-app-border flex flex-col sm:flex-row items-center justify-center gap-3">
-          <button
+          <Button
             onClick={handleGoHome}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-app-accent hover:bg-app-accentHover text-app-accentText font-semibold rounded-xl text-xs transition-colors shadow-subtle cursor-pointer"
+            className="w-full sm:w-auto h-9 px-4 bg-app-accent hover:bg-app-accentHover text-white font-semibold rounded-xl text-xs shadow-subtle gap-2"
           >
             <ArrowLeft size={16} weight="bold" />
             {t('auth.backToHome')}
-          </button>
+          </Button>
 
-          <button
+          <Button
+            variant="outline"
             onClick={handleSignOut}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-app-hover hover:bg-app-border text-app-text font-semibold rounded-xl text-xs transition-colors border border-app-border cursor-pointer"
+            className="w-full sm:w-auto h-9 px-4 font-semibold rounded-xl text-xs gap-2"
           >
             <SignOut size={16} weight="bold" className="text-rose-500" />
             {t('common.signOut')} / {t('common.signIn')}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

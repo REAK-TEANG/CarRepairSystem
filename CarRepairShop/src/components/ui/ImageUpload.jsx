@@ -1,5 +1,7 @@
 import { useRef } from 'react'
 import { UploadSimple, X, Image as ImageIcon } from '@phosphor-icons/react'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
 
 /**
  * Reusable Image Upload Component with live Base64 preview & file picker.
@@ -41,7 +43,7 @@ export default function ImageUpload({
 
   return (
     <div className={`space-y-1.5 font-sans ${className}`}>
-      {label && <label className="block text-app-muted font-medium text-xs">{label}</label>}
+      {label && <Label className="block text-app-muted font-medium text-xs">{label}</Label>}
 
       {shape === 'circle' ? (
         <div className="flex items-center gap-3">
@@ -52,14 +54,16 @@ export default function ImageUpload({
                 alt="Profile Preview"
                 className="w-12 h-12 rounded-full object-cover border border-app-border"
               />
-              <button
+              <Button
                 type="button"
+                variant="destructive"
+                size="icon"
                 onClick={handleClear}
-                className="absolute -top-1 -right-1 p-0.5 bg-red-600 hover:bg-red-700 text-white rounded-full transition-colors shadow-sm"
+                className="absolute -top-1 -right-1 w-4 h-4 p-0 rounded-full shadow-sm"
                 title="Remove photo"
               >
                 <X size={10} weight="bold" />
-              </button>
+              </Button>
             </div>
           ) : (
             <div className="w-12 h-12 rounded-full bg-app-input border border-dashed border-app-border flex items-center justify-center text-[10px] text-app-muted text-center flex-shrink-0">
@@ -82,14 +86,16 @@ export default function ImageUpload({
           {value ? (
             <div className="relative w-24 h-16 rounded-lg overflow-hidden border border-app-border bg-app-hover flex-shrink-0 group">
               <img src={value} alt="Preview" className="w-full h-full object-cover" />
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon"
                 onClick={handleClear}
-                className="absolute top-1 right-1 p-1 bg-black/70 hover:bg-black text-white rounded-md transition-colors"
+                className="absolute top-1 right-1 w-5 h-5 p-0 bg-black/70 hover:bg-black text-white rounded-md transition-colors"
                 title="Remove photo"
               >
                 <X size={12} weight="bold" />
-              </button>
+              </Button>
             </div>
           ) : (
             <div className="w-24 h-16 rounded-lg border border-dashed border-app-border bg-app-input flex flex-col items-center justify-center text-app-muted flex-shrink-0">

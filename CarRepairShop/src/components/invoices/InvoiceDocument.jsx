@@ -18,6 +18,7 @@ import {
   CreditCard,
   ShieldCheck,
 } from '@phosphor-icons/react'
+import { Button } from '@/components/ui/button'
 
 export default function InvoiceDocument({ invoice, onRecordPayment, onClose }) {
   const [copiedVin, setCopiedVin] = useState(false)
@@ -228,13 +229,15 @@ export default function InvoiceDocument({ invoice, onRecordPayment, onClose }) {
                   <span className="text-slate-400 font-sans">VIN:</span>
                   <span className="font-semibold text-slate-700">{invoice.vehicleVin || '1HGCR2F83HA001234'}</span>
                   {invoice.vehicleVin && (
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => handleCopyVin(invoice.vehicleVin)}
-                      className="text-slate-400 hover:text-slate-800 cursor-pointer no-print"
+                      className="h-5 w-5 p-0 text-slate-400 hover:text-slate-800 no-print"
                       title="Copy VIN"
                     >
                       {copiedVin ? <Check size={11} className="text-emerald-600" /> : <Copy size={11} />}
-                    </button>
+                    </Button>
                   )}
                 </div>
                 <p className="col-span-2 pt-0.5 text-[10px] text-slate-500">
@@ -470,31 +473,32 @@ export default function InvoiceDocument({ invoice, onRecordPayment, onClose }) {
       <div className="flex flex-wrap items-center justify-between gap-3 pt-2 no-print">
         <div className="flex items-center gap-2">
           {!isPaid && onRecordPayment && (
-            <button
+            <Button
               onClick={() => onRecordPayment(invoice)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-subtle transition-colors cursor-pointer"
+              className="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-subtle gap-1.5"
             >
               <CheckCircle size={15} weight="bold" />
               Record Payment (${balanceDue.toFixed(2)})
-            </button>
+            </Button>
           )}
         </div>
 
         <div className="flex items-center gap-2">
-          <button
+          <Button
             onClick={handlePrint}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-subtle transition-colors cursor-pointer"
+            className="h-9 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-subtle gap-1.5"
           >
             <Printer size={15} weight="bold" />
             Print Official Invoice / PDF
-          </button>
+          </Button>
           {onClose && (
-            <button
+            <Button
+              variant="ghost"
               onClick={onClose}
-              className="px-4 py-2 bg-app-hover hover:bg-app-hover/80 text-app-text text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+              className="h-9 px-4 rounded-xl text-xs font-semibold"
             >
               Close
-            </button>
+            </Button>
           )}
         </div>
       </div>

@@ -13,6 +13,7 @@ import {
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { CardSkeleton } from '@/components/ui'
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 import { useInvoices } from '@/hooks/useInvoices'
 import { useCustomers } from '@/hooks/useCustomers'
 import { useRepairJobs } from '@/hooks/useRepairJobs'
@@ -61,13 +62,12 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-app-text">{t('titles.adminOverview')}</h1>
-          <p className="text-xs text-app-muted mt-0.5 font-normal">{t('dashboard.adminSubtitle')}</p>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">{t('titles.adminOverview')}</h1>
         </div>
         <div className="flex items-center gap-2 self-start sm:self-auto">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-app-card border border-app-border text-app-muted rounded-xl text-xs font-medium shadow-subtle">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-card border border-border text-muted-foreground rounded-lg text-xs font-medium">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            {t('reports.thisMonth')} ▾
+            {t('reports.thisMonth')}
           </span>
         </div>
       </div>
@@ -108,9 +108,6 @@ export default function AdminDashboard() {
                 ${totalPaid.toLocaleString('en-US', { minimumFractionDigits: 2 })} {t('common.paid')}
               </span>
             </div>
-
-            {/* Subtle decorative sparkline glow */}
-            <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-app-accent/5 rounded-full blur-2xl pointer-events-none" />
           </div>
 
           {/* BENTO TILE 2: Active Repair Jobs */}
@@ -350,18 +347,18 @@ export default function AdminDashboard() {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="text-app-muted text-left border-b border-app-border/60">
-                    <th className="pb-3 font-semibold">{t('common.name')}</th>
-                    <th className="pb-3 font-semibold">{t('common.phone')}</th>
-                    <th className="pb-3 font-semibold text-right">{t('customers.totalSpent')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-app-border/40">
+              <Table className="w-full text-xs">
+                <TableHeader>
+                  <TableRow className="text-app-muted text-left border-b border-app-border/60 hover:bg-transparent">
+                    <TableHead className="pb-3 font-semibold text-app-muted">{t('common.name')}</TableHead>
+                    <TableHead className="pb-3 font-semibold text-app-muted">{t('common.phone')}</TableHead>
+                    <TableHead className="pb-3 font-semibold text-right text-app-muted">{t('customers.totalSpent')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="divide-y divide-app-border/40">
                   {customers.slice(0, 5).map((customer) => (
-                    <tr key={customer.id} className="hover:bg-app-hover transition-colors group">
-                      <td className="py-2.5 sm:py-3">
+                    <TableRow key={customer.id} className="hover:bg-app-hover transition-colors group">
+                      <TableCell className="py-2.5 sm:py-3">
                         <div className="flex items-center gap-2.5">
                           <div className="w-7 h-7 rounded-lg bg-app-hover border border-app-border flex items-center justify-center text-app-muted flex-shrink-0 font-bold text-[11px]">
                             {customer.name[0]}
@@ -373,15 +370,15 @@ export default function AdminDashboard() {
                             <p className="text-[10px] text-app-muted">{customer.code}</p>
                           </div>
                         </div>
-                      </td>
-                      <td className="py-2.5 sm:py-3 font-mono text-app-muted">{customer.phone}</td>
-                      <td className="py-2.5 sm:py-3 font-bold text-app-text text-right tabular-nums">
+                      </TableCell>
+                      <TableCell className="py-2.5 sm:py-3 font-mono text-app-muted">{customer.phone}</TableCell>
+                      <TableCell className="py-2.5 sm:py-3 font-bold text-app-text text-right tabular-nums">
                         {customer.totalSpent || '$0.00'}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           </div>
         </div>

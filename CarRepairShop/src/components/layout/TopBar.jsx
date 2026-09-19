@@ -172,8 +172,8 @@ export default function TopBar({ onToggleSidebar }) {
 
         {/* Desktop Global Search Bar with Live Popover */}
         <div ref={searchRef} className="relative hidden sm:block">
-          <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
-          <input
+          <MagnifyingGlass size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+          <Input
             type="text"
             placeholder={t('common.quickSearch')}
             value={searchQuery}
@@ -182,13 +182,13 @@ export default function TopBar({ onToggleSidebar }) {
               setSearchQuery(e.target.value)
               setIsSearchOpen(true)
             }}
-            className="w-48 md:w-60 lg:w-80 pl-9 pr-12 py-2 bg-app-input border border-app-border rounded-xl text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent focus:ring-1 focus:ring-app-accent transition-all shadow-subtle"
+            className="w-48 md:w-60 lg:w-80 pl-8 pr-12 h-9 text-xs"
           />
           <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
             {searchQuery ? (
               <Button variant="ghost" size="icon" onClick={() => setSearchQuery('')} className="h-5 w-5"><X size={13} weight="bold" /></Button>
             ) : (
-              <span className="text-[10px] font-mono bg-app-hover border border-app-border px-1.5 py-0.5 rounded text-app-muted select-none hidden lg:inline">
+              <span className="text-[10px] font-mono bg-muted border border-border px-1.5 py-0.5 rounded text-muted-foreground select-none hidden lg:inline">
                 ⌘K
               </span>
             )}
@@ -337,19 +337,21 @@ export default function TopBar({ onToggleSidebar }) {
 
               return (
                 <>
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => {
                       setNotifOpen(!notifOpen)
                       setProfileOpen(false)
                     }}
-                    className="relative p-1.5 sm:p-2 rounded-xl text-app-muted hover:bg-app-card hover:text-app-text transition-all"
+                    className="relative h-8 w-8 sm:h-9 sm:w-9 rounded-xl text-app-muted hover:bg-app-card hover:text-app-text"
                     aria-label="Notifications"
                   >
                     <Bell size={17} weight={notifOpen ? 'fill' : 'bold'} />
                     {liveAlerts.length > 0 && (
                       <span className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-app-card" />
                     )}
-                  </button>
+                  </Button>
 
                   {notifOpen && (
                     <div className="absolute right-0 mt-3 w-72 sm:w-80 bg-app-card border border-app-border rounded-2xl shadow-card py-2 z-50 animate-fade-in max-w-[calc(100vw-1.5rem)]">
@@ -396,12 +398,13 @@ export default function TopBar({ onToggleSidebar }) {
 
         {/* User Profile Menu */}
         <div className="relative">
-          <button
+          <Button
+            variant="ghost"
             onClick={() => {
               setProfileOpen(!profileOpen)
               setNotifOpen(false)
             }}
-            className="flex items-center gap-2 p-1 sm:p-1.5 sm:pr-2.5 rounded-2xl hover:bg-app-hover transition-all border border-transparent hover:border-app-border"
+            className="flex items-center gap-2 h-auto p-1 sm:p-1.5 sm:pr-2.5 rounded-2xl hover:bg-app-hover border border-transparent hover:border-app-border"
           >
             <div className="relative">
               <div className="w-8 h-8 bg-app-accent/15 border border-app-accent/30 rounded-xl flex items-center justify-center text-app-accent font-bold text-xs shadow-subtle">
@@ -416,7 +419,7 @@ export default function TopBar({ onToggleSidebar }) {
               </p>
             </div>
             <CaretDown size={13} weight="bold" className="text-app-muted hidden md:block" />
-          </button>
+          </Button>
 
           {profileOpen && (
             <div className="absolute right-0 mt-3 w-56 sm:w-64 bg-app-card border border-app-border rounded-2xl shadow-card py-2 z-50 animate-fade-in text-xs max-w-[calc(100vw-1.5rem)]">

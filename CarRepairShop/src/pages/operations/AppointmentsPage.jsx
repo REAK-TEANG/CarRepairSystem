@@ -22,7 +22,13 @@ import { useMechanics } from '@/hooks/useMechanics'
 import { useServicesCatalog } from '@/hooks/useServicesCatalog'
 import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
-import { Modal, StatusBadge, EmptyState, TableSkeleton, LoadingButton } from '@/components/ui'
+import { StatusBadge, EmptyState, TableSkeleton, LoadingButton } from '@/components/ui'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const statusFilters = ['All', 'Scheduled', 'Confirmed', 'In Progress', 'Completed', 'Cancelled']
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -240,16 +246,19 @@ export default function AppointmentsPage() {
   })
 
   return (
-    <div className="space-y-6 font-sans text-app-text animate-fade-in">
+    <div className="space-y-4 font-sans text-app-text animate-fade-in">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold tracking-tight text-app-text">{t('titles.appointmentsSchedule')}</h1>
-          <p className="text-xs text-app-muted mt-1">{t('appointments.subtitle')}</p>
+          <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-app-hover text-app-muted border border-app-border">
+            {appointments.length}
+          </span>
         </div>
         <div className="flex items-center gap-2">
           {activeTab === 'reminders' ? (
-            <button
+            <Button
+              size="sm"
               onClick={() => {
                 setReminderForm({
                   customerId: customers[0]?.id || '',
@@ -261,20 +270,21 @@ export default function AppointmentsPage() {
                 })
                 setIsAddReminderOpen(true)
               }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl transition-colors shadow-subtle cursor-pointer"
+              className="inline-flex items-center gap-1.5"
             >
-              <Plus size={16} weight="bold" />
-              <span>Schedule Service Reminder</span>
-            </button>
+              <Plus size={15} weight="bold" />
+              <span>New Reminder</span>
+            </Button>
           ) : (
             can('appointments', 'create') && (
-              <button
+              <Button
+                size="sm"
                 onClick={handleOpenAdd}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover text-app-accentText text-xs font-semibold rounded-xl transition-colors shadow-subtle cursor-pointer"
+                className="inline-flex items-center gap-1.5"
               >
-                <Plus size={16} weight="bold" />
+                <Plus size={15} weight="bold" />
                 {t('appointments.newAppointment')}
-              </button>
+              </Button>
             )
           )}
         </div>
@@ -282,31 +292,27 @@ export default function AppointmentsPage() {
 
       {/* View Switcher Tabs */}
       <div className="flex items-center gap-2 border-b border-app-border pb-3">
-        <button
+        <Button
+          variant={activeTab === 'calendar' ? 'default' : 'ghost'}
+          size="sm"
           onClick={() => setActiveTab('calendar')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-            activeTab === 'calendar'
-              ? 'bg-app-accent text-app-accentText shadow-subtle'
-              : 'text-app-muted hover:text-app-text hover:bg-app-hover'
-          }`}
+          className="gap-2"
         >
-          <CalendarBlank size={16} weight="bold" />
-          <span>Appointments & Calendar Schedule</span>
+          <CalendarBlank size={15} weight="bold" />
+          <span>Appointments</span>
           <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/10 dark:bg-white/10">{appointments.length}</span>
-        </button>
+        </Button>
 
-        <button
+        <Button
+          variant={activeTab === 'reminders' ? 'default' : 'ghost'}
+          size="sm"
           onClick={() => setActiveTab('reminders')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-            activeTab === 'reminders'
-              ? 'bg-app-accent text-app-accentText shadow-subtle'
-              : 'text-app-muted hover:text-app-text hover:bg-app-hover'
-          }`}
+          className="gap-2"
         >
-          <Bell size={16} weight="bold" />
-          <span>Maintenance Reminders (CRM)</span>
+          <Bell size={15} weight="bold" />
+          <span>Reminders</span>
           <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/10 dark:bg-white/10">{reminders.length}</span>
-        </button>
+        </Button>
       </div>
 
       {activeTab === 'calendar' ? (
@@ -315,29 +321,33 @@ export default function AppointmentsPage() {
           {/* Left Calendar Picker */}
           <div className="bg-app-card rounded-2xl border border-app-border p-4 shadow-card self-start transition-colors duration-200">
             <div className="flex items-center justify-between mb-3">
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => {
                   if (calMonth === 0) {
                     setCalMonth(11)
                     setCalYear(calYear - 1)
                   } else setCalMonth(calMonth - 1)
                 }}
-                className="p-1.5 rounded-lg text-app-muted hover:bg-app-hover hover:text-app-text transition-colors cursor-pointer"
+                className="h-7 w-7 rounded-lg text-app-muted hover:bg-app-hover hover:text-app-text"
               >
                 <CaretLeft size={14} weight="bold" />
-              </button>
+              </Button>
               <h3 className="text-xs font-semibold text-app-text">{monthName}</h3>
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => {
                   if (calMonth === 11) {
                     setCalMonth(0)
                     setCalYear(calYear + 1)
                   } else setCalMonth(calMonth + 1)
                 }}
-                className="p-1.5 rounded-lg text-app-muted hover:bg-app-hover hover:text-app-text transition-colors cursor-pointer"
+                className="h-7 w-7 rounded-lg text-app-muted hover:bg-app-hover hover:text-app-text"
               >
                 <CaretRight size={14} weight="bold" />
-              </button>
+              </Button>
             </div>
             <div className="grid grid-cols-7 gap-1 text-center mb-2">
               {DAYS.map((d) => (
@@ -355,14 +365,16 @@ export default function AppointmentsPage() {
                 const count = appointmentsByDay[day] || 0
 
                 return (
-                  <button
+                  <Button
                     key={day}
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setSelectedDate(isSelected ? null : day)}
-                    className={`h-8 rounded-lg flex flex-col items-center justify-center relative text-xs font-medium transition-colors cursor-pointer ${
+                    className={`h-8 w-full p-0 flex flex-col items-center justify-center relative text-xs font-medium transition-colors ${
                       isSelected
-                        ? 'bg-app-accent text-app-accentText font-bold shadow-subtle'
+                        ? 'bg-app-accent text-app-accentText font-bold shadow-subtle hover:bg-app-accent/90'
                         : isToday
-                        ? 'border border-app-accent text-app-accent font-bold'
+                        ? 'border border-app-accent text-app-accent font-bold hover:bg-app-hover'
                         : 'hover:bg-app-hover text-app-text'
                     }`}
                   >
@@ -370,7 +382,7 @@ export default function AppointmentsPage() {
                     {count > 0 && !isSelected && (
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 absolute bottom-1" />
                     )}
-                  </button>
+                  </Button>
                 )
               })}
             </div>
@@ -379,12 +391,14 @@ export default function AppointmentsPage() {
                 <span className="text-app-muted">
                   Filtered: {calYear}-{String(calMonth + 1).padStart(2, '0')}-{String(selectedDate).padStart(2, '0')}
                 </span>
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setSelectedDate(null)}
-                  className="text-app-accent hover:underline font-medium cursor-pointer"
+                  className="text-app-accent hover:text-app-accentHover h-auto p-0 font-medium hover:underline hover:bg-transparent"
                 >
                   Clear
-                </button>
+                </Button>
               </div>
             )}
           </div>
@@ -394,30 +408,32 @@ export default function AppointmentsPage() {
             {/* Filter Tabs */}
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
               {statusFilters.map((st) => (
-                <button
+                <Button
                   key={st}
+                  variant={activeFilter === st ? 'default' : 'outline'}
+                  size="sm"
                   onClick={() => setActiveFilter(st)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-colors cursor-pointer h-auto ${
                     activeFilter === st
-                      ? 'bg-app-accent text-app-accentText shadow-subtle'
+                      ? 'bg-app-accent text-app-accentText shadow-subtle hover:bg-app-accentHover'
                       : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover hover:text-app-text'
                   }`}
                 >
                   {st === 'All' ? t('common.all') : t(`status.${st}`, st)}
-                </button>
+                </Button>
               ))}
             </div>
 
             <div className="bg-app-card rounded-2xl border border-app-border shadow-card overflow-hidden transition-colors duration-200">
-              <div className="p-4 border-b border-app-border">
-                <div className="relative max-w-md">
-                  <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
-                  <input
+              <div className="p-3.5 border-b border-app-border">
+                <div className="relative max-w-sm">
+                  <MagnifyingGlass size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                  <Input
                     type="text"
                     placeholder={t('common.quickSearch')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-xl text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+                    className="pl-8"
                   />
                 </div>
               </div>
@@ -441,68 +457,74 @@ export default function AppointmentsPage() {
                     }
                   />
                 ) : (
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                        <th className="px-6 py-3 font-semibold">{t('appointments.code')}</th>
-                        <th className="px-6 py-3 font-semibold">{t('appointments.customer')}</th>
-                        <th className="px-6 py-3 font-semibold">{t('appointments.vehicle')}</th>
-                        <th className="px-6 py-3 hidden md:table-cell font-semibold">{t('appointments.service')}</th>
-                        <th className="px-6 py-3 hidden lg:table-cell font-semibold">{t('common.date')} / {t('common.time')}</th>
-                        <th className="px-6 py-3 font-semibold">{t('common.status')}</th>
-                        <th className="px-6 py-3 font-semibold text-right">{t('common.actions')}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-app-border">
+                  <Table className="w-full text-xs">
+                    <TableHeader>
+                      <TableRow className="text-app-muted text-left border-b border-app-border bg-app-hover/50 hover:bg-transparent">
+                        <TableHead className="px-6 py-3 font-semibold">{t('appointments.code')}</TableHead>
+                        <TableHead className="px-6 py-3 font-semibold">{t('appointments.customer')}</TableHead>
+                        <TableHead className="px-6 py-3 font-semibold">{t('appointments.vehicle')}</TableHead>
+                        <TableHead className="px-6 py-3 hidden md:table-cell font-semibold">{t('appointments.service')}</TableHead>
+                        <TableHead className="px-6 py-3 hidden lg:table-cell font-semibold">{t('common.date')} / {t('common.time')}</TableHead>
+                        <TableHead className="px-6 py-3 font-semibold">{t('common.status')}</TableHead>
+                        <TableHead className="px-6 py-3 font-semibold text-right">{t('common.actions')}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody className="divide-y divide-app-border">
                       {filtered.map((apt) => (
-                        <tr key={apt.id} className="hover:bg-app-hover/60 transition-colors group">
-                          <td className="px-6 py-3.5 font-mono font-bold text-app-accent">{apt.code}</td>
-                          <td className="px-6 py-3.5 font-semibold text-app-text">{apt.customer}</td>
-                          <td className="px-6 py-3.5">
+                        <TableRow key={apt.id} className="hover:bg-app-hover/60 transition-colors group">
+                          <TableCell className="px-6 py-3.5 font-mono font-bold text-app-accent">{apt.code}</TableCell>
+                          <TableCell className="px-6 py-3.5 font-semibold text-app-text">{apt.customer}</TableCell>
+                          <TableCell className="px-6 py-3.5">
                             <p className="font-semibold text-app-text">{apt.vehicle}</p>
                             <p className="text-[10px] text-app-muted font-mono">{apt.plate}</p>
-                          </td>
-                          <td className="px-6 py-3.5 text-app-muted hidden md:table-cell">{apt.service}</td>
-                          <td className="px-6 py-3.5 text-app-muted hidden lg:table-cell">
+                          </TableCell>
+                          <TableCell className="px-6 py-3.5 text-app-muted hidden md:table-cell">{apt.service}</TableCell>
+                          <TableCell className="px-6 py-3.5 text-app-muted hidden lg:table-cell">
                             <span className="font-medium text-app-text">{apt.date}</span>
                             <span className="text-[10px] text-app-muted block">{apt.time}</span>
-                          </td>
-                          <td className="px-6 py-3.5">
+                          </TableCell>
+                          <TableCell className="px-6 py-3.5">
                             <StatusBadge status={apt.status} />
-                          </td>
-                          <td className="px-6 py-3.5 text-right">
+                          </TableCell>
+                          <TableCell className="px-6 py-3.5 text-right">
                             <div className="flex items-center justify-end gap-1">
-                              <button
-                                onClick={() => handleOpenView(apt)}
-                                className="p-1.5 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
-                                title={t('common.view')}
-                              >
-                                <Eye size={15} />
-                              </button>
-                              {can('appointments', 'update') && (
-                                <button
-                                  onClick={() => handleOpenEdit(apt)}
-                                  className="p-1.5 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
-                                  title={t('common.edit')}
+                              <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleOpenView(apt)}
+                                  className="h-7 w-7 p-0 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
+                                  title={t('common.view')}
                                 >
-                                  <PencilSimple size={15} />
-                                </button>
+                                  <Eye size={15} />
+                                </Button>
+                              {can('appointments', 'update') && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleOpenEdit(apt)}
+                                    className="h-7 w-7 p-0 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
+                                    title={t('common.edit')}
+                                  >
+                                    <PencilSimple size={15} />
+                                  </Button>
                               )}
                               {can('appointments', 'delete') && apt.status !== 'Cancelled' && (
-                                <button
-                                  onClick={() => handleCancelApt(apt.id)}
-                                  className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                                  title={t('appointments.cancelAppointment')}
-                                >
-                                  <XCircle size={15} />
-                                </button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleCancelApt(apt.id)}
+                                    className="h-7 w-7 p-0 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                                    title={t('appointments.cancelAppointment')}
+                                  >
+                                    <XCircle size={15} />
+                                  </Button>
                               )}
                             </div>
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 )}
               </div>
             </div>
@@ -532,36 +554,36 @@ export default function AppointmentsPage() {
                 description="Click 'Schedule Service Reminder' to set an oil change or service recall alert for a customer."
               />
             ) : (
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                    <th className="px-6 py-3 font-semibold">Customer & Contact</th>
-                    <th className="px-6 py-3 font-semibold">Vehicle</th>
-                    <th className="px-6 py-3 font-semibold">Service Type</th>
-                    <th className="px-6 py-3 font-semibold">Due Date / Mileage</th>
-                    <th className="px-6 py-3 font-semibold">Status</th>
-                    <th className="px-6 py-3 font-semibold text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-app-border">
+              <Table className="w-full text-xs">
+                <TableHeader>
+                  <TableRow className="text-app-muted text-left border-b border-app-border bg-app-hover/50 hover:bg-transparent">
+                    <TableHead className="px-6 py-3 font-semibold">Customer & Contact</TableHead>
+                    <TableHead className="px-6 py-3 font-semibold">Vehicle</TableHead>
+                    <TableHead className="px-6 py-3 font-semibold">Service Type</TableHead>
+                    <TableHead className="px-6 py-3 font-semibold">Due Date / Mileage</TableHead>
+                    <TableHead className="px-6 py-3 font-semibold">Status</TableHead>
+                    <TableHead className="px-6 py-3 font-semibold text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="divide-y divide-app-border">
                   {reminders.map((rem) => (
-                    <tr key={rem.id} className="hover:bg-app-hover/60 transition-colors">
-                      <td className="px-6 py-3.5">
+                    <TableRow key={rem.id} className="hover:bg-app-hover/60 transition-colors">
+                      <TableCell className="px-6 py-3.5">
                         <p className="font-semibold text-app-text">{rem.customer}</p>
                         <p className="text-[10px] text-app-muted">{rem.customerPhone || 'No phone'}</p>
-                      </td>
-                      <td className="px-6 py-3.5">
+                      </TableCell>
+                      <TableCell className="px-6 py-3.5">
                         <p className="font-semibold text-app-text">{rem.vehicle}</p>
                         <p className="text-[10px] font-mono text-app-accent font-bold">{rem.plate}</p>
-                      </td>
-                      <td className="px-6 py-3.5 font-medium text-app-text">{rem.serviceType}</td>
-                      <td className="px-6 py-3.5">
+                      </TableCell>
+                      <TableCell className="px-6 py-3.5 font-medium text-app-text">{rem.serviceType}</TableCell>
+                      <TableCell className="px-6 py-3.5">
                         <p className="font-semibold text-app-text">{rem.dueDate || 'Upon mileage'}</p>
                         {rem.dueOdometer && (
                           <p className="text-[10px] text-app-muted font-mono">Target: {rem.dueOdometer} km</p>
                         )}
-                      </td>
-                      <td className="px-6 py-3.5">
+                      </TableCell>
+                      <TableCell className="px-6 py-3.5">
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
                             rem.status === 'Booked'
@@ -573,92 +595,101 @@ export default function AppointmentsPage() {
                         >
                           {rem.status}
                         </span>
-                      </td>
-                      <td className="px-6 py-3.5 text-right">
+                      </TableCell>
+                      <TableCell className="px-6 py-3.5 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           {/* Send Notification */}
-                          <button
+                          <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => {
                               const msg = `Hello ${rem.customer}, your vehicle ${rem.vehicle} (${rem.plate}) is due for ${rem.serviceType} at CarRepair Workshop. Reply to this message or call us to reserve your service slot!`
                               navigator.clipboard?.writeText(msg)
                               updateReminderMutation.mutate({ id: rem.id, data: { status: 'Notified' } })
                               addToast('Reminder text copied & status updated to Notified!', 'success')
                             }}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 text-[11px] font-semibold border border-emerald-500/30 transition-colors cursor-pointer"
+                            className="h-7 px-2.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 text-[11px] font-semibold border-emerald-500/30"
                             title="Copy SMS / WhatsApp text"
                           >
-                            <ChatCircleDots size={13} />
+                            <ChatCircleDots size={13} className="mr-1" />
                             <span>Notify</span>
-                          </button>
+                          </Button>
 
                           {/* 1-Click Book Appointment */}
-                          <button
+                          <Button
+                            size="sm"
                             onClick={() => handleBookFromReminder(rem)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-app-accent hover:bg-app-accentHover text-app-accentText text-[11px] font-semibold transition-colors shadow-subtle cursor-pointer"
+                            className="h-7 px-2.5 bg-app-accent hover:bg-app-accentHover text-app-accentText text-[11px] font-semibold shadow-subtle"
                             title="Book appointment from this reminder"
                           >
-                            <CalendarCheck size={13} weight="bold" />
+                            <CalendarCheck size={13} weight="bold" className="mr-1" />
                             <span>Book</span>
-                          </button>
+                          </Button>
 
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => deleteReminderMutation.mutate(rem.id)}
-                            className="p-1.5 rounded-lg text-app-muted hover:text-rose-500 transition-colors cursor-pointer"
+                            className="h-7 w-7 text-app-muted hover:text-rose-500"
                             title="Delete reminder"
                           >
                             <Trash size={14} />
-                          </button>
+                          </Button>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             )}
           </div>
         </div>
       )}
 
       {/* Schedule Custom Reminder Modal */}
-      <Modal isOpen={isAddReminderOpen} onClose={() => setIsAddReminderOpen(false)} title="Schedule Maintenance Reminder">
+      <Dialog open={isAddReminderOpen} onOpenChange={(open) => { if (!open) setIsAddReminderOpen(false); }}><DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>Schedule Maintenance Reminder</DialogTitle></DialogHeader>
         <form onSubmit={handleCreateReminder} className="space-y-4 text-xs">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">Customer *</label>
-              <select
-                required
+              <Label className="block text-app-muted font-medium mb-1">Customer *</Label>
+              <Select
                 value={reminderForm.customerId}
-                onChange={(e) => setReminderForm({ ...reminderForm, customerId: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                onValueChange={(val) => setReminderForm({ ...reminderForm, customerId: val })}
               >
-                <option value="">-- Choose Customer --</option>
-                {customers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.phone})
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select customer" />
+                </SelectTrigger>
+                <SelectContent>
+                  {customers.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name} ({c.phone})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">Vehicle *</label>
-              <select
-                required
+              <Label className="block text-app-muted font-medium mb-1">Vehicle *</Label>
+              <Select
                 value={reminderForm.vehicleId}
-                onChange={(e) => setReminderForm({ ...reminderForm, vehicleId: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                onValueChange={(val) => setReminderForm({ ...reminderForm, vehicleId: val })}
               >
-                <option value="">-- Choose Vehicle --</option>
-                {vehicles.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.number} - {v.brand} {v.model}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select vehicle" />
+                </SelectTrigger>
+                <SelectContent>
+                  {vehicles.map((v) => (
+                    <SelectItem key={v.id} value={v.id}>
+                      {v.number} - {v.brand} {v.model}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           <div>
-            <label className="block text-app-muted font-medium mb-1">Maintenance Service Type *</label>
+            <Label className="block text-app-muted font-medium mb-1">Maintenance Service Type *</Label>
             <input
               type="text"
               required
@@ -671,7 +702,7 @@ export default function AppointmentsPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">Due Date</label>
+              <Label className="block text-app-muted font-medium mb-1">Due Date</Label>
               <input
                 type="date"
                 value={reminderForm.dueDate}
@@ -680,7 +711,7 @@ export default function AppointmentsPage() {
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">Due Mileage (km)</label>
+              <Label className="block text-app-muted font-medium mb-1">Due Mileage (km)</Label>
               <input
                 type="number"
                 value={reminderForm.dueOdometer}
@@ -692,102 +723,112 @@ export default function AppointmentsPage() {
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
-              type="button"
-              onClick={() => setIsAddReminderOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
-            >
-              Cancel
-            </button>
+            <Button type="button" variant="ghost" size="sm" onClick={() => setIsAddReminderOpen(false)} className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer">Cancel</Button>
             <LoadingButton type="submit" loading={createReminderMutation.isPending}>
               Schedule Reminder
             </LoadingButton>
           </div>
         </form>
-      </Modal>
+      </DialogContent></Dialog>
 
       {/* Create Appointment Modal */}
-      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('appointments.createAppointment')}>
+      <Dialog open={isAddOpen} onOpenChange={(open) => { if (!open) setIsAddOpen(false); }}><DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{t('appointments.createAppointment')}</DialogTitle></DialogHeader>
         <form onSubmit={handleCreate} className="space-y-4 text-xs">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('appointments.customer')} *</label>
-              <select
+              <Label className="block text-app-muted font-medium mb-1">{t('appointments.customer')} *</Label>
+              <Select
                 value={formData.customer}
-                onChange={(e) => {
-                  const c = customers.find((x) => x.name === e.target.value)
-                  setFormData({ ...formData, customer: e.target.value, customerId: c ? c.id : '' })
+                onValueChange={(val) => {
+                  const c = customers.find((x) => x.name === val)
+                  setFormData({ ...formData, customer: val, customerId: c ? c.id : '' })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
               >
-                {customers.map((c) => (
-                  <option key={c.id} value={c.name}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select customer" />
+                </SelectTrigger>
+                <SelectContent>
+                  {customers.map((c) => (
+                    <SelectItem key={c.id} value={c.name}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('appointments.vehicle')} *</label>
-              <select
+              <Label className="block text-app-muted font-medium mb-1">{t('appointments.vehicle')} *</Label>
+              <Select
                 value={formData.plate}
-                onChange={(e) => {
-                  const v = vehicles.find((x) => x.number === e.target.value)
+                onValueChange={(val) => {
+                  const v = vehicles.find((x) => x.number === val)
                   setFormData({
                     ...formData,
-                    plate: e.target.value,
+                    plate: val,
                     vehicle: v ? `${v.brand} ${v.model}` : '',
                     vehicleId: v ? v.id : '',
                   })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
               >
-                {vehicles.map((v) => (
-                  <option key={v.id} value={v.number}>
-                    {v.number} - {v.brand} {v.model}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select vehicle" />
+                </SelectTrigger>
+                <SelectContent>
+                  {vehicles.map((v) => (
+                    <SelectItem key={v.id} value={v.number}>
+                      {v.number} - {v.brand} {v.model}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('appointments.service')} *</label>
-              <select
+              <Label className="block text-app-muted font-medium mb-1">{t('appointments.service')} *</Label>
+              <Select
                 value={formData.service}
-                onChange={(e) => setFormData({ ...formData, service: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                onValueChange={(val) => setFormData({ ...formData, service: val })}
               >
-                {services.map((s) => (
-                  <option key={s.id} value={s.name}>
-                    {s.name} (${s.estimatedCost})
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select service" />
+                </SelectTrigger>
+                <SelectContent>
+                  {services.map((s) => (
+                    <SelectItem key={s.id} value={s.name}>
+                      {s.name} (${s.estimatedCost})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('repairJobs.technician')}</label>
-              <select
+              <Label className="block text-app-muted font-medium mb-1">{t('repairJobs.technician')}</Label>
+              <Select
                 value={formData.mechanic}
-                onChange={(e) => {
-                  const m = mechanics.find((x) => x.name === e.target.value)
-                  setFormData({ ...formData, mechanic: e.target.value, mechanicId: m ? m.id : '' })
+                onValueChange={(val) => {
+                  const m = mechanics.find((x) => x.name === val)
+                  setFormData({ ...formData, mechanic: val, mechanicId: m ? m.id : '' })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
               >
-                {mechanics.map((m) => (
-                  <option key={m.id} value={m.name}>
-                    {m.name} ({m.specialization})
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select technician" />
+                </SelectTrigger>
+                <SelectContent>
+                  {mechanics.map((m) => (
+                    <SelectItem key={m.id} value={m.name}>
+                      {m.name} ({m.specialization})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('common.date')} *</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('common.date')} *</Label>
               <input
                 type="date"
                 required
@@ -797,7 +838,7 @@ export default function AppointmentsPage() {
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('common.time')} *</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('common.time')} *</Label>
               <input
                 type="time"
                 required
@@ -809,7 +850,7 @@ export default function AppointmentsPage() {
           </div>
 
           <div>
-            <label className="block text-app-muted font-medium mb-1">{t('appointments.notes')}</label>
+            <Label className="block text-app-muted font-medium mb-1">{t('appointments.notes')}</Label>
             <textarea
               rows={2}
               value={formData.notes}
@@ -820,60 +861,62 @@ export default function AppointmentsPage() {
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
-              type="button"
-              onClick={() => setIsAddOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
-            >
-              {t('common.cancel')}
-            </button>
+            <Button type="button" variant="ghost" size="sm" onClick={() => setIsAddOpen(false)} className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer">{t('common.cancel')}</Button>
             <LoadingButton type="submit" loading={createAptMutation.isPending}>
               {t('appointments.createAppointment')}
             </LoadingButton>
           </div>
         </form>
-      </Modal>
+      </DialogContent></Dialog>
 
       {/* Edit Appointment Modal */}
-      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title={`${t('appointments.editAppointment')}: ${selectedApt?.code}`}>
+      <Dialog open={isEditOpen} onOpenChange={(open) => { if (!open) setIsEditOpen(false); }}><DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{`${t('appointments.editAppointment')}: ${selectedApt?.code}`}</DialogTitle></DialogHeader>
         <form onSubmit={handleUpdate} className="space-y-4 text-xs">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('common.status')}</label>
-              <select
+              <Label className="block text-app-muted font-medium mb-1">{t('common.status')}</Label>
+              <Select
                 value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-semibold"
+                onValueChange={(val) => setFormData({ ...formData, status: val })}
               >
-                <option value="Scheduled">{t('status.Scheduled')}</option>
-                <option value="Confirmed">{t('status.Confirmed')}</option>
-                <option value="In Progress">{t('status.In Progress')}</option>
-                <option value="Completed">{t('status.Completed')}</option>
-                <option value="Cancelled">{t('status.Cancelled')}</option>
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Scheduled">{t('status.Scheduled')}</SelectItem>
+                  <SelectItem value="Confirmed">{t('status.Confirmed')}</SelectItem>
+                  <SelectItem value="In Progress">{t('status.In Progress')}</SelectItem>
+                  <SelectItem value="Completed">{t('status.Completed')}</SelectItem>
+                  <SelectItem value="Cancelled">{t('status.Cancelled')}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('repairJobs.technician')}</label>
-              <select
+              <Label className="block text-app-muted font-medium mb-1">{t('repairJobs.technician')}</Label>
+              <Select
                 value={formData.mechanic}
-                onChange={(e) => {
-                  const m = mechanics.find((x) => x.name === e.target.value)
-                  setFormData({ ...formData, mechanic: e.target.value, mechanicId: m ? m.id : '' })
+                onValueChange={(val) => {
+                  const m = mechanics.find((x) => x.name === val)
+                  setFormData({ ...formData, mechanic: val, mechanicId: m ? m.id : '' })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-semibold"
               >
-                {mechanics.map((m) => (
-                  <option key={m.id} value={m.name}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select technician" />
+                </SelectTrigger>
+                <SelectContent>
+                  {mechanics.map((m) => (
+                    <SelectItem key={m.id} value={m.name}>
+                      {m.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('common.date')}</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('common.date')}</Label>
               <input
                 type="date"
                 value={formData.date}
@@ -882,7 +925,7 @@ export default function AppointmentsPage() {
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('common.time')}</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('common.time')}</Label>
               <input
                 type="time"
                 value={formData.time}
@@ -893,22 +936,16 @@ export default function AppointmentsPage() {
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
-              type="button"
-              onClick={() => setIsEditOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
-            >
-              {t('common.cancel')}
-            </button>
+            <Button type="button" variant="ghost" size="sm" onClick={() => setIsEditOpen(false)} className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer">{t('common.cancel')}</Button>
             <LoadingButton type="submit" loading={updateAptMutation.isPending}>
               {t('common.saveChanges')}
             </LoadingButton>
           </div>
         </form>
-      </Modal>
+      </DialogContent></Dialog>
 
       {/* View Appointment Modal */}
-      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('common.details')}>
+      <Dialog open={isViewOpen} onOpenChange={(open) => { if (!open) setIsViewOpen(false); }}><DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{t('common.details')}</DialogTitle></DialogHeader>
         {selectedApt && (
           <div className="space-y-4 text-xs">
             <div className="flex items-center justify-between p-3 bg-app-hover/50 rounded-xl border border-app-border">
@@ -937,7 +974,7 @@ export default function AppointmentsPage() {
             </div>
           </div>
         )}
-      </Modal>
+      </DialogContent></Dialog>
     </div>
   )
 }

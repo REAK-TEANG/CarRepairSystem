@@ -3,7 +3,14 @@ import { MagnifyingGlass, Plus, PencilSimple, Trash, Eye, CheckCircle } from '@p
 import { useTranslation } from 'react-i18next'
 import { useEmployees, useCreateEmployee, useUpdateEmployee, useToggleAttendance, useDeleteEmployee } from '@/hooks/useEmployees'
 import { useAuth } from '@/context/AuthContext'
-import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton } from '@/components/ui'
+import { ConfirmDialog, EmptyState, TableSkeleton, LoadingButton } from '@/components/ui'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 const attendanceFilters = ['All Attendance', 'Present', 'On Leave']
 
@@ -132,18 +139,15 @@ export default function EmployeesPage() {
     <div className="space-y-6 text-app-text font-sans">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-app-text">{t('titles.staffAttendance')}</h1>
-          <p className="text-xs text-app-muted mt-1">{employees.length} {t('employees.subtitle')}</p>
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">{t('titles.staffAttendance')}</h1>
+          <Badge variant="outline" className="text-xs font-mono">{employees.length}</Badge>
         </div>
         {can('employees', 'create') && (
-          <button
-            onClick={handleOpenAdd}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover text-app-accentText font-semibold rounded-xl text-xs transition-colors shadow-subtle"
-          >
+          <Button onClick={handleOpenAdd} size="sm">
             <Plus size={16} weight="bold" />
             {t('employees.addEmployee')}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -151,34 +155,36 @@ export default function EmployeesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-2 overflow-x-auto pb-1">
           {departments.map((dept) => (
-            <button
+            <Button
               key={dept}
+              variant="ghost"
               onClick={() => setRoleFilter(dept)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-colors ${
+              className={`h-8 px-3 rounded-xl whitespace-nowrap text-xs ${
                 roleFilter === dept
-                  ? 'bg-app-accent text-app-accentText shadow-subtle'
+                  ? 'bg-app-accent text-white shadow-subtle hover:bg-app-accent hover:text-white'
                   : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover hover:text-app-text'
               }`}
             >
               {dept === 'All' ? t('common.all') : dept}
-            </button>
+            </Button>
           ))}
         </div>
 
         <div className="flex items-center gap-2 overflow-x-auto pb-1">
           <span className="text-xs text-app-muted flex items-center gap-1 mr-1">{t('employees.attendance')}:</span>
           {attendanceFilters.map((att) => (
-            <button
+            <Button
               key={att}
+              variant="ghost"
               onClick={() => setAttendanceFilter(att)}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-medium whitespace-nowrap transition-colors ${
+              className={`h-7 px-2.5 rounded-lg text-[11px] whitespace-nowrap ${
                 attendanceFilter === att
-                  ? 'bg-app-hover text-app-text border border-app-border font-semibold'
+                  ? 'bg-app-hover text-app-text border border-app-border font-semibold hover:bg-app-hover hover:text-app-text'
                   : 'text-app-muted hover:text-app-text'
               }`}
             >
               {att === 'All Attendance' ? t('common.all') : t(`status.${att}`, att)}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -186,27 +192,28 @@ export default function EmployeesPage() {
       {/* Main Table */}
       <div className="bg-app-card rounded-2xl border border-app-border shadow-card overflow-hidden transition-colors duration-200">
         <div className="p-4 border-b border-app-border flex items-center justify-between gap-3">
-          <div className="relative flex-1 max-w-md">
-            <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
-            <input
+          <div className="relative flex-1 max-w-sm">
+            <MagnifyingGlass size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <Input
               type="text"
               placeholder={t('common.quickSearch')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-xl text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+              className="pl-8"
             />
           </div>
           {(searchQuery || roleFilter !== 'All' || attendanceFilter !== 'All Attendance') && (
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => {
                 setSearchQuery('')
                 setRoleFilter('All')
                 setAttendanceFilter('All Attendance')
               }}
-              className="text-xs text-app-muted hover:text-app-text px-2 py-1 transition-colors"
             >
               {t('common.cancel')}
-            </button>
+            </Button>
           )}
         </div>
 
@@ -228,22 +235,22 @@ export default function EmployeesPage() {
               }
             />
           ) : (
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                  <th className="px-6 py-3 font-semibold">{t('employees.employeeId')}</th>
-                  <th className="px-6 py-3 font-semibold">{t('employees.name')}</th>
-                  <th className="px-6 py-3 hidden md:table-cell font-semibold">{t('employees.position')}</th>
-                  <th className="px-6 py-3 hidden lg:table-cell font-semibold">{t('employees.department')}</th>
-                  <th className="px-6 py-3 font-semibold">{t('employees.attendance')}</th>
-                  <th className="px-6 py-3 font-semibold text-right">{t('common.actions')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-app-border">
+            <Table className="w-full text-xs">
+              <TableHeader>
+                <TableRow className="text-app-muted text-left border-b border-app-border bg-app-hover/50 hover:bg-app-hover/50">
+                  <TableHead className="px-6 py-3 font-semibold">{t('employees.employeeId')}</TableHead>
+                  <TableHead className="px-6 py-3 font-semibold">{t('employees.name')}</TableHead>
+                  <TableHead className="px-6 py-3 hidden md:table-cell font-semibold">{t('employees.position')}</TableHead>
+                  <TableHead className="px-6 py-3 hidden lg:table-cell font-semibold">{t('employees.department')}</TableHead>
+                  <TableHead className="px-6 py-3 font-semibold">{t('employees.attendance')}</TableHead>
+                  <TableHead className="px-6 py-3 font-semibold text-right">{t('common.actions')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className="divide-y divide-app-border">
                 {filtered.map((emp) => (
-                  <tr key={emp.id} className="hover:bg-app-hover/60 transition-colors group">
-                    <td className="px-6 py-3.5 font-mono font-semibold text-app-accent">{emp.empCode}</td>
-                    <td className="px-6 py-3.5">
+                  <TableRow key={emp.id} className="hover:bg-app-hover/60 transition-colors group">
+                    <TableCell className="px-6 py-3.5 font-mono font-semibold text-app-accent">{emp.empCode}</TableCell>
+                    <TableCell className="px-6 py-3.5">
                       <div className="flex items-center gap-3">
                         {emp.image ? (
                           <img
@@ -261,13 +268,14 @@ export default function EmployeesPage() {
                           <p className="text-[10px] text-app-muted">{emp.phone}</p>
                         </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-3.5 text-app-text font-medium hidden md:table-cell">{emp.roleTitle}</td>
-                    <td className="px-6 py-3.5 text-app-muted hidden lg:table-cell">{emp.department}</td>
-                    <td className="px-6 py-3.5">
-                      <button
+                    </TableCell>
+                    <TableCell className="px-6 py-3.5 text-app-text font-medium hidden md:table-cell">{emp.roleTitle}</TableCell>
+                    <TableCell className="px-6 py-3.5 text-app-muted hidden lg:table-cell">{emp.department}</TableCell>
+                    <TableCell className="px-6 py-3.5">
+                      <Button
+                        variant="ghost"
                         onClick={() => can('employees', 'update') && handleToggleAttendanceClick(emp)}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold transition-colors ${
+                        className={`h-6 px-2.5 rounded-full text-[11px] font-semibold ${
                           emp.attendanceToday === 'Present'
                             ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
                             : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
@@ -275,204 +283,235 @@ export default function EmployeesPage() {
                       >
                         <CheckCircle size={13} weight={emp.attendanceToday === 'Present' ? 'fill' : 'regular'} />
                         {t(`status.${emp.attendanceToday}`, emp.attendanceToday)}
-                      </button>
-                    </td>
-                    <td className="px-6 py-3.5 text-right">
+                      </Button>
+                    </TableCell>
+                    <TableCell className="px-6 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => handleOpenView(emp)}
-                          className="p-1.5 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors"
+                          className="h-8 w-8 text-app-muted hover:text-app-text hover:bg-app-hover"
                           title={t('common.view')}
                         >
                           <Eye size={15} />
-                        </button>
+                        </Button>
                         {can('employees', 'update') && (
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handleOpenEdit(emp)}
-                            className="p-1.5 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors"
+                            className="h-8 w-8 text-app-muted hover:text-app-text hover:bg-app-hover"
                             title={t('common.edit')}
                           >
                             <PencilSimple size={15} />
-                          </button>
+                          </Button>
                         )}
                         {can('employees', 'delete') && (
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handleOpenDelete(emp)}
-                            className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors"
+                            className="h-8 w-8 text-rose-500 hover:text-rose-500 hover:bg-rose-500/10"
                             title={t('common.delete')}
                           >
                             <Trash size={15} />
-                          </button>
+                          </Button>
                         )}
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           )}
         </div>
       </div>
 
       {/* Add Employee Modal */}
-      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('employees.createEmployee')}>
-        <form onSubmit={handleCreate} className="space-y-4 text-xs">
-          <div>
-            <label className="block text-app-muted font-medium mb-1">{t('employees.name')} *</label>
-            <input
-              type="text"
-              required
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="e.g. Sreysros Keo"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <Dialog open={isAddOpen} onOpenChange={(open) => { if(!open) setIsAddOpen(false); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('employees.createEmployee')}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCreate} className="space-y-4 text-xs">
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('employees.position')} *</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('employees.name')} *</Label>
               <input
                 type="text"
                 required
-                value={formData.roleTitle}
-                onChange={(e) => setFormData({ ...formData, roleTitle: e.target.value })}
-                placeholder="Service Advisor, Chief Cashier..."
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="e.g. Sreysros Keo"
                 className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
-            <div>
-              <label className="block text-app-muted font-medium mb-1">{t('employees.department')}</label>
-              <select
-                value={formData.department}
-                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
-              >
-                <option value="Service">Service</option>
-                <option value="Workshop">Workshop</option>
-                <option value="Inventory">Inventory</option>
-                <option value="Finance">Finance</option>
-                <option value="Management">Management</option>
-              </select>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-app-muted font-medium mb-1">{t('common.phone')} *</label>
-              <input
-                type="text"
-                required
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="012 345 678"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
-              />
-            </div>
-            <div>
-              <label className="block text-app-muted font-medium mb-1">{t('common.email')}</label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="staff@workshop.com"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
-              />
-            </div>
-          </div>
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
-              type="button"
-              onClick={() => setIsAddOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
-            >
-              {t('common.cancel')}
-            </button>
-            <LoadingButton type="submit" loading={createEmpMutation.isPending}>
-              {t('employees.createEmployee')}
-            </LoadingButton>
-          </div>
-        </form>
-      </Modal>
-
-      {/* Edit Employee Modal */}
-      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title={`${t('employees.editEmployee')}: ${selectedEmp?.name}`}>
-        <form onSubmit={handleUpdate} className="space-y-4 text-xs">
-          <div>
-            <label className="block text-app-muted font-medium mb-1">{t('employees.name')} *</label>
-            <input
-              type="text"
-              required
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-app-muted font-medium mb-1">{t('employees.position')}</label>
-              <input
-                type="text"
-                value={formData.roleTitle}
-                onChange={(e) => setFormData({ ...formData, roleTitle: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
-              />
-            </div>
-            <div>
-              <label className="block text-app-muted font-medium mb-1">{t('employees.department')}</label>
-              <select
-                value={formData.department}
-                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
-              >
-                <option value="Service">Service</option>
-                <option value="Workshop">Workshop</option>
-                <option value="Inventory">Inventory</option>
-                <option value="Finance">Finance</option>
-                <option value="Management">Management</option>
-              </select>
-            </div>
-          </div>
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
-              type="button"
-              onClick={() => setIsEditOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
-            >
-              {t('common.cancel')}
-            </button>
-            <LoadingButton type="submit" loading={updateEmpMutation.isPending}>
-              {t('common.saveChanges')}
-            </LoadingButton>
-          </div>
-        </form>
-      </Modal>
-
-      {/* View Employee Modal */}
-      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('employees.title')}>
-        {selectedEmp && (
-          <div className="space-y-4 text-xs">
-            <div className="flex items-center gap-3 p-3 bg-app-hover/50 rounded-xl border border-app-border">
-              <div className="w-10 h-10 rounded-xl bg-app-accent/15 flex items-center justify-center text-app-accent font-bold text-xs flex-shrink-0">
-                {selectedEmp.name[0]}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <Label className="block text-app-muted font-medium mb-1">{t('employees.position')} *</Label>
+                <input
+                  type="text"
+                  required
+                  value={formData.roleTitle}
+                  onChange={(e) => setFormData({ ...formData, roleTitle: e.target.value })}
+                  placeholder="Service Advisor, Chief Cashier..."
+                  className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-app-text">{selectedEmp.name}</h3>
-                <p className="text-app-muted">{selectedEmp.roleTitle} · {selectedEmp.department}</p>
+                <Label className="block text-app-muted font-medium mb-1">{t('employees.department')}</Label>
+                <Select
+                  value={formData.department}
+                  onValueChange={(val) => setFormData({ ...formData, department: val })}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={t('employees.department')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Service">Service</SelectItem>
+                    <SelectItem value="Workshop">Workshop</SelectItem>
+                    <SelectItem value="Inventory">Inventory</SelectItem>
+                    <SelectItem value="Finance">Finance</SelectItem>
+                    <SelectItem value="Management">Management</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <Label className="block text-app-muted font-medium mb-1">{t('common.phone')} *</Label>
+                <input
+                  type="text"
+                  required
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="012 345 678"
+                  className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                />
+              </div>
+              <div>
+                <Label className="block text-app-muted font-medium mb-1">{t('common.email')}</Label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="staff@workshop.com"
+                  className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
+              <Button
+                variant="ghost"
+                type="button"
+                onClick={() => setIsAddOpen(false)}
+                className="h-9 rounded-xl"
+              >
+                {t('common.cancel')}
+              </Button>
+              <LoadingButton type="submit" loading={createEmpMutation.isPending}>
+                {t('employees.createEmployee')}
+              </LoadingButton>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-app-input rounded-xl border border-app-border">
-                <p className="text-[10px] text-app-muted uppercase font-semibold">{t('common.phone')}</p>
-                <p className="font-semibold text-app-text mt-0.5">{selectedEmp.phone}</p>
+      {/* Edit Employee Modal */}
+      <Dialog open={isEditOpen} onOpenChange={(open) => { if(!open) setIsEditOpen(false); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('employees.editEmployee')}: {selectedEmp?.name}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleUpdate} className="space-y-4 text-xs">
+            <div>
+              <Label className="block text-app-muted font-medium mb-1">{t('employees.name')} *</Label>
+              <input
+                type="text"
+                required
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <Label className="block text-app-muted font-medium mb-1">{t('employees.position')}</Label>
+                <input
+                  type="text"
+                  value={formData.roleTitle}
+                  onChange={(e) => setFormData({ ...formData, roleTitle: e.target.value })}
+                  className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                />
               </div>
-              <div className="p-3 bg-app-input rounded-xl border border-app-border">
-                <p className="text-[10px] text-app-muted uppercase font-semibold">{t('common.email')}</p>
-                <p className="font-semibold text-app-text mt-0.5">{selectedEmp.email || '—'}</p>
+              <div>
+                <Label className="block text-app-muted font-medium mb-1">{t('employees.department')}</Label>
+                <Select
+                  value={formData.department}
+                  onValueChange={(val) => setFormData({ ...formData, department: val })}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={t('employees.department')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Service">Service</SelectItem>
+                    <SelectItem value="Workshop">Workshop</SelectItem>
+                    <SelectItem value="Inventory">Inventory</SelectItem>
+                    <SelectItem value="Finance">Finance</SelectItem>
+                    <SelectItem value="Management">Management</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-          </div>
-        )}
-      </Modal>
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
+              <Button
+                variant="ghost"
+                type="button"
+                onClick={() => setIsEditOpen(false)}
+                className="h-9 rounded-xl"
+              >
+                {t('common.cancel')}
+              </Button>
+              <LoadingButton type="submit" loading={updateEmpMutation.isPending}>
+                {t('common.saveChanges')}
+              </LoadingButton>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Employee Modal */}
+      <Dialog open={isViewOpen} onOpenChange={(open) => { if(!open) setIsViewOpen(false); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('employees.title')}</DialogTitle>
+          </DialogHeader>
+          {selectedEmp && (
+            <div className="space-y-4 text-xs">
+              <div className="flex items-center gap-3 p-3 bg-app-hover/50 rounded-xl border border-app-border">
+                <div className="w-10 h-10 rounded-xl bg-app-accent/15 flex items-center justify-center text-app-accent font-bold text-xs flex-shrink-0">
+                  {selectedEmp.name[0]}
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-app-text">{selectedEmp.name}</h3>
+                  <p className="text-app-muted">{selectedEmp.roleTitle} · {selectedEmp.department}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 bg-app-input rounded-xl border border-app-border">
+                  <p className="text-[10px] text-app-muted uppercase font-semibold">{t('common.phone')}</p>
+                  <p className="font-semibold text-app-text mt-0.5">{selectedEmp.phone}</p>
+                </div>
+                <div className="p-3 bg-app-input rounded-xl border border-app-border">
+                  <p className="text-[10px] text-app-muted uppercase font-semibold">{t('common.email')}</p>
+                  <p className="font-semibold text-app-text mt-0.5">{selectedEmp.email || '—'}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation */}
       <ConfirmDialog

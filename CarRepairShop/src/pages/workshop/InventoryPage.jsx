@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const stockStatusOptions = ['All Stock', 'In Stock', 'Low Stock', 'Out of Stock']
 
@@ -169,16 +170,18 @@ export default function InventoryPage() {
   })
 
   return (
-    <div className="space-y-6 font-sans text-app-text animate-fade-in">
+    <div className="space-y-4 font-sans text-app-text animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold tracking-tight text-app-text">{t('titles.sparePartsInventory')}</h1>
-          <p className="text-xs text-app-muted mt-1">{items.length} {t('inventory.subtitle')}</p>
+          <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-app-hover text-app-muted border border-app-border">
+            {items.length}
+          </span>
         </div>
         {can('inventory', 'create') && (
-          <Button onClick={handleOpenAdd} className="h-9 px-4 rounded-xl bg-app-accent hover:bg-app-accentHover text-white shadow-subtle">
-            <Plus size={16} weight="bold" />
+          <Button onClick={handleOpenAdd} size="sm" className="inline-flex items-center gap-1.5">
+            <Plus size={15} weight="bold" />
             {t('inventory.addPart')}
           </Button>
         )}
@@ -186,23 +189,25 @@ export default function InventoryPage() {
 
       {/* View Switcher Tabs */}
       <div className="flex items-center gap-2 border-b border-app-border pb-3">
-        <Button variant="ghost" onClick={() => setActiveTab('inventory')} className={`h-9 px-3.5 rounded-xl font-semibold ${
-            activeTab === 'inventory'
-              ? 'bg-app-accent text-app-accentText shadow-subtle'
-              : 'text-app-muted hover:text-app-text hover:bg-app-hover'
-          }`}>
-          <Package size={16} weight="bold" />
-          <span>Spare Parts Catalog</span>
+        <Button
+          variant={activeTab === 'inventory' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => setActiveTab('inventory')}
+          className="gap-2"
+        >
+          <Package size={15} weight="bold" />
+          <span>Spare Parts</span>
           <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/10 dark:bg-white/10">{items.length}</span>
         </Button>
 
-        <Button variant="ghost" onClick={() => setActiveTab('transactions')} className={`h-9 px-3.5 rounded-xl font-semibold ${
-            activeTab === 'transactions'
-              ? 'bg-app-accent text-app-accentText shadow-subtle'
-              : 'text-app-muted hover:text-app-text hover:bg-app-hover'
-          }`}>
-          <ClockCounterClockwise size={16} weight="bold" />
-          <span>Stock Movement & Auto Stock-Out Logs</span>
+        <Button
+          variant={activeTab === 'transactions' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => setActiveTab('transactions')}
+          className="gap-2"
+        >
+          <ClockCounterClockwise size={15} weight="bold" />
+          <span>Transactions</span>
           <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/10 dark:bg-white/10">{transactions.length}</span>
         </Button>
       </div>
@@ -239,10 +244,10 @@ export default function InventoryPage() {
 
       {/* Table */}
       <div className="bg-app-card rounded-2xl border border-app-border shadow-card overflow-hidden">
-        <div className="p-4 border-b border-app-border flex items-center justify-between gap-3">
-          <div className="relative flex-1 max-w-md">
-            <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
-            <Input type="text" placeholder={t('common.quickSearch')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full h-9 pl-9 rounded-xl" />
+        <div className="p-3.5 border-b border-app-border flex items-center justify-between gap-3">
+          <div className="relative flex-1 max-w-sm">
+            <MagnifyingGlass size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <Input type="text" placeholder={t('common.quickSearch')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-8" />
           </div>
           {(searchQuery || categoryFilter !== 'All' || stockFilter !== 'All Stock') && (
             <Button
@@ -472,20 +477,24 @@ export default function InventoryPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <Label className="block text-app-muted font-medium mb-1">{t('inventory.category')}</Label>
-              <select
+              <Select
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                onValueChange={(val) => setFormData({ ...formData, category: val })}
               >
-                <option value="Engine">Engine</option>
-                <option value="Brakes">Brakes</option>
-                <option value="Fluids">Fluids</option>
-                <option value="Filters">Filters</option>
-                <option value="Ignition">Ignition</option>
-                <option value="Electrical">Electrical</option>
-                <option value="Tires">Tires</option>
-                <option value="Suspension">Suspension</option>
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Engine">Engine</SelectItem>
+                  <SelectItem value="Brakes">Brakes</SelectItem>
+                  <SelectItem value="Fluids">Fluids</SelectItem>
+                  <SelectItem value="Filters">Filters</SelectItem>
+                  <SelectItem value="Ignition">Ignition</SelectItem>
+                  <SelectItem value="Electrical">Electrical</SelectItem>
+                  <SelectItem value="Tires">Tires</SelectItem>
+                  <SelectItem value="Suspension">Suspension</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label className="block text-app-muted font-medium mb-1">{t('inventory.brand')}</Label>
@@ -512,25 +521,28 @@ export default function InventoryPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label className="block text-app-muted font-medium mb-1">{t('inventory.supplier')}</Label>
-              <select
+              <Select
                 value={formData.supplierId}
-                onChange={(e) => {
-                  const sup = suppliers.find((s) => String(s.id) === e.target.value)
+                onValueChange={(val) => {
+                  const sup = suppliers.find((s) => String(s.id) === val)
                   setFormData({
                     ...formData,
-                    supplierId: e.target.value,
+                    supplierId: val,
                     supplier: sup ? sup.name : formData.supplier,
                   })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
               >
-                <option value="">Select Supplier</option>
-                {suppliers.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select supplier" />
+                </SelectTrigger>
+                <SelectContent>
+                  {suppliers.map((s) => (
+                    <SelectItem key={s.id} value={String(s.id)}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label className="block text-app-muted font-medium mb-1">{t('inventory.location')}</Label>
@@ -633,42 +645,49 @@ export default function InventoryPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <Label className="block text-app-muted font-medium mb-1">{t('inventory.category')}</Label>
-              <select
+              <Select
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                onValueChange={(val) => setFormData({ ...formData, category: val })}
               >
-                <option value="Engine">Engine</option>
-                <option value="Brakes">Brakes</option>
-                <option value="Fluids">Fluids</option>
-                <option value="Filters">Filters</option>
-                <option value="Ignition">Ignition</option>
-                <option value="Electrical">Electrical</option>
-                <option value="Tires">Tires</option>
-                <option value="Suspension">Suspension</option>
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Engine">Engine</SelectItem>
+                  <SelectItem value="Brakes">Brakes</SelectItem>
+                  <SelectItem value="Fluids">Fluids</SelectItem>
+                  <SelectItem value="Filters">Filters</SelectItem>
+                  <SelectItem value="Ignition">Ignition</SelectItem>
+                  <SelectItem value="Electrical">Electrical</SelectItem>
+                  <SelectItem value="Tires">Tires</SelectItem>
+                  <SelectItem value="Suspension">Suspension</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label className="block text-app-muted font-medium mb-1">{t('inventory.supplier')}</Label>
-              <select
+              <Select
                 value={formData.supplierId}
-                onChange={(e) => {
-                  const sup = suppliers.find((s) => String(s.id) === e.target.value)
+                onValueChange={(val) => {
+                  const sup = suppliers.find((s) => String(s.id) === val)
                   setFormData({
                     ...formData,
-                    supplierId: e.target.value,
+                    supplierId: val,
                     supplier: sup ? sup.name : formData.supplier,
                   })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
               >
-                <option value="">Select Supplier</option>
-                {suppliers.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select supplier" />
+                </SelectTrigger>
+                <SelectContent>
+                  {suppliers.map((s) => (
+                    <SelectItem key={s.id} value={String(s.id)}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label className="block text-app-muted font-medium mb-1">{t('inventory.location')}</Label>
@@ -734,11 +753,11 @@ export default function InventoryPage() {
       </DialogContent></Dialog>
 
       {/* Adjust Stock Modal */}
-      <Modal
-        isOpen={isAdjustOpen}
-        onClose={() => setIsAdjustOpen(false)}
-        title={`${adjustType}: ${selectedPart?.name}`}
-      >
+      <Dialog open={isAdjustOpen} onOpenChange={(open) => { if(!open) setIsAdjustOpen(false); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{adjustType}: {selectedPart?.name}</DialogTitle>
+          </DialogHeader>
         <form onSubmit={handleAdjust} className="space-y-4 text-xs">
           <div className="p-3 bg-app-hover/50 rounded-xl border border-app-border">
             <p className="text-app-muted">
@@ -774,7 +793,8 @@ export default function InventoryPage() {
             </LoadingButton>
           </div>
         </form>
-      </Modal>
+        </DialogContent>
+      </Dialog>
 
       {/* View Part Modal */}
       <Dialog open={isViewOpen} onOpenChange={(open) => { if(!open) setIsViewOpen(false); }}><DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>{t('inventory.title')}</DialogTitle></DialogHeader>

@@ -1,4 +1,5 @@
 import { MagnifyingGlass, FunnelX } from '@phosphor-icons/react'
+import { Button } from '@/components/ui/button'
 
 export default function EmptyState({
   title = 'No records found',
@@ -16,14 +17,16 @@ export default function EmptyState({
       <h3 className="text-sm font-semibold text-app-text">{title}</h3>
       <p className="text-xs text-app-muted mt-1 max-w-sm">{description}</p>
       {actionText && onAction && (
-        <button
+        <Button
+          variant="outline"
+          size="sm"
           type="button"
           onClick={onAction}
-          className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 bg-app-hover hover:bg-app-border border border-app-border text-app-text text-xs font-medium rounded-lg transition-colors shadow-subtle"
+          className="mt-4 gap-1.5 h-8 px-3 rounded-xl shadow-subtle text-xs"
         >
           <FunnelX size={14} />
           {actionText}
-        </button>
+        </Button>
       )}
     </div>
   )

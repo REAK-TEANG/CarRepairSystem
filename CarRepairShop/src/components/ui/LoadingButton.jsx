@@ -1,5 +1,6 @@
 import { CircleNotch } from '@phosphor-icons/react'
-import clsx from 'clsx'
+import { Button } from '@/components/ui/button'
+import { cn } from 'cn'
 
 export default function LoadingButton({
   children,
@@ -12,26 +13,27 @@ export default function LoadingButton({
   onClick,
   ...props
 }) {
-  const baseStyles =
-    'inline-flex items-center justify-center gap-2 rounded-xl text-xs font-semibold transition-all select-none disabled:opacity-50 disabled:cursor-not-allowed shadow-subtle'
-
   const variants = {
     primary:
-      'bg-app-accent hover:bg-app-accentHover text-app-accentText shadow-subtle active:scale-[0.98]',
+      'bg-app-accent hover:bg-app-accentHover text-white shadow-subtle',
     secondary:
       'bg-app-card hover:bg-app-hover border border-app-border text-app-text hover:border-app-border/80',
     danger:
-      'bg-rose-600 hover:bg-rose-700 text-white shadow-subtle active:scale-[0.98]',
+      'bg-rose-600 hover:bg-rose-700 text-white shadow-subtle',
     ghost:
       'text-app-muted hover:text-app-text hover:bg-app-hover border border-transparent',
   }
 
   return (
-    <button
+    <Button
       type={type}
       disabled={disabled || loading}
       onClick={onClick}
-      className={clsx(baseStyles, variants[variant], 'px-4 py-2', className)}
+      className={cn(
+        'h-9 px-4 rounded-xl text-xs font-semibold gap-2 transition-all',
+        variants[variant] || variants.primary,
+        className
+      )}
       {...props}
     >
       {loading ? (
@@ -45,6 +47,6 @@ export default function LoadingButton({
           <span>{children}</span>
         </>
       )}
-    </button>
+    </Button>
   )
 }

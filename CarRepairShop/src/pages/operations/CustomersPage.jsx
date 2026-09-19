@@ -3,7 +3,12 @@ import { MagnifyingGlass, Plus, PencilSimple, Trash, Eye, MapPin, User } from '@
 import { useTranslation } from 'react-i18next'
 import { useCustomers, useCreateCustomer, useUpdateCustomer, useDeleteCustomer } from '@/hooks/useCustomers'
 import { useAuth } from '@/context/AuthContext'
-import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton } from '@/components/ui'
+import { ConfirmDialog, EmptyState, TableSkeleton, LoadingButton } from '@/components/ui'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 export default function CustomersPage() {
   const { t } = useTranslation()
@@ -90,42 +95,42 @@ export default function CustomersPage() {
   })
 
   return (
-    <div className="space-y-6 text-app-text font-sans transition-colors duration-200">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
+    <div className="space-y-4 text-app-text font-sans transition-colors duration-200">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold tracking-tight text-app-text">{t('titles.customerDirectory')}</h1>
-          <p className="text-xs text-app-muted mt-1">{customers.length} {t('customers.subtitle')}</p>
+          <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-app-hover text-app-muted border border-app-border">
+            {customers.length}
+          </span>
         </div>
         {can('customers', 'create') && (
-          <button
+          <Button
             onClick={handleOpenAdd}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover text-app-accentText font-semibold rounded-xl text-xs transition-colors shadow-subtle"
+            size="sm"
+            className="inline-flex items-center gap-1.5"
           >
-            <Plus size={16} weight="bold" />
+            <Plus size={15} weight="bold" />
             {t('customers.addCustomer')}
-          </button>
+          </Button>
         )}
       </div>
 
       <div className="bg-app-card rounded-2xl border border-app-border shadow-card overflow-hidden transition-colors duration-200">
-        <div className="p-4 border-b border-app-border flex items-center justify-between gap-3">
-          <div className="relative flex-1 max-w-md">
-            <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
-            <input
+        <div className="p-3.5 border-b border-app-border flex items-center justify-between gap-3">
+          <div className="relative flex-1 max-w-sm">
+            <MagnifyingGlass size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <Input
               type="text"
               placeholder={t('common.quickSearch')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-xl text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+              className="pl-8"
             />
           </div>
           {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="text-xs text-app-muted hover:text-app-text px-2 py-1 transition-colors"
-            >
+            <Button variant="ghost" size="sm" onClick={() => setSearchQuery('')} className="text-xs">
               {t('common.cancel')}
-            </button>
+            </Button>
           )}
         </div>
 
@@ -140,193 +145,139 @@ export default function CustomersPage() {
               onAction={searchQuery ? () => setSearchQuery('') : undefined}
             />
           ) : (
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                  <th className="px-6 py-3 font-semibold">{t('customers.customerCode')}</th>
-                  <th className="px-6 py-3 font-semibold">{t('customers.fullName')}</th>
-                  <th className="px-6 py-3 font-semibold">{t('customers.phone')}</th>
-                  <th className="px-6 py-3 hidden md:table-cell font-semibold">{t('customers.email')}</th>
-                  <th className="px-6 py-3 hidden lg:table-cell font-semibold text-right">{t('customers.totalSpent')}</th>
-                  <th className="px-6 py-3 font-semibold text-right">{t('common.actions')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-app-border">
+            <Table className="w-full text-xs">
+              <TableHeader>
+                <TableRow className="text-app-muted text-left border-b border-app-border bg-app-hover/50 hover:bg-transparent">
+                  <TableHead className="px-6 py-3 font-semibold">{t('customers.customerCode')}</TableHead>
+                  <TableHead className="px-6 py-3 font-semibold">{t('customers.fullName')}</TableHead>
+                  <TableHead className="px-6 py-3 font-semibold">{t('customers.phone')}</TableHead>
+                  <TableHead className="px-6 py-3 hidden md:table-cell font-semibold">{t('customers.email')}</TableHead>
+                  <TableHead className="px-6 py-3 hidden lg:table-cell font-semibold text-right">{t('customers.totalSpent')}</TableHead>
+                  <TableHead className="px-6 py-3 font-semibold text-right">{t('common.actions')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className="divide-y divide-app-border">
                 {filtered.map((customer) => (
-                  <tr key={customer.id} className="hover:bg-app-hover/60 transition-colors group">
-                    <td className="px-6 py-3.5 font-mono font-semibold text-app-accent">{customer.code}</td>
-                    <td className="px-6 py-3.5">
+                  <TableRow key={customer.id} className="hover:bg-app-hover/60 transition-colors group">
+                    <TableCell className="px-6 py-3.5 font-mono font-semibold text-app-accent">{customer.code}</TableCell>
+                    <TableCell className="px-6 py-3.5">
                       <div className="flex items-center gap-2.5">
                         <div className="w-7 h-7 rounded-lg bg-app-hover flex items-center justify-center text-app-muted font-bold text-[11px] flex-shrink-0">
                           {customer.name[0]}
                         </div>
                         <span className="font-semibold text-app-text">{customer.name}</span>
                       </div>
-                    </td>
-                    <td className="px-6 py-3.5 text-app-muted">{customer.phone}</td>
-                    <td className="px-6 py-3.5 text-app-muted hidden md:table-cell">{customer.email || '—'}</td>
-                    <td className="px-6 py-3.5 font-semibold text-app-text text-right tabular-nums hidden lg:table-cell">
+                    </TableCell>
+                    <TableCell className="px-6 py-3.5 text-app-muted">{customer.phone}</TableCell>
+                    <TableCell className="px-6 py-3.5 text-app-muted hidden md:table-cell">{customer.email || '—'}</TableCell>
+                    <TableCell className="px-6 py-3.5 font-semibold text-app-text text-right tabular-nums hidden lg:table-cell">
                       {customer.totalSpent || '$0.00'}
-                    </td>
-                    <td className="px-6 py-3.5 text-right">
+                    </TableCell>
+                    <TableCell className="px-6 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => handleOpenView(customer)}
-                          className="p-1.5 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors"
+                          className="h-7 w-7 p-0 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
                           title={t('common.view')}
                         >
                           <Eye size={15} />
-                        </button>
+                        </Button>
                         {can('customers', 'update') && (
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handleOpenEdit(customer)}
-                            className="p-1.5 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors"
+                            className="h-7 w-7 p-0 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
                             title={t('common.edit')}
                           >
                             <PencilSimple size={15} />
-                          </button>
+                          </Button>
                         )}
                         {can('customers', 'delete') && (
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handleOpenDelete(customer)}
-                            className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors"
+                            className="h-7 w-7 p-0 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
                             title={t('common.delete')}
                           >
                             <Trash size={15} />
-                          </button>
+                          </Button>
                         )}
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           )}
         </div>
       </div>
 
       {/* Add Customer Modal */}
-      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('customers.createCustomer')}>
+      <Dialog open={isAddOpen} onOpenChange={(open) => { if (!open) setIsAddOpen(false); }}><DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{t('customers.createCustomer')}</DialogTitle></DialogHeader>
         <form onSubmit={handleCreate} className="space-y-4 text-xs">
           <div>
-            <label className="block text-app-muted font-medium mb-1">{t('customers.fullName')} *</label>
-            <input
-              type="text"
-              required
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="e.g. Sokha Chan"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
-            />
+            <Label className="block text-app-muted font-medium mb-1">{t('customers.fullName')} *</Label>
+            <Input required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="e.g. Sokha Chan" className="w-full h-9 rounded-xl" />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('customers.phone')} *</label>
-              <input
-                type="text"
-                required
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="012 345 678"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
-              />
+              <Label className="block text-app-muted font-medium mb-1">{t('customers.phone')} *</Label>
+              <Input required value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="012 345 678" className="w-full h-9 rounded-xl font-mono" />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('customers.email')}</label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="customer@email.com"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
-              />
+              <Label className="block text-app-muted font-medium mb-1">{t('customers.email')}</Label>
+              <Input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="customer@email.com" className="w-full h-9 rounded-xl" />
             </div>
           </div>
           <div>
-            <label className="block text-app-muted font-medium mb-1">{t('customers.address')}</label>
-            <input
-              type="text"
-              value={formData.address}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              placeholder="Phnom Penh, Cambodia"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
-            />
+            <Label className="block text-app-muted font-medium mb-1">{t('customers.address')}</Label>
+            <Input value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} placeholder="Phnom Penh, Cambodia" className="w-full h-9 rounded-xl" />
           </div>
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
-              type="button"
-              onClick={() => setIsAddOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
-            >
-              {t('common.cancel')}
-            </button>
+            <Button type="button" variant="ghost" size="sm" onClick={() => setIsAddOpen(false)} className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer">{t('common.cancel')}</Button>
             <LoadingButton type="submit" loading={createCustomerMutation.isPending}>
               {t('customers.createCustomer')}
             </LoadingButton>
           </div>
         </form>
-      </Modal>
+      </DialogContent></Dialog>
 
       {/* Edit Customer Modal */}
-      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title={`${t('customers.editCustomer')}: ${selectedCustomer?.code}`}>
+      <Dialog open={isEditOpen} onOpenChange={(open) => { if (!open) setIsEditOpen(false); }}><DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{`${t('customers.editCustomer')}: ${selectedCustomer?.code}`}</DialogTitle></DialogHeader>
         <form onSubmit={handleUpdate} className="space-y-4 text-xs">
           <div>
-            <label className="block text-app-muted font-medium mb-1">{t('customers.fullName')} *</label>
-            <input
-              type="text"
-              required
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
-            />
+            <Label className="block text-app-muted font-medium mb-1">{t('customers.fullName')} *</Label>
+            <Input required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full h-9 rounded-xl" />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('customers.phone')} *</label>
-              <input
-                type="text"
-                required
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
-              />
+              <Label className="block text-app-muted font-medium mb-1">{t('customers.phone')} *</Label>
+              <Input required value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full h-9 rounded-xl font-mono" />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('customers.email')}</label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
-              />
+              <Label className="block text-app-muted font-medium mb-1">{t('customers.email')}</Label>
+              <Input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full h-9 rounded-xl" />
             </div>
           </div>
           <div>
-            <label className="block text-app-muted font-medium mb-1">{t('customers.address')}</label>
-            <input
-              type="text"
-              value={formData.address}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
-            />
+            <Label className="block text-app-muted font-medium mb-1">{t('customers.address')}</Label>
+            <Input value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="w-full h-9 rounded-xl" />
           </div>
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
-              type="button"
-              onClick={() => setIsEditOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
-            >
-              {t('common.cancel')}
-            </button>
+            <Button type="button" variant="ghost" size="sm" onClick={() => setIsEditOpen(false)} className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer">{t('common.cancel')}</Button>
             <LoadingButton type="submit" loading={updateCustomerMutation.isPending}>
               {t('common.saveChanges')}
             </LoadingButton>
           </div>
         </form>
-      </Modal>
+      </DialogContent></Dialog>
 
       {/* View Customer Details Modal */}
-      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('customers.title')}>
+      <Dialog open={isViewOpen} onOpenChange={(open) => { if (!open) setIsViewOpen(false); }}><DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{t('customers.title')}</DialogTitle></DialogHeader>
         {selectedCustomer && (
           <div className="space-y-4 text-xs">
             <div className="flex items-center gap-3 p-3 bg-app-hover/50 rounded-xl border border-app-border">
@@ -369,7 +320,7 @@ export default function CustomersPage() {
             )}
           </div>
         )}
-      </Modal>
+      </DialogContent></Dialog>
 
       {/* Delete Confirmation Modal */}
       <ConfirmDialog

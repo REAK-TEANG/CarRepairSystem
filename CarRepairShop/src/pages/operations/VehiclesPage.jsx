@@ -33,7 +33,13 @@ import { useMechanics } from '@/hooks/useMechanics'
 import { useServicesCatalog } from '@/hooks/useServicesCatalog'
 import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
-import { Modal, ImageUpload, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, StatusBadge } from '@/components/ui'
+import { ImageUpload, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, StatusBadge } from '@/components/ui'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const fuelOptions = ['All', 'Petrol', 'Diesel', 'Hybrid', 'Electric']
 
@@ -317,21 +323,20 @@ export default function VehiclesPage() {
   })
 
   return (
-    <div className="space-y-6 text-app-text font-sans transition-colors duration-200">
+    <div className="space-y-4 text-app-text font-sans transition-colors duration-200">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold tracking-tight text-app-text">{t('titles.vehicleRegistry')}</h1>
-          <p className="text-xs text-app-muted mt-1">{vehicles.length} {t('vehicles.subtitle')}</p>
+          <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-app-hover text-app-muted border border-app-border">
+            {vehicles.length}
+          </span>
         </div>
         {can('vehicles', 'create') && (
-          <button
-            onClick={handleOpenAdd}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover text-app-accentText font-semibold rounded-xl text-xs transition-colors shadow-subtle cursor-pointer"
-          >
-            <Plus size={16} weight="bold" />
+          <Button onClick={handleOpenAdd} size="sm" className="inline-flex items-center gap-1.5">
+            <Plus size={15} weight="bold" />
             {t('vehicles.addVehicle')}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -341,15 +346,11 @@ export default function VehiclesPage() {
           const count = f === 'All' ? vehicles.length : vehicles.filter((v) => v.fuelType === f).length
           const isActive = fuelFilter === f
           return (
-            <button
-              key={f}
-              onClick={() => setFuelFilter(f)}
-              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+            <Button variant="ghost" key={f} onClick={() => setFuelFilter(f)} className={`h-8 px-3 rounded-xl whitespace-nowrap ${
                 isActive
                   ? 'bg-app-accent text-app-accentText shadow-subtle'
                   : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover hover:text-app-text'
-              }`}
-            >
+              }`}>
               {f === 'All' ? t('common.all') : f}
               <span
                 className={`text-[10px] px-1.5 py-0.5 rounded-md ${
@@ -358,34 +359,29 @@ export default function VehiclesPage() {
               >
                 {count}
               </span>
-            </button>
+            </Button>
           )
         })}
       </div>
 
       {/* Main Table */}
       <div className="bg-app-card rounded-2xl border border-app-border shadow-card overflow-hidden transition-colors duration-200">
-        <div className="p-4 border-b border-app-border flex items-center justify-between gap-3">
-          <div className="relative flex-1 max-w-md">
-            <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
-            <input
-              type="text"
-              placeholder={t('common.quickSearch')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-xl text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
-            />
+        <div className="p-3.5 border-b border-app-border flex items-center justify-between gap-3">
+          <div className="relative flex-1 max-w-sm">
+            <MagnifyingGlass size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <Input type="text" placeholder={t('common.quickSearch')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-8" />
           </div>
           {(searchQuery || fuelFilter !== 'All') && (
-            <button
+            <Button
+              variant="ghost"
               onClick={() => {
                 setSearchQuery('')
                 setFuelFilter('All')
               }}
-              className="text-xs text-app-muted hover:text-app-text px-2 py-1 transition-colors cursor-pointer"
+              className="h-8 px-2 text-xs text-app-muted hover:text-app-text cursor-pointer"
             >
               {t('common.cancel')}
-            </button>
+            </Button>
           )}
         </div>
 
@@ -407,19 +403,7 @@ export default function VehiclesPage() {
               }
             />
           ) : (
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                  <th className="px-6 py-3 font-semibold">{t('vehicles.plateNumber')}</th>
-                  <th className="px-6 py-3 font-semibold">{t('appointments.vehicle')}</th>
-                  <th className="px-6 py-3 hidden lg:table-cell font-semibold">Fuel</th>
-                  <th className="px-6 py-3 hidden md:table-cell font-semibold">{t('vehicles.mileage')}</th>
-                  <th className="px-6 py-3 font-semibold">{t('vehicles.owner')}</th>
-                  <th className="px-6 py-3 font-semibold">Service History</th>
-                  <th className="px-6 py-3 font-semibold text-right">{t('common.actions')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-app-border">
+            <Table className="w-full text-xs"><TableHeader><TableRow className="text-app-muted text-left border-b border-app-border bg-app-hover/50 hover:bg-app-hover/50"><TableHead className="px-6 py-3 font-semibold">{t('vehicles.plateNumber')}</TableHead><TableHead className="px-6 py-3 font-semibold">{t('appointments.vehicle')}</TableHead><TableHead className="px-6 py-3 hidden lg:table-cell font-semibold">Fuel</TableHead><TableHead className="px-6 py-3 hidden md:table-cell font-semibold">{t('vehicles.mileage')}</TableHead><TableHead className="px-6 py-3 font-semibold">{t('vehicles.owner')}</TableHead><TableHead className="px-6 py-3 font-semibold">Service History</TableHead><TableHead className="px-6 py-3 font-semibold text-right">{t('common.actions')}</TableHead></TableRow></TableHeader><TableBody className="divide-y divide-app-border">
                 {filteredVehicles.map((v) => {
                   const vJobs = getVehicleJobs(v)
                   const hasActive = vJobs.some((j) =>
@@ -428,17 +412,13 @@ export default function VehiclesPage() {
                   const completedJobs = vJobs.filter((j) => j.status === 'Completed').length
 
                   return (
-                    <tr
-                      key={v.id}
-                      onClick={() => handleOpenView(v)}
-                      className="hover:bg-app-hover/60 transition-colors group cursor-pointer"
-                    >
-                      <td className="px-6 py-3.5 font-mono font-bold text-app-accent">
+                    <TableRow key={v.id} onClick={() => handleOpenView(v)} className="hover:bg-app-hover/60 transition-colors group cursor-pointer">
+                      <TableCell className="px-6 py-3.5 font-mono font-bold text-app-accent">
                         <span className="px-2 py-0.5 rounded-lg bg-app-accent/10 border border-app-accent/20">
                           {v.number}
                         </span>
-                      </td>
-                      <td className="px-6 py-3.5">
+                      </TableCell>
+                      <TableCell className="px-6 py-3.5">
                         <div className="flex items-center gap-3">
                           {v.image ? (
                             <img
@@ -460,18 +440,18 @@ export default function VehiclesPage() {
                             </p>
                           </div>
                         </div>
-                      </td>
-                      <td className="px-6 py-3.5 text-app-muted hidden lg:table-cell">
+                      </TableCell>
+                      <TableCell className="px-6 py-3.5 text-app-muted hidden lg:table-cell">
                         <span className="inline-flex items-center gap-1.5">
                           <GasPump size={13} className="text-app-accent" />
                           {v.fuelType}
                         </span>
-                      </td>
-                      <td className="px-6 py-3.5 text-app-muted tabular-nums hidden md:table-cell">
+                      </TableCell>
+                      <TableCell className="px-6 py-3.5 text-app-muted tabular-nums hidden md:table-cell">
                         {Number(v.mileage || 0).toLocaleString()} km
-                      </td>
-                      <td className="px-6 py-3.5 font-medium text-app-text">{v.owner}</td>
-                      <td className="px-6 py-3.5">
+                      </TableCell>
+                      <TableCell className="px-6 py-3.5 font-medium text-app-text">{v.owner}</TableCell>
+                      <TableCell className="px-6 py-3.5">
                         <div className="flex items-center gap-1.5">
                           {vJobs.length > 0 ? (
                             <span
@@ -493,51 +473,39 @@ export default function VehiclesPage() {
                             <span className="text-[11px] text-app-muted italic">No service history</span>
                           )}
                         </div>
-                      </td>
-                      <td className="px-6 py-3.5 text-right">
+                      </TableCell>
+                      <TableCell className="px-6 py-3.5 text-right">
                         <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            onClick={() => handleOpenView(v)}
-                            className="p-1.5 rounded-lg text-app-muted hover:text-app-accent hover:bg-app-hover transition-colors cursor-pointer"
-                            title="View Vehicle & Service History"
-                          >
+                          <Button variant="ghost" size="icon" onClick={() => handleOpenView(v)} className="h-8 w-8 text-app-muted hover:text-app-accent hover:bg-app-hover" title="View Vehicle & Service History">
                             <Eye size={15} />
-                          </button>
+                          </Button>
                           {can('vehicles', 'update') && (
-                            <button
-                              onClick={() => handleOpenEdit(v)}
-                              className="p-1.5 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
-                              title={t('common.edit')}
-                            >
+                            <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(v)} className="h-8 w-8 text-app-muted hover:text-app-text hover:bg-app-hover" title={t('common.edit')}>
                               <PencilSimple size={15} />
-                            </button>
+                            </Button>
                           )}
                           {can('vehicles', 'delete') && (
-                            <button
-                              onClick={() => handleOpenDelete(v)}
-                              className="p-1.5 rounded-lg text-app-muted hover:text-red-500 hover:bg-app-hover transition-colors cursor-pointer"
-                              title={t('common.delete')}
-                            >
+                            <Button variant="ghost" size="icon" onClick={() => handleOpenDelete(v)} className="h-8 w-8 text-app-muted hover:text-red-500 hover:bg-app-hover" title={t('common.delete')}>
                               <Trash size={15} />
-                            </button>
+                            </Button>
                           )}
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   )
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           )}
         </div>
       </div>
 
       {/* Register Vehicle Modal */}
-      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('vehicles.createVehicle')}>
+      <Dialog open={isAddOpen} onOpenChange={(open) => { if(!open) setIsAddOpen(false); }}><DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{t('vehicles.createVehicle')}</DialogTitle></DialogHeader>
         <form onSubmit={handleCreateVehicle} className="space-y-4 text-xs">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('vehicles.plateNumber')} *</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('vehicles.plateNumber')} *</Label>
               <input
                 type="text"
                 required
@@ -548,7 +516,7 @@ export default function VehiclesPage() {
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('vehicles.vin')}</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('vehicles.vin')}</Label>
               <input
                 type="text"
                 value={formData.vin}
@@ -561,7 +529,7 @@ export default function VehiclesPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('vehicles.brand')} *</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('vehicles.brand')} *</Label>
               <input
                 type="text"
                 required
@@ -572,7 +540,7 @@ export default function VehiclesPage() {
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('vehicles.model')} *</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('vehicles.model')} *</Label>
               <input
                 type="text"
                 required
@@ -583,7 +551,7 @@ export default function VehiclesPage() {
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('vehicles.year')}</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('vehicles.year')}</Label>
               <input
                 type="number"
                 value={formData.year}
@@ -595,7 +563,7 @@ export default function VehiclesPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('vehicles.color')}</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('vehicles.color')}</Label>
               <input
                 type="text"
                 value={formData.color}
@@ -605,7 +573,7 @@ export default function VehiclesPage() {
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('vehicles.mileage')}</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('vehicles.mileage')}</Label>
               <input
                 type="number"
                 value={formData.mileage}
@@ -615,54 +583,50 @@ export default function VehiclesPage() {
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('vehicles.owner')} *</label>
-              <select
+              <Label className="block text-app-muted font-medium mb-1">{t('vehicles.owner')} *</Label>
+              <Select
                 value={formData.owner}
-                onChange={(e) => {
-                  const c = customers.find((x) => x.name === e.target.value)
-                  setFormData({ ...formData, owner: e.target.value, ownerId: c ? c.id : '' })
+                onValueChange={(val) => {
+                  const c = customers.find((x) => x.name === val)
+                  setFormData({ ...formData, owner: val, ownerId: c ? c.id : '' })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
               >
-                {customers.map((c) => (
-                  <option key={c.id} value={c.name}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select customer" />
+                </SelectTrigger>
+                <SelectContent>
+                  {customers.map((c) => (
+                    <SelectItem key={c.id} value={c.name}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           <div>
-            <label className="block text-app-muted font-medium mb-1">Vehicle Image (Optional)</label>
+            <Label className="block text-app-muted font-medium mb-1">Vehicle Image (Optional)</Label>
             <ImageUpload value={formData.image} onChange={(url) => setFormData({ ...formData, image: url })} />
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
-              type="button"
-              onClick={() => setIsAddOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
-            >
+            <Button variant="ghost" type="button" onClick={() => setIsAddOpen(false)} className="h-9 rounded-xl">
               {t('common.cancel')}
-            </button>
+            </Button>
             <LoadingButton type="submit" loading={createVehicleMutation.isPending}>
               {t('vehicles.createVehicle')}
             </LoadingButton>
           </div>
         </form>
-      </Modal>
+      </DialogContent></Dialog>
 
       {/* Edit Vehicle Modal */}
-      <Modal
-        isOpen={isEditOpen}
-        onClose={() => setIsEditOpen(false)}
-        title={`${t('vehicles.editVehicle')}: ${selectedVehicle?.number}`}
-      >
+      <Dialog open={isEditOpen} onOpenChange={(open) => { if(!open) setIsEditOpen(false); }}><DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{t('vehicles.editVehicle')}: {selectedVehicle?.number}</DialogTitle></DialogHeader>
         <form onSubmit={handleUpdateVehicle} className="space-y-4 text-xs">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('vehicles.plateNumber')} *</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('vehicles.plateNumber')} *</Label>
               <input
                 type="text"
                 required
@@ -672,7 +636,7 @@ export default function VehiclesPage() {
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('vehicles.vin')}</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('vehicles.vin')}</Label>
               <input
                 type="text"
                 value={formData.vin}
@@ -684,7 +648,7 @@ export default function VehiclesPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('vehicles.brand')} *</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('vehicles.brand')} *</Label>
               <input
                 type="text"
                 required
@@ -694,7 +658,7 @@ export default function VehiclesPage() {
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('vehicles.model')} *</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('vehicles.model')} *</Label>
               <input
                 type="text"
                 required
@@ -704,7 +668,7 @@ export default function VehiclesPage() {
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('vehicles.year')}</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('vehicles.year')}</Label>
               <input
                 type="number"
                 value={formData.year}
@@ -716,7 +680,7 @@ export default function VehiclesPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('vehicles.color')}</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('vehicles.color')}</Label>
               <input
                 type="text"
                 value={formData.color}
@@ -725,7 +689,7 @@ export default function VehiclesPage() {
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('vehicles.mileage')}</label>
+              <Label className="block text-app-muted font-medium mb-1">{t('vehicles.mileage')}</Label>
               <input
                 type="number"
                 value={formData.mileage}
@@ -734,51 +698,46 @@ export default function VehiclesPage() {
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('vehicles.owner')} *</label>
-              <select
+              <Label className="block text-app-muted font-medium mb-1">{t('vehicles.owner')} *</Label>
+              <Select
                 value={formData.owner}
-                onChange={(e) => {
-                  const c = customers.find((x) => x.name === e.target.value)
-                  setFormData({ ...formData, owner: e.target.value, ownerId: c ? c.id : '' })
+                onValueChange={(val) => {
+                  const c = customers.find((x) => x.name === val)
+                  setFormData({ ...formData, owner: val, ownerId: c ? c.id : '' })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
               >
-                {customers.map((c) => (
-                  <option key={c.id} value={c.name}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select customer" />
+                </SelectTrigger>
+                <SelectContent>
+                  {customers.map((c) => (
+                    <SelectItem key={c.id} value={c.name}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           <div>
-            <label className="block text-app-muted font-medium mb-1">Vehicle Image (Optional)</label>
+            <Label className="block text-app-muted font-medium mb-1">Vehicle Image (Optional)</Label>
             <ImageUpload value={formData.image} onChange={(url) => setFormData({ ...formData, image: url })} />
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
-              type="button"
-              onClick={() => setIsEditOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
-            >
+            <Button variant="ghost" type="button" onClick={() => setIsEditOpen(false)} className="h-9 rounded-xl">
               {t('common.cancel')}
-            </button>
+            </Button>
             <LoadingButton type="submit" loading={updateVehicleMutation.isPending}>
               {t('common.saveChanges')}
             </LoadingButton>
           </div>
         </form>
-      </Modal>
+      </DialogContent></Dialog>
 
       {/* View Vehicle & Comprehensive Lifetime Service History Modal */}
-      <Modal
-        isOpen={isViewOpen}
-        onClose={() => setIsViewOpen(false)}
-        title="Vehicle Profile & Service History"
-        maxWidth="max-w-4xl"
-      >
+      <Dialog open={isViewOpen} onOpenChange={(open) => { if(!open) setIsViewOpen(false); }}><DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>Vehicle Profile & Service History</DialogTitle></DialogHeader>
         {selectedVehicle && (
           <div className="space-y-5 text-xs">
             {/* Top Vehicle Overview Card */}
@@ -809,14 +768,14 @@ export default function VehiclesPage() {
                       {selectedVehicle.number}
                     </span>
                     {selectedVehicle.vin && (
-                      <button
+                      <Button
                         onClick={() => handleCopyVin(selectedVehicle.vin)}
                         className="inline-flex items-center gap-1 font-mono text-[10px] text-app-muted hover:text-app-text px-2 py-0.5 rounded-md bg-app-input border border-app-border transition-colors cursor-pointer"
                         title="Click to copy VIN"
                       >
                         {copiedVin ? <Check size={11} className="text-emerald-500" /> : <Copy size={11} />}
                         VIN: {selectedVehicle.vin}
-                      </button>
+                      </Button>
                     )}
                     <span className="text-[11px] text-app-muted">
                       {selectedVehicle.color} · {selectedVehicle.fuelType}
@@ -826,13 +785,13 @@ export default function VehiclesPage() {
               </div>
 
               {can('repair_jobs', 'create') && (
-                <button
+                <Button
                   onClick={() => handleOpenCreateJob(selectedVehicle)}
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-app-accent hover:bg-app-accentHover text-app-accentText font-semibold rounded-xl text-xs transition-colors shadow-subtle cursor-pointer flex-shrink-0"
                 >
                   <Plus size={14} weight="bold" />
                   Book New Work Order
-                </button>
+                </Button>
               )}
             </div>
 
@@ -952,7 +911,7 @@ export default function VehiclesPage() {
                 {/* Filter Tabs */}
                 <div className="flex items-center gap-1.5 overflow-x-auto">
                   {['All', 'Completed', 'In Progress', 'Pending'].map((f) => (
-                    <button
+                    <Button
                       key={f}
                       onClick={() => setHistoryFilter(f)}
                       className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer whitespace-nowrap ${
@@ -970,7 +929,7 @@ export default function VehiclesPage() {
                         ? activeCount
                         : selectedVehicleJobs.filter((j) => j.status === 'Pending').length}
                       )
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </div>
@@ -1097,13 +1056,13 @@ export default function VehiclesPage() {
                     </p>
                   </div>
                   {can('repair_jobs', 'create') && (
-                    <button
+                    <Button
                       onClick={() => handleOpenCreateJob(selectedVehicle)}
                       className="inline-flex items-center gap-1.5 px-4 py-2 bg-app-accent hover:bg-app-accentHover text-app-accentText font-semibold rounded-xl text-xs transition-colors cursor-pointer shadow-subtle"
                     >
                       <Plus size={14} weight="bold" />
                       Create First Work Order
-                    </button>
+                    </Button>
                   )}
                 </div>
               ) : (
@@ -1115,43 +1074,46 @@ export default function VehiclesPage() {
 
             {/* Modal Footer Actions */}
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-app-border">
-              <button
+              <Button
                 type="button"
                 onClick={() => setIsViewOpen(false)}
                 className="px-4 py-2 rounded-xl bg-app-hover hover:bg-app-hover/80 text-app-text transition-colors text-xs font-semibold cursor-pointer"
               >
                 {t('common.close')}
-              </button>
+              </Button>
             </div>
           </div>
         )}
-      </Modal>
+      </DialogContent></Dialog>
 
       {/* Direct Work Order Creation Modal for this Vehicle */}
-      <Modal
-        isOpen={isCreateJobOpen}
-        onClose={() => setIsCreateJobOpen(false)}
-        title={`New Work Order: ${jobFormData.plate} (${jobFormData.vehicle})`}
-      >
+      <Dialog open={isCreateJobOpen} onOpenChange={(open) => { if(!open) setIsCreateJobOpen(false); }}>
+        <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>New Work Order: {jobFormData.plate} ({jobFormData.vehicle})</DialogTitle>
+          </DialogHeader>
         <form onSubmit={handleCreateJobSubmit} className="space-y-4 text-xs">
           {/* Service Package Selector */}
           <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl space-y-2">
-            <label className="block text-emerald-800 dark:text-emerald-300 font-semibold flex items-center gap-1.5">
+            <Label className="block text-emerald-800 dark:text-emerald-300 font-semibold flex items-center gap-1.5">
               <Sparkle size={15} weight="fill" className="text-emerald-500" />
-              Choose Service Package (Auto-configures cost & required parts)
-            </label>
-            <select
+              Service Package
+            </Label>
+            <Select
               value={jobFormData.serviceId}
-              onChange={(e) => handleCatalogServiceSelect(e.target.value)}
-              className="w-full px-3 py-2 bg-app-card border border-emerald-500/30 rounded-xl text-app-text font-medium focus:outline-none focus:border-emerald-500"
+              onValueChange={(val) => handleCatalogServiceSelect(val)}
             >
-              <option value="">-- Choose Service Package (e.g. Oil Change, Brake Service) --</option>
-              {servicesCatalog.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} (${Number(s.estimatedCost || 0).toFixed(2)}) — {s.requiredParts?.length || 0} required parts
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="bg-app-card">
+                <SelectValue placeholder="-- Choose Service Package --" />
+              </SelectTrigger>
+              <SelectContent>
+                {servicesCatalog.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name} (${Number(s.estimatedCost || 0).toFixed(2)}) — {s.requiredParts?.length || 0} required parts
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             {/* Live Auto Stock-Out Preview */}
             {activeCatalogService && (
@@ -1202,47 +1164,55 @@ export default function VehiclesPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('appointments.customer')} *</label>
-              <select
+              <Label className="block text-app-muted font-medium mb-1">{t('appointments.customer')} *</Label>
+              <Select
                 value={jobFormData.customer}
-                onChange={(e) => {
-                  const c = customers.find((x) => x.name === e.target.value)
-                  setJobFormData({ ...jobFormData, customer: e.target.value, customerId: c ? c.id : '' })
+                onValueChange={(val) => {
+                  const c = customers.find((x) => x.name === val)
+                  setJobFormData({ ...jobFormData, customer: val, customerId: c ? c.id : '' })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
               >
-                {customers.map((c) => (
-                  <option key={c.id} value={c.name}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select customer" />
+                </SelectTrigger>
+                <SelectContent>
+                  {customers.map((c) => (
+                    <SelectItem key={c.id} value={c.name}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">{t('repairJobs.technician')} *</label>
-              <select
+              <Label className="block text-app-muted font-medium mb-1">{t('repairJobs.technician')} *</Label>
+              <Select
                 value={jobFormData.mechanic}
-                onChange={(e) => {
-                  const m = mechanics.find((x) => x.name === e.target.value)
-                  setJobFormData({ ...jobFormData, mechanic: e.target.value, mechanicId: m ? m.id : '' })
+                onValueChange={(val) => {
+                  const m = mechanics.find((x) => x.name === val)
+                  setJobFormData({ ...jobFormData, mechanic: val, mechanicId: m ? m.id : '' })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
               >
-                {mechanics.map((m) => (
-                  <option key={m.id} value={m.name}>
-                    {m.name} ({m.specialization})
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select technician" />
+                </SelectTrigger>
+                <SelectContent>
+                  {mechanics.map((m) => (
+                    <SelectItem key={m.id} value={m.name}>
+                      {m.name} ({m.specialization})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           {/* DVI Intake info */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-app-hover/40 border border-app-border rounded-xl">
             <div>
-              <label className="block text-app-muted font-medium mb-1 flex items-center gap-1">
+              <Label className="block text-app-muted font-medium mb-1 flex items-center gap-1">
                 <Gauge size={12} /> Odometer (km)
-              </label>
+              </Label>
               <input
                 type="number"
                 value={jobFormData.odometer}
@@ -1252,23 +1222,27 @@ export default function VehiclesPage() {
               />
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1 flex items-center gap-1">
+              <Label className="block text-app-muted font-medium mb-1 flex items-center gap-1">
                 <GasPump size={12} /> Fuel Level
-              </label>
-              <select
+              </Label>
+              <Select
                 value={jobFormData.fuelLevel}
-                onChange={(e) => setJobFormData({ ...jobFormData, fuelLevel: e.target.value })}
-                className="w-full px-3 py-1.5 bg-app-input border border-app-border rounded-lg text-app-text focus:outline-none focus:border-app-accent"
+                onValueChange={(val) => setJobFormData({ ...jobFormData, fuelLevel: val })}
               >
-                <option value="Empty">Empty</option>
-                <option value="1/4">1/4 Tank</option>
-                <option value="1/2">1/2 Tank</option>
-                <option value="3/4">3/4 Tank</option>
-                <option value="Full">Full Tank</option>
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Fuel level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Empty">Empty</SelectItem>
+                  <SelectItem value="1/4">1/4 Tank</SelectItem>
+                  <SelectItem value="1/2">1/2 Tank</SelectItem>
+                  <SelectItem value="3/4">3/4 Tank</SelectItem>
+                  <SelectItem value="Full">Full Tank</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <label className="block text-app-muted font-medium mb-1">Estimated Cost</label>
+              <Label className="block text-app-muted font-medium mb-1">Estimated Cost</Label>
               <input
                 type="text"
                 value={jobFormData.estimatedCost}
@@ -1279,7 +1253,7 @@ export default function VehiclesPage() {
           </div>
 
           <div>
-            <label className="block text-app-muted font-medium mb-1">{t('common.description')} / Problem *</label>
+            <Label className="block text-app-muted font-medium mb-1">{t('common.description')} / Problem *</Label>
             <textarea
               rows={2}
               required
@@ -1291,7 +1265,7 @@ export default function VehiclesPage() {
           </div>
 
           <div>
-            <label className="block text-app-muted font-medium mb-1">{t('repairJobs.diagnosticReport')}</label>
+            <Label className="block text-app-muted font-medium mb-1">{t('repairJobs.diagnosticReport')}</Label>
             <textarea
               rows={2}
               value={jobFormData.diagnosis}
@@ -1302,19 +1276,16 @@ export default function VehiclesPage() {
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
-              type="button"
-              onClick={() => setIsCreateJobOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
-            >
+            <Button variant="ghost" type="button" onClick={() => setIsCreateJobOpen(false)} className="h-9 rounded-xl">
               {t('common.cancel')}
-            </button>
+            </Button>
             <LoadingButton type="submit" loading={createJobMutation.isPending}>
               {t('repairJobs.createWorkOrder')}
             </LoadingButton>
           </div>
         </form>
-      </Modal>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Modal */}
       <ConfirmDialog

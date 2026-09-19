@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useRepairJobs } from '@/hooks/useRepairJobs'
 import { useMechanics } from '@/hooks/useMechanics'
 import { useAuth } from '@/context/AuthContext'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import RepairPipelineTracker from '@/components/workshop/RepairPipelineTracker'
 
 export default function MechanicDashboard() {
@@ -31,32 +32,31 @@ export default function MechanicDashboard() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">{t('titles.mechanicWorkspace')}</h1>
-          <p className="text-xs text-app-muted mt-1">
-            {t('dashboard.adminWelcome')}, <span className="font-semibold text-app-text">{user?.name || ''}</span> (
-            {user ? t(`roles.${user.role}`, user.roleTitle) : ''}) · {t('dashboard.mechanicSubtitle')}
-          </p>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">{t('titles.mechanicWorkspace')}</h1>
         </div>
 
         {/* Admin / Manager Technician Filter */}
         {!isMechanicUser && (
-          <div className="flex items-center gap-2 bg-app-card border border-app-border p-1.5 rounded-xl shadow-subtle text-xs self-start sm:self-auto">
-            <User size={15} className="text-app-accent ml-1" />
-            <span className="text-app-muted font-medium">{t('repairJobs.technician')}:</span>
-            <select
-              value={selectedMechanicId}
-              onChange={(e) => setSelectedMechanicId(e.target.value)}
-              className="bg-app-input border border-app-border rounded-lg px-2.5 py-1 text-xs text-app-text focus:outline-none focus:border-app-accent font-medium"
+          <div className="flex items-center gap-2 text-xs self-start sm:self-auto">
+            <span className="text-muted-foreground font-medium">{t('repairJobs.technician')}:</span>
+            <Select
+              value={String(selectedMechanicId)}
+              onValueChange={(val) => setSelectedMechanicId(val)}
             >
-              <option value="all">
-                {t('common.all')} ({jobs.length} {t('nav.repairJobs')})
-              </option>
-              {mechanics.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name} ({m.specialty})
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="h-8 w-[200px]">
+                <SelectValue placeholder={t('repairJobs.technician')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">
+                  {t('common.all')} ({jobs.length} {t('nav.repairJobs')})
+                </SelectItem>
+                {mechanics.map((m) => (
+                  <SelectItem key={m.id} value={String(m.id)}>
+                    {m.name} ({m.specialty})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         )}
       </div>

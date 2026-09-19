@@ -27,7 +27,12 @@ import { useMechanics } from '@/hooks/useMechanics'
 import { useInventory } from '@/hooks/useInventory'
 import { useCreateInvoice } from '@/hooks/useInvoices'
 import { useToast } from '@/context/ToastContext'
-import { StatusBadge, Modal, LoadingButton } from '@/components/ui'
+import { StatusBadge, LoadingButton } from '@/components/ui'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 const PIPELINE_STEPS = [
   {
@@ -256,81 +261,78 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           {/* Title & Count Badge */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 shadow-subtle">
-              <Car size={22} weight="duotone" />
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-app-text flex items-center gap-2">
-                Vehicle Repair Pipeline
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
-                  {filteredJobs.length} {filteredJobs.length === 1 ? 'Vehicle' : 'Vehicles'}
-                </span>
-              </h2>
-              <p className="text-[11px] text-app-muted mt-0.5">
-                Standard 6-stage lifecycle tracking with 1-click step progression, QA gate, and auto stock deductions.
-              </p>
-            </div>
+            <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              Vehicle Repair Pipeline
+              <span className="px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-muted text-muted-foreground border border-border">
+                {filteredJobs.length} {filteredJobs.length === 1 ? 'Vehicle' : 'Vehicles'}
+              </span>
+            </h2>
           </div>
 
           {/* Controls: Search, Mechanic Dropdown & View Mode */}
           <div className="flex flex-wrap items-center gap-2.5">
             {/* Search Input */}
             <div className="relative flex-1 sm:w-56">
-              <MagnifyingGlass size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted" />
-              <input
+              <MagnifyingGlass size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+              <Input
                 type="text"
                 placeholder="Search plate, vehicle, order..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 bg-app-input border border-app-border rounded-xl text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+                className="pl-8 h-8 text-xs"
               />
             </div>
 
             {/* Mechanic Filter */}
             {!mechanicFilter && (
-              <div className="flex items-center gap-1.5 bg-app-input border border-app-border rounded-xl px-2.5 py-1.5 text-xs">
-                <User size={14} className="text-app-muted flex-shrink-0" />
-                <select
-                  value={selectedMechanic}
-                  onChange={(e) => setSelectedMechanic(e.target.value)}
-                  className="bg-transparent border-none text-xs text-app-text focus:outline-none font-medium pr-1 cursor-pointer"
-                >
-                  <option value="all">All Mechanics ({mechanics.length})</option>
+              <Select
+                value={String(selectedMechanic)}
+                onValueChange={(val) => setSelectedMechanic(val)}
+              >
+                <SelectTrigger className="h-8 w-[170px] text-xs">
+                  <SelectValue placeholder="All Mechanics" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Mechanics ({mechanics.length})</SelectItem>
                   {mechanics.map((m) => (
-                    <option key={m.id} value={m.id}>
+                    <SelectItem key={m.id} value={String(m.id)}>
                       {m.name}
-                    </option>
+                    </SelectItem>
                   ))}
-                </select>
-              </div>
+                </SelectContent>
+              </Select>
             )}
 
             {/* View Mode Toggle */}
             <div className="flex items-center p-1 bg-app-input border border-app-border rounded-xl">
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setViewMode('pipeline')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                className={`h-7 px-2.5 rounded-lg text-xs font-semibold gap-1.5 ${
                   viewMode === 'pipeline'
-                    ? 'bg-app-accent text-app-accentText shadow-subtle'
+                    ? 'bg-app-accent text-white shadow-subtle hover:bg-app-accent hover:text-white'
                     : 'text-app-muted hover:text-app-text'
                 }`}
                 title="Visual Pipeline Stepper"
               >
                 <ListNumbers size={14} weight="bold" />
                 <span>Stepper</span>
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setViewMode('columns')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                className={`h-7 px-2.5 rounded-lg text-xs font-semibold gap-1.5 ${
                   viewMode === 'columns'
-                    ? 'bg-app-accent text-app-accentText shadow-subtle'
+                    ? 'bg-app-accent text-white shadow-subtle hover:bg-app-accent hover:text-white'
                     : 'text-app-muted hover:text-app-text'
                 }`}
                 title="Kanban Board View"
               >
                 <Kanban size={14} weight="bold" />
                 <span>Board</span>
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -338,46 +340,50 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
         {/* Quick Filter Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto pt-2 border-t border-app-border/60 pb-0.5">
           <span className="text-[11px] font-semibold text-app-muted mr-1 flex-shrink-0">Stage Filter:</span>
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setStatusFilter('All')}
-            className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all whitespace-nowrap ${
+            className={`h-7 px-2.5 rounded-lg text-[11px] font-semibold whitespace-nowrap ${
               statusFilter === 'All'
-                ? 'bg-app-text text-app-card shadow-subtle'
+                ? 'bg-app-text text-app-card shadow-subtle hover:bg-app-text hover:text-app-card'
                 : 'bg-app-input text-app-muted hover:text-app-text border border-app-border'
             }`}
           >
             All Stages ({jobs.length})
-          </button>
+          </Button>
           {PIPELINE_STEPS.map((s) => {
             const count = jobs.filter((j) => j.status === s.id).length
             const isSelected = statusFilter === s.id
             return (
-              <button
+              <Button
                 key={s.id}
+                variant="ghost"
+                size="sm"
                 onClick={() => setStatusFilter(s.id)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all whitespace-nowrap flex items-center gap-1 ${
+                className={`h-7 px-2.5 rounded-lg text-[11px] font-semibold whitespace-nowrap gap-1 ${
                   isSelected
-                    ? 'bg-emerald-600 text-white shadow-subtle'
+                    ? 'bg-emerald-600 text-white shadow-subtle hover:bg-emerald-600 hover:text-white'
                     : 'bg-app-input text-app-muted hover:text-app-text border border-app-border'
                 }`}
               >
                 <span>{s.shortLabel}</span>
                 <span
                   className={`px-1.5 py-0.2 rounded text-[10px] ${
-                    isSelected ? 'bg-black/20 text-white' : 'bg-app-hover text-app-text'
+                    isSelected ? 'bg-white/20 text-white font-bold' : 'bg-app-hover text-app-muted'
                   }`}
                 >
                   {count}
                 </span>
-              </button>
+              </Button>
             )
           })}
         </div>
       </div>
 
-      {/* Main Content Area */}
+      {/* Main Container Views */}
       {filteredJobs.length === 0 ? (
-        <div className="bg-app-card rounded-2xl border border-app-border p-10 text-center shadow-card">
+        <div className="p-12 text-center bg-app-card rounded-2xl border border-app-border shadow-card">
           <Car size={40} className="mx-auto text-app-muted mb-3 opacity-40" />
           <h3 className="text-sm font-bold text-app-text">No vehicles match current filters</h3>
           <p className="text-xs text-app-muted mt-1 max-w-sm mx-auto">
@@ -386,16 +392,18 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
               : 'Create a new repair order to begin tracking its repair journey.'}
           </p>
           {(searchQuery || statusFilter !== 'All') && (
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => {
                 setSearchQuery('')
                 setStatusFilter('All')
                 setSelectedMechanic('all')
               }}
-              className="mt-4 px-3.5 py-1.5 rounded-xl bg-app-hover hover:bg-app-border text-xs font-semibold text-app-text transition-colors cursor-pointer"
+              className="mt-4 h-8 px-3.5 rounded-xl text-xs font-semibold shadow-subtle"
             >
               Reset Filters
-            </button>
+            </Button>
           )}
         </div>
       ) : viewMode === 'pipeline' ? (
@@ -460,20 +468,20 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                   <div className="flex items-center gap-2 self-start md:self-center flex-wrap">
                     {/* Fast Advance Action */}
                     {nextStep ? (
-                      <button
+                      <Button
                         onClick={() => handleSetStatus(job, nextStep.id)}
                         disabled={isUpdating}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-95 text-white text-xs font-bold shadow-md hover:shadow-lg transition-all duration-150 disabled:opacity-50 group cursor-pointer"
+                        className="h-9 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-md hover:shadow-lg transition-all gap-2"
                         title={`1-Click advance status directly to "${nextStep.label}"`}
                       >
                         {isUpdating ? (
                           <CircleNotch size={15} className="animate-spin" />
                         ) : (
-                          <ArrowCircleRight size={16} weight="fill" className="group-hover:translate-x-0.5 transition-transform" />
+                          <ArrowCircleRight size={16} weight="fill" className="group-hover/button:translate-x-0.5 transition-transform" />
                         )}
                         <span>Advance to {nextStep.shortLabel}</span>
                         <CaretRight size={13} weight="bold" />
-                      </button>
+                      </Button>
                     ) : (
                       <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold">
                         <CheckCircle size={16} weight="fill" />
@@ -483,59 +491,63 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
 
                     {/* Ready for Pickup: Send Customer Notification Button */}
                     {(job.status === 'Ready for Pickup' || job.status === 'Completed') && (
-                      <button
+                      <Button
+                        variant="outline"
                         onClick={() => {
                           setSelectedJob(job)
                           setIsNotifyOpen(true)
                         }}
-                        className="px-3 py-2 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/20 transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                        className="h-9 px-3 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20 text-xs font-semibold gap-1.5"
                         title="Send Customer Pickup Notice"
                       >
                         <ChatCircleDots size={15} weight="bold" />
                         <span className="hidden sm:inline">Notify Customer</span>
-                      </button>
+                      </Button>
                     )}
 
                     {/* 1-Click Generate Invoice Button */}
                     {job.status === 'Completed' && (
-                      <button
+                      <Button
+                        variant="outline"
                         onClick={() => handleGenerateInvoice(job)}
-                        className="px-3 py-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30 hover:bg-blue-500/20 transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                        className="h-9 px-3 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30 hover:bg-blue-500/20 text-xs font-semibold gap-1.5"
                         title="Generate Official Invoice"
                       >
                         <Receipt size={15} weight="bold" />
                         <span className="hidden sm:inline">Invoice</span>
-                      </button>
+                      </Button>
                     )}
 
                     {/* Add Extra Part Action (For Diagnosing & Repairing stages) */}
                     {(job.status === 'Diagnosing' || job.status === 'Repairing' || job.status === 'Waiting for Parts') && (
-                      <button
+                      <Button
+                        variant="outline"
                         onClick={() => {
                           setSelectedJob(job)
                           setPartSelection({ sparePartId: inventory[0]?.id || '', quantity: 1 })
                           setIsAddPartOpen(true)
                         }}
-                        className="px-3 py-2 rounded-xl text-amber-700 dark:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition-colors text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                        className="h-9 px-3 rounded-xl text-amber-700 dark:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-xs font-semibold gap-1"
                         title="Add extra part from stock (auto stock-out)"
                       >
                         <Plus size={14} weight="bold" />
                         <span>+ Part</span>
-                      </button>
+                      </Button>
                     )}
 
                     {/* View Details Button */}
-                    <button
+                    <Button
+                      variant="outline"
                       onClick={() => {
                         setSelectedJob(job)
                         setIsViewOpen(true)
                       }}
-                      className="px-3 py-2 rounded-xl text-app-muted hover:text-app-text hover:bg-app-hover border border-app-border transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                      className="h-9 px-3 rounded-xl text-app-muted hover:text-app-text hover:bg-app-hover border-app-border text-xs font-semibold gap-1.5"
                       title="View Details"
                     >
                       <Eye size={15} />
                       <span className="hidden sm:inline">Details</span>
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
@@ -584,21 +596,22 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                       const StepIcon = step.icon
 
                       return (
-                        <button
+                        <Button
                           key={step.id}
+                          variant="ghost"
                           onClick={() => handleSetStatus(job, step.id)}
                           disabled={isUpdating}
-                          className={`relative p-2.5 rounded-xl text-left transition-all duration-200 flex flex-col justify-between group cursor-pointer border ${
+                          className={`h-auto w-full p-2.5 rounded-xl text-left transition-all duration-200 flex flex-col justify-between items-stretch group border whitespace-normal font-normal ${
                             isCurrent
-                              ? 'bg-gradient-to-b from-emerald-500/15 to-teal-500/10 border-emerald-500 ring-2 ring-emerald-500/30 shadow-md'
+                              ? 'bg-gradient-to-b from-emerald-500/15 to-teal-500/10 border-emerald-500 ring-2 ring-emerald-500/30 shadow-md hover:bg-emerald-500/20'
                               : isCompleted
-                              ? 'bg-emerald-500/5 hover:bg-emerald-500/15 border-emerald-500/30 hover:border-emerald-500/60'
-                              : 'bg-app-input/50 hover:bg-app-hover border-app-border/80 hover:border-app-border'
+                              ? 'bg-emerald-500/5 hover:bg-emerald-500/15 border-emerald-500/30 hover:border-emerald-500/60 text-app-text'
+                              : 'bg-app-input/50 hover:bg-app-hover border-app-border/80 hover:border-app-border text-app-muted hover:text-app-text'
                           }`}
                           title={`Click once to jump stage to "${step.label}"`}
                         >
                           {/* Top Row of Step Card */}
-                          <div className="flex items-center justify-between mb-1.5">
+                          <div className="flex items-center justify-between mb-1.5 w-full">
                             <span
                               className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center font-mono ${
                                 isCompleted
@@ -625,7 +638,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                           </div>
 
                           {/* Step Label & Status Indicator */}
-                          <div>
+                          <div className="w-full text-left">
                             <p
                               className={`text-[11px] font-bold truncate leading-tight ${
                                 isCurrent
@@ -637,11 +650,11 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                             >
                               {step.shortLabel}
                             </p>
-                            <p className="text-[9px] text-app-muted mt-0.5 truncate leading-none">
-                              {isCompleted ? '✓ Done' : isCurrent ? '⚡ Active' : 'Click to set'}
+                            <p className="text-[9px] text-app-muted mt-0.5 truncate leading-none font-medium">
+                              {isCompleted ? 'Completed' : isCurrent ? 'In Progress' : 'Pending'}
                             </p>
                           </div>
-                        </button>
+                        </Button>
                       )
                     })}
                   </div>
@@ -705,13 +718,13 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
 
                         {/* 1-Click Fast Step Transition in Kanban */}
                         {nextStep ? (
-                          <button
+                          <Button
                             onClick={() => handleSetStatus(job, nextStep.id)}
-                            className="w-full py-1.5 px-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors shadow-subtle cursor-pointer"
+                            className="w-full h-8 py-1.5 px-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold gap-1.5 shadow-subtle"
                           >
                             <span>Move to {nextStep.shortLabel}</span>
                             <ArrowRight size={12} weight="bold" />
-                          </button>
+                          </Button>
                         ) : (
                           <div className="w-full py-1 text-center text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
                             ✓ Job Completed
@@ -733,7 +746,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
       )}
 
       {/* QA Pre-Delivery Inspection Gate Modal */}
-      <Modal isOpen={isQAGateOpen} onClose={() => setIsQAGateOpen(false)} title="Quality Assurance Pre-Delivery Gate">
+      <Dialog open={isQAGateOpen} onOpenChange={(open) => { if (!open) setIsQAGateOpen(false); }}><DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>Quality Assurance Pre-Delivery Gate</DialogTitle></DialogHeader>
         {selectedJob && (
           <div className="space-y-4 text-xs">
             <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-3">
@@ -791,14 +804,8 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-app-border">
-              <button
-                type="button"
-                onClick={() => setIsQAGateOpen(false)}
-                className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
+              <Button type="button" variant="ghost" size="sm" onClick={() => setIsQAGateOpen(false)} className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer">Cancel</Button>
+              <Button
                 type="button"
                 onClick={handleConfirmQAGate}
                 disabled={!qaChecks.roadTest || !qaChecks.dtcCleared}
@@ -806,14 +813,14 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
               >
                 <CheckCircle size={15} weight="bold" />
                 <span>Pass QA & Mark Ready for Pickup</span>
-              </button>
+              </Button>
             </div>
           </div>
         )}
-      </Modal>
+      </DialogContent></Dialog>
 
       {/* Mid-Repair Add Extra Spare Part Modal */}
-      <Modal isOpen={isAddPartOpen} onClose={() => setIsAddPartOpen(false)} title="Add Extra Spare Part to Order">
+      <Dialog open={isAddPartOpen} onOpenChange={(open) => { if (!open) setIsAddPartOpen(false); }}><DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>Add Extra Spare Part to Order</DialogTitle></DialogHeader>
         {selectedJob && (
           <form onSubmit={handleAddPartSubmit} className="space-y-4 text-xs">
             <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
@@ -827,52 +834,41 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
             </div>
 
             <div>
-              <label className="block text-app-muted font-medium mb-1">Select Spare Part *</label>
-              <select
-                required
-                value={partSelection.sparePartId}
-                onChange={(e) => setPartSelection({ ...partSelection, sparePartId: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text font-medium focus:outline-none focus:border-app-accent"
+              <Label className="block text-app-muted font-medium mb-1">Select Spare Part *</Label>
+              <Select
+                value={String(partSelection.sparePartId)}
+                onValueChange={(val) => setPartSelection({ ...partSelection, sparePartId: val })}
               >
-                <option value="">-- Choose Spare Part --</option>
-                {inventory.map((p) => (
-                  <option key={p.id} value={p.id} disabled={p.stockQty === 0}>
-                    {p.partCode} - {p.name} (${Number(p.unitPrice).toFixed(2)}) — {p.stockQty} in stock
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="-- Choose Spare Part --" />
+                </SelectTrigger>
+                <SelectContent>
+                  {inventory.map((p) => (
+                    <SelectItem key={p.id} value={String(p.id)} disabled={p.stockQty === 0}>
+                      {p.partCode} - {p.name} (${Number(p.unitPrice).toFixed(2)}) — {p.stockQty} in stock
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
               <label className="block text-app-muted font-medium mb-1">Quantity to Deduct *</label>
-              <input
-                type="number"
-                min="1"
-                required
-                value={partSelection.quantity}
-                onChange={(e) => setPartSelection({ ...partSelection, quantity: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text font-bold focus:outline-none focus:border-app-accent"
-              />
+              <Input type="number" min="1" required value={partSelection.quantity} onChange={(e) => setPartSelection({ ...partSelection, quantity: e.target.value })} className="w-full h-9 px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text font-bold focus:outline-none focus:border-app-accent" />
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-app-border">
-              <button
-                type="button"
-                onClick={() => setIsAddPartOpen(false)}
-                className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
-              >
-                Cancel
-              </button>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setIsAddPartOpen(false)} className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer">Cancel</Button>
               <LoadingButton type="submit" loading={updateJobMutation.isPending}>
                 Deduct & Add to Order
               </LoadingButton>
             </div>
           </form>
         )}
-      </Modal>
+      </DialogContent></Dialog>
 
       {/* Customer Pickup Readiness Notification Modal */}
-      <Modal isOpen={isNotifyOpen} onClose={() => setIsNotifyOpen(false)} title="Customer Pickup Notification">
+      <Dialog open={isNotifyOpen} onOpenChange={(open) => { if (!open) setIsNotifyOpen(false); }}><DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>Customer Pickup Notification</DialogTitle></DialogHeader>
         {selectedJob && (
           <div className="space-y-4 text-xs">
             <div className="p-3.5 bg-app-input rounded-xl border border-app-border space-y-2">
@@ -881,17 +877,19 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                   <ChatCircleDots size={15} className="text-emerald-500" />
                   SMS / WhatsApp / Telegram Ready Template
                 </span>
-                <button
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => {
                     const msg = `Dear ${selectedJob.customer}, your vehicle ${selectedJob.vehicle} (Plate: ${selectedJob.plate}) is READY FOR PICKUP at CarRepair Workshop. Total Amount: ${selectedJob.estimatedCost || '$350'}. Order: #${selectedJob.orderNumber}. Workshop open until 6:00 PM.`
                     navigator.clipboard?.writeText(msg)
                     addToast('Pickup message copied to clipboard!', 'success')
                   }}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-app-card border border-app-border text-app-text hover:bg-app-hover font-semibold text-[11px] transition-colors cursor-pointer"
+                  className="h-7 px-2.5 rounded-lg text-[11px] font-semibold gap-1"
                 >
                   <Copy size={13} />
                   <span>Copy Text</span>
-                </button>
+                </Button>
               </div>
 
               <div className="p-3 bg-app-card rounded-lg border border-app-border font-mono text-[11px] text-app-text leading-relaxed">
@@ -909,20 +907,14 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-app-border">
-              <button
-                type="button"
-                onClick={() => setIsNotifyOpen(false)}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-colors shadow-subtle cursor-pointer"
-              >
-                Done
-              </button>
+              <Button type="button" onClick={() => setIsNotifyOpen(false)} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-colors shadow-subtle cursor-pointer">Done</Button>
             </div>
           </div>
         )}
-      </Modal>
+      </DialogContent></Dialog>
 
       {/* Vehicle Order Details Modal */}
-      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title="Vehicle Repair Pipeline Details">
+      <Dialog open={isViewOpen} onOpenChange={(open) => { if (!open) setIsViewOpen(false); }}><DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>Vehicle Repair Pipeline Details</DialogTitle></DialogHeader>
         {selectedJob && (
           <div className="space-y-4 text-xs">
             <div className="flex items-center justify-between p-3.5 bg-app-hover/50 rounded-xl border border-app-border">
@@ -941,21 +933,23 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                 {PIPELINE_STEPS.map((s) => {
                   const isCurrent = selectedJob.status === s.id
                   return (
-                    <button
+                    <Button
                       key={s.id}
+                      variant="ghost"
+                      size="sm"
                       onClick={() => {
                         handleSetStatus(selectedJob, s.id)
                         setSelectedJob((prev) => ({ ...prev, status: s.id }))
                       }}
-                      className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+                      className={`h-9 px-3 rounded-xl text-xs font-semibold gap-2 transition-all ${
                         isCurrent
-                          ? 'bg-emerald-600 text-white shadow-md'
+                          ? 'bg-emerald-600 text-white shadow-md hover:bg-emerald-600 hover:text-white'
                           : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover hover:text-app-text'
                       }`}
                     >
                       <CheckCircle size={14} weight={isCurrent ? 'fill' : 'regular'} />
                       <span className="truncate">{s.shortLabel}</span>
-                    </button>
+                    </Button>
                   )
                 })}
               </div>
@@ -997,15 +991,17 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                   <Package size={14} className="text-amber-500" />
                   Parts Consumed from Inventory (Auto Stock-Out)
                 </p>
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => {
                     setIsViewOpen(false)
                     setIsAddPartOpen(true)
                   }}
-                  className="text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1"
+                  className="h-6 px-2 text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 gap-1"
                 >
                   <Plus size={12} weight="bold" /> Add Extra Part
-                </button>
+                </Button>
               </div>
 
               {selectedJob.partsUsed && selectedJob.partsUsed.length > 0 ? (
@@ -1030,7 +1026,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
             </div>
           </div>
         )}
-      </Modal>
+      </DialogContent></Dialog>
     </div>
   )
 }

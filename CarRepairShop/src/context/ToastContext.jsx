@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useCallback } from 'react'
 import { CheckCircle, WarningCircle, Info, X } from '@phosphor-icons/react'
+import { Button } from '@/components/ui/button'
 
 const ToastContext = createContext(null)
 
@@ -24,7 +25,7 @@ export function ToastProvider({ children }) {
     <ToastContext.Provider value={{ addToast }}>
       {children}
       {/* Toast Notification Container */}
-      <div className="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none max-w-sm w-full px-4">
+      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none">
         {toasts.map((toast) => (
           <div
             key={toast.id}
@@ -42,12 +43,15 @@ export function ToastProvider({ children }) {
               )}
               <p className="font-medium leading-tight">{toast.message}</p>
             </div>
-            <button
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
               onClick={() => removeToast(toast.id)}
-              className="text-app-muted hover:text-app-text transition-colors p-0.5 rounded"
+              className="h-6 w-6 text-app-muted hover:text-app-text p-0.5 rounded"
             >
               <X size={13} weight="bold" />
-            </button>
+            </Button>
           </div>
         ))}
       </div>
