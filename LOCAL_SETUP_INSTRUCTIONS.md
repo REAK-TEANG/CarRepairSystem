@@ -5,10 +5,10 @@ Welcome to the Car Repair Management System project! Follow these instructions t
 ## 🛠 Prerequisites
 
 Before you begin, ensure you have the following installed on your system:
-1. **[WAMP Server](https://www.wampserver.com/en/)** (or XAMPP/MAMP) with Apache and PHP 8+.
-2. **[PostgreSQL](https://www.postgresql.org/download/)** (Database).
-3. **[Node.js and npm](https://nodejs.org/)** (for the React/Vite frontend).
-4. **[Composer](https://getcomposer.org/)** (for PHP dependencies).
+1. **[WAMP Server](https://www.wampserver.com/en/)** (or XAMPP/MAMP) with Apache and **PHP 8.3** (or 8.2+).
+2. **[PostgreSQL](https://www.postgresql.org/download/)** (Database, **v14+ recommended**).
+3. **[Node.js and npm](https://nodejs.org/)** (Node.js **v18+** for the React 19/Vite 8 frontend).
+4. **[Composer](https://getcomposer.org/)** (Composer **v2+** for PHP dependencies).
 
 ---
 
