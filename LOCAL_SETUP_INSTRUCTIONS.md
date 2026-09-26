@@ -63,15 +63,21 @@ Since this project uses a PHP backend, the project folder must be located inside
      ```
 
 2. **Install Dependencies and Run:**
-   - In your terminal, navigate to the frontend directory:
+   - In your terminal, navigate to the **root project directory** (`C:\wamp64\www\CarRepairSystem`):
      ```bash
-     cd C:\wamp64\www\CarRepairSystem\CarRepairShop
+     cd C:\wamp64\www\CarRepairSystem
      ```
-   - Install the Node modules:
+   - Install the root dependencies (which include `concurrently` for running both servers):
      ```bash
      npm install
      ```
-   - Start the development server:
+   - Make sure you also install the frontend dependencies if you haven't yet:
+     ```bash
+     cd CarRepairShop
+     npm install
+     cd ..
+     ```
+   - Start BOTH the PHP development server and the React frontend simultaneously:
      ```bash
      npm run dev
      ```
@@ -81,4 +87,5 @@ Since this project uses a PHP backend, the project folder must be located inside
 ## 🎉 Accessing the Application
 
 - **Frontend Application:** Open your browser and navigate to [http://localhost:5173](http://localhost:5173).
-- **Backend API:** The API is accessible via your local web server at `http://localhost/CarRepairSystem/api`.
+- **Backend API:** With the `npm run dev` script, the API runs independently on `http://localhost:8000` (you can update `VITE_API_URL=http://localhost:8000` in `CarRepairShop/.env` if it's not connecting).
+

@@ -3,13 +3,15 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev:backend": "cd server && npm run dev",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd api && php -S localhost:8000",
     "dev:frontend": "cd CarRepairShop && npm run dev",
-    "free:port": "powershell -Command \"Get-NetTCPConnection -LocalPort 5000 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }\"",
-    "build": "cd CarRepairShop && npm run build",
-    "start": "cd server && npm start"
+    "build": "cd CarRepairShop && npm run build"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5"
   }
 }
