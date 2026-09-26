@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:backend": "php -S localhost:8000 -t api",
+    "dev:backend": "cd api && php -S localhost:8000",
     "dev:frontend": "cd CarRepairShop && npm run dev",
-    "free:port": "powershell -Command \"Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }\"",
-    "build": "cd CarRepairShop && npm run build",
-    "start": "php -S localhost:8000 -t api"
+    "build": "cd CarRepairShop && npm run build"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.112.3"
   },
   "devDependencies": {
     "concurrently": "^10.0.5"

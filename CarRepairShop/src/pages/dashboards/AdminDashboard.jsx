@@ -12,14 +12,14 @@ import {
 } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { CardSkeleton } from '@/components/ui'
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
-import { useInvoices } from '@/hooks/useInvoices'
-import { useCustomers } from '@/hooks/useCustomers'
-import { useRepairJobs } from '@/hooks/useRepairJobs'
-import { useInventory } from '@/hooks/useInventory'
-import { useEmployees } from '@/hooks/useEmployees'
-import { useAppointments } from '@/hooks/useAppointments'
+import { CardSkeleton } from '../../components/ui'
+import { useInvoices } from '../../hooks/useInvoices'
+import { useCustomers } from '../../hooks/useCustomers'
+import { useRepairJobs } from '../../hooks/useRepairJobs'
+import { useInventory } from '../../hooks/useInventory'
+import { useEmployees } from '../../hooks/useEmployees'
+import { useAppointments } from '../../hooks/useAppointments'
+import { StaggerGroup } from '../../components/animation/AnimeWrapper'
 
 export default function AdminDashboard() {
   const { t } = useTranslation()
@@ -62,12 +62,13 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-foreground">{t('titles.adminOverview')}</h1>
+          <h1 className="text-xl font-bold tracking-tight text-app-text">{t('titles.adminOverview')}</h1>
+          <p className="text-xs text-app-muted mt-0.5 font-normal">{t('dashboard.adminSubtitle')}</p>
         </div>
         <div className="flex items-center gap-2 self-start sm:self-auto">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-card border border-border text-muted-foreground rounded-lg text-xs font-medium">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            {t('reports.thisMonth')}
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-app-card border border-app-border text-app-muted rounded-sm text-xs font-medium shadow-subtle">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            {t('reports.thisMonth')} ▾
           </span>
         </div>
       </div>
@@ -82,9 +83,9 @@ export default function AdminDashboard() {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+        <StaggerGroup staggerDelay={75} duration={600} className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
           {/* BENTO TILE 1: Primary Revenue Hero Tile (Spans 2 on Mobile) */}
-          <div className="col-span-2 md:col-span-2 lg:col-span-2 bg-gradient-to-br from-app-card via-app-card to-app-hover/50 rounded-2xl border border-app-border p-4 sm:p-5 shadow-card relative overflow-hidden flex flex-col justify-between group">
+          <div className="col-span-2 md:col-span-2 lg:col-span-2 bg-app-card rounded-sm border border-app-border p-3 shadow-card relative overflow-hidden flex flex-col justify-between group">
             <div className="flex items-start justify-between relative z-10">
               <div>
                 <p className="text-[10px] sm:text-xs font-bold text-app-muted uppercase tracking-wider">
@@ -94,7 +95,7 @@ export default function AdminDashboard() {
                   ${totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </h2>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-app-accent/15 border border-app-accent/30 flex items-center justify-center text-app-accent shadow-subtle flex-shrink-0">
+              <div className="w-10 h-10 rounded-sm bg-app-accent/15 border border-app-accent/30 flex items-center justify-center text-app-accent shadow-subtle flex-shrink-0">
                 <CurrencyDollar size={22} weight="bold" />
               </div>
             </div>
@@ -108,16 +109,18 @@ export default function AdminDashboard() {
                 ${totalPaid.toLocaleString('en-US', { minimumFractionDigits: 2 })} {t('common.paid')}
               </span>
             </div>
+
+
           </div>
 
           {/* BENTO TILE 2: Active Repair Jobs */}
           <Link
             to="/repair-jobs"
-            className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-2xl border border-app-border p-3.5 sm:p-4 shadow-card hover:border-app-accent/40 transition-all flex flex-col justify-between group"
+            className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-sm border border-app-border p-3.5 sm:p-4 shadow-card hover:border-app-accent/40 transition-all flex flex-col justify-between group"
           >
             <div className="flex items-center justify-between">
-              <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-              <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+              <span className="w-2 h-2 rounded-full bg-blue-500" />
+              <div className="w-8 h-8 rounded-sm bg-blue-500/10 text-blue-500 flex items-center justify-center">
                 <Wrench size={16} weight="bold" />
               </div>
             </div>
@@ -134,7 +137,7 @@ export default function AdminDashboard() {
           {/* BENTO TILE 3: Spare Parts Inventory */}
           <Link
             to="/inventory"
-            className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-2xl border border-app-border p-3.5 sm:p-4 shadow-card hover:border-app-accent/40 transition-all flex flex-col justify-between group"
+            className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-sm border border-app-border p-3.5 sm:p-4 shadow-card hover:border-app-accent/40 transition-all flex flex-col justify-between group"
           >
             <div className="flex items-center justify-between">
               {lowStockItems.length > 0 ? (
@@ -144,7 +147,7 @@ export default function AdminDashboard() {
               ) : (
                 <span className="w-2 h-2 rounded-full bg-emerald-500" />
               )}
-              <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-sm bg-amber-500/10 text-amber-500 flex items-center justify-center">
                 <Package size={16} weight="bold" />
               </div>
             </div>
@@ -161,13 +164,13 @@ export default function AdminDashboard() {
           {/* BENTO TILE 4: Customers Total */}
           <Link
             to="/customers"
-            className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-2xl border border-app-border p-3.5 sm:p-4 shadow-card hover:border-app-accent/40 transition-all flex flex-col justify-between group"
+            className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-sm border border-app-border p-3.5 sm:p-4 shadow-card hover:border-app-accent/40 transition-all flex flex-col justify-between group"
           >
             <div className="flex items-center justify-between">
               <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">
                 +12%
               </span>
-              <div className="w-8 h-8 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-sm bg-sky-500/10 text-sky-500 flex items-center justify-center">
                 <Users size={16} weight="bold" />
               </div>
             </div>
@@ -184,11 +187,11 @@ export default function AdminDashboard() {
           {/* BENTO TILE 5: Appointments Scheduled */}
           <Link
             to="/appointments"
-            className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-2xl border border-app-border p-3.5 sm:p-4 shadow-card hover:border-app-accent/40 transition-all flex flex-col justify-between group"
+            className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-sm border border-app-border p-3.5 sm:p-4 shadow-card hover:border-app-accent/40 transition-all flex flex-col justify-between group"
           >
             <div className="flex items-center justify-between">
               <span className="w-2 h-2 rounded-full bg-purple-500" />
-              <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-sm bg-purple-500/10 text-purple-500 flex items-center justify-center">
                 <CalendarBlank size={16} weight="bold" />
               </div>
             </div>
@@ -201,18 +204,18 @@ export default function AdminDashboard() {
               <ArrowUpRight size={12} className="group-hover:text-app-accent transition-colors" />
             </div>
           </Link>
-        </div>
+        </StaggerGroup>
       )}
 
       {/* ============================================================ */}
       {/* QUICK ACTIONS BENTO ROW (Fast Navigation for Mobile Users)  */}
       {/* ============================================================ */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+      <StaggerGroup staggerDelay={50} delay={300} className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
         <Link
           to="/repair-jobs"
-          className="flex items-center gap-2.5 p-3 rounded-xl bg-app-card border border-app-border hover:border-app-accent/40 hover:bg-app-hover transition-all text-xs font-semibold text-app-text shadow-subtle group"
+          className="flex items-center gap-2.5 p-3 rounded-sm bg-app-card border border-app-border hover:border-app-accent/40 hover:bg-app-hover transition-all text-xs font-semibold text-app-text shadow-subtle group"
         >
-          <div className="w-7 h-7 rounded-lg bg-app-accent/15 text-app-accent flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+          <div className="w-7 h-7 rounded-sm bg-app-accent/15 text-app-accent flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
             <Plus size={14} weight="bold" />
           </div>
           <span className="truncate">{t('repairJobs.createJob')}</span>
@@ -220,9 +223,9 @@ export default function AdminDashboard() {
 
         <Link
           to="/appointments"
-          className="flex items-center gap-2.5 p-3 rounded-xl bg-app-card border border-app-border hover:border-app-accent/40 hover:bg-app-hover transition-all text-xs font-semibold text-app-text shadow-subtle group"
+          className="flex items-center gap-2.5 p-3 rounded-sm bg-app-card border border-app-border hover:border-app-accent/40 hover:bg-app-hover transition-all text-xs font-semibold text-app-text shadow-subtle group"
         >
-          <div className="w-7 h-7 rounded-lg bg-purple-500/15 text-purple-500 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+          <div className="w-7 h-7 rounded-sm bg-purple-500/15 text-purple-500 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
             <CalendarBlank size={14} weight="bold" />
           </div>
           <span className="truncate">{t('appointments.newAppointment')}</span>
@@ -230,9 +233,9 @@ export default function AdminDashboard() {
 
         <Link
           to="/invoices"
-          className="flex items-center gap-2.5 p-3 rounded-xl bg-app-card border border-app-border hover:border-app-accent/40 hover:bg-app-hover transition-all text-xs font-semibold text-app-text shadow-subtle group"
+          className="flex items-center gap-2.5 p-3 rounded-sm bg-app-card border border-app-border hover:border-app-accent/40 hover:bg-app-hover transition-all text-xs font-semibold text-app-text shadow-subtle group"
         >
-          <div className="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-500 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+          <div className="w-7 h-7 rounded-sm bg-emerald-500/15 text-emerald-500 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
             <Receipt size={14} weight="bold" />
           </div>
           <span className="truncate">{t('invoices.createInvoice')}</span>
@@ -240,14 +243,14 @@ export default function AdminDashboard() {
 
         <Link
           to="/inventory"
-          className="flex items-center gap-2.5 p-3 rounded-xl bg-app-card border border-app-border hover:border-app-accent/40 hover:bg-app-hover transition-all text-xs font-semibold text-app-text shadow-subtle group"
+          className="flex items-center gap-2.5 p-3 rounded-sm bg-app-card border border-app-border hover:border-app-accent/40 hover:bg-app-hover transition-all text-xs font-semibold text-app-text shadow-subtle group"
         >
-          <div className="w-7 h-7 rounded-lg bg-amber-500/15 text-amber-500 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+          <div className="w-7 h-7 rounded-sm bg-amber-500/15 text-amber-500 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
             <Package size={14} weight="bold" />
           </div>
           <span className="truncate">{t('inventory.addPart')}</span>
         </Link>
-      </div>
+      </StaggerGroup>
 
       {/* ============================================================ */}
       {/* MAIN TWO-COLUMN SECTION                                      */}
@@ -256,7 +259,7 @@ export default function AdminDashboard() {
         {/* Left 2 Columns: Chart Breakdown + Customer Table */}
         <div className="xl:col-span-2 space-y-4 sm:space-y-6">
           {/* Revenue Breakdown Bento Box */}
-          <div className="bg-app-card rounded-2xl border border-app-border p-4 sm:p-6 shadow-card transition-colors duration-200">
+          <div className="bg-app-card rounded-sm border border-app-border p-4 shadow-card transition-colors duration-200">
             <div className="flex items-center justify-between mb-4 sm:mb-6">
               <div>
                 <h2 className="text-sm font-bold text-app-text">{t('reports.partsVsLabor')}</h2>
@@ -303,7 +306,7 @@ export default function AdminDashboard() {
 
               {/* Breakdown Legend List */}
               <div className="flex-1 space-y-2 w-full">
-                <div className="flex items-center justify-between p-2.5 bg-app-hover rounded-xl border border-app-border/40">
+                <div className="flex items-center justify-between p-2.5 bg-app-hover rounded-sm border border-app-border/40">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-app-accent" />
                     <span className="text-xs font-medium text-app-text">
@@ -312,7 +315,7 @@ export default function AdminDashboard() {
                   </div>
                   <span className="text-xs font-bold text-app-accent tabular-nums">${totalPaid.toFixed(2)}</span>
                 </div>
-                <div className="flex items-center justify-between p-2.5 bg-app-hover rounded-xl border border-app-border/40">
+                <div className="flex items-center justify-between p-2.5 bg-app-hover rounded-sm border border-app-border/40">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
                     <span className="text-xs font-medium text-app-text">
@@ -321,7 +324,7 @@ export default function AdminDashboard() {
                   </div>
                   <span className="text-xs font-bold text-amber-500 tabular-nums">${Math.max(0, totalRevenue - totalPaid).toFixed(2)}</span>
                 </div>
-                <div className="flex items-center justify-between p-2.5 bg-app-hover rounded-xl border border-app-border/40">
+                <div className="flex items-center justify-between p-2.5 bg-app-hover rounded-sm border border-app-border/40">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-sky-500" />
                     <span className="text-xs font-medium text-app-text">{t('nav.inventory')} ({totalParts} {t('common.total')})</span>
@@ -335,7 +338,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Customer Directory Mini Bento Table */}
-          <div className="bg-app-card rounded-2xl border border-app-border p-4 sm:p-6 shadow-card transition-colors duration-200">
+          <div className="bg-app-card rounded-sm border border-app-border p-4 shadow-card transition-colors duration-200">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-sm font-bold text-app-text">{t('customers.title')}</h2>
@@ -347,20 +350,20 @@ export default function AdminDashboard() {
             </div>
 
             <div className="overflow-x-auto">
-              <Table className="w-full text-xs">
-                <TableHeader>
-                  <TableRow className="text-app-muted text-left border-b border-app-border/60 hover:bg-transparent">
-                    <TableHead className="pb-3 font-semibold text-app-muted">{t('common.name')}</TableHead>
-                    <TableHead className="pb-3 font-semibold text-app-muted">{t('common.phone')}</TableHead>
-                    <TableHead className="pb-3 font-semibold text-right text-app-muted">{t('customers.totalSpent')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody className="divide-y divide-app-border/40">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="text-app-muted text-left border-b border-app-border/60">
+                    <th className="pb-3 font-semibold">{t('common.name')}</th>
+                    <th className="pb-3 font-semibold">{t('common.phone')}</th>
+                    <th className="pb-3 font-semibold text-right">{t('customers.totalSpent')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-app-border/40">
                   {customers.slice(0, 5).map((customer) => (
-                    <TableRow key={customer.id} className="hover:bg-app-hover transition-colors group">
-                      <TableCell className="py-2.5 sm:py-3">
+                    <tr key={customer.id} className="hover:bg-app-hover transition-colors group">
+                      <td className="py-2.5 sm:py-3">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-lg bg-app-hover border border-app-border flex items-center justify-center text-app-muted flex-shrink-0 font-bold text-[11px]">
+                          <div className="w-7 h-7 rounded-sm bg-app-hover border border-app-border flex items-center justify-center text-app-muted flex-shrink-0 font-bold text-[11px]">
                             {customer.name[0]}
                           </div>
                           <div>
@@ -370,15 +373,15 @@ export default function AdminDashboard() {
                             <p className="text-[10px] text-app-muted">{customer.code}</p>
                           </div>
                         </div>
-                      </TableCell>
-                      <TableCell className="py-2.5 sm:py-3 font-mono text-app-muted">{customer.phone}</TableCell>
-                      <TableCell className="py-2.5 sm:py-3 font-bold text-app-text text-right tabular-nums">
+                      </td>
+                      <td className="py-2.5 sm:py-3 font-mono text-app-muted">{customer.phone}</td>
+                      <td className="py-2.5 sm:py-3 font-bold text-app-text text-right tabular-nums">
                         {customer.totalSpent || '$0.00'}
-                      </TableCell>
-                    </TableRow>
+                      </td>
+                    </tr>
                   ))}
-                </TableBody>
-              </Table>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -386,7 +389,7 @@ export default function AdminDashboard() {
         {/* Right 1 Column Bento Panels */}
         <div className="space-y-4 sm:space-y-6">
           {/* Live Alerts Bento Card */}
-          <div className="bg-app-card rounded-2xl border border-app-border p-4 sm:p-5 shadow-card transition-colors duration-200">
+          <div className="bg-app-card rounded-sm border border-app-border p-3 shadow-card transition-colors duration-200">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-xs font-bold text-app-text uppercase tracking-wider">{t('common.liveAlerts')}</h3>
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-semibold font-mono">
@@ -395,7 +398,7 @@ export default function AdminDashboard() {
             </div>
             <div className="space-y-2.5">
               {notificationsFeed.map((item) => (
-                <div key={item.id} className="flex items-start gap-2.5 p-2 rounded-xl bg-app-hover/50 border border-app-border/40">
+                <div key={item.id} className="flex items-start gap-2.5 p-2 rounded-sm bg-app-hover/50 border border-app-border/40">
                   <div
                     className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
                       item.type === 'warning' ? 'bg-amber-500' : item.type === 'success' ? 'bg-purple-500' : 'bg-blue-500'
@@ -411,7 +414,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Recent Repair Orders Activity */}
-          <div className="bg-app-card rounded-2xl border border-app-border p-4 sm:p-5 shadow-card transition-colors duration-200">
+          <div className="bg-app-card rounded-sm border border-app-border p-3 shadow-card transition-colors duration-200">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-xs font-bold text-app-text uppercase tracking-wider">{t('dashboard.recentJobs')}</h3>
               <Link to="/repair-jobs" className="text-[11px] text-app-accent hover:underline">
@@ -420,8 +423,8 @@ export default function AdminDashboard() {
             </div>
             <div className="space-y-2">
               {activitiesFeed.map((act) => (
-                <div key={act.id} className="flex items-start gap-2.5 p-2 rounded-xl hover:bg-app-hover transition-colors">
-                  <div className="w-6 h-6 rounded-lg bg-app-hover text-app-muted flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div key={act.id} className="flex items-start gap-2.5 p-2 rounded-sm hover:bg-app-hover transition-colors">
+                  <div className="w-6 h-6 rounded-sm bg-app-hover text-app-muted flex items-center justify-center flex-shrink-0 mt-0.5">
                     <Wrench size={13} weight="bold" />
                   </div>
                   <div className="truncate flex-1">
@@ -434,7 +437,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Workshop Staff Roster */}
-          <div className="bg-app-card rounded-2xl border border-app-border p-4 sm:p-5 shadow-card transition-colors duration-200">
+          <div className="bg-app-card rounded-sm border border-app-border p-3 shadow-card transition-colors duration-200">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-xs font-bold text-app-text uppercase tracking-wider">{t('employees.title')}</h3>
               <Link to="/employees" className="text-[11px] text-app-accent hover:underline">
@@ -445,10 +448,10 @@ export default function AdminDashboard() {
               {staffList.map((m) => (
                 <div
                   key={m.id}
-                  className="flex items-center justify-between p-2 rounded-xl hover:bg-app-hover text-app-muted transition-colors"
+                  className="flex items-center justify-between p-2 rounded-sm hover:bg-app-hover text-app-muted transition-colors"
                 >
                   <div className="flex items-center gap-2.5 truncate">
-                    <div className="w-7 h-7 rounded-lg bg-app-accent/15 border border-app-accent/30 flex items-center justify-center text-xs font-bold text-app-accent flex-shrink-0">
+                    <div className="w-7 h-7 rounded-sm bg-app-accent/15 border border-app-accent/30 flex items-center justify-center text-xs font-bold text-app-accent flex-shrink-0">
                       {m.name ? m.name[0] : 'S'}
                     </div>
                     <div className="truncate">
@@ -461,7 +464,7 @@ export default function AdminDashboard() {
                     <a
                       href={`tel:${m.phone}`}
                       title={m.phone}
-                      className="w-7 h-7 rounded-lg bg-app-hover text-app-muted hover:text-app-text flex items-center justify-center transition-colors flex-shrink-0"
+                      className="w-7 h-7 rounded-sm bg-app-hover text-app-muted hover:text-app-text flex items-center justify-center transition-colors flex-shrink-0"
                     >
                       <Phone size={13} weight="bold" />
                     </a>

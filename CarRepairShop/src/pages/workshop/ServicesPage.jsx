@@ -1,16 +1,10 @@
 import { useState } from 'react'
-import { MagnifyingGlass, Plus, PencilSimple, Trash, Eye, CheckCircle, XCircle, Package } from '@phosphor-icons/react'
+import { MagnifyingGlass, Plus, PencilSimple, Trash, CheckCircle, XCircle, Package } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
-import { useServicesCatalog, useCreateService, useUpdateService, useDeleteService } from '@/hooks/useServicesCatalog'
-import { useInventory } from '@/hooks/useInventory'
-import { useAuth } from '@/context/AuthContext'
-import { ConfirmDialog, EmptyState, TableSkeleton, LoadingButton } from '@/components/ui'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useServicesCatalog, useCreateService, useUpdateService, useDeleteService } from '../../hooks/useServicesCatalog'
+import { useInventory } from '../../hooks/useInventory'
+import { useAuth } from '../../context/AuthContext'
+import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton } from '../../components/ui'
 
 const statusOptions = ['All Status', 'Active Only', 'Inactive Only']
 
@@ -72,7 +66,7 @@ export default function ServicesPage() {
     })
     setSelectedPartId('')
     setSelectedPartQty(1)
-    setIsEditOpen(true)
+    setIsViewOpen(false); setIsEditOpen(true)
   }
 
   const handleOpenView = (s) => {
@@ -82,7 +76,7 @@ export default function ServicesPage() {
 
   const handleOpenDelete = (s) => {
     setSelectedService(s)
-    setIsDeleteOpen(true)
+    setIsViewOpen(false); setIsDeleteOpen(true)
   }
 
   const handleToggleActive = (s) => {
@@ -175,20 +169,21 @@ export default function ServicesPage() {
   })
 
   return (
-    <div className="space-y-4 text-app-text font-sans">
+    <div className="space-y-6 text-app-text font-sans">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
           <h1 className="text-xl font-bold tracking-tight text-app-text">{t('titles.serviceCatalog')}</h1>
-          <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-app-hover text-app-muted border border-app-border">
-            {services.length}
-          </span>
+          <p className="text-xs text-app-muted mt-1">{services.length} {t('services.subtitle')}</p>
         </div>
         {can('services', 'create') && (
-          <Button onClick={handleOpenAdd} size="sm" className="inline-flex items-center gap-1.5">
-            <Plus size={15} weight="bold" />
+          <button
+            onClick={handleOpenAdd}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText font-semibold rounded-sm text-xs transition-colors shadow-subtle"
+          >
+            <Plus size={16} weight="bold" />
             {t('services.addService')}
-          </Button>
+          </button>
         )}
       </div>
 
@@ -196,41 +191,62 @@ export default function ServicesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-2 overflow-x-auto pb-1">
           {categories.map((cat) => (
-            <Button variant="ghost" key={cat} onClick={() => setCategoryFilter(cat)} className={`h-8 px-3 rounded-xl whitespace-nowrap ${categoryFilter === cat ? 'bg-app-accent text-white shadow-subtle hover:bg-app-accent hover:text-white' : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover hover:text-app-text'}`}>
+            <button
+              key={cat}
+              onClick={() => setCategoryFilter(cat)}
+              className={`px-3 py-1.5 rounded-sm text-xs font-medium whitespace-nowrap transition-colors ${
+                categoryFilter === cat
+                  ? 'bg-app-accent text-app-accentText shadow-subtle'
+                  : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover active:scale-[0.98] hover:text-app-text'
+              }`}
+            >
               {cat === 'All' ? t('common.all') : cat}
-            </Button>
+            </button>
           ))}
         </div>
 
         <div className="flex items-center gap-2 overflow-x-auto pb-1">
           <span className="text-xs text-app-muted flex items-center gap-1 mr-1">{t('common.status')}:</span>
           {statusOptions.map((st) => (
-            <Button variant="ghost" key={st} onClick={() => setStatusFilter(st)} className={`h-7 px-2.5 rounded-lg whitespace-nowrap text-[11px] ${statusFilter === st ? 'bg-app-hover text-app-text border border-app-border font-semibold hover:bg-app-hover hover:text-app-text' : 'text-app-muted hover:text-app-text'}`}>
+            <button
+              key={st}
+              onClick={() => setStatusFilter(st)}
+              className={`px-2.5 py-1 rounded-sm text-[11px] font-medium whitespace-nowrap transition-colors ${
+                statusFilter === st
+                  ? 'bg-app-hover text-app-text border border-app-border font-semibold'
+                  : 'text-app-muted hover:text-app-text'
+              }`}
+            >
               {st === 'All Status' ? t('common.all') : st}
-            </Button>
+            </button>
           ))}
         </div>
       </div>
 
       {/* Main Table */}
-      <div className="bg-app-card rounded-2xl border border-app-border shadow-card overflow-hidden transition-colors duration-200">
-        <div className="p-3.5 border-b border-app-border flex items-center justify-between gap-3">
-          <div className="relative flex-1 max-w-sm">
-            <MagnifyingGlass size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-            <Input type="text" placeholder={t('common.quickSearch')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-8" />
+      <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden transition-colors duration-200">
+        <div className="p-4 border-b border-app-border flex items-center justify-between gap-3">
+          <div className="relative flex-1 max-w-md">
+            <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
+            <input
+              type="text"
+              placeholder={t('common.quickSearch')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-sm text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+            />
           </div>
           {(searchQuery || categoryFilter !== 'All' || statusFilter !== 'All Status') && (
-            <Button
-              variant="ghost"
+            <button
               onClick={() => {
                 setSearchQuery('')
                 setCategoryFilter('All')
                 setStatusFilter('All Status')
               }}
-              className="h-8 px-2 text-xs text-app-muted hover:text-app-text"
+              className="text-xs text-app-muted hover:text-app-text px-2 py-1 transition-colors"
             >
               {t('common.cancel')}
-            </Button>
+            </button>
           )}
         </div>
 
@@ -252,21 +268,32 @@ export default function ServicesPage() {
               }
             />
           ) : (
-            <Table className="w-full text-xs"><TableHeader><TableRow className="text-app-muted text-left border-b border-app-border bg-app-hover/50 hover:bg-app-hover/50"><TableHead className="px-6 py-3 font-semibold">{t('services.serviceName')}</TableHead><TableHead className="px-6 py-3 hidden md:table-cell font-semibold">{t('services.category')}</TableHead><TableHead className="px-6 py-3 font-semibold">Auto Stock-Out Parts</TableHead><TableHead className="px-6 py-3 hidden lg:table-cell font-semibold">{t('services.estimatedHours')}</TableHead><TableHead className="px-6 py-3 font-semibold">{t('services.standardPrice')}</TableHead><TableHead className="px-6 py-3 font-semibold">{t('common.status')}</TableHead><TableHead className="px-6 py-3 font-semibold text-right">{t('common.actions')}</TableHead></TableRow></TableHeader><TableBody className="divide-y divide-app-border">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
+                  <th className="px-4 py-3 font-semibold">{t('services.serviceName')}</th>
+                  <th className="px-4 py-3 hidden md:table-cell font-semibold">{t('services.category')}</th>
+                  <th className="px-4 py-3 font-semibold">Auto Stock-Out Parts</th>
+                  <th className="px-4 py-3 hidden lg:table-cell font-semibold">{t('services.estimatedHours')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('services.standardPrice')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('common.status')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-app-border">
                 {filtered.map((s) => (
-                  <TableRow key={s.id} className="hover:bg-app-hover/60 transition-colors group">
-                    <TableCell className="px-6 py-3.5">
+                  <tr key={s.id} onClick={() => handleOpenView(s)} className="hover:bg-app-hover /60 active:scale-[0.98] transition-colors group cursor-pointer">
+                    <td className="px-4 py-3.5">
                       <p className="font-semibold text-app-text">{s.name}</p>
                       <p className="text-[10px] text-app-muted truncate max-w-xs">{s.description || 'Standard service procedure'}</p>
-                    </TableCell>
-                    <TableCell className="px-6 py-3.5 text-app-muted hidden md:table-cell">{s.category}</TableCell>
-                    <TableCell className="px-6 py-3.5">
+                    </td>
+                    <td className="px-4 py-3.5 text-app-muted hidden md:table-cell">{s.category}</td>
+                    <td className="px-4 py-3.5">
                       {s.requiredParts && s.requiredParts.length > 0 ? (
                         <div className="flex flex-wrap gap-1.5 max-w-xs">
                           {s.requiredParts.map((p, idx) => (
                             <span
                               key={idx}
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 text-[10px] font-medium"
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 text-[10px] font-medium"
                               title={`${p.name} (${p.partCode}) - Qty: ${p.quantity}`}
                             >
                               <Package size={12} />
@@ -277,17 +304,20 @@ export default function ServicesPage() {
                       ) : (
                         <span className="text-[11px] text-app-muted italic">Labor only (No parts)</span>
                       )}
-                    </TableCell>
-                    <TableCell className="px-6 py-3.5 text-app-muted tabular-nums hidden lg:table-cell">{s.laborHours} hrs</TableCell>
-                    <TableCell className="px-6 py-3.5 font-bold text-app-text tabular-nums">
+                    </td>
+                    <td className="px-4 py-3.5 text-app-muted tabular-nums hidden lg:table-cell">{s.laborHours} hrs</td>
+                    <td className="px-4 py-3.5 font-bold text-app-text tabular-nums">
                       ${Number(s.estimatedCost || 0).toFixed(2)}
-                    </TableCell>
-                    <TableCell className="px-6 py-3.5">
-                      <Button variant="ghost" onClick={() => can('services', 'update') && handleToggleActive(s)} className={`h-6 px-2.5 rounded-full text-[11px] ${
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <button
+                        onClick={() => can('services', 'update') && handleToggleActive(s)}
+                        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm text-[11px] font-semibold transition-colors ${
                           s.isActive
                             ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
                             : 'bg-app-hover text-app-muted border border-app-border'
-                        }`}>
+                        }`}
+                      >
                         {s.isActive ? (
                           <>
                             <CheckCircle size={13} weight="fill" /> {t('status.Active')}
@@ -297,131 +327,117 @@ export default function ServicesPage() {
                             <XCircle size={13} /> {t('status.Draft')}
                           </>
                         )}
-                      </Button>
-                    </TableCell>
-                    <TableCell className="px-6 py-3.5 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => handleOpenView(s)} className="h-8 w-8 text-app-muted hover:text-app-text hover:bg-app-hover" title={t('common.view')}>
-                          <Eye size={15} />
-                        </Button>
-                        {can('services', 'update') && (
-                          <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(s)} className="h-8 w-8 text-app-muted hover:text-app-text hover:bg-app-hover" title={t('common.edit')}>
-                            <PencilSimple size={15} />
-                          </Button>
-                        )}
-                        {can('services', 'delete') && (
-                          <Button variant="ghost" size="icon" onClick={() => handleOpenDelete(s)} className="h-8 w-8 text-rose-500 hover:text-rose-500 hover:bg-rose-500/10" title={t('common.delete')}>
-                            <Trash size={15} />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                      </button>
+                    </td>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
+              </tbody>
+            </table>
           )}
         </div>
       </div>
 
       {/* Add Service Modal */}
-      <Dialog open={isAddOpen} onOpenChange={(open) => { if(!open) setIsAddOpen(false); }}><DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>{t('services.createService')}</DialogTitle></DialogHeader>
+      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('services.createService')}>
         <form onSubmit={handleCreate} className="space-y-4 text-xs">
           <div>
-            <Label className="block text-app-muted font-medium mb-1">{t('services.serviceName')} *</Label>
+            <label className="block text-app-muted font-medium mb-1">{t('services.serviceName')} *</label>
             <input
               type="text"
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="e.g. Synthetic Engine Oil & Filter Change"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('services.category')}</Label>
-              <Select
+              <label className="block text-app-muted font-medium mb-1">{t('services.category')}</label>
+              <select
                 value={formData.category}
-                onValueChange={(val) => setFormData({ ...formData, category: val })}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Routine Maintenance">Routine Maintenance</SelectItem>
-                  <SelectItem value="Brake System">Brake System</SelectItem>
-                  <SelectItem value="Engine & Transmission">Engine & Transmission</SelectItem>
-                  <SelectItem value="Electrical Diagnostics">Electrical Diagnostics</SelectItem>
-                  <SelectItem value="Suspension & Steering">Suspension & Steering</SelectItem>
-                  <SelectItem value="HVAC & AC System">HVAC & AC System</SelectItem>
-                </SelectContent>
-              </Select>
+                <option value="Routine Maintenance">Routine Maintenance</option>
+                <option value="Brake System">Brake System</option>
+                <option value="Engine & Transmission">Engine & Transmission</option>
+                <option value="Electrical Diagnostics">Electrical Diagnostics</option>
+                <option value="Suspension & Steering">Suspension & Steering</option>
+                <option value="HVAC & AC System">HVAC & AC System</option>
+              </select>
             </div>
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('services.estimatedHours')}</Label>
+              <label className="block text-app-muted font-medium mb-1">{t('services.estimatedHours')}</label>
               <input
                 type="number"
                 step="0.5"
                 value={formData.laborHours}
                 onChange={(e) => setFormData({ ...formData, laborHours: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('services.standardPrice')} ($)</Label>
+              <label className="block text-app-muted font-medium mb-1">{t('services.standardPrice')} ($)</label>
               <input
                 type="number"
                 step="1"
                 value={formData.estimatedCost}
                 onChange={(e) => setFormData({ ...formData, estimatedCost: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-semibold"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
               />
             </div>
           </div>
           <div>
-            <Label className="block text-app-muted font-medium mb-1">{t('services.description')}</Label>
+            <label className="block text-app-muted font-medium mb-1">{t('services.description')}</label>
             <textarea
               rows={2}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Detailed maintenance checklist items..."
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
 
           {/* Required Parts (Bill of Materials / Auto Stock-Out) */}
-          <div className="p-3 bg-app-hover/40 border border-app-border rounded-xl space-y-2.5">
+          <div className="p-3 bg-app-hover/40 border border-app-border rounded-sm space-y-2.5">
             <div className="flex items-center justify-between">
-              <Label className="font-semibold text-app-text flex items-center gap-1.5">
+              <label className="font-semibold text-app-text flex items-center gap-1.5">
                 <Package size={15} className="text-amber-500" />
                 Required Spare Parts (Auto Stock-Out)
-              </Label>
+              </label>
               <span className="text-[10px] text-app-muted">Parts auto-deducted when service is used</span>
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="flex-1">
-                <Select
-                  value={selectedPartId}
-                  onValueChange={(val) => setSelectedPartId(val)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="-- Select Spare Part from Inventory --" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {inventory.map((p) => (
-                      <SelectItem key={p.id} value={String(p.id)}>
-                        {p.name} ({p.partCode}) - Stock: {p.stockQty} - ${Number(p.unitPrice || 0).toFixed(2)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Input type="number" min="1" value={selectedPartQty} onChange={(e) => setSelectedPartQty(Math.max(1, parseInt(e.target.value, 10) || 1))} className="w-16 h-8 text-center" placeholder="Qty" />
-              <Button type="button" onClick={handleAddPartToForm} disabled={!selectedPartId} className="h-8 px-3 rounded-xl bg-app-accent hover:bg-app-accent/80 text-white shadow-subtle">
+              <select
+                value={selectedPartId}
+                onChange={(e) => setSelectedPartId(e.target.value)}
+                className="flex-1 px-3 py-1.5 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent text-xs"
+              >
+                <option value="">-- Select Spare Part from Inventory --</option>
+                {inventory.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} ({p.partCode}) - Stock: {p.stockQty} - ${Number(p.unitPrice || 0).toFixed(2)}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="number"
+                min="1"
+                value={selectedPartQty}
+                onChange={(e) => setSelectedPartQty(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                className="w-16 px-2 py-1.5 bg-app-input border border-app-border rounded-sm text-app-text text-center text-xs"
+                placeholder="Qty"
+              />
+              <button
+                type="button"
+                onClick={handleAddPartToForm}
+                disabled={!selectedPartId}
+                className="px-3 py-1.5 bg-app-accent disabled:opacity-50 text-app-accentText font-semibold rounded-sm text-xs flex items-center gap-1"
+              >
                 <Plus size={14} weight="bold" /> Add
-              </Button>
+              </button>
             </div>
 
             {formData.requiredParts.length > 0 ? (
@@ -429,7 +445,7 @@ export default function ServicesPage() {
                 {formData.requiredParts.map((p, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between p-2 bg-app-card rounded-lg border border-app-border text-xs"
+                    className="flex items-center justify-between p-2 bg-app-card rounded-sm border border-app-border text-xs"
                   >
                     <div className="flex items-center gap-2">
                       <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold">
@@ -438,9 +454,13 @@ export default function ServicesPage() {
                       <span className="font-medium text-app-text">{p.name}</span>
                       <span className="text-[10px] text-app-muted">({p.partCode})</span>
                     </div>
-                    <Button variant="ghost" size="icon" type="button" onClick={() => handleRemovePartFromForm(p.sparePartId || p.id)} className="h-6 w-6 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10">
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePartFromForm(p.sparePartId || p.id)}
+                      className="text-rose-500 hover:text-rose-600 p-1"
+                    >
                       <Trash size={14} />
-                    </Button>
+                    </button>
                   </div>
                 ))}
               </div>
@@ -450,112 +470,119 @@ export default function ServicesPage() {
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <Button variant="ghost" type="button" onClick={() => setIsAddOpen(false)} className="h-9 rounded-xl">
+            <button
+              type="button"
+              onClick={() => setIsAddOpen(false)}
+              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
+            >
               {t('common.cancel')}
-            </Button>
+            </button>
             <LoadingButton type="submit" loading={createServiceMutation.isPending}>
               {t('services.createService')}
             </LoadingButton>
           </div>
         </form>
-      </DialogContent></Dialog>
+      </Modal>
 
       {/* Edit Service Modal */}
-      <Dialog open={isEditOpen} onOpenChange={(open) => { if(!open) setIsEditOpen(false); }}><DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>{t('services.editService')}: {selectedService?.name}</DialogTitle></DialogHeader>
+      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title={`${t('services.editService')}: ${selectedService?.name}`}>
         <form onSubmit={handleUpdate} className="space-y-4 text-xs">
           <div>
-            <Label className="block text-app-muted font-medium mb-1">{t('services.serviceName')} *</Label>
+            <label className="block text-app-muted font-medium mb-1">{t('services.serviceName')} *</label>
             <input
               type="text"
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('services.category')}</Label>
-              <Select
+              <label className="block text-app-muted font-medium mb-1">{t('services.category')}</label>
+              <select
                 value={formData.category}
-                onValueChange={(val) => setFormData({ ...formData, category: val })}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Routine Maintenance">Routine Maintenance</SelectItem>
-                  <SelectItem value="Brake System">Brake System</SelectItem>
-                  <SelectItem value="Engine & Transmission">Engine & Transmission</SelectItem>
-                  <SelectItem value="Electrical Diagnostics">Electrical Diagnostics</SelectItem>
-                  <SelectItem value="Suspension & Steering">Suspension & Steering</SelectItem>
-                  <SelectItem value="HVAC & AC System">HVAC & AC System</SelectItem>
-                </SelectContent>
-              </Select>
+                <option value="Routine Maintenance">Routine Maintenance</option>
+                <option value="Brake System">Brake System</option>
+                <option value="Engine & Transmission">Engine & Transmission</option>
+                <option value="Electrical Diagnostics">Electrical Diagnostics</option>
+                <option value="Suspension & Steering">Suspension & Steering</option>
+                <option value="HVAC & AC System">HVAC & AC System</option>
+              </select>
             </div>
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('services.estimatedHours')}</Label>
+              <label className="block text-app-muted font-medium mb-1">{t('services.estimatedHours')}</label>
               <input
                 type="number"
                 step="0.5"
                 value={formData.laborHours}
                 onChange={(e) => setFormData({ ...formData, laborHours: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('services.standardPrice')} ($)</Label>
+              <label className="block text-app-muted font-medium mb-1">{t('services.standardPrice')} ($)</label>
               <input
                 type="number"
                 step="1"
                 value={formData.estimatedCost}
                 onChange={(e) => setFormData({ ...formData, estimatedCost: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-semibold"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
               />
             </div>
           </div>
           <div>
-            <Label className="block text-app-muted font-medium mb-1">{t('services.description')}</Label>
+            <label className="block text-app-muted font-medium mb-1">{t('services.description')}</label>
             <textarea
               rows={2}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
 
           {/* Required Parts (Bill of Materials / Auto Stock-Out) */}
-          <div className="p-3 bg-app-hover/40 border border-app-border rounded-xl space-y-2.5">
+          <div className="p-3 bg-app-hover/40 border border-app-border rounded-sm space-y-2.5">
             <div className="flex items-center justify-between">
-              <Label className="font-semibold text-app-text flex items-center gap-1.5">
+              <label className="font-semibold text-app-text flex items-center gap-1.5">
                 <Package size={15} className="text-amber-500" />
                 Required Spare Parts (Auto Stock-Out)
-              </Label>
+              </label>
               <span className="text-[10px] text-app-muted">Parts auto-deducted when service is used</span>
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="flex-1">
-                <Select
-                  value={selectedPartId}
-                  onValueChange={(val) => setSelectedPartId(val)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="-- Select Spare Part from Inventory --" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {inventory.map((p) => (
-                      <SelectItem key={p.id} value={String(p.id)}>
-                        {p.name} ({p.partCode}) - Stock: {p.stockQty} - ${Number(p.unitPrice || 0).toFixed(2)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Input type="number" min="1" value={selectedPartQty} onChange={(e) => setSelectedPartQty(Math.max(1, parseInt(e.target.value, 10) || 1))} className="w-16 h-8 text-center" placeholder="Qty" />
-              <Button type="button" onClick={handleAddPartToForm} disabled={!selectedPartId} className="h-8 px-3 rounded-xl bg-app-accent hover:bg-app-accent/80 text-white shadow-subtle">
+              <select
+                value={selectedPartId}
+                onChange={(e) => setSelectedPartId(e.target.value)}
+                className="flex-1 px-3 py-1.5 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent text-xs"
+              >
+                <option value="">-- Select Spare Part from Inventory --</option>
+                {inventory.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} ({p.partCode}) - Stock: {p.stockQty} - ${Number(p.unitPrice || 0).toFixed(2)}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="number"
+                min="1"
+                value={selectedPartQty}
+                onChange={(e) => setSelectedPartQty(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                className="w-16 px-2 py-1.5 bg-app-input border border-app-border rounded-sm text-app-text text-center text-xs"
+                placeholder="Qty"
+              />
+              <button
+                type="button"
+                onClick={handleAddPartToForm}
+                disabled={!selectedPartId}
+                className="px-3 py-1.5 bg-app-accent disabled:opacity-50 text-app-accentText font-semibold rounded-sm text-xs flex items-center gap-1"
+              >
                 <Plus size={14} weight="bold" /> Add
-              </Button>
+              </button>
             </div>
 
             {formData.requiredParts.length > 0 ? (
@@ -563,7 +590,7 @@ export default function ServicesPage() {
                 {formData.requiredParts.map((p, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between p-2 bg-app-card rounded-lg border border-app-border text-xs"
+                    className="flex items-center justify-between p-2 bg-app-card rounded-sm border border-app-border text-xs"
                   >
                     <div className="flex items-center gap-2">
                       <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold">
@@ -572,9 +599,13 @@ export default function ServicesPage() {
                       <span className="font-medium text-app-text">{p.name}</span>
                       <span className="text-[10px] text-app-muted">({p.partCode})</span>
                     </div>
-                    <Button variant="ghost" size="icon" type="button" onClick={() => handleRemovePartFromForm(p.sparePartId || p.id)} className="h-6 w-6 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10">
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePartFromForm(p.sparePartId || p.id)}
+                      className="text-rose-500 hover:text-rose-600 p-1"
+                    >
                       <Trash size={14} />
-                    </Button>
+                    </button>
                   </div>
                 ))}
               </div>
@@ -584,21 +615,25 @@ export default function ServicesPage() {
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <Button variant="ghost" type="button" onClick={() => setIsEditOpen(false)} className="h-9 rounded-xl">
+            <button
+              type="button"
+              onClick={() => setIsEditOpen(false)}
+              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
+            >
               {t('common.cancel')}
-            </Button>
+            </button>
             <LoadingButton type="submit" loading={updateServiceMutation.isPending}>
               {t('common.saveChanges')}
             </LoadingButton>
           </div>
         </form>
-      </DialogContent></Dialog>
+      </Modal>
 
       {/* View Service Modal */}
-      <Dialog open={isViewOpen} onOpenChange={(open) => { if(!open) setIsViewOpen(false); }}><DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>{t('services.title')}</DialogTitle></DialogHeader>
+      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('services.title')}>
         {selectedService && (
           <div className="space-y-4 text-xs">
-            <div className="flex items-center justify-between p-3 bg-app-hover/50 rounded-xl border border-app-border">
+            <div className="flex items-center justify-between p-3 bg-app-hover/50 rounded-sm border border-app-border">
               <div>
                 <h3 className="text-sm font-bold text-app-text">{selectedService.name}</h3>
                 <p className="text-app-muted">{selectedService.category}</p>
@@ -606,13 +641,13 @@ export default function ServicesPage() {
               <span className="text-sm font-bold text-app-accent">${selectedService.estimatedCost}</span>
             </div>
 
-            <div className="p-3 bg-app-input rounded-xl border border-app-border">
+            <div className="p-3 bg-app-input rounded-sm border border-app-border">
               <p className="text-[10px] text-app-muted uppercase font-semibold">{t('services.description')}</p>
               <p className="text-app-text mt-1">{selectedService.description || 'Standard workshop procedure.'}</p>
             </div>
 
             {/* Bill of Materials list */}
-            <div className="p-3 bg-app-card rounded-xl border border-app-border space-y-2">
+            <div className="p-3 bg-app-card rounded-sm border border-app-border space-y-2">
               <p className="text-[10px] text-app-muted uppercase font-semibold flex items-center gap-1">
                 <Package size={14} className="text-amber-500" />
                 Required Spare Parts (Auto Stock-Out)
@@ -620,7 +655,7 @@ export default function ServicesPage() {
               {selectedService.requiredParts && selectedService.requiredParts.length > 0 ? (
                 <div className="space-y-1.5">
                   {selectedService.requiredParts.map((p, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-app-hover/50 border border-app-border">
+                    <div key={idx} className="flex items-center justify-between p-2 rounded-sm bg-app-hover/50 border border-app-border">
                       <div className="flex items-center gap-2">
                         <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold">
                           {p.quantity}x
@@ -640,9 +675,30 @@ export default function ServicesPage() {
                 <p className="text-app-muted italic text-[11px]">No parts required for this service.</p>
               )}
             </div>
+
+            <div className="flex items-center justify-end gap-2 pt-4">
+              {can('services', 'update') && (
+                <button
+                  onClick={() => handleOpenEdit(selectedService)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-app-card hover:bg-app-hover active:scale-[0.98] border border-app-border text-app-text font-semibold rounded-sm text-xs transition-colors cursor-pointer"
+                >
+                  <PencilSimple size={14} weight="bold" />
+                  Edit
+                </button>
+              )}
+              {can('services', 'delete') && (
+                <button
+                  onClick={() => handleOpenDelete(selectedService)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 font-semibold rounded-sm text-xs transition-colors cursor-pointer border border-rose-500/20"
+                >
+                  <Trash size={14} weight="bold" />
+                  Delete
+                </button>
+              )}
+            </div>
           </div>
         )}
-      </DialogContent></Dialog>
+      </Modal>
 
       {/* Delete Confirmation */}
       <ConfirmDialog

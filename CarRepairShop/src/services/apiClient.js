@@ -23,7 +23,6 @@ export function getApiBaseUrl() {
 }
 
 export const API_CONFIG = {
-  USE_REAL_API: true,
   get BASE_URL() {
     return getApiBaseUrl()
   },
@@ -62,9 +61,6 @@ class ApiClient {
   }
 
   async request(endpoint, options = {}) {
-    if (!this.config.USE_REAL_API) {
-      throw new Error(`Real API is currently disabled. Using local mock services for: ${endpoint}`)
-    }
 
     const baseUrl = this.config.BASE_URL
     let cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`

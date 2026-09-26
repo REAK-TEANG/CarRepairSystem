@@ -2,17 +2,12 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Eye, EyeSlash, SignIn, ShieldCheck, Key, ArrowLeft, CheckCircle } from '@phosphor-icons/react'
-import Logo from '@/components/ui/Logo'
-import LanguageSwitcher from '@/components/ui/LanguageSwitcher'
-import { LoadingButton } from '@/components/ui'
-import { useAuth, ROLE_PROFILES } from '@/context/AuthContext'
-import { authService } from '@/services/authService'
-import { useToast } from '@/context/ToastContext'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import Logo from '../../components/ui/Logo'
+import LanguageSwitcher from '../../components/ui/LanguageSwitcher'
+import { Modal, LoadingButton } from '../../components/ui'
+import { useAuth, ROLE_PROFILES } from '../../context/AuthContext'
+import { authService } from '../../services/authService'
+import { useToast } from '../../context/ToastContext'
 
 export default function LoginPage() {
   const { t } = useTranslation()
@@ -159,7 +154,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-emerald-600 via-teal-700 to-emerald-950 flex items-center justify-center p-4 sm:p-6 lg:p-12 relative overflow-hidden font-sans selection:bg-emerald-300 selection:text-emerald-950">
+    <div className="min-h-screen w-full bg-gradient-to-br from-emerald-600 via-teal-700 to-emerald-950 flex items-center justify-center p-4 lg:p-12 relative overflow-hidden font-sans selection:bg-emerald-300 selection:text-emerald-950">
       {/* Decorative ambient glowing orbs */}
       <div className="absolute -top-40 -left-40 w-96 h-96 bg-emerald-400/25 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-teal-400/20 rounded-full blur-3xl pointer-events-none" />
@@ -171,12 +166,12 @@ export default function LoginPage() {
       </div>
 
       {/* Main Two-Column Layout */}
-      <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center z-10 py-6">
+      <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center z-10 py-4">
         {/* Left Branding / Hero Side */}
         <div className="hidden lg:flex lg:col-span-6 xl:col-span-7 flex-col justify-center text-white px-4 lg:px-8">
           {/* Logo & Brand Name */}
           <div className="flex items-center gap-3.5 mb-10">
-            <div className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 flex items-center justify-center shadow-lg shadow-emerald-950/20">
+            <div className="w-12 h-12 rounded-sm bg-white/15 backdrop-blur-md border border-white/25 flex items-center justify-center shadow-lg shadow-emerald-950/20">
               <Logo size={26} className="text-white" strokeWidth={2.4} />
             </div>
             <div>
@@ -204,15 +199,15 @@ export default function LoginPage() {
 
           {/* Capability Badges */}
           <div className="grid grid-cols-3 gap-4 mt-10 pt-8 border-t border-white/15 max-w-lg">
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3.5 border border-white/10">
+            <div className="bg-white/10 backdrop-blur-sm rounded-sm p-3.5 border border-white/10">
               <p className="text-sm font-bold text-white">6 RBAC Roles</p>
               <p className="text-xs text-emerald-100/75 mt-0.5">Role Access</p>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3.5 border border-white/10">
+            <div className="bg-white/10 backdrop-blur-sm rounded-sm p-3.5 border border-white/10">
               <p className="text-sm font-bold text-white">PostgreSQL</p>
               <p className="text-xs text-emerald-100/75 mt-0.5">Live Database</p>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3.5 border border-white/10">
+            <div className="bg-white/10 backdrop-blur-sm rounded-sm p-3.5 border border-white/10">
               <p className="text-sm font-bold text-white">REST API</p>
               <p className="text-xs text-emerald-100/75 mt-0.5">Secure JWT</p>
             </div>
@@ -221,11 +216,10 @@ export default function LoginPage() {
 
         {/* Right Floating Card */}
         <div className="lg:col-span-6 xl:col-span-5 flex justify-center lg:justify-end w-full">
-          <Card className="w-full max-w-[440px] rounded-[28px] sm:rounded-[36px] shadow-2xl shadow-emerald-950/30 border-white/40 dark:border-gray-800 p-2 sm:p-4 border-0">
-<CardContent className="pt-6">
+          <div className="w-full max-w-[440px] bg-white dark:bg-[#1E2328] rounded-[28px] sm:rounded-[36px] shadow-2xl shadow-emerald-950/30 border border-white/40 dark:border-gray-800 p-4 sm:p-9 md:p-10 transition-all">
             {/* Mobile Header Logo */}
             <div className="flex items-center justify-center gap-3 mb-6 lg:hidden">
-              <div className="w-11 h-11 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-md shadow-emerald-600/30">
+              <div className="w-11 h-11 rounded-sm bg-emerald-600 flex items-center justify-center text-white shadow-md shadow-emerald-600/30">
                 <Logo size={24} className="text-white" strokeWidth={2.4} />
               </div>
               <div className="text-left">
@@ -247,60 +241,75 @@ export default function LoginPage() {
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
-                <div className="px-4 py-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-2xl text-xs font-medium animate-fade-in">
+                <div className="px-4 py-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-sm text-xs font-medium">
                   {error}
                 </div>
               )}
 
               {/* Username Input */}
               <div>
-                <Label htmlFor="username" className="sr-only">
+                <label htmlFor="username" className="sr-only">
                   {t('auth.emailLabel')}
-                </Label>
-                <Input id="username"
+                </label>
+                <input
+                  id="username"
                   type="text"
                   required
                   value={form.username}
                   onChange={(e) => setForm({ ...form, username: e.target.value })}
                   placeholder="Username"
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800/70 border border-gray-200 dark:border-gray-700 rounded-2xl text-xs sm:text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800/70 border border-gray-200 dark:border-gray-700 rounded-sm text-xs sm:text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                 />
               </div>
 
               {/* Password Input */}
               <div className="space-y-1">
                 <div className="relative">
-                  <Input id="password"
+                  <input
+                    id="password"
                     type={showPassword ? 'text' : 'password'}
                     required
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
                     placeholder="Password"
-                    className="w-full px-4 py-3 pr-11 bg-gray-50 dark:bg-gray-800/70 border border-gray-200 dark:border-gray-700 rounded-2xl text-xs sm:text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 pr-11 bg-gray-50 dark:bg-gray-800/70 border border-gray-200 dark:border-gray-700 rounded-sm text-xs sm:text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                   />
-                  <Button variant="ghost" size="icon" type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground">
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-1"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
                     {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
-                  </Button>
+                  </button>
                 </div>
                 {/* Forgot Password link positioned right under password like in the design */}
                 <div className="flex justify-end pt-1">
-                  <Button variant="link" type="button" onClick={handleOpenForgot} className="px-0 h-auto text-xs text-emerald-600 dark:text-emerald-400">
+                  <button
+                    type="button"
+                    onClick={handleOpenForgot}
+                    className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium transition-colors cursor-pointer"
+                  >
                     {t('auth.forgotPassword')}
-                  </Button>
+                  </button>
                 </div>
               </div>
 
               {/* Login Button */}
-              <Button type="submit" disabled={loading} className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-semibold rounded-sm text-sm shadow-md shadow-emerald-600/25 transition-all disabled:opacity-60 cursor-pointer mt-2"
+              >
                 {loading ? (
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
                 ) : (
                   <>
                     <SignIn size={18} weight="bold" />
                     <span>Login</span>
                   </>
                 )}
-              </Button>
+              </button>
 
               {/* OR Divider */}
               <div className="relative flex py-2 items-center my-1">
@@ -319,14 +328,20 @@ export default function LoginPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {Object.entries(ROLE_PROFILES).map(([key, prof]) => (
-                    <Button variant="outline" key={key} type="button" disabled={loading} onClick={() => handleRoleQuickSelect(key)} className="h-auto py-2 px-3 justify-start flex-col items-start gap-1 rounded-xl">
+                    <button
+                      key={key}
+                      type="button"
+                      disabled={loading}
+                      onClick={() => handleRoleQuickSelect(key)}
+                      className="flex flex-col items-start px-3 py-2 rounded-sm bg-gray-50 dark:bg-gray-800/70 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 border border-gray-200 dark:border-gray-700 hover:border-emerald-300 dark:hover:border-emerald-700 text-left transition-all group disabled:opacity-50 cursor-pointer"
+                    >
                       <span className="text-xs font-semibold text-gray-800 dark:text-gray-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                         {prof.name}
                       </span>
                       <span className="text-[10px] text-gray-500 dark:text-gray-400 truncate w-full">
                         {t(`roles.${key}`, prof.roleTitle)}
                       </span>
-                    </Button>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -334,27 +349,28 @@ export default function LoginPage() {
               {/* Card Footer */}
               <div className="text-center pt-3 text-xs text-gray-500 dark:text-gray-400">
                 <span>Don't have an account? </span>
-                <Button variant="link" type="button" onClick={() => addToast('Please contact your workshop administrator for account setup.', 'info')} className="px-1 h-auto text-emerald-600">
+                <button
+                  type="button"
+                  onClick={() => addToast('Please contact your workshop administrator for account setup.', 'info')}
+                  className="text-emerald-600 dark:text-emerald-400 hover:underline font-semibold cursor-pointer"
+                >
                   Sign Up
-                </Button>
+                </button>
               </div>
             </form>
-</CardContent>
-</Card>
-</div>
-</div>
+          </div>
+        </div>
+      </div>
 
       {/* Forgot & Reset Password Modal */}
-      <Dialog open={isForgotOpen} onOpenChange={(open) => { if (!open) setIsForgotOpen(false); }}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {forgotStep === 1 ? t('auth.forgotPasswordTitle') : t('auth.resetPassword')}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 text-xs font-sans">
+      <Modal
+        isOpen={isForgotOpen}
+        onClose={() => setIsForgotOpen(false)}
+        title={forgotStep === 1 ? t('auth.forgotPasswordTitle') : t('auth.resetPassword')}
+      >
+        <div className="space-y-4 text-xs font-sans">
           {forgotError && (
-            <div className="px-3.5 py-2.5 bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 rounded-xl font-medium">
+            <div className="px-3.5 py-2.5 bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 rounded-sm font-medium">
               {forgotError}
             </div>
           )}
@@ -362,7 +378,7 @@ export default function LoginPage() {
           {forgotStep === 1 ? (
             /* STEP 1: Enter Username/Email */
             <form onSubmit={handleRequestCode} className="space-y-4">
-              <div className="flex items-start gap-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-app-text">
+              <div className="flex items-start gap-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-sm text-app-text">
                 <Key size={20} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
                 <p className="text-xs leading-relaxed text-app-muted">
                   {t('auth.forgotPasswordSubtitle')}
@@ -370,22 +386,27 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <Label className="block text-app-muted font-medium mb-1.5">
+                <label className="block text-app-muted font-medium mb-1.5">
                   {t('auth.emailLabel')} / Username *
-                </Label>
-                <Input type="text"
+                </label>
+                <input
+                  type="text"
                   required
                   value={forgotIdentifier}
                   onChange={(e) => setForgotIdentifier(e.target.value)}
                   placeholder="e.g. admin or admin@carrepair.com"
-                  className="w-full px-3.5 py-2.5 bg-app-input border border-app-border rounded-xl text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full px-3.5 py-2.5 bg-app-input border border-app-border rounded-sm text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-emerald-500 transition-colors"
                 />
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-                <Button variant="ghost" type="button" onClick={() => setIsForgotOpen(false)} className="rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => setIsForgotOpen(false)}
+                  className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors font-medium cursor-pointer"
+                >
                   {t('common.cancel')}
-                </Button>
+                </button>
                 <LoadingButton type="submit" loading={forgotLoading} className="bg-emerald-600 hover:bg-emerald-700 text-white">
                   {t('auth.requestResetCode')}
                 </LoadingButton>
@@ -395,78 +416,83 @@ export default function LoginPage() {
             /* STEP 2: Verification Code & New Password */
             <form onSubmit={handleResetPassword} className="space-y-4">
               {codePreview && (
-                <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-700 dark:text-emerald-300 flex items-center justify-between">
+                <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-sm text-emerald-700 dark:text-emerald-300 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <CheckCircle size={18} weight="bold" />
                     <span>
                       Verification code for <strong className="font-mono font-bold">{forgotIdentifier}</strong>:
                     </span>
                   </div>
-                  <span className="font-mono font-bold text-sm bg-emerald-500/20 px-2 py-0.5 rounded-lg text-emerald-600 dark:text-emerald-300 tracking-wider">
+                  <span className="font-mono font-bold text-sm bg-emerald-500/20 px-2 py-0.5 rounded-sm text-emerald-600 dark:text-emerald-300 tracking-wider">
                     {codePreview}
                   </span>
                 </div>
               )}
 
               <div>
-                <Label className="block text-app-muted font-medium mb-1.5">
+                <label className="block text-app-muted font-medium mb-1.5">
                   {t('auth.resetCodeLabel')} *
-                </Label>
-                <Input type="text"
+                </label>
+                <input
+                  type="text"
                   required
                   maxLength={6}
                   value={resetCode}
                   onChange={(e) => setResetCode(e.target.value)}
                   placeholder={t('auth.resetCodePlaceholder')}
-                  className="w-full px-3.5 py-2.5 bg-app-input border border-app-border rounded-xl text-app-text font-mono tracking-widest text-center text-sm focus:outline-none focus:border-emerald-500"
+                  className="w-full px-3.5 py-2.5 bg-app-input border border-app-border rounded-sm text-xs text-app-text font-mono tracking-widest text-center text-sm focus:outline-none focus:border-emerald-500"
                 />
               </div>
 
               <div>
-                <Label className="block text-app-muted font-medium mb-1.5">
+                <label className="block text-app-muted font-medium mb-1.5">
                   {t('auth.newPasswordLabel')} *
-                </Label>
+                </label>
                 <div className="relative">
-                  <Input type={showNewPassword ? 'text' : 'password'}
+                  <input
+                    type={showNewPassword ? 'text' : 'password'}
                     required
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder={t('auth.newPasswordPlaceholder')}
-                    className="w-full px-3.5 py-2.5 pr-10 bg-app-input border border-app-border rounded-xl text-xs text-app-text focus:outline-none focus:border-emerald-500"
+                    className="w-full px-3.5 py-2.5 pr-10 bg-app-input border border-app-border rounded-sm text-xs text-app-text focus:outline-none focus:border-emerald-500"
                   />
-                  <Button variant="ghost" size="icon" type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground">
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-app-muted hover:text-app-text transition-colors"
+                  >
                     {showNewPassword ? <EyeSlash size={16} /> : <Eye size={16} />}
-                  </Button>
+                  </button>
                 </div>
               </div>
 
               <div>
-                <Label className="block text-app-muted font-medium mb-1.5">
+                <label className="block text-app-muted font-medium mb-1.5">
                   {t('auth.confirmPasswordLabel')} *
-                </Label>
-                <Input type={showNewPassword ? 'text' : 'password'}
+                </label>
+                <input
+                  type={showNewPassword ? 'text' : 'password'}
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder={t('auth.confirmPasswordPlaceholder')}
-                  className="w-full px-3.5 py-2.5 bg-app-input border border-app-border rounded-xl text-xs text-app-text focus:outline-none focus:border-emerald-500"
+                  className="w-full px-3.5 py-2.5 bg-app-input border border-app-border rounded-sm text-xs text-app-text focus:outline-none focus:border-emerald-500"
                 />
               </div>
 
               <div className="flex items-center justify-between pt-3 border-t border-app-border">
-                <Button
+                <button
                   type="button"
-                  variant="ghost"
-                  size="sm"
                   onClick={() => {
                     setForgotStep(1)
                     setForgotError('')
                   }}
-                  className="flex items-center gap-1.5 text-app-muted hover:text-app-text"
+                  className="flex items-center gap-1.5 px-3 py-2 text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98] rounded-sm transition-colors cursor-pointer"
                 >
                   <ArrowLeft size={14} />
                   <span>{t('common.back')}</span>
-                </Button>
+                </button>
                 <LoadingButton type="submit" loading={forgotLoading} className="bg-emerald-600 hover:bg-emerald-700 text-white">
                   {t('auth.resetPasswordButton')}
                 </LoadingButton>
@@ -474,8 +500,7 @@ export default function LoginPage() {
             </form>
           )}
         </div>
-        </DialogContent>
-      </Dialog>
+      </Modal>
     </div>
   )
 }

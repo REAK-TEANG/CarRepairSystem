@@ -1,16 +1,10 @@
 import { useState } from 'react'
-import { MagnifyingGlass, Plus, PencilSimple, Trash, ArrowUp, ArrowDown, Eye, Package, ClockCounterClockwise } from '@phosphor-icons/react'
+import { MagnifyingGlass, Plus, PencilSimple, Trash, ArrowUp, ArrowDown, Package, ClockCounterClockwise } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
-import { useInventory, useInventoryTransactions, useCreatePart, useUpdatePart, useAdjustStock, useDeletePart } from '@/hooks/useInventory'
-import { useSuppliers } from '@/hooks/useSuppliers'
-import { useAuth } from '@/context/AuthContext'
-import { StatusBadge, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, ImageUpload } from '@/components/ui'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useInventory, useInventoryTransactions, useCreatePart, useUpdatePart, useAdjustStock, useDeletePart } from '../../hooks/useInventory'
+import { useSuppliers } from '../../hooks/useSuppliers'
+import { useAuth } from '../../context/AuthContext'
+import { Modal, StatusBadge, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, ImageUpload } from '../../components/ui'
 
 const stockStatusOptions = ['All Stock', 'In Stock', 'Low Stock', 'Out of Stock']
 
@@ -95,7 +89,7 @@ export default function InventoryPage() {
       location: p.location || '',
       image: p.image || '',
     })
-    setIsEditOpen(true)
+    setIsViewOpen(false); setIsEditOpen(true)
   }
 
   const handleOpenAdjust = (p, type) => {
@@ -103,7 +97,7 @@ export default function InventoryPage() {
     setAdjustType(type)
     setAdjustQty(type === 'Stock In' ? 10 : 1)
     setAdjustNotes('')
-    setIsAdjustOpen(true)
+    setIsViewOpen(false); setIsAdjustOpen(true)
   }
 
   const handleOpenView = (p) => {
@@ -113,7 +107,7 @@ export default function InventoryPage() {
 
   const handleOpenDelete = (p) => {
     setSelectedPart(p)
-    setIsDeleteOpen(true)
+    setIsViewOpen(false); setIsDeleteOpen(true)
   }
 
   const handleCreate = async (e) => {
@@ -170,46 +164,51 @@ export default function InventoryPage() {
   })
 
   return (
-    <div className="space-y-4 font-sans text-app-text animate-fade-in">
+    <div className="space-y-6 font-sans text-app-text">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
           <h1 className="text-xl font-bold tracking-tight text-app-text">{t('titles.sparePartsInventory')}</h1>
-          <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-app-hover text-app-muted border border-app-border">
-            {items.length}
-          </span>
+          <p className="text-xs text-app-muted mt-1">{items.length} {t('inventory.subtitle')}</p>
         </div>
         {can('inventory', 'create') && (
-          <Button onClick={handleOpenAdd} size="sm" className="inline-flex items-center gap-1.5">
-            <Plus size={15} weight="bold" />
+          <button
+            onClick={handleOpenAdd}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText text-xs font-semibold rounded-sm transition-colors shadow-subtle"
+          >
+            <Plus size={16} weight="bold" />
             {t('inventory.addPart')}
-          </Button>
+          </button>
         )}
       </div>
 
       {/* View Switcher Tabs */}
       <div className="flex items-center gap-2 border-b border-app-border pb-3">
-        <Button
-          variant={activeTab === 'inventory' ? 'default' : 'ghost'}
-          size="sm"
+        <button
           onClick={() => setActiveTab('inventory')}
-          className="gap-2"
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-sm text-xs font-semibold transition-all ${
+            activeTab === 'inventory'
+              ? 'bg-app-accent text-app-accentText shadow-subtle'
+              : 'text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98]'
+          }`}
         >
-          <Package size={15} weight="bold" />
-          <span>Spare Parts</span>
+          <Package size={16} weight="bold" />
+          <span>Spare Parts Catalog</span>
           <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/10 dark:bg-white/10">{items.length}</span>
-        </Button>
+        </button>
 
-        <Button
-          variant={activeTab === 'transactions' ? 'default' : 'ghost'}
-          size="sm"
+        <button
           onClick={() => setActiveTab('transactions')}
-          className="gap-2"
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-sm text-xs font-semibold transition-all ${
+            activeTab === 'transactions'
+              ? 'bg-app-accent text-app-accentText shadow-subtle'
+              : 'text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98]'
+          }`}
         >
-          <ClockCounterClockwise size={15} weight="bold" />
-          <span>Transactions</span>
+          <ClockCounterClockwise size={16} weight="bold" />
+          <span>Stock Movement & Auto Stock-Out Logs</span>
           <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/10 dark:bg-white/10">{transactions.length}</span>
-        </Button>
+        </button>
       </div>
 
       {activeTab === 'inventory' ? (
@@ -218,49 +217,62 @@ export default function InventoryPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
               {categories.map((cat) => (
-                <Button variant="ghost" key={cat} onClick={() => setCategoryFilter(cat)} className={`h-8 px-3 rounded-xl whitespace-nowrap ${
+                <button
+                  key={cat}
+                  onClick={() => setCategoryFilter(cat)}
+                  className={`px-3 py-1.5 rounded-sm text-xs font-medium whitespace-nowrap transition-colors ${
                     categoryFilter === cat
                       ? 'bg-app-accent text-app-accentText shadow-subtle'
-                      : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover hover:text-app-text'
-                  }`}>
+                      : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover active:scale-[0.98] hover:text-app-text'
+                  }`}
+                >
                   {cat === 'All' ? t('common.all') : cat}
-                </Button>
+                </button>
               ))}
             </div>
 
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
               <span className="text-xs text-app-muted flex items-center gap-1 mr-1">{t('common.status')}:</span>
               {stockStatusOptions.map((st) => (
-                <Button variant="ghost" key={st} onClick={() => setStockFilter(st)} className={`h-7 px-2.5 rounded-lg whitespace-nowrap text-[11px] ${
+                <button
+                  key={st}
+                  onClick={() => setStockFilter(st)}
+                  className={`px-2.5 py-1 rounded-sm text-[11px] font-medium whitespace-nowrap transition-colors ${
                     stockFilter === st
                       ? 'bg-app-hover text-app-text border border-app-border font-semibold'
                       : 'text-app-muted hover:text-app-text'
-                  }`}>
+                  }`}
+                >
                   {st === 'All Stock' ? t('common.all') : t(`status.${st}`, st)}
-                </Button>
+                </button>
               ))}
             </div>
           </div>
 
       {/* Table */}
-      <div className="bg-app-card rounded-2xl border border-app-border shadow-card overflow-hidden">
-        <div className="p-3.5 border-b border-app-border flex items-center justify-between gap-3">
-          <div className="relative flex-1 max-w-sm">
-            <MagnifyingGlass size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-            <Input type="text" placeholder={t('common.quickSearch')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-8" />
+      <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden">
+        <div className="p-4 border-b border-app-border flex items-center justify-between gap-3">
+          <div className="relative flex-1 max-w-md">
+            <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
+            <input
+              type="text"
+              placeholder={t('common.quickSearch')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-sm text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+            />
           </div>
           {(searchQuery || categoryFilter !== 'All' || stockFilter !== 'All Stock') && (
-            <Button
-              variant="ghost"
+            <button
               onClick={() => {
                 setSearchQuery('')
                 setCategoryFilter('All')
                 setStockFilter('All Stock')
               }}
-              className="h-8 px-2 text-xs text-app-muted hover:text-app-text"
+              className="text-xs text-app-muted hover:text-app-text px-2 py-1 transition-colors"
             >
               {t('common.cancel')}
-            </Button>
+            </button>
           )}
         </div>
 
@@ -283,20 +295,32 @@ export default function InventoryPage() {
               }
             />
           ) : (
-            <Table className="w-full text-xs"><TableHeader><TableRow className="text-app-muted text-left border-b border-app-border bg-app-hover/50 hover:bg-app-hover/50"><TableHead className="px-6 py-3 font-semibold">{t('inventory.partCode')}</TableHead><TableHead className="px-6 py-3 font-semibold">{t('inventory.partName')}</TableHead><TableHead className="px-6 py-3 font-semibold hidden md:table-cell">{t('inventory.category')}</TableHead><TableHead className="px-6 py-3 font-semibold hidden lg:table-cell">{t('inventory.location')}</TableHead><TableHead className="px-6 py-3 font-semibold">{t('inventory.stockQty')}</TableHead><TableHead className="px-6 py-3 font-semibold">{t('inventory.sellingPrice')}</TableHead><TableHead className="px-6 py-3 font-semibold">{t('common.status')}</TableHead><TableHead className="px-6 py-3 font-semibold text-right">{t('common.actions')}</TableHead></TableRow></TableHeader><TableBody className="divide-y divide-app-border">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
+                  <th className="px-4 py-3 font-semibold">{t('inventory.partCode')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('inventory.partName')}</th>
+                  <th className="px-4 py-3 font-semibold hidden md:table-cell">{t('inventory.category')}</th>
+                  <th className="px-4 py-3 font-semibold hidden lg:table-cell">{t('inventory.location')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('inventory.stockQty')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('inventory.sellingPrice')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('common.status')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-app-border">
                 {filtered.map((part) => (
-                  <TableRow key={part.id} className="hover:bg-app-hover/60 transition-colors group">
-                    <TableCell className="px-6 py-3.5 font-mono font-semibold text-app-accent">{part.partCode}</TableCell>
-                    <TableCell className="px-6 py-3.5">
+                  <tr key={part.id} onClick={() => handleOpenView(part)} className="hover:bg-app-hover /60 active:scale-[0.98] transition-colors group cursor-pointer">
+                    <td className="px-4 py-3.5 font-mono font-semibold text-app-accent">{part.partCode}</td>
+                    <td className="px-4 py-3.5">
                       <div className="flex items-center gap-3">
                         {part.image ? (
                           <img
                             src={part.image}
                             alt={part.name}
-                            className="w-10 h-10 rounded-xl object-cover border border-app-border bg-app-card flex-shrink-0"
+                            className="w-10 h-10 rounded-sm object-cover border border-app-border bg-app-card flex-shrink-0"
                           />
                         ) : (
-                          <div className="w-10 h-10 rounded-xl bg-app-hover border border-app-border flex items-center justify-center flex-shrink-0 text-app-muted">
+                          <div className="w-10 h-10 rounded-sm bg-app-hover border border-app-border flex items-center justify-center flex-shrink-0 text-app-muted">
                             <Package size={20} />
                           </div>
                         )}
@@ -307,80 +331,37 @@ export default function InventoryPage() {
                           </p>
                         </div>
                       </div>
-                    </TableCell>
-                    <TableCell className="px-6 py-3.5 text-app-muted hidden md:table-cell">{part.category}</TableCell>
-                    <TableCell className="px-6 py-3.5 text-app-muted hidden lg:table-cell font-mono">{part.location}</TableCell>
-                    <TableCell className="px-6 py-3.5">
+                    </td>
+                    <td className="px-4 py-3.5 text-app-muted hidden md:table-cell">{part.category}</td>
+                    <td className="px-4 py-3.5 text-app-muted hidden lg:table-cell font-mono">{part.location}</td>
+                    <td className="px-4 py-3.5">
                       <span
                         className={`font-bold tabular-nums ${part.stockQty <= part.minThreshold ? 'text-red-600 dark:text-red-400' : 'text-app-text'}`}
                       >
                         {part.stockQty}
                       </span>
                       <span className="text-[10px] text-app-muted ml-1">(min {part.minThreshold})</span>
-                    </TableCell>
-                    <TableCell className="px-6 py-3.5 font-semibold text-app-text tabular-nums">
+                    </td>
+                    <td className="px-4 py-3.5 font-semibold text-app-text tabular-nums">
                       ${Number(part.unitPrice).toFixed(2)}
-                    </TableCell>
-                    <TableCell className="px-6 py-3.5">
+                    </td>
+                    <td className="px-4 py-3.5">
                       <StatusBadge
                         status={part.stockQty === 0 ? 'Out of Stock' : part.stockQty <= part.minThreshold ? 'Low Stock' : 'In Stock'}
                         variant={part.stockQty === 0 ? 'danger' : part.stockQty <= part.minThreshold ? 'warning' : 'success'}
                       />
-                    </TableCell>
-                    <TableCell className="px-6 py-3.5 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => handleOpenView(part)} className="h-8 w-8 text-app-muted hover:text-app-text hover:bg-app-hover" title={t('common.view')}>
-                          <Eye size={15} />
-                        </Button>
-                        {can('inventory', 'update') && (
-                          <>
-                            {part.stockQty <= part.minThreshold && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() =>
-                                  adjustStockMutation.mutate({
-                                    id: part.id,
-                                    type: 'Stock In',
-                                    quantity: 10,
-                                    notes: `Quick Reorder Restock from ${part.supplier || 'Supplier'}`,
-                                  })
-                                }
-                                title="1-Click Quick Restock (+10 from Supplier)"
-                                className="h-6 px-2 rounded-lg text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/30 hover:bg-emerald-500/20 flex items-center gap-1 cursor-pointer"
-                              >
-                                <ArrowUp size={12} weight="bold" />
-                                <span>+10</span>
-                              </Button>
-                            )}
-                            <Button variant="ghost" size="icon" onClick={() => handleOpenAdjust(part, 'Stock In')} title="Stock In (+)" className="h-8 w-8 text-emerald-600 hover:bg-app-hover">
-                              <ArrowUp size={15} weight="bold" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleOpenAdjust(part, 'Stock Out')} title="Stock Out (-)" className="h-8 w-8 text-amber-600 hover:bg-app-hover">
-                              <ArrowDown size={15} weight="bold" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(part)} title={t('common.edit')} className="h-8 w-8 text-app-muted hover:text-app-text hover:bg-app-hover">
-                              <PencilSimple size={15} />
-                            </Button>
-                          </>
-                        )}
-                        {can('inventory', 'delete') && (
-                          <Button variant="ghost" size="icon" onClick={() => handleOpenDelete(part)} title={t('common.delete')} className="h-8 w-8 text-app-muted hover:text-red-500 hover:bg-app-hover">
-                            <Trash size={15} />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell></TableRow>
+                    </td>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
+              </tbody>
+            </table>
           )}
         </div>
       </div>
     </>
   ) : (
     /* Stock Movement & Auto Stock-Out Transactions View */
-    <div className="bg-app-card rounded-2xl border border-app-border shadow-card overflow-hidden">
+    <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden">
       <div className="p-4 border-b border-app-border flex items-center justify-between">
         <div>
           <h2 className="text-sm font-bold text-app-text flex items-center gap-2">
@@ -400,16 +381,27 @@ export default function InventoryPage() {
             description="Stock movements and auto stock-outs for services will automatically appear here."
           />
         ) : (
-          <Table className="w-full text-xs"><TableHeader><TableRow className="text-app-muted text-left border-b border-app-border bg-app-hover/50 hover:bg-app-hover/50"><TableHead className="px-6 py-3 font-semibold">Part Code / Item</TableHead><TableHead className="px-6 py-3 font-semibold">Type</TableHead><TableHead className="px-6 py-3 font-semibold">Quantity</TableHead><TableHead className="px-6 py-3 font-semibold">Reason / Reference</TableHead><TableHead className="px-6 py-3 hidden sm:table-cell font-semibold">Performed By</TableHead><TableHead className="px-6 py-3 font-semibold text-right">Date & Time</TableHead></TableRow></TableHeader><TableBody className="divide-y divide-app-border">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
+                <th className="px-4 py-3 font-semibold">Part Code / Item</th>
+                <th className="px-4 py-3 font-semibold">Type</th>
+                <th className="px-4 py-3 font-semibold">Quantity</th>
+                <th className="px-4 py-3 font-semibold">Reason / Reference</th>
+                <th className="px-4 py-3 hidden sm:table-cell font-semibold">Performed By</th>
+                <th className="px-4 py-3 font-semibold text-right">Date & Time</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-app-border">
               {transactions.map((tx) => (
-                <TableRow key={tx.id} className="hover:bg-app-hover/60 transition-colors">
-                  <TableCell className="px-6 py-3.5">
+                <tr key={tx.id} className="hover:bg-app-hover /60 active:scale-[0.98] transition-colors">
+                  <td className="px-4 py-3.5">
                     <p className="font-semibold text-app-text">{tx.partName}</p>
                     <p className="font-mono text-[10px] text-app-accent">{tx.partCode}</p>
-                  </TableCell>
-                  <TableCell className="px-6 py-3.5">
+                  </td>
+                  <td className="px-4 py-3.5">
                     <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[11px] font-semibold border ${
                         tx.type === 'Stock Out'
                           ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
                           : tx.type === 'Stock In'
@@ -420,185 +412,178 @@ export default function InventoryPage() {
                       {tx.type === 'Stock Out' ? <ArrowDown size={12} weight="bold" /> : <ArrowUp size={12} weight="bold" />}
                       {tx.type}
                     </span>
-                  </TableCell>
-                  <TableCell className="px-6 py-3.5 font-bold tabular-nums text-app-text">
+                  </td>
+                  <td className="px-4 py-3.5 font-bold tabular-nums text-app-text">
                     {tx.type === 'Stock Out' ? `-${tx.quantity}` : `+${tx.quantity}`} units
-                  </TableCell>
-                  <TableCell className="px-6 py-3.5">
+                  </td>
+                  <td className="px-4 py-3.5">
                     <p className="text-app-text font-medium max-w-sm">{tx.notes || 'Routine stock operation'}</p>
                     {tx.referenceType && (
                       <span className="text-[10px] text-app-muted uppercase font-mono">
                         Ref: {tx.referenceType} #{tx.referenceId}
                       </span>
                     )}
-                  </TableCell>
-                  <TableCell className="px-6 py-3.5 text-app-muted hidden sm:table-cell">
+                  </td>
+                  <td className="px-4 py-3.5 text-app-muted hidden sm:table-cell">
                     {tx.performedBy}
-                  </TableCell>
-                  <TableCell className="px-6 py-3.5 text-right font-mono text-[11px] text-app-muted">
+                  </td>
+                  <td className="px-4 py-3.5 text-right font-mono text-[11px] text-app-muted">
                     {tx.createdAt ? new Date(tx.createdAt).toLocaleString() : 'Recent'}
-                  </TableCell>
-                </TableRow>
+                  </td>
+                </tr>
               ))}
-            </TableBody>
-          </Table>
+            </tbody>
+          </table>
         )}
       </div>
     </div>
   )}
 
       {/* Add Part Modal */}
-      <Dialog open={isAddOpen} onOpenChange={(open) => { if(!open) setIsAddOpen(false); }}><DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{t('inventory.createPart')}</DialogTitle></DialogHeader>
+      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('inventory.createPart')}>
         <form onSubmit={handleCreate} className="space-y-4 text-xs">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('inventory.partName')} *</Label>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.partName')} *</label>
               <input
                 type="text"
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="e.g. Ceramic Front Brake Pads"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('inventory.partCode')}</Label>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.partCode')}</label>
               <input
                 type="text"
                 value={formData.partCode}
                 onChange={(e) => setFormData({ ...formData, partCode: e.target.value })}
                 placeholder="Auto-generated if empty"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-mono"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-mono"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('inventory.category')}</Label>
-              <Select
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.category')}</label>
+              <select
                 value={formData.category}
-                onValueChange={(val) => setFormData({ ...formData, category: val })}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Engine">Engine</SelectItem>
-                  <SelectItem value="Brakes">Brakes</SelectItem>
-                  <SelectItem value="Fluids">Fluids</SelectItem>
-                  <SelectItem value="Filters">Filters</SelectItem>
-                  <SelectItem value="Ignition">Ignition</SelectItem>
-                  <SelectItem value="Electrical">Electrical</SelectItem>
-                  <SelectItem value="Tires">Tires</SelectItem>
-                  <SelectItem value="Suspension">Suspension</SelectItem>
-                </SelectContent>
-              </Select>
+                <option value="Engine">Engine</option>
+                <option value="Brakes">Brakes</option>
+                <option value="Fluids">Fluids</option>
+                <option value="Filters">Filters</option>
+                <option value="Ignition">Ignition</option>
+                <option value="Electrical">Electrical</option>
+                <option value="Tires">Tires</option>
+                <option value="Suspension">Suspension</option>
+              </select>
             </div>
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('inventory.brand')}</Label>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.brand')}</label>
               <input
                 type="text"
                 value={formData.brand}
                 onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
                 placeholder="Bosch, Denso, Mobil..."
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('inventory.location')}</Label>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.location')}</label>
               <input
                 type="text"
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 placeholder="Shelf A-1"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('inventory.supplier')}</Label>
-              <Select
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.supplier')}</label>
+              <select
                 value={formData.supplierId}
-                onValueChange={(val) => {
-                  const sup = suppliers.find((s) => String(s.id) === val)
+                onChange={(e) => {
+                  const sup = suppliers.find((s) => String(s.id) === e.target.value)
                   setFormData({
                     ...formData,
-                    supplierId: val,
+                    supplierId: e.target.value,
                     supplier: sup ? sup.name : formData.supplier,
                   })
                 }}
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select supplier" />
-                </SelectTrigger>
-                <SelectContent>
-                  {suppliers.map((s) => (
-                    <SelectItem key={s.id} value={String(s.id)}>
-                      {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <option value="">Select Supplier</option>
+                {suppliers.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('inventory.location')}</Label>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.location')}</label>
               <input
                 type="text"
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 placeholder="Shelf A-1"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('inventory.stockQty')}</Label>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.stockQty')}</label>
               <input
                 type="number"
                 value={formData.stockQty}
                 onChange={(e) => setFormData({ ...formData, stockQty: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('inventory.minStock')}</Label>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.minStock')}</label>
               <input
                 type="number"
                 value={formData.minThreshold}
                 onChange={(e) => setFormData({ ...formData, minThreshold: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('inventory.unitCost')} ($)</Label>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.unitCost')} ($)</label>
               <input
                 type="number"
                 step="0.01"
                 value={formData.costPrice}
                 onChange={(e) => setFormData({ ...formData, costPrice: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('inventory.sellingPrice')} ($)</Label>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.sellingPrice')} ($)</label>
               <input
                 type="number"
                 step="0.01"
                 value={formData.unitPrice}
                 onChange={(e) => setFormData({ ...formData, unitPrice: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-semibold"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
               />
             </div>
           </div>
 
           <div>
-            <Label className="block text-app-muted font-medium mb-1">Part Photo / Image (Optional)</Label>
+            <label className="block text-app-muted font-medium mb-1">Part Photo / Image (Optional)</label>
             <ImageUpload
               value={formData.image}
               onChange={(url) => setFormData({ ...formData, image: url })}
@@ -607,133 +592,130 @@ export default function InventoryPage() {
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <Button variant="ghost" type="button" onClick={() => setIsAddOpen(false)} className="h-9 rounded-xl">
+            <button
+              type="button"
+              onClick={() => setIsAddOpen(false)}
+              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
+            >
               {t('common.cancel')}
-            </Button>
+            </button>
             <LoadingButton type="submit" loading={createPartMutation.isPending}>
               {t('inventory.createPart')}
             </LoadingButton>
           </div>
         </form>
-      </DialogContent></Dialog>
+      </Modal>
 
       {/* Edit Part Modal */}
-      <Dialog open={isEditOpen} onOpenChange={(open) => { if(!open) setIsEditOpen(false); }}><DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{t('inventory.editPart')}: {selectedPart?.partCode}</DialogTitle></DialogHeader>
+      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title={`${t('inventory.editPart')}: ${selectedPart?.partCode}`}>
         <form onSubmit={handleUpdate} className="space-y-4 text-xs">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('inventory.partName')} *</Label>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.partName')} *</label>
               <input
                 type="text"
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('inventory.brand')}</Label>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.brand')}</label>
               <input
                 type="text"
                 value={formData.brand}
                 onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('inventory.category')}</Label>
-              <Select
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.category')}</label>
+              <select
                 value={formData.category}
-                onValueChange={(val) => setFormData({ ...formData, category: val })}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Engine">Engine</SelectItem>
-                  <SelectItem value="Brakes">Brakes</SelectItem>
-                  <SelectItem value="Fluids">Fluids</SelectItem>
-                  <SelectItem value="Filters">Filters</SelectItem>
-                  <SelectItem value="Ignition">Ignition</SelectItem>
-                  <SelectItem value="Electrical">Electrical</SelectItem>
-                  <SelectItem value="Tires">Tires</SelectItem>
-                  <SelectItem value="Suspension">Suspension</SelectItem>
-                </SelectContent>
-              </Select>
+                <option value="Engine">Engine</option>
+                <option value="Brakes">Brakes</option>
+                <option value="Fluids">Fluids</option>
+                <option value="Filters">Filters</option>
+                <option value="Ignition">Ignition</option>
+                <option value="Electrical">Electrical</option>
+                <option value="Tires">Tires</option>
+                <option value="Suspension">Suspension</option>
+              </select>
             </div>
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('inventory.supplier')}</Label>
-              <Select
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.supplier')}</label>
+              <select
                 value={formData.supplierId}
-                onValueChange={(val) => {
-                  const sup = suppliers.find((s) => String(s.id) === val)
+                onChange={(e) => {
+                  const sup = suppliers.find((s) => String(s.id) === e.target.value)
                   setFormData({
                     ...formData,
-                    supplierId: val,
+                    supplierId: e.target.value,
                     supplier: sup ? sup.name : formData.supplier,
                   })
                 }}
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select supplier" />
-                </SelectTrigger>
-                <SelectContent>
-                  {suppliers.map((s) => (
-                    <SelectItem key={s.id} value={String(s.id)}>
-                      {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <option value="">Select Supplier</option>
+                {suppliers.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('inventory.location')}</Label>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.location')}</label>
               <input
                 type="text"
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('inventory.stockQty')}</Label>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.stockQty')}</label>
               <input
                 type="number"
                 value={formData.stockQty}
                 onChange={(e) => setFormData({ ...formData, stockQty: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-semibold"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
               />
             </div>
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('inventory.unitCost')} ($)</Label>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.unitCost')} ($)</label>
               <input
                 type="number"
                 step="0.01"
                 value={formData.costPrice}
                 onChange={(e) => setFormData({ ...formData, costPrice: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('inventory.sellingPrice')} ($)</Label>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.sellingPrice')} ($)</label>
               <input
                 type="number"
                 step="0.01"
                 value={formData.unitPrice}
                 onChange={(e) => setFormData({ ...formData, unitPrice: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-semibold"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
               />
             </div>
           </div>
 
           <div>
-            <Label className="block text-app-muted font-medium mb-1">Part Photo / Image (Optional)</Label>
+            <label className="block text-app-muted font-medium mb-1">Part Photo / Image (Optional)</label>
             <ImageUpload
               value={formData.image}
               onChange={(url) => setFormData({ ...formData, image: url })}
@@ -742,24 +724,28 @@ export default function InventoryPage() {
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <Button variant="ghost" type="button" onClick={() => setIsEditOpen(false)} className="h-9 rounded-xl">
+            <button
+              type="button"
+              onClick={() => setIsEditOpen(false)}
+              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
+            >
               {t('common.cancel')}
-            </Button>
+            </button>
             <LoadingButton type="submit" loading={updatePartMutation.isPending}>
               {t('common.saveChanges')}
             </LoadingButton>
           </div>
         </form>
-      </DialogContent></Dialog>
+      </Modal>
 
       {/* Adjust Stock Modal */}
-      <Dialog open={isAdjustOpen} onOpenChange={(open) => { if(!open) setIsAdjustOpen(false); }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{adjustType}: {selectedPart?.name}</DialogTitle>
-          </DialogHeader>
+      <Modal
+        isOpen={isAdjustOpen}
+        onClose={() => setIsAdjustOpen(false)}
+        title={`${adjustType}: ${selectedPart?.name}`}
+      >
         <form onSubmit={handleAdjust} className="space-y-4 text-xs">
-          <div className="p-3 bg-app-hover/50 rounded-xl border border-app-border">
+          <div className="p-3 bg-app-hover/50 rounded-sm border border-app-border">
             <p className="text-app-muted">
               {t('inventory.partCode')}: <span className="font-mono text-app-accent font-semibold">{selectedPart?.partCode}</span>
             </p>
@@ -769,39 +755,49 @@ export default function InventoryPage() {
           </div>
 
           <div>
-            <Label className="block text-app-muted font-medium mb-1">{t('common.qty')} *</Label>
-            <Input type="number" min="1" required value={adjustQty} onChange={(e) => setAdjustQty(e.target.value)} className="w-full h-9 rounded-xl" />
+            <label className="block text-app-muted font-medium mb-1">{t('common.qty')} *</label>
+            <input
+              type="number"
+              min="1"
+              required
+              value={adjustQty}
+              onChange={(e) => setAdjustQty(e.target.value)}
+              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
+            />
           </div>
 
           <div>
-            <Label className="block text-app-muted font-medium mb-1">{t('common.notes')}</Label>
+            <label className="block text-app-muted font-medium mb-1">{t('common.notes')}</label>
             <textarea
               rows={2}
               value={adjustNotes}
               onChange={(e) => setAdjustNotes(e.target.value)}
               placeholder="e.g. Delivery order #PO-9918 received"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <Button variant="ghost" type="button" onClick={() => setIsAdjustOpen(false)} className="h-9 rounded-xl">
+            <button
+              type="button"
+              onClick={() => setIsAdjustOpen(false)}
+              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
+            >
               {t('common.cancel')}
-            </Button>
+            </button>
             <LoadingButton type="submit" loading={adjustStockMutation.isPending}>
               {t('common.saveChanges')}
             </LoadingButton>
           </div>
         </form>
-        </DialogContent>
-      </Dialog>
+      </Modal>
 
       {/* View Part Modal */}
-      <Dialog open={isViewOpen} onOpenChange={(open) => { if(!open) setIsViewOpen(false); }}><DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>{t('inventory.title')}</DialogTitle></DialogHeader>
+      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('inventory.title')}>
         {selectedPart && (
           <div className="space-y-4 text-xs">
             {selectedPart.image && (
-              <div className="w-full h-44 rounded-xl overflow-hidden border border-app-border bg-app-card">
+              <div className="w-full h-44 rounded-sm overflow-hidden border border-app-border bg-app-card">
                 <img
                   src={selectedPart.image}
                   alt={selectedPart.name}
@@ -810,7 +806,7 @@ export default function InventoryPage() {
               </div>
             )}
 
-            <div className="flex items-center justify-between p-3 bg-app-hover/50 rounded-xl border border-app-border">
+            <div className="flex items-center justify-between p-3 bg-app-hover/50 rounded-sm border border-app-border">
               <div>
                 <p className="font-mono text-app-accent font-semibold">{selectedPart.partCode}</p>
                 <h3 className="text-sm font-bold text-app-text mt-0.5">{selectedPart.name}</h3>
@@ -819,34 +815,87 @@ export default function InventoryPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+              <div className="p-3 bg-app-input rounded-sm border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold">{t('inventory.stockQty')}</p>
                 <p className="text-sm font-bold text-app-text mt-0.5">{selectedPart.stockQty} units</p>
               </div>
-              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+              <div className="p-3 bg-app-input rounded-sm border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold">{t('inventory.sellingPrice')}</p>
                 <p className="text-sm font-bold text-app-accent mt-0.5">${Number(selectedPart.unitPrice).toFixed(2)}</p>
               </div>
-              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+              <div className="p-3 bg-app-input rounded-sm border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold">{t('inventory.brand')}</p>
                 <p className="font-semibold text-app-text mt-0.5">{selectedPart.brand}</p>
               </div>
-              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+              <div className="p-3 bg-app-input rounded-sm border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold">{t('inventory.category')}</p>
                 <p className="font-semibold text-app-text mt-0.5">{selectedPart.category}</p>
               </div>
-              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+              <div className="p-3 bg-app-input rounded-sm border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold">{t('inventory.supplier')}</p>
                 <p className="text-app-text mt-0.5">{selectedPart.supplier || 'N/A'}</p>
               </div>
-              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+              <div className="p-3 bg-app-input rounded-sm border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold">{t('inventory.location')}</p>
                 <p className="font-mono text-app-text mt-0.5">{selectedPart.location || 'N/A'}</p>
               </div>
             </div>
+
+            <div className="flex items-center justify-end gap-2 pt-4 flex-wrap">
+              {can('inventory', 'update') && (
+                <>
+                  {selectedPart.stockQty <= selectedPart.minThreshold && (
+                    <button
+                      onClick={() =>
+                        adjustStockMutation.mutate({
+                          id: selectedPart.id,
+                          type: 'Stock In',
+                          quantity: 10,
+                          notes: `Quick Reorder Restock from ${selectedPart.supplier || 'Supplier'}`,
+                        })
+                      }
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-semibold rounded-sm text-xs transition-colors cursor-pointer border border-emerald-500/20"
+                    >
+                      <ArrowUp size={14} weight="bold" />
+                      Quick Restock (+10)
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleOpenAdjust(selectedPart, 'Stock In')}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-app-card hover:bg-app-hover active:scale-[0.98] border border-app-border text-app-text font-semibold rounded-sm text-xs transition-colors cursor-pointer"
+                  >
+                    <ArrowUp size={14} weight="bold" />
+                    Stock In (+)
+                  </button>
+                  <button
+                    onClick={() => handleOpenAdjust(selectedPart, 'Stock Out')}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-app-card hover:bg-app-hover active:scale-[0.98] border border-app-border text-app-text font-semibold rounded-sm text-xs transition-colors cursor-pointer"
+                  >
+                    <ArrowDown size={14} weight="bold" />
+                    Stock Out (-)
+                  </button>
+                  <button
+                    onClick={() => handleOpenEdit(selectedPart)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-app-card hover:bg-app-hover active:scale-[0.98] border border-app-border text-app-text font-semibold rounded-sm text-xs transition-colors cursor-pointer"
+                  >
+                    <PencilSimple size={14} weight="bold" />
+                    Edit
+                  </button>
+                </>
+              )}
+              {can('inventory', 'delete') && (
+                <button
+                  onClick={() => handleOpenDelete(selectedPart)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 font-semibold rounded-sm text-xs transition-colors cursor-pointer border border-rose-500/20"
+                >
+                  <Trash size={14} weight="bold" />
+                  Delete
+                </button>
+              )}
+            </div>
           </div>
         )}
-      </DialogContent></Dialog>
+      </Modal>
 
       {/* Delete Confirmation */}
       <ConfirmDialog

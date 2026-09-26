@@ -23,14 +23,7 @@ export default {
           accentLight:'var(--accent-secondary)',
           accentText: 'var(--accent-text)',
         },
-        background: 'var(--background)',
-        foreground: 'var(--foreground)',
-        border: 'var(--border)',
-        input: 'var(--input)',
-        ring: 'var(--ring)',
         primary: {
-          DEFAULT: 'var(--primary)',
-          foreground: 'var(--primary-foreground)',
           50:  '#EFF6FF',
           100: '#DBEAFE',
           200: '#BFDBFE',
@@ -42,38 +35,6 @@ export default {
           800: '#1E40AF',
           900: '#1E3A8A',
         },
-        secondary: {
-          DEFAULT: 'var(--secondary)',
-          foreground: 'var(--secondary-foreground)'
-        },
-        destructive: {
-          DEFAULT: 'var(--destructive)',
-          foreground: 'var(--destructive-foreground)'
-        },
-        muted: {
-          DEFAULT: 'var(--muted)',
-          foreground: 'var(--muted-foreground)'
-        },
-        accent: {
-          DEFAULT: 'var(--accent)',
-          foreground: 'var(--accent-foreground)'
-        },
-        popover: {
-          DEFAULT: 'var(--popover)',
-          foreground: 'var(--popover-foreground)'
-        },
-        card: {
-          DEFAULT: 'var(--card)',
-          foreground: 'var(--card-foreground)'
-        },
-        chart: {
-          1: 'var(--chart-1)',
-          2: 'var(--chart-2)',
-          3: 'var(--chart-3)',
-          4: 'var(--chart-4)',
-          5: 'var(--chart-5)'
-        },
-
         surface: {
           50:  '#F9FAFB',
           100: '#F3F4F6',
@@ -88,32 +49,13 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['"Kantumruy Pro"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
       },
       boxShadow: {
         'card': 'var(--shadow-card)',
         'subtle': 'var(--shadow-subtle)',
       },
-      animation: {
-        'fade-in': 'fadeIn 0.2s ease-out',
-        'pulse-subtle': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'shimmer': 'shimmer 1.8s infinite',
-      },
-      keyframes: {
-        fadeIn: {
-          '0%': { opacity: '0', transform: 'translateY(2px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-        shimmer: {
-          '100%': { transform: 'translateX(100%)' },
-        },
-      },
-      borderRadius: {
-        lg: `var(--radius)`,
-        md: `calc(var(--radius) - 2px)`,
-        sm: `calc(var(--radius) - 4px)`,
-      },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [],
 }

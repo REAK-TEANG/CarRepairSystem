@@ -17,21 +17,15 @@ import {
   Receipt,
 } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
-import { useRepairJobs, useCreateRepairJob, useUpdateRepairJob, useDeleteRepairJob } from '@/hooks/useRepairJobs'
-import { useCustomers } from '@/hooks/useCustomers'
-import { useVehicles } from '@/hooks/useVehicles'
-import { useMechanics } from '@/hooks/useMechanics'
-import { useServicesCatalog } from '@/hooks/useServicesCatalog'
-import { useCreateInvoice } from '@/hooks/useInvoices'
-import { useAuth } from '@/context/AuthContext'
-import { useToast } from '@/context/ToastContext'
-import { StatusBadge, EmptyState, ConfirmDialog, TableSkeleton, LoadingButton } from '@/components/ui'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useRepairJobs, useCreateRepairJob, useUpdateRepairJob, useDeleteRepairJob } from '../../hooks/useRepairJobs'
+import { useCustomers } from '../../hooks/useCustomers'
+import { useVehicles } from '../../hooks/useVehicles'
+import { useMechanics } from '../../hooks/useMechanics'
+import { useServicesCatalog } from '../../hooks/useServicesCatalog'
+import { useCreateInvoice } from '../../hooks/useInvoices'
+import { useAuth } from '../../context/AuthContext'
+import { useToast } from '../../context/ToastContext'
+import { Modal, StatusBadge, EmptyState, ConfirmDialog, TableSkeleton, LoadingButton } from '../../components/ui'
 
 const statusFilters = ['All', 'Pending', 'Diagnosing', 'Repairing', 'Waiting for Parts', 'Ready for Pickup', 'Completed']
 
@@ -137,7 +131,7 @@ export default function RepairJobsPage() {
       intakeNotes: job.intakeInspection?.notes || '',
       customerApproval: job.customerApproval || 'Approved',
     })
-    setIsEditOpen(true)
+    setIsViewOpen(false); setIsEditOpen(true)
   }
 
   const handleOpenView = (job) => {
@@ -178,7 +172,7 @@ export default function RepairJobsPage() {
 
   const handleOpenDelete = (job) => {
     setSelectedJob(job)
-    setIsDeleteOpen(true)
+    setIsViewOpen(false); setIsDeleteOpen(true)
   }
 
   const handleConfirmDelete = () => {
@@ -224,53 +218,52 @@ export default function RepairJobsPage() {
   })
 
   return (
-    <div className="space-y-4 font-sans text-app-text animate-fade-in">
+    <div className="space-y-6 font-sans text-app-text">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
           <h1 className="text-xl font-bold tracking-tight text-app-text">{t('titles.repairJobsOrders')}</h1>
-          <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-app-hover text-app-muted border border-app-border">
-            {jobs.length}
-          </span>
+          <p className="text-xs text-app-muted mt-1">{t('repairJobs.subtitle')}</p>
         </div>
         {can('repair_jobs', 'create') && (
-          <Button onClick={handleOpenAdd} size="sm" className="inline-flex items-center gap-1.5">
-            <Plus size={15} weight="bold" />
+          <button
+            onClick={handleOpenAdd}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText text-xs font-semibold rounded-sm transition-colors shadow-subtle cursor-pointer"
+          >
+            <Plus size={16} weight="bold" />
             {t('repairJobs.newJob')}
-          </Button>
+          </button>
         )}
       </div>
 
       {/* Filter Tabs */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
         {statusFilters.map((tab) => (
-          <Button
+          <button
             key={tab}
-            variant={activeFilter === tab ? 'default' : 'outline'}
-            size="sm"
             onClick={() => setActiveFilter(tab)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-colors cursor-pointer h-auto ${
+            className={`px-3 py-1.5 rounded-sm text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
               activeFilter === tab
-                ? 'bg-app-accent text-app-accentText shadow-subtle hover:bg-app-accentHover'
-                : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover hover:text-app-text'
+                ? 'bg-app-accent text-app-accentText shadow-subtle'
+                : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover active:scale-[0.98] hover:text-app-text'
             }`}
           >
             {tab === 'All' ? t('common.all') : t(`status.${tab}`)}
-          </Button>
+          </button>
         ))}
       </div>
 
       {/* Main Table */}
-      <div className="bg-app-card rounded-2xl border border-app-border shadow-card overflow-hidden transition-colors duration-200">
-        <div className="p-3.5 border-b border-app-border">
-          <div className="relative max-w-sm">
-            <MagnifyingGlass size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-            <Input
+      <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden transition-colors duration-200">
+        <div className="p-4 border-b border-app-border">
+          <div className="relative max-w-md">
+            <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
+            <input
               type="text"
               placeholder={t('common.quickSearch')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8"
+              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-sm text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
             />
           </div>
         </div>
@@ -293,35 +286,35 @@ export default function RepairJobsPage() {
               }
             />
           ) : (
-            <Table className="w-full text-xs">
-              <TableHeader>
-                <TableRow className="text-app-muted text-left border-b border-app-border bg-app-hover/50 hover:bg-transparent">
-                  <TableHead className="px-6 py-3 font-semibold">{t('repairJobs.orderId')}</TableHead>
-                  <TableHead className="px-6 py-3 font-semibold">{t('appointments.vehicle')}</TableHead>
-                  <TableHead className="px-6 py-3 hidden md:table-cell font-semibold">{t('appointments.customer')}</TableHead>
-                  <TableHead className="px-6 py-3 hidden lg:table-cell font-semibold">{t('repairJobs.technician')}</TableHead>
-                  <TableHead className="px-6 py-3 font-semibold">Stock-Out Parts</TableHead>
-                  <TableHead className="px-6 py-3 hidden md:table-cell font-semibold">{t('repairJobs.totalCost')}</TableHead>
-                  <TableHead className="px-6 py-3 font-semibold">{t('common.status')}</TableHead>
-                  <TableHead className="px-6 py-3 font-semibold text-right">{t('common.actions')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody className="divide-y divide-app-border">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
+                  <th className="px-4 py-3 font-semibold">{t('repairJobs.orderId')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('appointments.vehicle')}</th>
+                  <th className="px-4 py-3 hidden md:table-cell font-semibold">{t('appointments.customer')}</th>
+                  <th className="px-4 py-3 hidden lg:table-cell font-semibold">{t('repairJobs.technician')}</th>
+                  <th className="px-4 py-3 font-semibold">Stock-Out Parts</th>
+                  <th className="px-4 py-3 hidden md:table-cell font-semibold">{t('repairJobs.totalCost')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('common.status')}</th>
+                  <th className="px-4 py-3 font-semibold text-right">{t('common.actions')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-app-border">
                 {filtered.map((job) => (
-                  <TableRow key={job.id} className="hover:bg-app-hover/60 transition-colors group">
-                    <TableCell className="px-6 py-3.5 font-mono font-bold text-app-accent">{job.orderNumber}</TableCell>
-                    <TableCell className="px-6 py-3.5">
+                  <tr key={job.id} className="hover:bg-app-hover /60 active:scale-[0.98] transition-colors group">
+                    <td className="px-4 py-3.5 font-mono font-bold text-app-accent">{job.orderNumber}</td>
+                    <td className="px-4 py-3.5">
                       <p className="font-semibold text-app-text">{job.vehicle}</p>
                       <p className="text-[10px] text-app-muted font-mono">{job.plate}</p>
-                    </TableCell>
-                    <TableCell className="px-6 py-3.5 text-app-muted hidden md:table-cell">{job.customer}</TableCell>
-                    <TableCell className="px-6 py-3.5 hidden lg:table-cell">
+                    </td>
+                    <td className="px-4 py-3.5 text-app-muted hidden md:table-cell">{job.customer}</td>
+                    <td className="px-4 py-3.5 hidden lg:table-cell">
                       <span className="inline-flex items-center gap-1.5 text-app-muted">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                         {job.mechanic}
                       </span>
-                    </TableCell>
-                    <TableCell className="px-6 py-3.5">
+                    </td>
+                    <td className="px-4 py-3.5">
                       {job.partsUsed && job.partsUsed.length > 0 ? (
                         <div className="flex flex-wrap gap-1 max-w-xs">
                           {job.partsUsed.map((p, idx) => (
@@ -340,92 +333,81 @@ export default function RepairJobsPage() {
                       ) : (
                         <span className="text-[11px] text-app-muted italic">No parts</span>
                       )}
-                    </TableCell>
-                    <TableCell className="px-6 py-3.5 font-semibold text-app-text tabular-nums hidden md:table-cell">
+                    </td>
+                    <td className="px-4 py-3.5 font-semibold text-app-text tabular-nums hidden md:table-cell">
                       {job.estimatedCost}
-                    </TableCell>
-                    <TableCell className="px-6 py-3.5">
+                    </td>
+                    <td className="px-4 py-3.5">
                       <StatusBadge status={job.status} />
-                    </TableCell>
-                    <TableCell className="px-6 py-3.5 text-right">
+                    </td>
+                    <td className="px-4 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-1">
                         {/* 1-Click Fast Invoice on Completed Orders */}
                         {job.status === 'Completed' && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
+                          <button
                             onClick={() => handle1ClickInvoice(job)}
-                            className="h-7 w-7 p-0 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-sm text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors cursor-pointer"
                             title="Generate Invoice"
                           >
                             <Receipt size={15} />
-                          </Button>
+                          </button>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
+                        <button
                           onClick={() => handleOpenView(job)}
-                          className="h-7 w-7 p-0 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
+                          className="p-1.5 rounded-sm text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
                           title={t('common.view')}
                         >
                           <Eye size={15} />
-                        </Button>
+                        </button>
                         {can('repair_jobs', 'update') && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
+                          <button
                             onClick={() => handleOpenEdit(job)}
-                            className="h-7 w-7 p-0 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
+                            className="p-1.5 rounded-sm text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
                             title={t('repairJobs.updateProgress')}
                           >
                             <PencilSimple size={15} />
-                          </Button>
+                          </button>
                         )}
                         {can('repair_jobs', 'delete') && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
+                          <button
                             onClick={() => handleOpenDelete(job)}
-                            className="h-7 w-7 p-0 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-sm text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
                             title={t('common.delete')}
                           >
                             <Trash size={15} />
-                          </Button>
+                          </button>
                         )}
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
+              </tbody>
+            </table>
           )}
         </div>
       </div>
 
       {/* Create Repair Order Modal with Digital Vehicle Intake (DVI) */}
-      <Dialog open={isAddOpen} onOpenChange={(open) => { if (!open) setIsAddOpen(false); }}><DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{t('repairJobs.createWorkOrder')}</DialogTitle></DialogHeader>
+      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('repairJobs.createWorkOrder')}>
         <form onSubmit={handleCreate} className="space-y-4 text-xs">
           {/* Service Package Quick Selector */}
-          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl space-y-2">
-            <Label className="block text-emerald-800 dark:text-emerald-300 font-semibold flex items-center gap-1.5">
+          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-sm space-y-2">
+            <label className="block text-emerald-800 dark:text-emerald-300 font-semibold flex items-center gap-1.5">
               <Sparkle size={15} weight="fill" className="text-emerald-500" />
-              Service Package
-            </Label>
-            <Select
+              Select Service Package (Auto-configures cost & parts stock-out)
+            </label>
+            <select
               value={formData.serviceId}
-              onValueChange={(val) => handleServiceSelect(val)}
+              onChange={(e) => handleServiceSelect(e.target.value)}
+              className="w-full px-3 py-2 bg-app-card border border-emerald-500/30 rounded-sm text-app-text font-medium focus:outline-none focus:border-emerald-500"
             >
-              <SelectTrigger className="bg-app-card">
-                <SelectValue placeholder="-- Choose Service Package --" />
-              </SelectTrigger>
-              <SelectContent>
-                {services.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.name} (${Number(s.estimatedCost || 0).toFixed(2)}) — {s.requiredParts?.length || 0} required parts
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <option value="">-- Choose Service Package (e.g. Oil Change, Brake Service) --</option>
+              {services.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name} (${Number(s.estimatedCost || 0).toFixed(2)}) — {s.requiredParts?.length || 0} required parts
+                </option>
+              ))}
+            </select>
 
             {/* Live Auto Stock-Out Preview */}
             {activeService && (
@@ -441,7 +423,7 @@ export default function RepairJobsPage() {
                       return (
                         <div
                           key={idx}
-                          className={`p-2 rounded-lg border flex items-center justify-between text-[11px] ${
+                          className={`p-2 rounded-sm border flex items-center justify-between text-[11px] ${
                             isAvailable
                               ? 'bg-emerald-500/5 border-emerald-500/20 text-app-text'
                               : 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400'
@@ -476,136 +458,134 @@ export default function RepairJobsPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('appointments.customer')} *</Label>
-              <Select
+              <label className="block text-app-muted font-medium mb-1">{t('appointments.customer')} *</label>
+              <select
                 value={formData.customer}
-                onValueChange={(val) => {
-                  const c = customers.find((x) => x.name === val)
-                  setFormData({ ...formData, customer: val, customerId: c ? c.id : '' })
+                onChange={(e) => {
+                  const c = customers.find((x) => x.name === e.target.value)
+                  setFormData({ ...formData, customer: e.target.value, customerId: c ? c.id : '' })
                 }}
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select customer" />
-                </SelectTrigger>
-                <SelectContent>
-                  {customers.map((c) => (
-                    <SelectItem key={c.id} value={c.name}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                {customers.map((c) => (
+                  <option key={c.id} value={c.name}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('appointments.vehicle')} *</Label>
-              <Select
+              <label className="block text-app-muted font-medium mb-1">{t('appointments.vehicle')} *</label>
+              <select
                 value={formData.plate}
-                onValueChange={(val) => {
-                  const v = vehicles.find((x) => x.number === val)
+                onChange={(e) => {
+                  const v = vehicles.find((x) => x.number === e.target.value)
                   setFormData({
                     ...formData,
-                    plate: val,
+                    plate: e.target.value,
                     vehicle: v ? `${v.brand} ${v.model}` : '',
                     vehicleId: v ? v.id : '',
                     odometer: v ? String(v.mileage || '') : formData.odometer,
                   })
                 }}
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select vehicle" />
-                </SelectTrigger>
-                <SelectContent>
-                  {vehicles.map((v) => (
-                    <SelectItem key={v.id} value={v.number}>
-                      {v.number} - {v.brand} {v.model}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                {vehicles.map((v) => (
+                  <option key={v.id} value={v.number}>
+                    {v.number} - {v.brand} {v.model}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
           {/* DVI: Odometer, Fuel Level & Estimate Authorization */}
-          <div className="p-3 bg-app-hover/40 border border-app-border rounded-xl space-y-2">
+          <div className="p-3 bg-app-hover/40 border border-app-border rounded-sm space-y-2">
             <p className="text-[11px] font-bold text-app-text flex items-center gap-1.5">
               <ShieldCheck size={14} className="text-emerald-500" />
-              Intake Verification
+              Digital Vehicle Intake (DVI) & Check-in Verification
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <Label className="block text-app-muted font-medium mb-1 flex items-center gap-1">
+                <label className="block text-app-muted font-medium mb-1 flex items-center gap-1">
                   <Gauge size={12} /> Odometer (km)
-                </Label>
-                <Input type="number" value={formData.odometer} onChange={(e) => setFormData({ ...formData, odometer: e.target.value })} placeholder="e.g. 52300" className="h-8 font-mono" />
+                </label>
+                <input
+                  type="number"
+                  value={formData.odometer}
+                  onChange={(e) => setFormData({ ...formData, odometer: e.target.value })}
+                  placeholder="e.g. 52300"
+                  className="w-full px-3 py-1.5 bg-app-input border border-app-border rounded-sm text-app-text font-mono focus:outline-none focus:border-app-accent"
+                />
               </div>
               <div>
-                <Label className="block text-app-muted font-medium mb-1 flex items-center gap-1">
+                <label className="block text-app-muted font-medium mb-1 flex items-center gap-1">
                   <GasPump size={12} /> Fuel Level
-                </Label>
-                <Select
+                </label>
+                <select
                   value={formData.fuelLevel}
-                  onValueChange={(val) => setFormData({ ...formData, fuelLevel: val })}
+                  onChange={(e) => setFormData({ ...formData, fuelLevel: e.target.value })}
+                  className="w-full px-3 py-1.5 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
                 >
-                  <SelectTrigger className="h-8">
-                    <SelectValue placeholder="Fuel" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Empty">Empty (Reserve)</SelectItem>
-                    <SelectItem value="1/4">1/4 Tank</SelectItem>
-                    <SelectItem value="1/2">1/2 Tank</SelectItem>
-                    <SelectItem value="3/4">3/4 Tank</SelectItem>
-                    <SelectItem value="Full">Full Tank</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <option value="Empty">Empty (Reserve)</option>
+                  <option value="1/4">1/4 Tank</option>
+                  <option value="1/2">1/2 Tank</option>
+                  <option value="3/4">3/4 Tank</option>
+                  <option value="Full">Full Tank</option>
+                </select>
               </div>
               <div>
-                <Label className="block text-app-muted font-medium mb-1">Customer Authorization</Label>
-                <Select
+                <label className="block text-app-muted font-medium mb-1">Customer Authorization</label>
+                <select
                   value={formData.customerApproval}
-                  onValueChange={(val) => setFormData({ ...formData, customerApproval: val })}
+                  onChange={(e) => setFormData({ ...formData, customerApproval: e.target.value })}
+                  className="w-full px-3 py-1.5 bg-app-input border border-app-border rounded-sm text-app-text font-semibold focus:outline-none focus:border-app-accent"
                 >
-                  <SelectTrigger className="h-8">
-                    <SelectValue placeholder="Approval" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Approved">Customer Approved</SelectItem>
-                    <SelectItem value="Pending Approval">Pending Quote Approval</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <option value="Approved">Customer Approved</option>
+                  <option value="Pending Approval">Pending Quote Approval</option>
+                </select>
               </div>
             </div>
 
             <div>
-              <Label className="block text-app-muted font-medium mb-1">Inspection Notes</Label>
-              <Input type="text" value={formData.intakeNotes} onChange={(e) => setFormData({ ...formData, intakeNotes: e.target.value })} placeholder="e.g. Minor scratch on rear right bumper" className="h-8" />
+              <label className="block text-app-muted font-medium mb-1">Pre-Existing Damage / Exterior Inspection Notes</label>
+              <input
+                type="text"
+                value={formData.intakeNotes}
+                onChange={(e) => setFormData({ ...formData, intakeNotes: e.target.value })}
+                placeholder="e.g. Minor scratch on rear right bumper, clean windshield"
+                className="w-full px-3 py-1.5 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent text-xs"
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('repairJobs.technician')} *</Label>
-              <Select
+              <label className="block text-app-muted font-medium mb-1">{t('repairJobs.technician')} *</label>
+              <select
                 value={formData.mechanic}
-                onValueChange={(val) => {
-                  const m = mechanics.find((x) => x.name === val)
-                  setFormData({ ...formData, mechanic: val, mechanicId: m ? m.id : '' })
+                onChange={(e) => {
+                  const m = mechanics.find((x) => x.name === e.target.value)
+                  setFormData({ ...formData, mechanic: e.target.value, mechanicId: m ? m.id : '' })
                 }}
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select technician" />
-                </SelectTrigger>
-                <SelectContent>
-                  {mechanics.map((m) => (
-                    <SelectItem key={m.id} value={m.name}>
-                      {m.name} ({m.specialization})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                {mechanics.map((m) => (
+                  <option key={m.id} value={m.name}>
+                    {m.name} ({m.specialization})
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('repairJobs.totalCost')}</label>
-              <Input type="text" value={formData.estimatedCost} onChange={(e) => setFormData({ ...formData, estimatedCost: e.target.value })} placeholder="$450" className="w-full h-9 px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text font-semibold text-xs" />
+              <input
+                type="text"
+                value={formData.estimatedCost}
+                onChange={(e) => setFormData({ ...formData, estimatedCost: e.target.value })}
+                placeholder="$450"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
+              />
             </div>
           </div>
 
@@ -617,7 +597,7 @@ export default function RepairJobsPage() {
               value={formData.problem}
               onChange={(e) => setFormData({ ...formData, problem: e.target.value })}
               placeholder="e.g. Engine shaking while idle, check engine light on"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
 
@@ -628,62 +608,60 @@ export default function RepairJobsPage() {
               value={formData.diagnosis}
               onChange={(e) => setFormData({ ...formData, diagnosis: e.target.value })}
               placeholder="e.g. Routine 50k miles inspection and filter replacement"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <Button type="button" variant="ghost" size="sm" onClick={() => setIsAddOpen(false)} className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer">{t('common.cancel')}</Button>
+            <button
+              type="button"
+              onClick={() => setIsAddOpen(false)}
+              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
+            >
+              {t('common.cancel')}
+            </button>
             <LoadingButton type="submit" loading={createJobMutation.isPending}>
               {t('repairJobs.createWorkOrder')}
             </LoadingButton>
           </div>
         </form>
-      </DialogContent></Dialog>
+      </Modal>
 
       {/* Edit / Update Status Modal */}
-      <Dialog open={isEditOpen} onOpenChange={(open) => { if (!open) setIsEditOpen(false); }}><DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{`${t('repairJobs.updateProgress')}: ${selectedJob?.orderNumber}`}</DialogTitle></DialogHeader>
+      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title={`${t('repairJobs.updateProgress')}: ${selectedJob?.orderNumber}`}>
         <form onSubmit={handleUpdate} className="space-y-4 text-xs">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('common.status')}</Label>
-              <Select
+              <label className="block text-app-muted font-medium mb-1">{t('common.status')}</label>
+              <select
                 value={formData.status}
-                onValueChange={(val) => setFormData({ ...formData, status: val })}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Pending">{t('status.Pending')}</SelectItem>
-                  <SelectItem value="Diagnosing">{t('status.Diagnosing')}</SelectItem>
-                  <SelectItem value="Repairing">{t('status.Repairing')}</SelectItem>
-                  <SelectItem value="Waiting for Parts">{t('status.Waiting for Parts')}</SelectItem>
-                  <SelectItem value="Ready for Pickup">{t('status.Ready for Pickup')}</SelectItem>
-                  <SelectItem value="Completed">{t('status.Completed')}</SelectItem>
-                </SelectContent>
-              </Select>
+                <option value="Pending">{t('status.Pending')}</option>
+                <option value="Diagnosing">{t('status.Diagnosing')}</option>
+                <option value="Repairing">{t('status.Repairing')}</option>
+                <option value="Waiting for Parts">{t('status.Waiting for Parts')}</option>
+                <option value="Ready for Pickup">{t('status.Ready for Pickup')}</option>
+                <option value="Completed">{t('status.Completed')}</option>
+              </select>
             </div>
             <div>
-              <Label className="block text-app-muted font-medium mb-1">{t('repairJobs.technician')}</Label>
-              <Select
+              <label className="block text-app-muted font-medium mb-1">{t('repairJobs.technician')}</label>
+              <select
                 value={formData.mechanic}
-                onValueChange={(val) => {
-                  const m = mechanics.find((x) => x.name === val)
-                  setFormData({ ...formData, mechanic: val, mechanicId: m ? m.id : '' })
+                onChange={(e) => {
+                  const m = mechanics.find((x) => x.name === e.target.value)
+                  setFormData({ ...formData, mechanic: e.target.value, mechanicId: m ? m.id : '' })
                 }}
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select technician" />
-                </SelectTrigger>
-                <SelectContent>
-                  {mechanics.map((m) => (
-                    <SelectItem key={m.id} value={m.name}>
-                      {m.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                {mechanics.map((m) => (
+                  <option key={m.id} value={m.name}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -693,24 +671,30 @@ export default function RepairJobsPage() {
               rows={3}
               value={formData.diagnosis || ''}
               onChange={(e) => setFormData({ ...formData, diagnosis: e.target.value })}
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <Button type="button" variant="ghost" size="sm" onClick={() => setIsEditOpen(false)} className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer">{t('common.cancel')}</Button>
+            <button
+              type="button"
+              onClick={() => setIsEditOpen(false)}
+              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
+            >
+              {t('common.cancel')}
+            </button>
             <LoadingButton type="submit" loading={updateJobMutation.isPending}>
               {t('common.saveChanges')}
             </LoadingButton>
           </div>
         </form>
-      </DialogContent></Dialog>
+      </Modal>
 
       {/* View Job Modal with Full DVI & Parts Details */}
-      <Dialog open={isViewOpen} onOpenChange={(open) => { if (!open) setIsViewOpen(false); }}><DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{t('common.details')}</DialogTitle></DialogHeader>
+      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('common.details')}>
         {selectedJob && (
           <div className="space-y-4 text-xs">
-            <div className="flex items-center justify-between p-3.5 bg-app-hover/50 rounded-xl border border-app-border">
+            <div className="flex items-center justify-between p-3.5 bg-app-hover/50 rounded-sm border border-app-border">
               <div>
                 <p className="font-mono text-app-accent font-semibold">{selectedJob.orderNumber}</p>
                 <h3 className="text-sm font-bold text-app-text mt-0.5">{selectedJob.vehicle}</h3>
@@ -719,13 +703,13 @@ export default function RepairJobsPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+              <div className="p-3 bg-app-input rounded-sm border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold flex items-center gap-1">
                   <User size={12} /> {t('appointments.customer')}
                 </p>
                 <p className="font-semibold text-app-text mt-0.5">{selectedJob.customer}</p>
               </div>
-              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+              <div className="p-3 bg-app-input rounded-sm border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold flex items-center gap-1">
                   <Car size={12} /> {t('appointments.vehicle')}
                 </p>
@@ -735,20 +719,20 @@ export default function RepairJobsPage() {
             </div>
 
             {/* DVI Intake Verification Card */}
-            <div className="p-3 bg-app-card rounded-xl border border-app-border space-y-1.5">
+            <div className="p-3 bg-app-card rounded-sm border border-app-border space-y-1.5">
               <p className="text-[10px] text-app-muted uppercase font-semibold flex items-center gap-1">
                 <ShieldCheck size={13} className="text-emerald-500" /> Digital Vehicle Intake Record
               </p>
               <div className="grid grid-cols-3 gap-2 pt-1 text-[11px]">
-                <div className="p-1.5 rounded-lg bg-app-hover">
+                <div className="p-1.5 rounded-sm bg-app-hover">
                   <span className="text-[10px] text-app-muted block">Mileage</span>
                   <span className="font-mono font-bold text-app-text">{selectedJob.odometer || '0'} km</span>
                 </div>
-                <div className="p-1.5 rounded-lg bg-app-hover">
+                <div className="p-1.5 rounded-sm bg-app-hover">
                   <span className="text-[10px] text-app-muted block">Fuel Level</span>
                   <span className="font-bold text-app-text">{selectedJob.fuelLevel || '1/2'}</span>
                 </div>
-                <div className="p-1.5 rounded-lg bg-app-hover">
+                <div className="p-1.5 rounded-sm bg-app-hover">
                   <span className="text-[10px] text-app-muted block">Customer Quote</span>
                   <span className="font-bold text-emerald-600 dark:text-emerald-400">
                     {selectedJob.customerApproval || 'Approved'}
@@ -762,20 +746,20 @@ export default function RepairJobsPage() {
               )}
             </div>
 
-            <div className="p-3 bg-app-input rounded-xl border border-app-border">
+            <div className="p-3 bg-app-input rounded-sm border border-app-border">
               <p className="text-[10px] text-app-muted uppercase font-semibold">{t('common.description')}</p>
               <p className="text-app-text mt-1">{selectedJob.problem}</p>
             </div>
 
             {selectedJob.diagnosis && (
-              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+              <div className="p-3 bg-app-input rounded-sm border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold">{t('repairJobs.diagnosticReport')}</p>
                 <p className="text-app-text mt-1">{selectedJob.diagnosis}</p>
               </div>
             )}
 
             {/* Deducted Spare Parts Section */}
-            <div className="p-3 bg-app-card rounded-xl border border-app-border space-y-2">
+            <div className="p-3 bg-app-card rounded-sm border border-app-border space-y-2">
               <p className="text-[10px] text-app-muted uppercase font-semibold flex items-center gap-1.5">
                 <Package size={14} className="text-amber-500" />
                 Inventory Parts Deducted (Auto Stock-Out)
@@ -783,7 +767,7 @@ export default function RepairJobsPage() {
               {selectedJob.partsUsed && selectedJob.partsUsed.length > 0 ? (
                 <div className="space-y-1.5">
                   {selectedJob.partsUsed.map((p, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-app-hover/50 border border-app-border">
+                    <div key={idx} className="flex items-center justify-between p-2 rounded-sm bg-app-hover/50 border border-app-border">
                       <div className="flex items-center gap-2">
                         <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold">
                           {p.quantity}x
@@ -803,7 +787,7 @@ export default function RepairJobsPage() {
             </div>
           </div>
         )}
-      </DialogContent></Dialog>
+      </Modal>
 
       {/* Delete Confirmation */}
       <ConfirmDialog

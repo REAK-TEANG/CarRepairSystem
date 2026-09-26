@@ -1,15 +1,19 @@
-import { useState } from 'react'
 import { Outlet, Navigate, useLocation } from 'react-router-dom'
-import Sidebar from '@/components/layout/Sidebar'
-import TopBar from '@/components/layout/TopBar'
-import { useAuth } from '@/context/AuthContext'
-import { LoadingSpinner } from '@/components/ui'
+import Sidebar from '../components/layout/Sidebar'
+import TopBar from '../components/layout/TopBar'
+import { useAuth } from '../context/AuthContext'
+import { LoadingSpinner } from '../components/ui'
+import { useAppStore } from '../store/useAppStore'
+import { FadeIn } from '../components/animation/AnimeWrapper'
 
 export default function AppLayout() {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const { user, loading } = useAuth()
   const location = useLocation()
+  
+  const sidebarCollapsed = useAppStore((state) => state.sidebarCollapsed)
+  const toggleSidebar = useAppStore((state) => state.toggleSidebar)
+  const mobileSidebarOpen = useAppStore((state) => state.mobileSidebarOpen)
+  const setMobileSidebarOpen = useAppStore((state) => state.setMobileSidebarOpen)
 
   if (loading) {
     return <LoadingSpinner />
@@ -24,7 +28,7 @@ export default function AppLayout() {
       {/* Sidebar (Desktop Collapsible & Mobile Slide-over Drawer) */}
       <Sidebar
         collapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        onToggle={toggleSidebar}
         mobileOpen={mobileSidebarOpen}
         onCloseMobile={() => setMobileSidebarOpen(false)}
       />
@@ -37,10 +41,10 @@ export default function AppLayout() {
         />
 
         {/* Page Content Viewport */}
-        <main className="flex-1 overflow-y-auto p-3 sm:p-6 bg-[var(--bg-canvas)] text-[var(--text-primary)] transition-colors duration-250">
-          <div className="max-w-7xl mx-auto animate-fade-in pb-12">
+        <main className="flex-1 overflow-y-auto p-2 sm:p-4 bg-[var(--bg-canvas)] text-[var(--text-primary)] transition-colors duration-250">
+          <FadeIn key={location.pathname} duration={300} delay={0} className="w-full mx-auto pb-12">
             <Outlet />
-          </div>
+          </FadeIn>
         </main>
       </div>
     </div>
