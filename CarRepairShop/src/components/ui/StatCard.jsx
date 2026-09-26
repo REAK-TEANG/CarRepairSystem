@@ -2,14 +2,14 @@ import { TrendUp, TrendDown } from '@phosphor-icons/react'
 
 export default function StatCard({ title, value, icon: Icon, trend, trendLabel, goal }) {
   return (
-    <div className="bg-app-card rounded-xl border border-app-border p-4 shadow-card hover:border-app-border/80 transition-colors group font-sans">
+    <div className="bg-app-card rounded-sm border border-app-border p-4 shadow-card hover:border-app-border/80 transition-colors group font-sans">
       <div className="flex items-start justify-between">
         <div className="space-y-1">
           <p className="text-xs font-medium text-app-muted uppercase tracking-wider">{title}</p>
           <h3 className="text-xl font-bold tracking-tight text-app-text tabular-nums">{value}</h3>
         </div>
         {Icon && (
-          <div className="p-2 rounded-lg bg-app-hover border border-app-border text-app-muted group-hover:text-app-accent transition-colors">
+          <div className="p-2 rounded-sm bg-app-hover border border-app-border text-app-muted group-hover:text-app-accent transition-colors">
             <Icon size={18} weight="regular" />
           </div>
         )}

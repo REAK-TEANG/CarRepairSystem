@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MagnifyingGlass, Plus, PencilSimple, Trash, ArrowUp, ArrowDown, Eye, Package, ClockCounterClockwise } from '@phosphor-icons/react'
+import { MagnifyingGlass, Plus, PencilSimple, Trash, ArrowUp, ArrowDown, Package, ClockCounterClockwise } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useInventory, useInventoryTransactions, useCreatePart, useUpdatePart, useAdjustStock, useDeletePart } from '../../hooks/useInventory'
 import { useSuppliers } from '../../hooks/useSuppliers'
@@ -89,7 +89,7 @@ export default function InventoryPage() {
       location: p.location || '',
       image: p.image || '',
     })
-    setIsEditOpen(true)
+    setIsViewOpen(false); setIsEditOpen(true)
   }
 
   const handleOpenAdjust = (p, type) => {
@@ -97,7 +97,7 @@ export default function InventoryPage() {
     setAdjustType(type)
     setAdjustQty(type === 'Stock In' ? 10 : 1)
     setAdjustNotes('')
-    setIsAdjustOpen(true)
+    setIsViewOpen(false); setIsAdjustOpen(true)
   }
 
   const handleOpenView = (p) => {
@@ -107,7 +107,7 @@ export default function InventoryPage() {
 
   const handleOpenDelete = (p) => {
     setSelectedPart(p)
-    setIsDeleteOpen(true)
+    setIsViewOpen(false); setIsDeleteOpen(true)
   }
 
   const handleCreate = async (e) => {
@@ -164,7 +164,7 @@ export default function InventoryPage() {
   })
 
   return (
-    <div className="space-y-6 font-sans text-app-text animate-fade-in">
+    <div className="space-y-6 font-sans text-app-text">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -174,7 +174,7 @@ export default function InventoryPage() {
         {can('inventory', 'create') && (
           <button
             onClick={handleOpenAdd}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover text-app-accentText text-xs font-semibold rounded-xl transition-colors shadow-subtle"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText text-xs font-semibold rounded-sm transition-colors shadow-subtle"
           >
             <Plus size={16} weight="bold" />
             {t('inventory.addPart')}
@@ -186,10 +186,10 @@ export default function InventoryPage() {
       <div className="flex items-center gap-2 border-b border-app-border pb-3">
         <button
           onClick={() => setActiveTab('inventory')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-sm text-xs font-semibold transition-all ${
             activeTab === 'inventory'
               ? 'bg-app-accent text-app-accentText shadow-subtle'
-              : 'text-app-muted hover:text-app-text hover:bg-app-hover'
+              : 'text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98]'
           }`}
         >
           <Package size={16} weight="bold" />
@@ -199,10 +199,10 @@ export default function InventoryPage() {
 
         <button
           onClick={() => setActiveTab('transactions')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-sm text-xs font-semibold transition-all ${
             activeTab === 'transactions'
               ? 'bg-app-accent text-app-accentText shadow-subtle'
-              : 'text-app-muted hover:text-app-text hover:bg-app-hover'
+              : 'text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98]'
           }`}
         >
           <ClockCounterClockwise size={16} weight="bold" />
@@ -220,10 +220,10 @@ export default function InventoryPage() {
                 <button
                   key={cat}
                   onClick={() => setCategoryFilter(cat)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-colors ${
+                  className={`px-3 py-1.5 rounded-sm text-xs font-medium whitespace-nowrap transition-colors ${
                     categoryFilter === cat
                       ? 'bg-app-accent text-app-accentText shadow-subtle'
-                      : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover hover:text-app-text'
+                      : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover active:scale-[0.98] hover:text-app-text'
                   }`}
                 >
                   {cat === 'All' ? t('common.all') : cat}
@@ -237,7 +237,7 @@ export default function InventoryPage() {
                 <button
                   key={st}
                   onClick={() => setStockFilter(st)}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium whitespace-nowrap transition-colors ${
+                  className={`px-2.5 py-1 rounded-sm text-[11px] font-medium whitespace-nowrap transition-colors ${
                     stockFilter === st
                       ? 'bg-app-hover text-app-text border border-app-border font-semibold'
                       : 'text-app-muted hover:text-app-text'
@@ -250,7 +250,7 @@ export default function InventoryPage() {
           </div>
 
       {/* Table */}
-      <div className="bg-app-card rounded-2xl border border-app-border shadow-card overflow-hidden">
+      <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden">
         <div className="p-4 border-b border-app-border flex items-center justify-between gap-3">
           <div className="relative flex-1 max-w-md">
             <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
@@ -259,7 +259,7 @@ export default function InventoryPage() {
               placeholder={t('common.quickSearch')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-xl text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-sm text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
             />
           </div>
           {(searchQuery || categoryFilter !== 'All' || stockFilter !== 'All Stock') && (
@@ -298,30 +298,29 @@ export default function InventoryPage() {
             <table className="w-full text-xs">
               <thead>
                 <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                  <th className="px-6 py-3 font-semibold">{t('inventory.partCode')}</th>
-                  <th className="px-6 py-3 font-semibold">{t('inventory.partName')}</th>
-                  <th className="px-6 py-3 font-semibold hidden md:table-cell">{t('inventory.category')}</th>
-                  <th className="px-6 py-3 font-semibold hidden lg:table-cell">{t('inventory.location')}</th>
-                  <th className="px-6 py-3 font-semibold">{t('inventory.stockQty')}</th>
-                  <th className="px-6 py-3 font-semibold">{t('inventory.sellingPrice')}</th>
-                  <th className="px-6 py-3 font-semibold">{t('common.status')}</th>
-                  <th className="px-6 py-3 font-semibold text-right">{t('common.actions')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('inventory.partCode')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('inventory.partName')}</th>
+                  <th className="px-4 py-3 font-semibold hidden md:table-cell">{t('inventory.category')}</th>
+                  <th className="px-4 py-3 font-semibold hidden lg:table-cell">{t('inventory.location')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('inventory.stockQty')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('inventory.sellingPrice')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('common.status')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-app-border">
                 {filtered.map((part) => (
-                  <tr key={part.id} className="hover:bg-app-hover/60 transition-colors group">
-                    <td className="px-6 py-3.5 font-mono font-semibold text-app-accent">{part.partCode}</td>
-                    <td className="px-6 py-3.5">
+                  <tr key={part.id} onClick={() => handleOpenView(part)} className="hover:bg-app-hover /60 active:scale-[0.98] transition-colors group cursor-pointer">
+                    <td className="px-4 py-3.5 font-mono font-semibold text-app-accent">{part.partCode}</td>
+                    <td className="px-4 py-3.5">
                       <div className="flex items-center gap-3">
                         {part.image ? (
                           <img
                             src={part.image}
                             alt={part.name}
-                            className="w-10 h-10 rounded-xl object-cover border border-app-border bg-app-card flex-shrink-0"
+                            className="w-10 h-10 rounded-sm object-cover border border-app-border bg-app-card flex-shrink-0"
                           />
                         ) : (
-                          <div className="w-10 h-10 rounded-xl bg-app-hover border border-app-border flex items-center justify-center flex-shrink-0 text-app-muted">
+                          <div className="w-10 h-10 rounded-sm bg-app-hover border border-app-border flex items-center justify-center flex-shrink-0 text-app-muted">
                             <Package size={20} />
                           </div>
                         )}
@@ -333,9 +332,9 @@ export default function InventoryPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-3.5 text-app-muted hidden md:table-cell">{part.category}</td>
-                    <td className="px-6 py-3.5 text-app-muted hidden lg:table-cell font-mono">{part.location}</td>
-                    <td className="px-6 py-3.5">
+                    <td className="px-4 py-3.5 text-app-muted hidden md:table-cell">{part.category}</td>
+                    <td className="px-4 py-3.5 text-app-muted hidden lg:table-cell font-mono">{part.location}</td>
+                    <td className="px-4 py-3.5">
                       <span
                         className={`font-bold tabular-nums ${part.stockQty <= part.minThreshold ? 'text-red-600 dark:text-red-400' : 'text-app-text'}`}
                       >
@@ -343,76 +342,14 @@ export default function InventoryPage() {
                       </span>
                       <span className="text-[10px] text-app-muted ml-1">(min {part.minThreshold})</span>
                     </td>
-                    <td className="px-6 py-3.5 font-semibold text-app-text tabular-nums">
+                    <td className="px-4 py-3.5 font-semibold text-app-text tabular-nums">
                       ${Number(part.unitPrice).toFixed(2)}
                     </td>
-                    <td className="px-6 py-3.5">
+                    <td className="px-4 py-3.5">
                       <StatusBadge
                         status={part.stockQty === 0 ? 'Out of Stock' : part.stockQty <= part.minThreshold ? 'Low Stock' : 'In Stock'}
                         variant={part.stockQty === 0 ? 'danger' : part.stockQty <= part.minThreshold ? 'warning' : 'success'}
                       />
-                    </td>
-                    <td className="px-6 py-3.5 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => handleOpenView(part)}
-                          className="p-1.5 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors"
-                          title={t('common.view')}
-                        >
-                          <Eye size={15} />
-                        </button>
-                        {can('inventory', 'update') && (
-                          <>
-                            {part.stockQty <= part.minThreshold && (
-                              <button
-                                onClick={() =>
-                                  adjustStockMutation.mutate({
-                                    id: part.id,
-                                    type: 'Stock In',
-                                    quantity: 10,
-                                    notes: `Quick Reorder Restock from ${part.supplier || 'Supplier'}`,
-                                  })
-                                }
-                                title="1-Click Quick Restock (+10 from Supplier)"
-                                className="px-2 py-1 rounded-lg text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 transition-colors flex items-center gap-1 cursor-pointer"
-                              >
-                                <ArrowUp size={12} weight="bold" />
-                                <span>+10</span>
-                              </button>
-                            )}
-                            <button
-                              onClick={() => handleOpenAdjust(part, 'Stock In')}
-                              title="Stock In (+)"
-                              className="p-1.5 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-app-hover transition-colors cursor-pointer"
-                            >
-                              <ArrowUp size={15} weight="bold" />
-                            </button>
-                            <button
-                              onClick={() => handleOpenAdjust(part, 'Stock Out')}
-                              title="Stock Out (-)"
-                              className="p-1.5 rounded-lg text-amber-600 dark:text-amber-400 hover:bg-app-hover transition-colors cursor-pointer"
-                            >
-                              <ArrowDown size={15} weight="bold" />
-                            </button>
-                            <button
-                              onClick={() => handleOpenEdit(part)}
-                              title={t('common.edit')}
-                              className="p-1.5 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors"
-                            >
-                              <PencilSimple size={15} />
-                            </button>
-                          </>
-                        )}
-                        {can('inventory', 'delete') && (
-                          <button
-                            onClick={() => handleOpenDelete(part)}
-                            title={t('common.delete')}
-                            className="p-1.5 rounded-lg text-app-muted hover:text-red-500 hover:bg-app-hover transition-colors"
-                          >
-                            <Trash size={15} />
-                          </button>
-                        )}
-                      </div>
                     </td>
                   </tr>
                 ))}
@@ -424,7 +361,7 @@ export default function InventoryPage() {
     </>
   ) : (
     /* Stock Movement & Auto Stock-Out Transactions View */
-    <div className="bg-app-card rounded-2xl border border-app-border shadow-card overflow-hidden">
+    <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden">
       <div className="p-4 border-b border-app-border flex items-center justify-between">
         <div>
           <h2 className="text-sm font-bold text-app-text flex items-center gap-2">
@@ -447,24 +384,24 @@ export default function InventoryPage() {
           <table className="w-full text-xs">
             <thead>
               <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                <th className="px-6 py-3 font-semibold">Part Code / Item</th>
-                <th className="px-6 py-3 font-semibold">Type</th>
-                <th className="px-6 py-3 font-semibold">Quantity</th>
-                <th className="px-6 py-3 font-semibold">Reason / Reference</th>
-                <th className="px-6 py-3 hidden sm:table-cell font-semibold">Performed By</th>
-                <th className="px-6 py-3 font-semibold text-right">Date & Time</th>
+                <th className="px-4 py-3 font-semibold">Part Code / Item</th>
+                <th className="px-4 py-3 font-semibold">Type</th>
+                <th className="px-4 py-3 font-semibold">Quantity</th>
+                <th className="px-4 py-3 font-semibold">Reason / Reference</th>
+                <th className="px-4 py-3 hidden sm:table-cell font-semibold">Performed By</th>
+                <th className="px-4 py-3 font-semibold text-right">Date & Time</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-app-border">
               {transactions.map((tx) => (
-                <tr key={tx.id} className="hover:bg-app-hover/60 transition-colors">
-                  <td className="px-6 py-3.5">
+                <tr key={tx.id} className="hover:bg-app-hover /60 active:scale-[0.98] transition-colors">
+                  <td className="px-4 py-3.5">
                     <p className="font-semibold text-app-text">{tx.partName}</p>
                     <p className="font-mono text-[10px] text-app-accent">{tx.partCode}</p>
                   </td>
-                  <td className="px-6 py-3.5">
+                  <td className="px-4 py-3.5">
                     <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[11px] font-semibold border ${
                         tx.type === 'Stock Out'
                           ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
                           : tx.type === 'Stock In'
@@ -476,10 +413,10 @@ export default function InventoryPage() {
                       {tx.type}
                     </span>
                   </td>
-                  <td className="px-6 py-3.5 font-bold tabular-nums text-app-text">
+                  <td className="px-4 py-3.5 font-bold tabular-nums text-app-text">
                     {tx.type === 'Stock Out' ? `-${tx.quantity}` : `+${tx.quantity}`} units
                   </td>
-                  <td className="px-6 py-3.5">
+                  <td className="px-4 py-3.5">
                     <p className="text-app-text font-medium max-w-sm">{tx.notes || 'Routine stock operation'}</p>
                     {tx.referenceType && (
                       <span className="text-[10px] text-app-muted uppercase font-mono">
@@ -487,10 +424,10 @@ export default function InventoryPage() {
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-3.5 text-app-muted hidden sm:table-cell">
+                  <td className="px-4 py-3.5 text-app-muted hidden sm:table-cell">
                     {tx.performedBy}
                   </td>
-                  <td className="px-6 py-3.5 text-right font-mono text-[11px] text-app-muted">
+                  <td className="px-4 py-3.5 text-right font-mono text-[11px] text-app-muted">
                     {tx.createdAt ? new Date(tx.createdAt).toLocaleString() : 'Recent'}
                   </td>
                 </tr>
@@ -514,7 +451,7 @@ export default function InventoryPage() {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="e.g. Ceramic Front Brake Pads"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -524,7 +461,7 @@ export default function InventoryPage() {
                 value={formData.partCode}
                 onChange={(e) => setFormData({ ...formData, partCode: e.target.value })}
                 placeholder="Auto-generated if empty"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-mono"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-mono"
               />
             </div>
           </div>
@@ -535,7 +472,7 @@ export default function InventoryPage() {
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
                 <option value="Engine">Engine</option>
                 <option value="Brakes">Brakes</option>
@@ -554,7 +491,7 @@ export default function InventoryPage() {
                 value={formData.brand}
                 onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
                 placeholder="Bosch, Denso, Mobil..."
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -564,7 +501,7 @@ export default function InventoryPage() {
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 placeholder="Shelf A-1"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
@@ -582,7 +519,7 @@ export default function InventoryPage() {
                     supplier: sup ? sup.name : formData.supplier,
                   })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
                 <option value="">Select Supplier</option>
                 {suppliers.map((s) => (
@@ -599,7 +536,7 @@ export default function InventoryPage() {
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 placeholder="Shelf A-1"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
@@ -611,7 +548,7 @@ export default function InventoryPage() {
                 type="number"
                 value={formData.stockQty}
                 onChange={(e) => setFormData({ ...formData, stockQty: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -620,7 +557,7 @@ export default function InventoryPage() {
                 type="number"
                 value={formData.minThreshold}
                 onChange={(e) => setFormData({ ...formData, minThreshold: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -630,7 +567,7 @@ export default function InventoryPage() {
                 step="0.01"
                 value={formData.costPrice}
                 onChange={(e) => setFormData({ ...formData, costPrice: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -640,7 +577,7 @@ export default function InventoryPage() {
                 step="0.01"
                 value={formData.unitPrice}
                 onChange={(e) => setFormData({ ...formData, unitPrice: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-semibold"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
               />
             </div>
           </div>
@@ -658,7 +595,7 @@ export default function InventoryPage() {
             <button
               type="button"
               onClick={() => setIsAddOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
+              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
             >
               {t('common.cancel')}
             </button>
@@ -680,7 +617,7 @@ export default function InventoryPage() {
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -689,7 +626,7 @@ export default function InventoryPage() {
                 type="text"
                 value={formData.brand}
                 onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
@@ -700,7 +637,7 @@ export default function InventoryPage() {
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
                 <option value="Engine">Engine</option>
                 <option value="Brakes">Brakes</option>
@@ -724,7 +661,7 @@ export default function InventoryPage() {
                     supplier: sup ? sup.name : formData.supplier,
                   })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
                 <option value="">Select Supplier</option>
                 {suppliers.map((s) => (
@@ -740,7 +677,7 @@ export default function InventoryPage() {
                 type="text"
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
@@ -752,7 +689,7 @@ export default function InventoryPage() {
                 type="number"
                 value={formData.stockQty}
                 onChange={(e) => setFormData({ ...formData, stockQty: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-semibold"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
               />
             </div>
             <div>
@@ -762,7 +699,7 @@ export default function InventoryPage() {
                 step="0.01"
                 value={formData.costPrice}
                 onChange={(e) => setFormData({ ...formData, costPrice: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -772,7 +709,7 @@ export default function InventoryPage() {
                 step="0.01"
                 value={formData.unitPrice}
                 onChange={(e) => setFormData({ ...formData, unitPrice: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-semibold"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
               />
             </div>
           </div>
@@ -790,7 +727,7 @@ export default function InventoryPage() {
             <button
               type="button"
               onClick={() => setIsEditOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
+              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
             >
               {t('common.cancel')}
             </button>
@@ -808,7 +745,7 @@ export default function InventoryPage() {
         title={`${adjustType}: ${selectedPart?.name}`}
       >
         <form onSubmit={handleAdjust} className="space-y-4 text-xs">
-          <div className="p-3 bg-app-hover/50 rounded-xl border border-app-border">
+          <div className="p-3 bg-app-hover/50 rounded-sm border border-app-border">
             <p className="text-app-muted">
               {t('inventory.partCode')}: <span className="font-mono text-app-accent font-semibold">{selectedPart?.partCode}</span>
             </p>
@@ -825,7 +762,7 @@ export default function InventoryPage() {
               required
               value={adjustQty}
               onChange={(e) => setAdjustQty(e.target.value)}
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-semibold"
+              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
             />
           </div>
 
@@ -836,7 +773,7 @@ export default function InventoryPage() {
               value={adjustNotes}
               onChange={(e) => setAdjustNotes(e.target.value)}
               placeholder="e.g. Delivery order #PO-9918 received"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
 
@@ -844,7 +781,7 @@ export default function InventoryPage() {
             <button
               type="button"
               onClick={() => setIsAdjustOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
+              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
             >
               {t('common.cancel')}
             </button>
@@ -860,7 +797,7 @@ export default function InventoryPage() {
         {selectedPart && (
           <div className="space-y-4 text-xs">
             {selectedPart.image && (
-              <div className="w-full h-44 rounded-xl overflow-hidden border border-app-border bg-app-card">
+              <div className="w-full h-44 rounded-sm overflow-hidden border border-app-border bg-app-card">
                 <img
                   src={selectedPart.image}
                   alt={selectedPart.name}
@@ -869,7 +806,7 @@ export default function InventoryPage() {
               </div>
             )}
 
-            <div className="flex items-center justify-between p-3 bg-app-hover/50 rounded-xl border border-app-border">
+            <div className="flex items-center justify-between p-3 bg-app-hover/50 rounded-sm border border-app-border">
               <div>
                 <p className="font-mono text-app-accent font-semibold">{selectedPart.partCode}</p>
                 <h3 className="text-sm font-bold text-app-text mt-0.5">{selectedPart.name}</h3>
@@ -878,30 +815,83 @@ export default function InventoryPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+              <div className="p-3 bg-app-input rounded-sm border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold">{t('inventory.stockQty')}</p>
                 <p className="text-sm font-bold text-app-text mt-0.5">{selectedPart.stockQty} units</p>
               </div>
-              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+              <div className="p-3 bg-app-input rounded-sm border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold">{t('inventory.sellingPrice')}</p>
                 <p className="text-sm font-bold text-app-accent mt-0.5">${Number(selectedPart.unitPrice).toFixed(2)}</p>
               </div>
-              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+              <div className="p-3 bg-app-input rounded-sm border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold">{t('inventory.brand')}</p>
                 <p className="font-semibold text-app-text mt-0.5">{selectedPart.brand}</p>
               </div>
-              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+              <div className="p-3 bg-app-input rounded-sm border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold">{t('inventory.category')}</p>
                 <p className="font-semibold text-app-text mt-0.5">{selectedPart.category}</p>
               </div>
-              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+              <div className="p-3 bg-app-input rounded-sm border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold">{t('inventory.supplier')}</p>
                 <p className="text-app-text mt-0.5">{selectedPart.supplier || 'N/A'}</p>
               </div>
-              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+              <div className="p-3 bg-app-input rounded-sm border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold">{t('inventory.location')}</p>
                 <p className="font-mono text-app-text mt-0.5">{selectedPart.location || 'N/A'}</p>
               </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-4 flex-wrap">
+              {can('inventory', 'update') && (
+                <>
+                  {selectedPart.stockQty <= selectedPart.minThreshold && (
+                    <button
+                      onClick={() =>
+                        adjustStockMutation.mutate({
+                          id: selectedPart.id,
+                          type: 'Stock In',
+                          quantity: 10,
+                          notes: `Quick Reorder Restock from ${selectedPart.supplier || 'Supplier'}`,
+                        })
+                      }
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-semibold rounded-sm text-xs transition-colors cursor-pointer border border-emerald-500/20"
+                    >
+                      <ArrowUp size={14} weight="bold" />
+                      Quick Restock (+10)
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleOpenAdjust(selectedPart, 'Stock In')}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-app-card hover:bg-app-hover active:scale-[0.98] border border-app-border text-app-text font-semibold rounded-sm text-xs transition-colors cursor-pointer"
+                  >
+                    <ArrowUp size={14} weight="bold" />
+                    Stock In (+)
+                  </button>
+                  <button
+                    onClick={() => handleOpenAdjust(selectedPart, 'Stock Out')}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-app-card hover:bg-app-hover active:scale-[0.98] border border-app-border text-app-text font-semibold rounded-sm text-xs transition-colors cursor-pointer"
+                  >
+                    <ArrowDown size={14} weight="bold" />
+                    Stock Out (-)
+                  </button>
+                  <button
+                    onClick={() => handleOpenEdit(selectedPart)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-app-card hover:bg-app-hover active:scale-[0.98] border border-app-border text-app-text font-semibold rounded-sm text-xs transition-colors cursor-pointer"
+                  >
+                    <PencilSimple size={14} weight="bold" />
+                    Edit
+                  </button>
+                </>
+              )}
+              {can('inventory', 'delete') && (
+                <button
+                  onClick={() => handleOpenDelete(selectedPart)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 font-semibold rounded-sm text-xs transition-colors cursor-pointer border border-rose-500/20"
+                >
+                  <Trash size={14} weight="bold" />
+                  Delete
+                </button>
+              )}
             </div>
           </div>
         )}

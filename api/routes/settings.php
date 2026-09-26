@@ -101,6 +101,12 @@ if ($path === '/settings/permissions') {
         exit;
 
     } else if ($method === 'PUT') {
+        if (($authPayload['role'] ?? '') !== 'admin') {
+            http_response_code(403);
+            echo json_encode(['error' => 'Forbidden: Only administrators can update shop settings']);
+            exit;
+        }
+
         $input = json_decode(file_get_contents('php://input'), true);
 
         $updates = [];

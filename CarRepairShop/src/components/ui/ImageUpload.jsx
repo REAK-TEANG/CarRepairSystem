@@ -73,14 +73,14 @@ export default function ImageUpload({
               type="file"
               accept="image/*"
               onChange={handleFileChange}
-              className="block w-full text-xs text-app-muted file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-app-accent/10 file:text-app-accent hover:file:bg-app-accent/20 cursor-pointer"
+              className="block w-full text-xs text-app-muted file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border-0 file:text-xs file:font-semibold file:bg-app-accent/10 file:text-app-accent hover:file:bg-app-accent/20 cursor-pointer"
             />
           </div>
         </div>
       ) : (
         <div className="flex items-start gap-3">
           {value ? (
-            <div className="relative w-24 h-16 rounded-lg overflow-hidden border border-app-border bg-app-hover flex-shrink-0 group">
+            <div className="relative w-24 h-16 rounded-sm overflow-hidden border border-app-border bg-app-hover flex-shrink-0 group">
               <img src={value} alt="Preview" className="w-full h-full object-cover" />
               <button
                 type="button"
@@ -92,14 +92,14 @@ export default function ImageUpload({
               </button>
             </div>
           ) : (
-            <div className="w-24 h-16 rounded-lg border border-dashed border-app-border bg-app-input flex flex-col items-center justify-center text-app-muted flex-shrink-0">
+            <div className="w-24 h-16 rounded-sm border border-dashed border-app-border bg-app-input flex flex-col items-center justify-center text-app-muted flex-shrink-0">
               <ImageIcon size={18} weight="light" />
               <span className="text-[9px] mt-0.5">No photo</span>
             </div>
           )}
 
           <div className="flex-1 space-y-1">
-            <label className="flex items-center justify-center gap-1.5 px-3 py-2 border border-dashed border-app-border hover:border-app-accent rounded-lg bg-app-input hover:bg-app-hover cursor-pointer transition-colors text-xs text-app-muted hover:text-app-text">
+            <label className="flex items-center justify-center gap-1.5 px-3 py-2 border border-dashed border-app-border hover:border-app-accent rounded-sm bg-app-input hover:bg-app-hover active:scale-[0.98] cursor-pointer transition-colors text-xs text-app-muted hover:text-app-text">
               <UploadSimple size={14} weight="bold" className="text-app-accent" />
               <span>{value ? 'Change Photo' : uploadText}</span>
               <input

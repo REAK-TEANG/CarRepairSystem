@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Kantumruy+Pro:ital,wght@0,100..700;1,100..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -61,11 +61,11 @@ html.dark {
   }
 
   html, body, #root, button, input, select, textarea, p, span, h1, h2, h3, h4, h5, h6, table, tr, th, td, a, label {
-    font-family: "Kantumruy Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
   }
 
   html {
-    font-size: 17.5px;
+    font-size: 14px;
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -78,7 +78,7 @@ html.dark {
     background-color: var(--bg-canvas);
     color: var(--text-primary);
     min-height: 100vh;
-    line-height: 1.65;
+    line-height: 1.5;
     transition: background-color 0.2s ease, color 0.2s ease;
   }
 

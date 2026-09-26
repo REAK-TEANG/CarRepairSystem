@@ -4,7 +4,6 @@ import {
   Plus,
   PencilSimple,
   Trash,
-  Eye,
   GasPump,
   Car,
   ClockCounterClockwise,
@@ -19,11 +18,9 @@ import {
   MapPin,
   Gauge,
   Package,
-  CurrencyDollar,
   Copy,
   Check,
   CalendarBlank,
-  FileText,
 } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useVehicles, useCreateVehicle, useUpdateVehicle, useDeleteVehicle } from '../../hooks/useVehicles'
@@ -34,6 +31,8 @@ import { useServicesCatalog } from '../../hooks/useServicesCatalog'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { Modal, ImageUpload, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, StatusBadge } from '../../components/ui'
+
+
 
 const fuelOptions = ['All', 'Petrol', 'Diesel', 'Hybrid', 'Electric']
 
@@ -141,7 +140,7 @@ export default function VehiclesPage() {
       ownerId: v.ownerId,
       image: v.image || '',
     })
-    setIsEditOpen(true)
+    setIsViewOpen(false); setIsViewOpen(false); setIsEditOpen(true)
   }
 
   const handleOpenView = (v) => {
@@ -153,7 +152,7 @@ export default function VehiclesPage() {
 
   const handleOpenDelete = (v) => {
     setSelectedVehicle(v)
-    setIsDeleteOpen(true)
+    setIsViewOpen(false); setIsDeleteOpen(true)
   }
 
   const handleOpenCreateJob = (v) => {
@@ -327,7 +326,7 @@ export default function VehiclesPage() {
         {can('vehicles', 'create') && (
           <button
             onClick={handleOpenAdd}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover text-app-accentText font-semibold rounded-xl text-xs transition-colors shadow-subtle cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText font-semibold rounded-sm text-xs transition-colors shadow-subtle cursor-pointer"
           >
             <Plus size={16} weight="bold" />
             {t('vehicles.addVehicle')}
@@ -344,10 +343,10 @@ export default function VehiclesPage() {
             <button
               key={f}
               onClick={() => setFuelFilter(f)}
-              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-sm text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                 isActive
                   ? 'bg-app-accent text-app-accentText shadow-subtle'
-                  : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover hover:text-app-text'
+                  : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover active:scale-[0.98] hover:text-app-text'
               }`}
             >
               {f === 'All' ? t('common.all') : f}
@@ -364,7 +363,7 @@ export default function VehiclesPage() {
       </div>
 
       {/* Main Table */}
-      <div className="bg-app-card rounded-2xl border border-app-border shadow-card overflow-hidden transition-colors duration-200">
+      <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden transition-colors duration-200">
         <div className="p-4 border-b border-app-border flex items-center justify-between gap-3">
           <div className="relative flex-1 max-w-md">
             <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
@@ -373,7 +372,7 @@ export default function VehiclesPage() {
               placeholder={t('common.quickSearch')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-xl text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-sm text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
             />
           </div>
           {(searchQuery || fuelFilter !== 'All') && (
@@ -410,13 +409,12 @@ export default function VehiclesPage() {
             <table className="w-full text-xs">
               <thead>
                 <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                  <th className="px-6 py-3 font-semibold">{t('vehicles.plateNumber')}</th>
-                  <th className="px-6 py-3 font-semibold">{t('appointments.vehicle')}</th>
-                  <th className="px-6 py-3 hidden lg:table-cell font-semibold">Fuel</th>
-                  <th className="px-6 py-3 hidden md:table-cell font-semibold">{t('vehicles.mileage')}</th>
-                  <th className="px-6 py-3 font-semibold">{t('vehicles.owner')}</th>
-                  <th className="px-6 py-3 font-semibold">Service History</th>
-                  <th className="px-6 py-3 font-semibold text-right">{t('common.actions')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('vehicles.plateNumber')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('appointments.vehicle')}</th>
+                  <th className="px-4 py-3 hidden lg:table-cell font-semibold">Fuel</th>
+                  <th className="px-4 py-3 hidden md:table-cell font-semibold">{t('vehicles.mileage')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('vehicles.owner')}</th>
+                  <th className="px-4 py-3 font-semibold">Service History</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-app-border">
@@ -425,29 +423,29 @@ export default function VehiclesPage() {
                   const hasActive = vJobs.some((j) =>
                     ['Repairing', 'Diagnosing', 'Waiting for Parts', 'In Progress', 'Ready for Pickup'].includes(j.status)
                   )
-                  const completedJobs = vJobs.filter((j) => j.status === 'Completed').length
+
 
                   return (
                     <tr
                       key={v.id}
                       onClick={() => handleOpenView(v)}
-                      className="hover:bg-app-hover/60 transition-colors group cursor-pointer"
+                      className="hover:bg-app-hover /60 active:scale-[0.98] transition-colors group cursor-pointer"
                     >
-                      <td className="px-6 py-3.5 font-mono font-bold text-app-accent">
-                        <span className="px-2 py-0.5 rounded-lg bg-app-accent/10 border border-app-accent/20">
+                      <td className="px-4 py-3.5 font-mono font-bold text-app-accent">
+                        <span className="px-2 py-0.5 rounded-sm bg-app-accent/10 border border-app-accent/20">
                           {v.number}
                         </span>
                       </td>
-                      <td className="px-6 py-3.5">
+                      <td className="px-4 py-3.5">
                         <div className="flex items-center gap-3">
                           {v.image ? (
                             <img
                               src={v.image}
                               alt={`${v.brand} ${v.model}`}
-                              className="w-10 h-10 rounded-xl object-cover ring-1 ring-app-border bg-app-hover flex-shrink-0"
+                              className="w-10 h-10 rounded-sm object-cover ring-1 ring-app-border bg-app-hover flex-shrink-0"
                             />
                           ) : (
-                            <div className="w-10 h-10 rounded-xl bg-app-hover border border-app-border flex items-center justify-center text-app-muted flex-shrink-0">
+                            <div className="w-10 h-10 rounded-sm bg-app-hover border border-app-border flex items-center justify-center text-app-muted flex-shrink-0">
                               <Car size={20} weight="duotone" />
                             </div>
                           )}
@@ -461,21 +459,21 @@ export default function VehiclesPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-3.5 text-app-muted hidden lg:table-cell">
+                      <td className="px-4 py-3.5 text-app-muted hidden lg:table-cell">
                         <span className="inline-flex items-center gap-1.5">
                           <GasPump size={13} className="text-app-accent" />
                           {v.fuelType}
                         </span>
                       </td>
-                      <td className="px-6 py-3.5 text-app-muted tabular-nums hidden md:table-cell">
+                      <td className="px-4 py-3.5 text-app-muted tabular-nums hidden md:table-cell">
                         {Number(v.mileage || 0).toLocaleString()} km
                       </td>
-                      <td className="px-6 py-3.5 font-medium text-app-text">{v.owner}</td>
-                      <td className="px-6 py-3.5">
+                      <td className="px-4 py-3.5 font-medium text-app-text">{v.owner}</td>
+                      <td className="px-4 py-3.5">
                         <div className="flex items-center gap-1.5">
                           {vJobs.length > 0 ? (
                             <span
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold border ${
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-[11px] font-semibold border ${
                                 hasActive
                                   ? 'bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/30'
                                   : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30'
@@ -486,40 +484,11 @@ export default function VehiclesPage() {
                                 {vJobs.length} {vJobs.length === 1 ? 'Order' : 'Orders'}
                               </span>
                               {hasActive && (
-                                <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" title="Active in workshop" />
+                                <span className="w-1.5 h-1.5 rounded-full bg-sky-500" title="Active in workshop" />
                               )}
                             </span>
                           ) : (
                             <span className="text-[11px] text-app-muted italic">No service history</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-3.5 text-right">
-                        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            onClick={() => handleOpenView(v)}
-                            className="p-1.5 rounded-lg text-app-muted hover:text-app-accent hover:bg-app-hover transition-colors cursor-pointer"
-                            title="View Vehicle & Service History"
-                          >
-                            <Eye size={15} />
-                          </button>
-                          {can('vehicles', 'update') && (
-                            <button
-                              onClick={() => handleOpenEdit(v)}
-                              className="p-1.5 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
-                              title={t('common.edit')}
-                            >
-                              <PencilSimple size={15} />
-                            </button>
-                          )}
-                          {can('vehicles', 'delete') && (
-                            <button
-                              onClick={() => handleOpenDelete(v)}
-                              className="p-1.5 rounded-lg text-app-muted hover:text-red-500 hover:bg-app-hover transition-colors cursor-pointer"
-                              title={t('common.delete')}
-                            >
-                              <Trash size={15} />
-                            </button>
                           )}
                         </div>
                       </td>
@@ -544,7 +513,7 @@ export default function VehiclesPage() {
                 value={formData.number}
                 onChange={(e) => setFormData({ ...formData, number: e.target.value.toUpperCase() })}
                 placeholder="e.g. 2AB-9988"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-mono uppercase"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-mono uppercase"
               />
             </div>
             <div>
@@ -554,7 +523,7 @@ export default function VehiclesPage() {
                 value={formData.vin}
                 onChange={(e) => setFormData({ ...formData, vin: e.target.value.toUpperCase() })}
                 placeholder="17-character VIN"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-mono uppercase"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-mono uppercase"
               />
             </div>
           </div>
@@ -568,7 +537,7 @@ export default function VehiclesPage() {
                 value={formData.brand}
                 onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
                 placeholder="Toyota, Lexus..."
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -579,7 +548,7 @@ export default function VehiclesPage() {
                 value={formData.model}
                 onChange={(e) => setFormData({ ...formData, model: e.target.value })}
                 placeholder="Camry, RX350..."
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -588,7 +557,7 @@ export default function VehiclesPage() {
                 type="number"
                 value={formData.year}
                 onChange={(e) => setFormData({ ...formData, year: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
@@ -601,7 +570,7 @@ export default function VehiclesPage() {
                 value={formData.color}
                 onChange={(e) => setFormData({ ...formData, color: e.target.value })}
                 placeholder="Black, Pearl White..."
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -611,7 +580,7 @@ export default function VehiclesPage() {
                 value={formData.mileage}
                 onChange={(e) => setFormData({ ...formData, mileage: e.target.value })}
                 placeholder="45000"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -622,7 +591,7 @@ export default function VehiclesPage() {
                   const c = customers.find((x) => x.name === e.target.value)
                   setFormData({ ...formData, owner: e.target.value, ownerId: c ? c.id : '' })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
                 {customers.map((c) => (
                   <option key={c.id} value={c.name}>
@@ -642,7 +611,7 @@ export default function VehiclesPage() {
             <button
               type="button"
               onClick={() => setIsAddOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
+              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
             >
               {t('common.cancel')}
             </button>
@@ -668,7 +637,7 @@ export default function VehiclesPage() {
                 required
                 value={formData.number}
                 onChange={(e) => setFormData({ ...formData, number: e.target.value.toUpperCase() })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-mono uppercase"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-mono uppercase"
               />
             </div>
             <div>
@@ -677,7 +646,7 @@ export default function VehiclesPage() {
                 type="text"
                 value={formData.vin}
                 onChange={(e) => setFormData({ ...formData, vin: e.target.value.toUpperCase() })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-mono uppercase"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-mono uppercase"
               />
             </div>
           </div>
@@ -690,7 +659,7 @@ export default function VehiclesPage() {
                 required
                 value={formData.brand}
                 onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -700,7 +669,7 @@ export default function VehiclesPage() {
                 required
                 value={formData.model}
                 onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -709,7 +678,7 @@ export default function VehiclesPage() {
                 type="number"
                 value={formData.year}
                 onChange={(e) => setFormData({ ...formData, year: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
@@ -721,7 +690,7 @@ export default function VehiclesPage() {
                 type="text"
                 value={formData.color}
                 onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -730,7 +699,7 @@ export default function VehiclesPage() {
                 type="number"
                 value={formData.mileage}
                 onChange={(e) => setFormData({ ...formData, mileage: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -741,7 +710,7 @@ export default function VehiclesPage() {
                   const c = customers.find((x) => x.name === e.target.value)
                   setFormData({ ...formData, owner: e.target.value, ownerId: c ? c.id : '' })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
                 {customers.map((c) => (
                   <option key={c.id} value={c.name}>
@@ -761,7 +730,7 @@ export default function VehiclesPage() {
             <button
               type="button"
               onClick={() => setIsEditOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
+              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
             >
               {t('common.cancel')}
             </button>
@@ -782,16 +751,16 @@ export default function VehiclesPage() {
         {selectedVehicle && (
           <div className="space-y-5 text-xs">
             {/* Top Vehicle Overview Card */}
-            <div className="p-4 bg-app-hover/50 rounded-2xl border border-app-border flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="p-4 bg-app-hover/50 rounded-sm border border-app-border flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="flex items-center gap-3.5">
                 {selectedVehicle.image ? (
                   <img
                     src={selectedVehicle.image}
                     alt={`${selectedVehicle.brand} ${selectedVehicle.model}`}
-                    className="w-16 h-16 rounded-2xl object-cover ring-2 ring-app-border bg-app-hover flex-shrink-0"
+                    className="w-16 h-16 rounded-sm object-cover ring-2 ring-app-border bg-app-hover flex-shrink-0"
                   />
                 ) : (
-                  <div className="w-16 h-16 rounded-2xl bg-app-accent/15 border border-app-accent/30 flex items-center justify-center text-app-accent flex-shrink-0">
+                  <div className="w-16 h-16 rounded-sm bg-app-accent/15 border border-app-accent/30 flex items-center justify-center text-app-accent flex-shrink-0">
                     <Car size={32} weight="duotone" />
                   </div>
                 )}
@@ -825,21 +794,41 @@ export default function VehiclesPage() {
                 </div>
               </div>
 
-              {can('repair_jobs', 'create') && (
-                <button
-                  onClick={() => handleOpenCreateJob(selectedVehicle)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-app-accent hover:bg-app-accentHover text-app-accentText font-semibold rounded-xl text-xs transition-colors shadow-subtle cursor-pointer flex-shrink-0"
-                >
-                  <Plus size={14} weight="bold" />
-                  Book New Work Order
-                </button>
-              )}
+              <div className="flex items-center gap-2 flex-wrap">
+                {can('vehicles', 'update') && (
+                  <button
+                    onClick={() => handleOpenEdit(selectedVehicle)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-app-card hover:bg-app-hover active:scale-[0.98] border border-app-border text-app-text font-semibold rounded-sm text-xs transition-colors cursor-pointer flex-shrink-0"
+                  >
+                    <PencilSimple size={14} weight="bold" />
+                    Edit
+                  </button>
+                )}
+                {can('vehicles', 'delete') && (
+                  <button
+                    onClick={() => handleOpenDelete(selectedVehicle)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 font-semibold rounded-sm text-xs transition-colors cursor-pointer flex-shrink-0 border border-rose-500/20"
+                  >
+                    <Trash size={14} weight="bold" />
+                    Delete
+                  </button>
+                )}
+                {can('repair_jobs', 'create') && (
+                  <button
+                    onClick={() => handleOpenCreateJob(selectedVehicle)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText font-semibold rounded-sm text-xs transition-colors shadow-subtle cursor-pointer flex-shrink-0"
+                  >
+                    <Plus size={14} weight="bold" />
+                    Book New Work Order
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Owner Details & Vehicle Specs Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {/* Owner Information */}
-              <div className="p-3.5 bg-app-card rounded-xl border border-app-border space-y-1.5">
+              <div className="p-3.5 bg-app-card rounded-sm border border-app-border space-y-1.5">
                 <p className="text-[10px] text-app-muted uppercase font-bold tracking-wider flex items-center gap-1">
                   <User size={13} className="text-app-accent" /> Registered Owner
                 </p>
@@ -862,7 +851,7 @@ export default function VehiclesPage() {
               </div>
 
               {/* Odometer & Mileage Status */}
-              <div className="p-3.5 bg-app-card rounded-xl border border-app-border space-y-1.5">
+              <div className="p-3.5 bg-app-card rounded-sm border border-app-border space-y-1.5">
                 <p className="text-[10px] text-app-muted uppercase font-bold tracking-wider flex items-center gap-1">
                   <Gauge size={13} className="text-emerald-500" /> Recorded Odometer
                 </p>
@@ -879,7 +868,7 @@ export default function VehiclesPage() {
               </div>
 
               {/* Current Workshop Status */}
-              <div className="p-3.5 bg-app-card rounded-xl border border-app-border space-y-1.5">
+              <div className="p-3.5 bg-app-card rounded-sm border border-app-border space-y-1.5">
                 <p className="text-[10px] text-app-muted uppercase font-bold tracking-wider flex items-center gap-1">
                   <Wrench size={13} className="text-amber-500" /> Workshop Status
                 </p>
@@ -906,28 +895,28 @@ export default function VehiclesPage() {
 
             {/* Lifetime Service History Metrics Bar */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              <div className="p-3 rounded-xl bg-app-input/60 border border-app-border text-center">
+              <div className="p-3 rounded-sm bg-app-input/60 border border-app-border text-center">
                 <span className="text-[10px] text-app-muted uppercase font-bold block">Total Services</span>
                 <span className="font-bold text-base text-app-text font-mono mt-0.5 block">
                   {selectedVehicleJobs.length}
                 </span>
                 <span className="text-[10px] text-app-muted">Work Orders Logged</span>
               </div>
-              <div className="p-3 rounded-xl bg-app-input/60 border border-app-border text-center">
+              <div className="p-3 rounded-sm bg-app-input/60 border border-app-border text-center">
                 <span className="text-[10px] text-app-muted uppercase font-bold block">Completed Services</span>
                 <span className="font-bold text-base text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 block">
                   {completedCount}
                 </span>
                 <span className="text-[10px] text-app-muted">Finished Repairs</span>
               </div>
-              <div className="p-3 rounded-xl bg-app-input/60 border border-app-border text-center">
+              <div className="p-3 rounded-sm bg-app-input/60 border border-app-border text-center">
                 <span className="text-[10px] text-app-muted uppercase font-bold block">Active / Pending</span>
                 <span className="font-bold text-base text-amber-600 dark:text-amber-400 font-mono mt-0.5 block">
                   {activeCount}
                 </span>
                 <span className="text-[10px] text-app-muted">In Progress</span>
               </div>
-              <div className="p-3 rounded-xl bg-app-input/60 border border-app-border text-center">
+              <div className="p-3 rounded-sm bg-app-input/60 border border-app-border text-center">
                 <span className="text-[10px] text-app-muted uppercase font-bold block">Lifetime Cost</span>
                 <span className="font-bold text-base text-app-accent font-mono mt-0.5 block">
                   ${totalVehicleLifetimeSpent.toFixed(2)}
@@ -937,7 +926,7 @@ export default function VehiclesPage() {
             </div>
 
             {/* Digital Service History Passport & Job Orders Timeline */}
-            <div className="p-4 bg-app-card rounded-2xl border border-app-border space-y-4">
+            <div className="p-4 bg-app-card rounded-sm border border-app-border space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-app-border pb-3">
                 <div>
                   <h4 className="text-sm font-bold text-app-text flex items-center gap-2">
@@ -955,7 +944,7 @@ export default function VehiclesPage() {
                     <button
                       key={f}
                       onClick={() => setHistoryFilter(f)}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+                      className={`px-2.5 py-1 rounded-sm text-[11px] font-semibold transition-colors cursor-pointer whitespace-nowrap ${
                         historyFilter === f
                           ? 'bg-app-accent text-app-accentText'
                           : 'bg-app-input text-app-muted hover:text-app-text'
@@ -984,7 +973,7 @@ export default function VehiclesPage() {
                     placeholder="Search past repairs, problems, diagnoses, mechanics, or parts..."
                     value={historySearch}
                     onChange={(e) => setHistorySearch(e.target.value)}
-                    className="w-full pl-8 pr-3 py-1.5 bg-app-input border border-app-border rounded-xl text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+                    className="w-full pl-8 pr-3 py-1.5 bg-app-input border border-app-border rounded-sm text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
                   />
                 </div>
               )}
@@ -995,7 +984,7 @@ export default function VehiclesPage() {
                   {filteredHistory.map((job) => (
                     <div
                       key={job.id}
-                      className="p-3.5 rounded-xl bg-app-hover/40 border border-app-border space-y-2.5 transition-all hover:border-app-accent/40"
+                      className="p-3.5 rounded-sm bg-app-hover/40 border border-app-border space-y-2.5 transition-all hover:border-app-accent/40"
                     >
                       {/* Job Header */}
                       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-app-border/60 pb-2">
@@ -1020,7 +1009,7 @@ export default function VehiclesPage() {
                           <span>{job.problem}</span>
                         </p>
                         {job.diagnosis && (
-                          <div className="p-2 rounded-lg bg-app-card border border-app-border/80 text-[11px] text-app-muted">
+                          <div className="p-2 rounded-sm bg-app-card border border-app-border/80 text-[11px] text-app-muted">
                             <span className="font-semibold text-app-text">Technician Findings: </span>
                             {job.diagnosis}
                           </div>
@@ -1029,19 +1018,19 @@ export default function VehiclesPage() {
 
                       {/* DVI Intake Details */}
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[10px]">
-                        <div className="p-1.5 rounded-lg bg-app-card border border-app-border flex items-center justify-between">
+                        <div className="p-1.5 rounded-sm bg-app-card border border-app-border flex items-center justify-between">
                           <span className="text-app-muted flex items-center gap-1">
                             <Gauge size={11} /> Intake Odometer
                           </span>
                           <span className="font-mono font-bold text-app-text">{job.odometer || '—'} km</span>
                         </div>
-                        <div className="p-1.5 rounded-lg bg-app-card border border-app-border flex items-center justify-between">
+                        <div className="p-1.5 rounded-sm bg-app-card border border-app-border flex items-center justify-between">
                           <span className="text-app-muted flex items-center gap-1">
                             <User size={11} /> Technician
                           </span>
                           <span className="font-semibold text-app-text truncate">{job.mechanic || 'Workshop Team'}</span>
                         </div>
-                        <div className="p-1.5 rounded-lg bg-app-card border border-app-border flex items-center justify-between col-span-2 sm:col-span-1">
+                        <div className="p-1.5 rounded-sm bg-app-card border border-app-border flex items-center justify-between col-span-2 sm:col-span-1">
                           <span className="text-app-muted flex items-center gap-1">
                             <ShieldCheck size={11} /> Quote Approval
                           </span>
@@ -1053,7 +1042,7 @@ export default function VehiclesPage() {
 
                       {/* Parts Used Breakdown */}
                       {job.partsUsed && job.partsUsed.length > 0 && (
-                        <div className="p-2.5 rounded-lg bg-app-card border border-app-border space-y-1.5">
+                        <div className="p-2.5 rounded-sm bg-app-card border border-app-border space-y-1.5">
                           <p className="text-[10px] text-app-muted uppercase font-bold flex items-center gap-1">
                             <Package size={12} className="text-amber-500" /> Replaced Spare Parts ({job.partsUsed.length})
                           </p>
@@ -1074,7 +1063,7 @@ export default function VehiclesPage() {
 
                       {/* Next Service Due Recommendation */}
                       {(job.nextServiceDueDate || job.nextServiceDueKm) && (
-                        <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">
+                        <div className="p-2 rounded-sm bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">
                           <span>Recommended Next Maintenance:</span>
                           <span className="font-semibold">
                             {job.nextServiceDueDate ? job.nextServiceDueDate : ''}{' '}
@@ -1087,7 +1076,7 @@ export default function VehiclesPage() {
                 </div>
               ) : selectedVehicleJobs.length === 0 ? (
                 <div className="py-8 text-center space-y-3">
-                  <div className="w-12 h-12 rounded-2xl bg-app-hover border border-app-border flex items-center justify-center text-app-muted mx-auto">
+                  <div className="w-12 h-12 rounded-sm bg-app-hover border border-app-border flex items-center justify-center text-app-muted mx-auto">
                     <ClockCounterClockwise size={24} weight="duotone" />
                   </div>
                   <div>
@@ -1099,7 +1088,7 @@ export default function VehiclesPage() {
                   {can('repair_jobs', 'create') && (
                     <button
                       onClick={() => handleOpenCreateJob(selectedVehicle)}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-app-accent hover:bg-app-accentHover text-app-accentText font-semibold rounded-xl text-xs transition-colors cursor-pointer shadow-subtle"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText font-semibold rounded-sm text-xs transition-colors cursor-pointer shadow-subtle"
                     >
                       <Plus size={14} weight="bold" />
                       Create First Work Order
@@ -1118,7 +1107,7 @@ export default function VehiclesPage() {
               <button
                 type="button"
                 onClick={() => setIsViewOpen(false)}
-                className="px-4 py-2 rounded-xl bg-app-hover hover:bg-app-hover/80 text-app-text transition-colors text-xs font-semibold cursor-pointer"
+                className="px-4 py-2 rounded-sm bg-app-hover hover:bg-app-hover active:scale-[0.98]/80 text-app-text transition-colors text-xs font-semibold cursor-pointer"
               >
                 {t('common.close')}
               </button>
@@ -1135,7 +1124,7 @@ export default function VehiclesPage() {
       >
         <form onSubmit={handleCreateJobSubmit} className="space-y-4 text-xs">
           {/* Service Package Selector */}
-          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl space-y-2">
+          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-sm space-y-2">
             <label className="block text-emerald-800 dark:text-emerald-300 font-semibold flex items-center gap-1.5">
               <Sparkle size={15} weight="fill" className="text-emerald-500" />
               Choose Service Package (Auto-configures cost & required parts)
@@ -1143,7 +1132,7 @@ export default function VehiclesPage() {
             <select
               value={jobFormData.serviceId}
               onChange={(e) => handleCatalogServiceSelect(e.target.value)}
-              className="w-full px-3 py-2 bg-app-card border border-emerald-500/30 rounded-xl text-app-text font-medium focus:outline-none focus:border-emerald-500"
+              className="w-full px-3 py-2 bg-app-card border border-emerald-500/30 rounded-sm text-app-text font-medium focus:outline-none focus:border-emerald-500"
             >
               <option value="">-- Choose Service Package (e.g. Oil Change, Brake Service) --</option>
               {servicesCatalog.map((s) => (
@@ -1167,7 +1156,7 @@ export default function VehiclesPage() {
                       return (
                         <div
                           key={idx}
-                          className={`p-2 rounded-lg border flex items-center justify-between text-[11px] ${
+                          className={`p-2 rounded-sm border flex items-center justify-between text-[11px] ${
                             isAvailable
                               ? 'bg-emerald-500/5 border-emerald-500/20 text-app-text'
                               : 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400'
@@ -1209,7 +1198,7 @@ export default function VehiclesPage() {
                   const c = customers.find((x) => x.name === e.target.value)
                   setJobFormData({ ...jobFormData, customer: e.target.value, customerId: c ? c.id : '' })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
                 {customers.map((c) => (
                   <option key={c.id} value={c.name}>
@@ -1226,7 +1215,7 @@ export default function VehiclesPage() {
                   const m = mechanics.find((x) => x.name === e.target.value)
                   setJobFormData({ ...jobFormData, mechanic: e.target.value, mechanicId: m ? m.id : '' })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
                 {mechanics.map((m) => (
                   <option key={m.id} value={m.name}>
@@ -1238,7 +1227,7 @@ export default function VehiclesPage() {
           </div>
 
           {/* DVI Intake info */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-app-hover/40 border border-app-border rounded-xl">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-app-hover/40 border border-app-border rounded-sm">
             <div>
               <label className="block text-app-muted font-medium mb-1 flex items-center gap-1">
                 <Gauge size={12} /> Odometer (km)
@@ -1248,7 +1237,7 @@ export default function VehiclesPage() {
                 value={jobFormData.odometer}
                 onChange={(e) => setJobFormData({ ...jobFormData, odometer: e.target.value })}
                 placeholder="e.g. 52300"
-                className="w-full px-3 py-1.5 bg-app-input border border-app-border rounded-lg text-app-text font-mono focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-1.5 bg-app-input border border-app-border rounded-sm text-app-text font-mono focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -1258,7 +1247,7 @@ export default function VehiclesPage() {
               <select
                 value={jobFormData.fuelLevel}
                 onChange={(e) => setJobFormData({ ...jobFormData, fuelLevel: e.target.value })}
-                className="w-full px-3 py-1.5 bg-app-input border border-app-border rounded-lg text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-1.5 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
                 <option value="Empty">Empty</option>
                 <option value="1/4">1/4 Tank</option>
@@ -1273,7 +1262,7 @@ export default function VehiclesPage() {
                 type="text"
                 value={jobFormData.estimatedCost}
                 onChange={(e) => setJobFormData({ ...jobFormData, estimatedCost: e.target.value })}
-                className="w-full px-3 py-1.5 bg-app-input border border-app-border rounded-lg text-app-text font-semibold focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-1.5 bg-app-input border border-app-border rounded-sm text-app-text font-semibold focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
@@ -1286,7 +1275,7 @@ export default function VehiclesPage() {
               value={jobFormData.problem}
               onChange={(e) => setJobFormData({ ...jobFormData, problem: e.target.value })}
               placeholder="e.g. Brake pad wear squeal, oil renewal service"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
 
@@ -1297,7 +1286,7 @@ export default function VehiclesPage() {
               value={jobFormData.diagnosis}
               onChange={(e) => setJobFormData({ ...jobFormData, diagnosis: e.target.value })}
               placeholder="e.g. Replace brake pads, inspect rotor thickness"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
 
@@ -1305,7 +1294,7 @@ export default function VehiclesPage() {
             <button
               type="button"
               onClick={() => setIsCreateJobOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
+              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
             >
               {t('common.cancel')}
             </button>

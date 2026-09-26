@@ -407,9 +407,9 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6 text-app-text font-sans max-w-6xl mx-auto pb-16 transition-colors duration-200">
       {/* Top Header & Page Identity */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-app-card border border-app-border rounded-2xl p-5 shadow-card">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-app-card border border-app-border rounded-sm p-3.5 shadow-card">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-app-accent/15 border border-app-accent/30 flex items-center justify-center text-app-accent flex-shrink-0 shadow-subtle">
+          <div className="w-12 h-12 rounded-sm bg-app-accent/15 border border-app-accent/30 flex items-center justify-center text-app-accent flex-shrink-0 shadow-subtle">
             <Gear size={26} weight="duotone" />
           </div>
           <div>
@@ -425,12 +425,12 @@ export default function SettingsPage() {
 
         {/* Global Quick Action Stats */}
         <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-3 px-3.5 py-2 bg-app-hover/60 border border-app-border rounded-xl text-xs">
+          <div className="hidden sm:flex items-center gap-3 px-3.5 py-2 bg-app-hover/60 border border-app-border rounded-sm text-xs">
             <div className="text-right">
               <p className="text-[10px] text-app-muted uppercase font-bold tracking-wider">Access Model</p>
               <p className="font-semibold text-app-text font-mono">RBAC Matrix (v2)</p>
             </div>
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <div className="w-2 h-2 rounded-full bg-emerald-500" />
           </div>
         </div>
       </div>
@@ -440,10 +440,10 @@ export default function SettingsPage() {
         {user?.role === 'admin' && (
           <button
             onClick={() => setActiveTab('permissions')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-sm text-xs font-semibold transition-all ${
               activeTab === 'permissions'
                 ? 'bg-app-accent text-app-accentText shadow-subtle'
-                : 'text-app-muted hover:text-app-text hover:bg-app-hover'
+                : 'text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98]'
             }`}
           >
             <LockKey size={16} weight={activeTab === 'permissions' ? 'bold' : 'regular'} />
@@ -456,10 +456,10 @@ export default function SettingsPage() {
 
         <button
           onClick={() => setActiveTab('profile')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-sm text-xs font-semibold transition-all ${
             activeTab === 'profile'
               ? 'bg-app-accent text-app-accentText shadow-subtle'
-              : 'text-app-muted hover:text-app-text hover:bg-app-hover'
+              : 'text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98]'
           }`}
         >
           <Buildings size={16} weight={activeTab === 'profile' ? 'bold' : 'regular'} />
@@ -468,10 +468,10 @@ export default function SettingsPage() {
 
         <button
           onClick={() => setActiveTab('language')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-sm text-xs font-semibold transition-all ${
             activeTab === 'language'
               ? 'bg-app-accent text-app-accentText shadow-subtle'
-              : 'text-app-muted hover:text-app-text hover:bg-app-hover'
+              : 'text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98]'
           }`}
         >
           <Translate size={16} weight={activeTab === 'language' ? 'bold' : 'regular'} />
@@ -480,10 +480,10 @@ export default function SettingsPage() {
 
         <button
           onClick={() => setActiveTab('billing')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-sm text-xs font-semibold transition-all ${
             activeTab === 'billing'
               ? 'bg-app-accent text-app-accentText shadow-subtle'
-              : 'text-app-muted hover:text-app-text hover:bg-app-hover'
+              : 'text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98]'
           }`}
         >
           <Receipt size={16} weight={activeTab === 'billing' ? 'bold' : 'regular'} />
@@ -492,10 +492,10 @@ export default function SettingsPage() {
 
         <button
           onClick={() => setActiveTab('security')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-sm text-xs font-semibold transition-all ${
             activeTab === 'security'
               ? 'bg-app-accent text-app-accentText shadow-subtle'
-              : 'text-app-muted hover:text-app-text hover:bg-app-hover'
+              : 'text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98]'
           }`}
         >
           <Database size={16} weight={activeTab === 'security' ? 'bold' : 'regular'} />
@@ -507,10 +507,10 @@ export default function SettingsPage() {
       {/* TAB 1: ROLE PERMISSIONS MATRIX (RBAC)                        */}
       {/* ============================================================ */}
       {activeTab === 'permissions' && (
-        <div className="space-y-6 animate-fade-in">
+        <div className="space-y-6">
           {/* Notification Banners */}
           {permSaved && (
-            <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-medium flex items-center justify-between animate-fade-in">
+            <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-sm text-xs font-medium flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <CheckCircle size={18} weight="fill" className="text-emerald-500" />
                 <span>{t('settings.permsSynced')}</span>
@@ -520,9 +520,9 @@ export default function SettingsPage() {
           )}
 
           {/* Admin Safe Banner */}
-          <div className="p-4 bg-app-card border border-app-border rounded-2xl shadow-card flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="p-4 bg-app-card border border-app-border rounded-sm shadow-card flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500 flex-shrink-0">
+              <div className="w-10 h-10 rounded-sm bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500 flex-shrink-0">
                 <Shield size={22} weight="duotone" />
               </div>
               <div>
@@ -539,7 +539,7 @@ export default function SettingsPage() {
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={handleResetDefaults}
-                className="inline-flex items-center gap-1.5 px-3 py-2 bg-app-hover hover:bg-app-border rounded-xl text-xs text-app-muted hover:text-app-text transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-2 bg-app-hover hover:bg-app-border rounded-sm text-xs text-app-muted hover:text-app-text transition-colors"
                 title="Reset matrix to factory defaults"
               >
                 <ArrowCounterClockwise size={14} weight="bold" />
@@ -548,9 +548,9 @@ export default function SettingsPage() {
               <button
                 onClick={handleSavePermissions}
                 disabled={isSavingPerms}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-app-accent hover:bg-app-accentHover text-app-accentText font-semibold rounded-xl text-xs transition-colors shadow-subtle disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText font-semibold rounded-sm text-xs transition-colors shadow-subtle disabled:opacity-50"
               >
-                {isSavingPerms ? <span className="inline-block animate-spin mr-1">⟳</span> : <FloppyDisk size={15} weight="bold" />}
+                {isSavingPerms ? <span className="inline-block mr-1">⟳</span> : <FloppyDisk size={15} weight="bold" />}
                 {t('settings.savePermissions')}
               </button>
             </div>
@@ -565,10 +565,10 @@ export default function SettingsPage() {
               </div>
 
               {/* Quick Presets for Selected Role */}
-              <div className="flex items-center gap-1.5 bg-app-card border border-app-border p-1 rounded-xl shadow-subtle text-xs self-start sm:self-auto">
+              <div className="flex items-center gap-1.5 bg-app-card border border-app-border p-1 rounded-sm shadow-subtle text-xs self-start sm:self-auto">
                 <button
                   onClick={() => handleGrantAll(selectedRole)}
-                  className="px-2.5 py-1 rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 text-[11px] font-semibold transition-colors flex items-center gap-1"
+                  className="px-2.5 py-1 rounded-sm text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 text-[11px] font-semibold transition-colors flex items-center gap-1"
                 >
                   <Sparkle size={12} weight="bold" />
                   {t('settings.grantAll')}
@@ -576,14 +576,14 @@ export default function SettingsPage() {
                 <span className="text-app-border">|</span>
                 <button
                   onClick={() => handleSetReadOnly(selectedRole)}
-                  className="px-2.5 py-1 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover text-[11px] font-medium transition-colors"
+                  className="px-2.5 py-1 rounded-sm text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98] text-[11px] font-medium transition-colors"
                 >
                   {t('settings.readOnly')}
                 </button>
                 <span className="text-app-border">|</span>
                 <button
                   onClick={() => handleRevokeAll(selectedRole)}
-                  className="px-2.5 py-1 rounded-lg text-rose-500 hover:bg-rose-500/10 text-[11px] font-medium transition-colors"
+                  className="px-2.5 py-1 rounded-sm text-rose-500 hover:bg-rose-500/10 text-[11px] font-medium transition-colors"
                 >
                   {t('settings.revokeAll')}
                 </button>
@@ -598,10 +598,10 @@ export default function SettingsPage() {
                     key={r.role}
                     type="button"
                     onClick={() => setSelectedRole(r.role)}
-                    className={`p-3.5 rounded-2xl border text-left transition-all relative overflow-hidden flex flex-col justify-between ${
+                    className={`p-3.5 rounded-sm border text-left transition-all relative overflow-hidden flex flex-col justify-between ${
                       isSelected
                         ? 'bg-app-card border-app-accent shadow-md ring-2 ring-app-accent/20'
-                        : 'bg-app-card border-app-border hover:border-app-muted/50 hover:bg-app-hover/50'
+                        : 'bg-app-card border-app-border hover:border-app-muted/50 hover:bg-app-hover /50 active:scale-[0.98]'
                     }`}
                   >
                     <div>
@@ -618,7 +618,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Matrix Table */}
-          <div className="bg-app-card rounded-2xl border border-app-border shadow-card overflow-hidden">
+          <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden">
             <div className="p-4 border-b border-app-border flex items-center justify-between gap-3">
               <div className="relative flex-1 max-w-md">
                 <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
@@ -627,7 +627,7 @@ export default function SettingsPage() {
                   placeholder={t('common.quickSearch')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-xl text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+                  className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-sm text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
                 />
               </div>
             </div>
@@ -636,7 +636,7 @@ export default function SettingsPage() {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                    <th className="px-5 py-3.5 font-bold uppercase tracking-wider text-[10px]">{t('settings.moduleName')}</th>
+                    <th className="px-4 py-3.5 font-bold uppercase tracking-wider text-[10px]">{t('settings.moduleName')}</th>
                     {PERM_ACTIONS.map((a) => (
                       <th key={a.key} className="px-3 py-3.5 text-center w-24 font-bold uppercase tracking-wider text-[10px]">
                         <button
@@ -659,10 +659,10 @@ export default function SettingsPage() {
                     const isNoneChecked = rolePerms.length === 0
 
                     return (
-                      <tr key={mod.key} className="hover:bg-app-hover/50 transition-colors group">
-                        <td className="px-5 py-3.5">
+                      <tr key={mod.key} className="hover:bg-app-hover /50 active:scale-[0.98] transition-colors group">
+                        <td className="px-4 py-3.5">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-xl bg-app-hover border border-app-border flex items-center justify-center text-app-muted group-hover:text-app-accent group-hover:border-app-accent/30 transition-colors flex-shrink-0">
+                            <div className="w-8 h-8 rounded-sm bg-app-hover border border-app-border flex items-center justify-center text-app-muted group-hover:text-app-accent group-hover:border-app-accent/30 transition-colors flex-shrink-0">
                               <Icon size={18} weight="regular" />
                             </div>
                             <div>
@@ -684,7 +684,7 @@ export default function SettingsPage() {
                               <button
                                 type="button"
                                 onClick={() => handleToggleLocalPerm(selectedRole, mod.key, action.key)}
-                                className={`w-6 h-6 rounded-lg border inline-flex items-center justify-center transition-all ${
+                                className={`w-6 h-6 rounded-sm border inline-flex items-center justify-center transition-all ${
                                   isChecked
                                     ? action.danger
                                       ? 'bg-rose-500/20 border-rose-500 text-rose-600 dark:text-rose-400'
@@ -699,7 +699,7 @@ export default function SettingsPage() {
                         })}
 
                         <td className="px-4 py-3.5 text-center">
-                          <div className="inline-flex items-center gap-1 bg-app-hover/70 border border-app-border p-0.5 rounded-lg text-[10px]">
+                          <div className="inline-flex items-center gap-1 bg-app-hover/70 border border-app-border p-0.5 rounded-sm text-[10px]">
                             <button
                               onClick={() => handleSetRowPreset(selectedRole, mod.key, 'full')}
                               className={`px-1.5 py-0.5 rounded ${
@@ -745,7 +745,7 @@ export default function SettingsPage() {
                 {hasUnsavedChanges && (
                   <button
                     onClick={handleDiscardChanges}
-                    className="px-3.5 py-2 rounded-xl border border-app-border bg-app-card text-app-muted hover:text-app-text text-xs font-medium transition-colors"
+                    className="px-3.5 py-2 rounded-sm border border-app-border bg-app-card text-app-muted hover:text-app-text text-xs font-medium transition-colors"
                   >
                     {t('settings.discard')}
                   </button>
@@ -753,7 +753,7 @@ export default function SettingsPage() {
                 <button
                   onClick={handleSavePermissions}
                   disabled={isSavingPerms}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-app-accent hover:bg-app-accentHover text-app-accentText font-semibold rounded-xl text-xs transition-colors shadow-subtle disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText font-semibold rounded-sm text-xs transition-colors shadow-subtle disabled:opacity-50"
                 >
                   <FloppyDisk size={15} weight="bold" />
                   {t('settings.savePermissions')}
@@ -768,9 +768,9 @@ export default function SettingsPage() {
       {/* TAB 2: WORKSHOP PROFILE & IDENTITY                           */}
       {/* ============================================================ */}
       {activeTab === 'profile' && (
-        <form onSubmit={handleSettingsSubmit} className="space-y-6 animate-fade-in">
+        <form onSubmit={handleSettingsSubmit} className="space-y-6">
           {saved && (
-            <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-medium flex items-center gap-2 animate-fade-in">
+            <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-sm text-xs font-medium flex items-center gap-2">
               <ShieldCheck size={18} weight="bold" />
               {t('settings.profileUpdated')}
             </div>
@@ -778,7 +778,7 @@ export default function SettingsPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
-              <div className="bg-app-card rounded-2xl border border-app-border p-6 shadow-card space-y-4">
+              <div className="bg-app-card rounded-sm border border-app-border p-4 shadow-card space-y-4">
                 <div className="flex items-center gap-2.5 pb-3 border-b border-app-border">
                   <Buildings size={18} className="text-app-accent" weight="bold" />
                   <h2 className="text-sm font-bold text-app-text">{t('settings.workshopIdentity')}</h2>
@@ -793,7 +793,7 @@ export default function SettingsPage() {
                         type="text"
                         value={settings.shopName}
                         onChange={(e) => setSettings({ ...settings, shopName: e.target.value })}
-                        className="w-full pl-9 pr-3.5 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                        className="w-full pl-9 pr-3.5 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
                         placeholder="e.g. Precision Auto Works"
                       />
                     </div>
@@ -807,7 +807,7 @@ export default function SettingsPage() {
                         type="text"
                         value={settings.contactPhone}
                         onChange={(e) => setSettings({ ...settings, contactPhone: e.target.value })}
-                        className="w-full pl-9 pr-3.5 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-mono"
+                        className="w-full pl-9 pr-3.5 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-mono"
                         placeholder="+855 12 345 678"
                       />
                     </div>
@@ -821,7 +821,7 @@ export default function SettingsPage() {
                         type="email"
                         value={settings.contactEmail}
                         onChange={(e) => setSettings({ ...settings, contactEmail: e.target.value })}
-                        className="w-full pl-9 pr-3.5 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                        className="w-full pl-9 pr-3.5 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
                         placeholder="service@autoworkshop.com"
                       />
                     </div>
@@ -835,7 +835,7 @@ export default function SettingsPage() {
                         type="text"
                         value={settings.businessHours}
                         onChange={(e) => setSettings({ ...settings, businessHours: e.target.value })}
-                        className="w-full pl-9 pr-3.5 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                        className="w-full pl-9 pr-3.5 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
                         placeholder="Mon - Sat: 08:00 AM - 06:00 PM"
                       />
                     </div>
@@ -849,7 +849,7 @@ export default function SettingsPage() {
                         type="text"
                         value={settings.address}
                         onChange={(e) => setSettings({ ...settings, address: e.target.value })}
-                        className="w-full pl-9 pr-3.5 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                        className="w-full pl-9 pr-3.5 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
                         placeholder="Phnom Penh, Cambodia"
                       />
                     </div>
@@ -860,7 +860,7 @@ export default function SettingsPage() {
               <div className="flex items-center justify-end gap-3">
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-app-accent hover:bg-app-accentHover text-app-accentText font-semibold rounded-xl text-xs transition-colors shadow-subtle"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText font-semibold rounded-sm text-xs transition-colors shadow-subtle"
                 >
                   <FloppyDisk size={16} weight="bold" />
                   {t('settings.saveProfile')}
@@ -870,13 +870,13 @@ export default function SettingsPage() {
 
             {/* Live Branding Preview Card */}
             <div className="space-y-4">
-              <div className="bg-app-card rounded-2xl border border-app-border p-5 shadow-card space-y-4">
+              <div className="bg-app-card rounded-sm border border-app-border p-3.5 shadow-card space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-app-border">
                   <span className="text-xs font-bold text-app-muted uppercase tracking-wider">{t('settings.liveInvoiceHeader')}</span>
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-app-hover text-app-muted font-mono">Realtime</span>
                 </div>
 
-                <div className="p-4 bg-app-hover/50 border border-app-border rounded-xl space-y-3 font-sans text-xs">
+                <div className="p-4 bg-app-hover/50 border border-app-border rounded-sm space-y-3 font-sans text-xs">
                   <div className="border-b border-app-border pb-3">
                     <h3 className="font-bold text-sm text-app-text">{settings.shopName || 'Precision Auto Works'}</h3>
                     <p className="text-[11px] text-app-muted">{settings.address || 'Phnom Penh, Cambodia'}</p>
@@ -911,10 +911,10 @@ export default function SettingsPage() {
       {/* TAB: LANGUAGE & LOCALIZATION SETTINGS                        */}
       {/* ============================================================ */}
       {activeTab === 'language' && (
-        <div className="space-y-6 animate-fade-in">
-          <div className="bg-app-card rounded-2xl border border-app-border p-6 shadow-card space-y-6">
+        <div className="space-y-6">
+          <div className="bg-app-card rounded-sm border border-app-border p-4 shadow-card space-y-6">
             <div className="flex items-center gap-3 pb-3 border-b border-app-border">
-              <div className="w-10 h-10 rounded-xl bg-app-accent/15 flex items-center justify-center text-app-accent">
+              <div className="w-10 h-10 rounded-sm bg-app-accent/15 flex items-center justify-center text-app-accent">
                 <Translate size={22} weight="bold" />
               </div>
               <div>
@@ -927,10 +927,10 @@ export default function SettingsPage() {
               <button
                 type="button"
                 onClick={() => i18n.changeLanguage('km')}
-                className={`p-4 rounded-2xl border flex items-center gap-3.5 transition-all text-left ${
+                className={`p-4 rounded-sm border flex items-center gap-3.5 transition-all text-left ${
                   i18n.language === 'km'
                     ? 'border-app-accent bg-app-accent/10 ring-2 ring-app-accent/20'
-                    : 'border-app-border bg-app-card hover:bg-app-hover'
+                    : 'border-app-border bg-app-card hover:bg-app-hover active:scale-[0.98]'
                 }`}
               >
                 <span className="text-3xl">🇰🇭</span>
@@ -944,10 +944,10 @@ export default function SettingsPage() {
               <button
                 type="button"
                 onClick={() => i18n.changeLanguage('en')}
-                className={`p-4 rounded-2xl border flex items-center gap-3.5 transition-all text-left ${
+                className={`p-4 rounded-sm border flex items-center gap-3.5 transition-all text-left ${
                   i18n.language === 'en'
                     ? 'border-app-accent bg-app-accent/10 ring-2 ring-app-accent/20'
-                    : 'border-app-border bg-app-card hover:bg-app-hover'
+                    : 'border-app-border bg-app-card hover:bg-app-hover active:scale-[0.98]'
                 }`}
               >
                 <span className="text-3xl">🇬🇧</span>
@@ -966,16 +966,16 @@ export default function SettingsPage() {
       {/* TAB 3: TAX & INVOICING DEFAULTS                              */}
       {/* ============================================================ */}
       {activeTab === 'billing' && (
-        <form onSubmit={handleSettingsSubmit} className="space-y-6 animate-fade-in">
+        <form onSubmit={handleSettingsSubmit} className="space-y-6">
           {saved && (
-            <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-medium flex items-center gap-2 animate-fade-in">
+            <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-sm text-xs font-medium flex items-center gap-2">
               <ShieldCheck size={18} weight="bold" />
               {t('settings.taxUpdated')}
             </div>
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-app-card rounded-2xl border border-app-border p-6 shadow-card space-y-4">
+            <div className="bg-app-card rounded-sm border border-app-border p-4 shadow-card space-y-4">
               <div className="flex items-center gap-2.5 pb-3 border-b border-app-border">
                 <Receipt size={18} className="text-app-accent" weight="bold" />
                 <h2 className="text-sm font-bold text-app-text">{t('settings.financialParams')}</h2>
@@ -992,7 +992,7 @@ export default function SettingsPage() {
                       max="100"
                       value={settings.taxRate}
                       onChange={(e) => setSettings({ ...settings, taxRate: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-3.5 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent tabular-nums font-semibold"
+                      className="w-full px-3.5 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent tabular-nums font-semibold"
                     />
                   </div>
                   <p className="text-[11px] text-app-muted mt-1">{t('settings.taxDesc')}</p>
@@ -1003,7 +1003,7 @@ export default function SettingsPage() {
                   <select
                     value={settings.currency}
                     onChange={(e) => setSettings({ ...settings, currency: e.target.value })}
-                    className="w-full px-3.5 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                    className="w-full px-3.5 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
                   >
                     <option value="USD ($)">USD ($) - US Dollar</option>
                     <option value="KHR (៛)">KHR (៛) - Cambodian Riel</option>
@@ -1016,13 +1016,13 @@ export default function SettingsPage() {
             </div>
 
             {/* Dynamic Calculation Sample */}
-            <div className="bg-app-card rounded-2xl border border-app-border p-6 shadow-card space-y-4">
+            <div className="bg-app-card rounded-sm border border-app-border p-4 shadow-card space-y-4">
               <div className="flex items-center gap-2.5 pb-3 border-b border-app-border">
                 <CurrencyDollar size={18} className="text-emerald-500" weight="bold" />
                 <h2 className="text-sm font-bold text-app-text">{t('settings.taxSimulation')}</h2>
               </div>
 
-              <div className="bg-app-hover/50 border border-app-border rounded-xl p-4 space-y-2 text-xs">
+              <div className="bg-app-hover/50 border border-app-border rounded-sm p-4 space-y-2 text-xs">
                 <div className="flex justify-between text-app-muted">
                   <span>Sample Labor & Diagnostics:</span>
                   <span className="font-mono text-app-text">$120.00</span>
@@ -1054,7 +1054,7 @@ export default function SettingsPage() {
           <div className="flex justify-end">
             <button
               type="submit"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-app-accent hover:bg-app-accentHover text-app-accentText font-semibold rounded-xl text-xs transition-colors shadow-subtle"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText font-semibold rounded-sm text-xs transition-colors shadow-subtle"
             >
               <FloppyDisk size={16} weight="bold" />
               {t('settings.saveTax')}
@@ -1067,10 +1067,10 @@ export default function SettingsPage() {
       {/* TAB 4: DATA SAFETY & BACKUPS                                 */}
       {/* ============================================================ */}
       {activeTab === 'security' && (
-        <div className="space-y-6 animate-fade-in">
+        <div className="space-y-6">
           {importStatus && (
             <div
-              className={`p-3.5 rounded-xl text-xs font-medium flex items-center gap-2 animate-fade-in ${
+              className={`p-3.5 rounded-sm text-xs font-medium flex items-center gap-2  ${
                 importStatus.type === 'success'
                   ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
                   : 'bg-rose-500/10 border border-rose-500/20 text-rose-600'
@@ -1083,7 +1083,7 @@ export default function SettingsPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Automatic Backup Card */}
-            <div className="bg-app-card rounded-2xl border border-app-border p-6 shadow-card space-y-4">
+            <div className="bg-app-card rounded-sm border border-app-border p-4 shadow-card space-y-4">
               <div className="flex items-center gap-2.5 pb-3 border-b border-app-border">
                 <Database size={18} className="text-app-accent" weight="bold" />
                 <h2 className="text-sm font-bold text-app-text">{t('settings.dataSafety')}</h2>
@@ -1116,14 +1116,14 @@ export default function SettingsPage() {
               </div>
 
               <div className="pt-2">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium border border-emerald-500/20">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-[11px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium border border-emerald-500/20">
                   <Check size={12} weight="bold" /> Backup Daemon Active
                 </span>
               </div>
             </div>
 
             {/* Export & Restore Configuration */}
-            <div className="bg-app-card rounded-2xl border border-app-border p-6 shadow-card space-y-4">
+            <div className="bg-app-card rounded-sm border border-app-border p-4 shadow-card space-y-4">
               <div className="flex items-center gap-2.5 pb-3 border-b border-app-border">
                 <DownloadSimple size={18} className="text-blue-500" weight="bold" />
                 <h2 className="text-sm font-bold text-app-text">{t('settings.exportBackup')}</h2>
@@ -1151,13 +1151,13 @@ export default function SettingsPage() {
                     downloadAnchor.click()
                     downloadAnchor.remove()
                   }}
-                  className="px-4 py-2 bg-app-hover hover:bg-app-border rounded-xl text-xs font-semibold text-app-text transition-colors inline-flex items-center gap-2"
+                  className="px-4 py-2 bg-app-hover hover:bg-app-border rounded-sm text-xs font-semibold text-app-text transition-colors inline-flex items-center gap-2"
                 >
                   <DownloadSimple size={15} weight="bold" />
                   {t('settings.exportJson')}
                 </button>
 
-                <label className="px-4 py-2 bg-app-card hover:bg-app-hover border border-app-border rounded-xl text-xs font-semibold text-app-text transition-colors inline-flex items-center gap-2 cursor-pointer">
+                <label className="px-4 py-2 bg-app-card hover:bg-app-hover active:scale-[0.98] border border-app-border rounded-sm text-xs font-semibold text-app-text transition-colors inline-flex items-center gap-2 cursor-pointer">
                   <UploadSimple size={15} weight="bold" />
                   {t('settings.importJson')}
                   <input type="file" accept=".json" onChange={handleImportConfig} className="hidden" />

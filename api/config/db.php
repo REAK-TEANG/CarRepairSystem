@@ -8,11 +8,12 @@ function loadEnv($path) {
     }
     $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
-        if (strpos(trim($line), '#') === 0) continue;
+        $line = trim($line);
+        if ($line === '' || strpos($line, '#') === 0) continue;
         list($name, $value) = explode('=', $line, 2) + [NULL, NULL];
         if ($name !== NULL && $value !== NULL) {
             $name = trim($name);
-            $value = trim($value);
+            $value = trim($value, " \t\n\r\0\x0B\"'");
             if (!array_key_exists($name, $_SERVER) && !array_key_exists($name, $_ENV)) {
                 putenv(sprintf('%s=%s', $name, $value));
                 $_ENV[$name] = $value;
@@ -34,17 +35,27 @@ $port = getenv('DB_PORT') ?: '5432';
 $dbname = getenv('DB_NAME') ?: 'carrepairshop';
 $user = getenv('DB_USER') ?: 'postgres';
 $password = getenv('DB_PASSWORD') ?: '123';
+$usePersistent = filter_var(getenv('DB_PERSISTENT') ?: 'true', FILTER_VALIDATE_BOOLEAN);
 
 try {
     $dsn = "pgsql:host=$host;port=$port;dbname=$dbname";
-    $pdo = new PDO($dsn, $user, $password, [
+    $options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES => false,
-    ]);
+    ];
+    if ($usePersistent) {
+        $options[PDO::ATTR_PERSISTENT] = true;
+    }
+    $pdo = new PDO($dsn, $user, $password, $options);
 } catch (PDOException $e) {
+    error_log("Database connection failed: " . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['error' => 'Database connection failed', 'message' => $e->getMessage()]);
+    $isDev = (getenv('APP_ENV') ?: 'development') === 'development';
+    echo json_encode([
+        'error' => 'Database connection failed',
+        'message' => $isDev ? $e->getMessage() : 'Unable to connect to database. Please check server configuration.'
+    ]);
     exit;
 }
 
@@ -69,4 +80,24 @@ function run($sql, $params = []) {
     global $pdo;
     $stmt = query($sql, $params);
     return ['rowCount' => $stmt->rowCount(), 'lastInsertId' => $pdo->lastInsertId()];
+}
+
+/**
+ * Execute a callback within an atomic database transaction
+ * Automatically rolls back on any Exception/Throwable and re-throws.
+ */
+function transaction(callable $callback) {
+    global $pdo;
+    if ($pdo->inTransaction()) {
+        return $callback($pdo);
+    }
+    $pdo->beginTransaction();
+    try {
+        $result = $callback($pdo);
+        $pdo->commit();
+        return $result;
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
 }

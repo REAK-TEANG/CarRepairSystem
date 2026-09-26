@@ -3,18 +3,12 @@ import {
   MagnifyingGlass,
   Plus,
   Receipt,
-  CreditCard,
   Clock,
   CheckCircle,
   Trash,
   QrCode,
-  CurrencyDollar,
   Wallet,
   HourglassHigh,
-  ChartPieSlice,
-  Car,
-  User,
-  Printer,
 } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useInvoices, useCreateInvoice, useRecordPayment, useDeleteInvoice } from '../../hooks/useInvoices'
@@ -46,13 +40,13 @@ export default function InvoicesPage() {
   const [selectedInvoice, setSelectedInvoice] = useState(null)
 
   // Add Form
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(() => ({
     customer: '',
     customerId: '',
     orderNumber: '',
     amount: 350.0,
     dueDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
-  })
+  }))
 
   // Payment Form
   const [paymentAmount, setPaymentAmount] = useState(0)
@@ -148,7 +142,7 @@ export default function InvoicesPage() {
         {can('invoices', 'create') && (
           <button
             onClick={handleOpenAdd}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover text-app-accentText font-semibold rounded-xl text-xs transition-colors shadow-subtle cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText font-semibold rounded-sm text-xs transition-colors shadow-subtle cursor-pointer"
           >
             <Plus size={16} weight="bold" />
             {t('invoices.createInvoice')}
@@ -158,8 +152,8 @@ export default function InvoicesPage() {
 
       {/* KPI Financial Overview Strip */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="p-4 rounded-2xl bg-app-card border border-app-border shadow-card flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-app-accent/15 flex items-center justify-center text-app-accent flex-shrink-0">
+        <div className="p-4 rounded-sm bg-app-card border border-app-border shadow-card flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-sm bg-app-accent/15 flex items-center justify-center text-app-accent flex-shrink-0">
             <Receipt size={20} weight="bold" />
           </div>
           <div>
@@ -169,8 +163,8 @@ export default function InvoicesPage() {
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-app-card border border-app-border shadow-card flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center text-emerald-600 dark:text-emerald-400 flex-shrink-0">
+        <div className="p-4 rounded-sm bg-app-card border border-app-border shadow-card flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-sm bg-emerald-500/15 flex items-center justify-center text-emerald-600 dark:text-emerald-400 flex-shrink-0">
             <Wallet size={20} weight="bold" />
           </div>
           <div>
@@ -182,8 +176,8 @@ export default function InvoicesPage() {
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-app-card border border-app-border shadow-card flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center text-amber-600 dark:text-amber-400 flex-shrink-0">
+        <div className="p-4 rounded-sm bg-app-card border border-app-border shadow-card flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-sm bg-amber-500/15 flex items-center justify-center text-amber-600 dark:text-amber-400 flex-shrink-0">
             <HourglassHigh size={20} weight="bold" />
           </div>
           <div>
@@ -197,8 +191,8 @@ export default function InvoicesPage() {
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-app-card border border-app-border shadow-card flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-sky-500/15 flex items-center justify-center text-sky-600 dark:text-sky-400 flex-shrink-0">
+        <div className="p-4 rounded-sm bg-app-card border border-app-border shadow-card flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-sm bg-sky-500/15 flex items-center justify-center text-sky-600 dark:text-sky-400 flex-shrink-0">
             <CheckCircle size={20} weight="bold" />
           </div>
           <div>
@@ -222,10 +216,10 @@ export default function InvoicesPage() {
             <button
               key={st}
               onClick={() => setStatusFilter(st)}
-              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-sm text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                 isActive
                   ? 'bg-app-accent text-app-accentText shadow-subtle'
-                  : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover hover:text-app-text'
+                  : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover active:scale-[0.98] hover:text-app-text'
               }`}
             >
               {translatedSt}
@@ -242,7 +236,7 @@ export default function InvoicesPage() {
       </div>
 
       {/* Main Table */}
-      <div className="bg-app-card rounded-2xl border border-app-border shadow-card overflow-hidden transition-colors duration-200">
+      <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden transition-colors duration-200">
         <div className="p-4 border-b border-app-border flex items-center justify-between gap-3">
           <div className="relative flex-1 max-w-md">
             <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
@@ -251,7 +245,7 @@ export default function InvoicesPage() {
               placeholder={t('common.quickSearch')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-xl text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-sm text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
             />
           </div>
           {(searchQuery || statusFilter !== 'All') && (
@@ -288,13 +282,13 @@ export default function InvoicesPage() {
             <table className="w-full text-xs">
               <thead>
                 <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                  <th className="px-6 py-3 font-semibold">{t('invoices.invoiceNumber')}</th>
-                  <th className="px-6 py-3 font-semibold">{t('invoices.customer')}</th>
-                  <th className="px-6 py-3 font-semibold hidden md:table-cell">Vehicle & Work Order</th>
-                  <th className="px-6 py-3 font-semibold">{t('invoices.amount')}</th>
-                  <th className="px-6 py-3 font-semibold hidden lg:table-cell">Balance Due</th>
-                  <th className="px-6 py-3 font-semibold">{t('common.status')}</th>
-                  <th className="px-6 py-3 font-semibold text-right">{t('common.actions')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('invoices.invoiceNumber')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('invoices.customer')}</th>
+                  <th className="px-4 py-3 font-semibold hidden md:table-cell">Vehicle & Work Order</th>
+                  <th className="px-4 py-3 font-semibold">{t('invoices.amount')}</th>
+                  <th className="px-4 py-3 font-semibold hidden lg:table-cell">Balance Due</th>
+                  <th className="px-4 py-3 font-semibold">{t('common.status')}</th>
+                  <th className="px-4 py-3 font-semibold text-right">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-app-border">
@@ -306,21 +300,21 @@ export default function InvoicesPage() {
                     <tr
                       key={inv.id}
                       onClick={() => handleOpenView(inv)}
-                      className="hover:bg-app-hover/60 transition-colors group cursor-pointer"
+                      className="hover:bg-app-hover /60 active:scale-[0.98] transition-colors group cursor-pointer"
                     >
-                      <td className="px-6 py-3.5">
-                        <span className="font-mono font-bold text-app-accent px-2 py-0.5 rounded-lg bg-app-accent/10 border border-app-accent/20">
+                      <td className="px-4 py-3.5">
+                        <span className="font-mono font-bold text-app-accent px-2 py-0.5 rounded-sm bg-app-accent/10 border border-app-accent/20">
                           {inv.invoiceNumber}
                         </span>
                         <p className="text-[10px] text-app-muted flex items-center gap-1 mt-1 font-mono">
                           <Clock size={11} /> Due: {inv.dueDate}
                         </p>
                       </td>
-                      <td className="px-6 py-3.5">
+                      <td className="px-4 py-3.5">
                         <p className="font-semibold text-app-text">{inv.customer}</p>
                         <p className="text-[10px] text-app-muted font-mono">{inv.customerCode || 'CUST-001'}</p>
                       </td>
-                      <td className="px-6 py-3.5 hidden md:table-cell">
+                      <td className="px-4 py-3.5 hidden md:table-cell">
                         <p className="font-medium text-app-text">{inv.vehicle || 'Vehicle Service'}</p>
                         <div className="flex items-center gap-1.5 text-[10px] font-mono text-app-muted mt-0.5">
                           {inv.vehiclePlate && <span className="font-bold text-app-text">{inv.vehiclePlate}</span>}
@@ -328,7 +322,7 @@ export default function InvoicesPage() {
                           <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{inv.orderNumber}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-3.5">
+                      <td className="px-4 py-3.5">
                         <p className="font-bold text-app-text tabular-nums text-xs">${Number(inv.amount).toFixed(2)}</p>
                         <div className="w-20 bg-app-border h-1.5 rounded-full overflow-hidden mt-1">
                           <div
@@ -340,7 +334,7 @@ export default function InvoicesPage() {
                         </div>
                         <p className="text-[9px] text-app-muted mt-0.5">{percentPaid}% Paid</p>
                       </td>
-                      <td className="px-6 py-3.5 hidden lg:table-cell">
+                      <td className="px-4 py-3.5 hidden lg:table-cell">
                         <span
                           className={`font-mono font-bold text-xs ${
                             bal === 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
@@ -349,23 +343,23 @@ export default function InvoicesPage() {
                           ${bal.toFixed(2)}
                         </span>
                       </td>
-                      <td className="px-6 py-3.5">
+                      <td className="px-4 py-3.5">
                         <StatusBadge status={inv.status} />
                       </td>
-                      <td className="px-6 py-3.5 text-right">
+                      <td className="px-4 py-3.5 text-right">
                         <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                           {can('invoices', 'update') && inv.status !== 'Paid' && (
                             <button
                               onClick={() => handleOpenPay(inv)}
                               title={t('invoices.markAsPaid')}
-                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-semibold transition-colors shadow-subtle cursor-pointer"
+                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-sm text-[11px] font-semibold transition-colors shadow-subtle cursor-pointer"
                             >
                               Pay
                             </button>
                           )}
                           <button
                             onClick={() => handleOpenView(inv)}
-                            className="p-1.5 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
+                            className="p-1.5 rounded-sm text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
                             title="View / Print Formal Invoice"
                           >
                             <Receipt size={16} />
@@ -373,7 +367,7 @@ export default function InvoicesPage() {
                           {can('invoices', 'delete') && (
                             <button
                               onClick={() => handleOpenDelete(inv)}
-                              className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                              className="p-1.5 rounded-sm text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
                               title={t('common.delete')}
                             >
                               <Trash size={16} />
@@ -402,7 +396,7 @@ export default function InvoicesPage() {
                   const c = customers.find((x) => x.name === e.target.value)
                   setFormData({ ...formData, customer: e.target.value, customerId: c ? c.id : '' })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
                 {customers.map((c) => (
                   <option key={c.id} value={c.name}>
@@ -416,7 +410,7 @@ export default function InvoicesPage() {
               <select
                 value={formData.orderNumber}
                 onChange={(e) => setFormData({ ...formData, orderNumber: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-mono"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-mono"
               >
                 {repairJobs.map((j) => (
                   <option key={j.id} value={j.orderNumber}>
@@ -436,7 +430,7 @@ export default function InvoicesPage() {
                 required
                 value={formData.amount}
                 onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-bold font-mono"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-bold font-mono"
               />
             </div>
             <div>
@@ -445,7 +439,7 @@ export default function InvoicesPage() {
                 type="date"
                 value={formData.dueDate}
                 onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
@@ -454,7 +448,7 @@ export default function InvoicesPage() {
             <button
               type="button"
               onClick={() => setIsAddOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
+              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
             >
               {t('common.cancel')}
             </button>
@@ -472,7 +466,7 @@ export default function InvoicesPage() {
         title={`Record Settlement: ${selectedInvoice?.invoiceNumber}`}
       >
         <form onSubmit={handlePaySubmit} className="space-y-4 text-xs">
-          <div className="p-3.5 bg-app-hover/50 rounded-xl border border-app-border space-y-1.5">
+          <div className="p-3.5 bg-app-hover/50 rounded-sm border border-app-border space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-app-muted">Customer:</span>
               <span className="font-bold text-app-text">{selectedInvoice?.customer}</span>
@@ -509,7 +503,7 @@ export default function InvoicesPage() {
               required
               value={paymentAmount}
               onChange={(e) => setPaymentAmount(parseFloat(e.target.value) || 0)}
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text font-bold font-mono text-base focus:outline-none focus:border-app-accent"
+              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text font-bold font-mono text-base focus:outline-none focus:border-app-accent"
             />
           </div>
 
@@ -518,7 +512,7 @@ export default function InvoicesPage() {
             <select
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-medium"
+              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-medium"
             >
               <option value="Credit/Debit Card">Credit / Debit Card (POS Terminal)</option>
               <option value="Cash">Cash at Counter</option>
@@ -528,8 +522,8 @@ export default function InvoicesPage() {
           </div>
 
           {paymentMethod === 'Bakong KHQR' && (
-            <div className="p-4 rounded-xl bg-gradient-to-br from-rose-500/10 via-app-card to-rose-500/5 border border-rose-500/30 text-center space-y-2">
-              <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center mx-auto shadow-md">
+            <div className="p-4 rounded-sm bg-gradient-to-br from-rose-500/10 via-app-card to-rose-500/5 border border-rose-500/30 text-center space-y-2">
+              <div className="w-10 h-10 rounded-sm bg-rose-600 text-white flex items-center justify-center mx-auto shadow-md">
                 <QrCode size={24} weight="bold" />
               </div>
               <h4 className="font-bold text-rose-700 dark:text-rose-400 text-xs">Bakong Universal KHQR</h4>
@@ -537,8 +531,8 @@ export default function InvoicesPage() {
                 Scan with any banking app (ABA, Wing, ACLEDA, Canadia) to pay{' '}
                 <span className="font-bold text-app-text">${Number(paymentAmount).toFixed(2)}</span>
               </p>
-              <div className="p-2.5 bg-white dark:bg-black/40 rounded-lg inline-block border border-app-border">
-                <div className="w-32 h-32 border-2 border-dashed border-rose-500/50 rounded-lg flex flex-col items-center justify-center p-2 text-center">
+              <div className="p-2.5 bg-white dark:bg-black/40 rounded-sm inline-block border border-app-border">
+                <div className="w-32 h-32 border-2 border-dashed border-rose-500/50 rounded-sm flex flex-col items-center justify-center p-2 text-center">
                   <QrCode size={56} className="text-rose-600 dark:text-rose-400" />
                   <span className="text-[9px] font-mono font-bold text-app-text mt-1">KHQR READY</span>
                 </div>
@@ -550,7 +544,7 @@ export default function InvoicesPage() {
             <button
               type="button"
               onClick={() => setIsPayOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
+              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
             >
               {t('common.cancel')}
             </button>

@@ -24,7 +24,7 @@ export default function ConfirmDialog({
       case 'warning':
         return 'bg-amber-600 hover:bg-amber-700 text-white'
       default:
-        return 'bg-app-accent hover:bg-app-accentHover text-app-accentText'
+        return 'bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText'
     }
   }
 
@@ -33,7 +33,7 @@ export default function ConfirmDialog({
       <div className="space-y-4 text-xs font-sans">
         <div className="flex items-start gap-3">
           {variant === 'danger' && (
-            <div className="p-2 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 flex-shrink-0">
+            <div className="p-2 rounded-sm bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 flex-shrink-0">
               <Warning size={20} weight="fill" />
             </div>
           )}
@@ -47,7 +47,7 @@ export default function ConfirmDialog({
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="px-3.5 py-2 rounded-lg text-app-muted hover:bg-app-hover hover:text-app-text transition-colors disabled:opacity-50"
+            className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover active:scale-[0.98] hover:text-app-text transition-colors disabled:opacity-50"
           >
             {resolvedCancelText}
           </button>
@@ -55,7 +55,7 @@ export default function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={isLoading}
-            className={`px-4 py-2 font-semibold rounded-lg transition-colors shadow-subtle disabled:opacity-50 ${getButtonClass()}`}
+            className={`px-4 py-2 font-semibold rounded-sm transition-colors shadow-subtle disabled:opacity-50 ${getButtonClass()}`}
           >
             {isLoading ? t('common.loading') : resolvedConfirmText}
           </button>

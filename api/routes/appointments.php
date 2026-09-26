@@ -1,10 +1,17 @@
 <?php
 // api/routes/appointments.php
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../utils/eventBus.php';
 
-$authPayload = authenticate(); // Validates JWT
+$authPayload = authenticate(); 
+authorizeRoles(['admin', 'manager', 'service_advisor', 'mechanic', 'cashier'], $authPayload);
 
 $method = $_SERVER['REQUEST_METHOD'];
+
+// Mutation operations restricted to front-desk and leadership
+if (in_array($method, ['POST', 'PUT', 'DELETE', 'PATCH'])) {
+    authorizeRoles(['admin', 'manager', 'service_advisor'], $authPayload);
+}
 $id = null;
 $action = null;
 
@@ -85,6 +92,15 @@ if ($method === 'GET' && !$id) {
     $customer = get('SELECT full_name FROM customers WHERE id = ?', [$inserted['customer_id']]);
     $vehicle = get('SELECT vehicle_number, brand, model FROM vehicles WHERE id = ?', [$inserted['vehicle_id']]);
 
+    EventBus::publish('appointments', 'created', [
+        'id' => (int)$inserted['id'],
+        'code' => $inserted['appointment_code'],
+        'customer' => $customer['full_name'] ?? '',
+        'date' => $inserted['scheduled_date'],
+        'time' => $inserted['scheduled_time'],
+        'status' => $inserted['status']
+    ]);
+
     http_response_code(201);
     echo json_encode(['data' => [
         'id' => $inserted['id'],
@@ -135,6 +151,14 @@ if ($method === 'GET' && !$id) {
     $customer = get('SELECT full_name FROM customers WHERE id = ?', [$updated['customer_id']]);
     $vehicle = get('SELECT vehicle_number, brand, model FROM vehicles WHERE id = ?', [$updated['vehicle_id']]);
 
+    EventBus::publish('appointments', 'updated', [
+        'id' => (int)$updated['id'],
+        'code' => $updated['appointment_code'],
+        'status' => $updated['status'],
+        'date' => $updated['scheduled_date'],
+        'time' => $updated['scheduled_time']
+    ]);
+
     echo json_encode(['data' => [
         'id' => $updated['id'],
         'code' => $updated['appointment_code'],
@@ -164,12 +188,18 @@ if ($method === 'GET' && !$id) {
         echo json_encode(['error' => 'Appointment not found']);
         exit;
     }
+
+    EventBus::publish('appointments', 'status_changed', [
+        'id' => (int)$updated['id'],
+        'code' => $updated['appointment_code'],
+        'status' => $updated['status']
+    ]);
     
     echo json_encode(['data' => $updated]);
     exit;
 
 } else if ($method === 'DELETE' && $id) {
-    $exists = get('SELECT id FROM appointments WHERE id = ?', [$id]);
+    $exists = get('SELECT id, appointment_code FROM appointments WHERE id = ?', [$id]);
     if (!$exists) {
         http_response_code(404);
         echo json_encode(['error' => 'Appointment not found']);
@@ -177,6 +207,13 @@ if ($method === 'GET' && !$id) {
     }
 
     run("UPDATE appointments SET status = 'Cancelled', updated_at = NOW() WHERE id = ?", [$id]);
+
+    EventBus::publish('appointments', 'cancelled', [
+        'id' => (int)$id,
+        'code' => $exists['appointment_code'],
+        'status' => 'Cancelled'
+    ]);
+
     echo json_encode(['success' => true, 'message' => 'Appointment cancelled successfully']);
     exit;
 }

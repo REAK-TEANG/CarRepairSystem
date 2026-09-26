@@ -252,11 +252,11 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
   return (
     <div className="space-y-5 text-app-text font-sans">
       {/* Top Filter & Toolbar Bar */}
-      <div className="bg-app-card rounded-2xl border border-app-border p-4 shadow-card space-y-3.5">
+      <div className="bg-app-card rounded-sm border border-app-border p-4 shadow-card space-y-3.5">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           {/* Title & Count Badge */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 shadow-subtle">
+            <div className="w-10 h-10 rounded-sm bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20 shadow-subtle">
               <Car size={22} weight="duotone" />
             </div>
             <div>
@@ -282,13 +282,13 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                 placeholder="Search plate, vehicle, order..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 bg-app-input border border-app-border rounded-xl text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+                className="w-full pl-8 pr-3 py-1.5 bg-app-input border border-app-border rounded-sm text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
               />
             </div>
 
             {/* Mechanic Filter */}
             {!mechanicFilter && (
-              <div className="flex items-center gap-1.5 bg-app-input border border-app-border rounded-xl px-2.5 py-1.5 text-xs">
+              <div className="flex items-center gap-1.5 bg-app-input border border-app-border rounded-sm px-2.5 py-1.5 text-xs">
                 <User size={14} className="text-app-muted flex-shrink-0" />
                 <select
                   value={selectedMechanic}
@@ -306,10 +306,10 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
             )}
 
             {/* View Mode Toggle */}
-            <div className="flex items-center p-1 bg-app-input border border-app-border rounded-xl">
+            <div className="flex items-center p-1 bg-app-input border border-app-border rounded-sm">
               <button
                 onClick={() => setViewMode('pipeline')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                className={`px-2.5 py-1 rounded-sm text-xs font-semibold flex items-center gap-1.5 transition-all ${
                   viewMode === 'pipeline'
                     ? 'bg-app-accent text-app-accentText shadow-subtle'
                     : 'text-app-muted hover:text-app-text'
@@ -321,7 +321,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
               </button>
               <button
                 onClick={() => setViewMode('columns')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                className={`px-2.5 py-1 rounded-sm text-xs font-semibold flex items-center gap-1.5 transition-all ${
                   viewMode === 'columns'
                     ? 'bg-app-accent text-app-accentText shadow-subtle'
                     : 'text-app-muted hover:text-app-text'
@@ -340,7 +340,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
           <span className="text-[11px] font-semibold text-app-muted mr-1 flex-shrink-0">Stage Filter:</span>
           <button
             onClick={() => setStatusFilter('All')}
-            className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all whitespace-nowrap ${
+            className={`px-2.5 py-1 rounded-sm text-[11px] font-semibold transition-all whitespace-nowrap ${
               statusFilter === 'All'
                 ? 'bg-app-text text-app-card shadow-subtle'
                 : 'bg-app-input text-app-muted hover:text-app-text border border-app-border'
@@ -355,7 +355,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
               <button
                 key={s.id}
                 onClick={() => setStatusFilter(s.id)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all whitespace-nowrap flex items-center gap-1 ${
+                className={`px-2.5 py-1 rounded-sm text-[11px] font-semibold transition-all whitespace-nowrap flex items-center gap-1 ${
                   isSelected
                     ? 'bg-emerald-600 text-white shadow-subtle'
                     : 'bg-app-input text-app-muted hover:text-app-text border border-app-border'
@@ -377,7 +377,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
 
       {/* Main Content Area */}
       {filteredJobs.length === 0 ? (
-        <div className="bg-app-card rounded-2xl border border-app-border p-10 text-center shadow-card">
+        <div className="bg-app-card rounded-sm border border-app-border p-10 text-center shadow-card">
           <Car size={40} className="mx-auto text-app-muted mb-3 opacity-40" />
           <h3 className="text-sm font-bold text-app-text">No vehicles match current filters</h3>
           <p className="text-xs text-app-muted mt-1 max-w-sm mx-auto">
@@ -392,7 +392,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                 setStatusFilter('All')
                 setSelectedMechanic('all')
               }}
-              className="mt-4 px-3.5 py-1.5 rounded-xl bg-app-hover hover:bg-app-border text-xs font-semibold text-app-text transition-colors cursor-pointer"
+              className="mt-4 px-3.5 py-1.5 rounded-sm bg-app-hover hover:bg-app-border text-xs font-semibold text-app-text transition-colors cursor-pointer"
             >
               Reset Filters
             </button>
@@ -410,13 +410,13 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
             return (
               <div
                 key={job.id}
-                className="bg-app-card rounded-2xl border border-app-border shadow-card hover:shadow-lg transition-all duration-200 overflow-hidden"
+                className="bg-app-card rounded-sm border border-app-border shadow-card hover:shadow-lg transition-all duration-200 overflow-hidden"
               >
                 {/* Top Section: Vehicle Card Header */}
-                <div className="p-4 sm:p-5 bg-gradient-to-r from-app-card via-app-card to-app-hover/30 border-b border-app-border flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="p-3 bg-gradient-to-r from-app-card via-app-card to-app-hover/30 border-b border-app-border flex flex-col md:flex-row md:items-center justify-between gap-4">
                   {/* Vehicle Identity */}
                   <div className="flex items-start sm:items-center gap-3.5">
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 flex-shrink-0 shadow-subtle">
+                    <div className="w-12 h-12 rounded-sm bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 flex-shrink-0 shadow-subtle">
                       <Car size={26} weight="duotone" />
                     </div>
 
@@ -425,7 +425,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                         <h3 className="font-bold text-sm sm:text-base text-app-text tracking-tight">
                           {job.vehicle || 'Vehicle Unit'}
                         </h3>
-                        <span className="px-2.5 py-0.5 rounded-lg bg-app-input border border-app-border font-mono text-xs font-bold text-app-text shadow-subtle">
+                        <span className="px-2.5 py-0.5 rounded-sm bg-app-input border border-app-border font-mono text-xs font-bold text-app-text shadow-subtle">
                           {job.plate}
                         </span>
                         <span className="font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400">
@@ -463,11 +463,11 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                       <button
                         onClick={() => handleSetStatus(job, nextStep.id)}
                         disabled={isUpdating}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-95 text-white text-xs font-bold shadow-md hover:shadow-lg transition-all duration-150 disabled:opacity-50 group cursor-pointer"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-sm bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-95 text-white text-xs font-bold shadow-md hover:shadow-lg transition-all duration-150 disabled:opacity-50 group cursor-pointer"
                         title={`1-Click advance status directly to "${nextStep.label}"`}
                       >
                         {isUpdating ? (
-                          <CircleNotch size={15} className="animate-spin" />
+                          <CircleNotch size={15} className="" />
                         ) : (
                           <ArrowCircleRight size={16} weight="fill" className="group-hover:translate-x-0.5 transition-transform" />
                         )}
@@ -475,7 +475,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                         <CaretRight size={13} weight="bold" />
                       </button>
                     ) : (
-                      <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold">
+                      <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-sm bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold">
                         <CheckCircle size={16} weight="fill" />
                         <span>Completed</span>
                       </div>
@@ -488,7 +488,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                           setSelectedJob(job)
                           setIsNotifyOpen(true)
                         }}
-                        className="px-3 py-2 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/20 transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                        className="px-3 py-2 rounded-sm bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/20 transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
                         title="Send Customer Pickup Notice"
                       >
                         <ChatCircleDots size={15} weight="bold" />
@@ -500,7 +500,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                     {job.status === 'Completed' && (
                       <button
                         onClick={() => handleGenerateInvoice(job)}
-                        className="px-3 py-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30 hover:bg-blue-500/20 transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                        className="px-3 py-2 rounded-sm bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30 hover:bg-blue-500/20 transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
                         title="Generate Official Invoice"
                       >
                         <Receipt size={15} weight="bold" />
@@ -516,7 +516,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                           setPartSelection({ sparePartId: inventory[0]?.id || '', quantity: 1 })
                           setIsAddPartOpen(true)
                         }}
-                        className="px-3 py-2 rounded-xl text-amber-700 dark:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition-colors text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                        className="px-3 py-2 rounded-sm text-amber-700 dark:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition-colors text-xs font-semibold flex items-center gap-1 cursor-pointer"
                         title="Add extra part from stock (auto stock-out)"
                       >
                         <Plus size={14} weight="bold" />
@@ -530,7 +530,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                         setSelectedJob(job)
                         setIsViewOpen(true)
                       }}
-                      className="px-3 py-2 rounded-xl text-app-muted hover:text-app-text hover:bg-app-hover border border-app-border transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                      className="px-3 py-2 rounded-sm text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98] border border-app-border transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
                       title="View Details"
                     >
                       <Eye size={15} />
@@ -540,7 +540,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                 </div>
 
                 {/* Middle: Issue & Parts Summary Bar */}
-                <div className="px-4 sm:px-5 py-3 bg-app-hover/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs border-b border-app-border">
+                <div className="px-4 sm:px-4 py-3 bg-app-hover/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs border-b border-app-border">
                   <div className="flex items-center gap-2 flex-1">
                     <span className="text-app-muted font-semibold flex-shrink-0">Problem / Work:</span>
                     <span className="text-app-text font-medium truncate">{job.problem}</span>
@@ -562,7 +562,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                 </div>
 
                 {/* Bottom: Modern Interactive Stepper Pipeline */}
-                <div className="p-4 sm:p-5 space-y-3">
+                <div className="p-3 space-y-3">
                   <div className="flex items-center justify-between text-xs mb-1">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-app-text">Current Stage:</span>
@@ -588,12 +588,12 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                           key={step.id}
                           onClick={() => handleSetStatus(job, step.id)}
                           disabled={isUpdating}
-                          className={`relative p-2.5 rounded-xl text-left transition-all duration-200 flex flex-col justify-between group cursor-pointer border ${
+                          className={`relative p-2.5 rounded-sm text-left transition-all duration-200 flex flex-col justify-between group cursor-pointer border ${
                             isCurrent
                               ? 'bg-gradient-to-b from-emerald-500/15 to-teal-500/10 border-emerald-500 ring-2 ring-emerald-500/30 shadow-md'
                               : isCompleted
                               ? 'bg-emerald-500/5 hover:bg-emerald-500/15 border-emerald-500/30 hover:border-emerald-500/60'
-                              : 'bg-app-input/50 hover:bg-app-hover border-app-border/80 hover:border-app-border'
+                              : 'bg-app-input/50 hover:bg-app-hover active:scale-[0.98] border-app-border/80 hover:border-app-border'
                           }`}
                           title={`Click once to jump stage to "${step.label}"`}
                         >
@@ -604,7 +604,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                                 isCompleted
                                   ? 'bg-emerald-500 text-white'
                                   : isCurrent
-                                  ? 'bg-emerald-600 text-white ring-2 ring-emerald-500/30 animate-pulse'
+                                  ? 'bg-emerald-600 text-white ring-2 ring-emerald-500/30 '
                                   : 'bg-app-hover text-app-muted border border-app-border'
                               }`}
                             >
@@ -660,12 +660,12 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
             return (
               <div
                 key={step.id}
-                className="bg-app-card rounded-2xl border border-app-border p-3.5 flex flex-col space-y-3 shadow-card"
+                className="bg-app-card rounded-sm border border-app-border p-3.5 flex flex-col space-y-3 shadow-card"
               >
                 {/* Column Header */}
                 <div className="flex items-center justify-between pb-2.5 border-b border-app-border">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+                    <div className="w-7 h-7 rounded-sm bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
                       <StepIcon size={15} weight="bold" />
                     </div>
                     <div>
@@ -685,7 +685,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                     return (
                       <div
                         key={job.id}
-                        className="bg-app-card rounded-xl p-3 border border-app-border shadow-subtle hover:border-emerald-500/50 hover:shadow-md transition-all duration-200 space-y-2.5"
+                        className="bg-app-card rounded-sm p-3 border border-app-border shadow-subtle hover:border-emerald-500/50 hover:shadow-md transition-all duration-200 space-y-2.5"
                       >
                         <div>
                           <div className="flex items-center justify-between gap-1">
@@ -698,7 +698,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                           </div>
                           <h5 className="font-bold text-xs text-app-text mt-1 truncate">{job.vehicle}</h5>
                           <p className="text-[11px] text-app-muted truncate mt-0.5">{job.customer}</p>
-                          <p className="text-[10px] text-app-text/80 line-clamp-2 mt-1 bg-app-hover/50 p-1.5 rounded-lg border border-app-border/40">
+                          <p className="text-[10px] text-app-text/80 line-clamp-2 mt-1 bg-app-hover/50 p-1.5 rounded-sm border border-app-border/40">
                             {job.problem}
                           </p>
                         </div>
@@ -707,13 +707,13 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                         {nextStep ? (
                           <button
                             onClick={() => handleSetStatus(job, nextStep.id)}
-                            className="w-full py-1.5 px-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors shadow-subtle cursor-pointer"
+                            className="w-full py-1.5 px-2 rounded-sm bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors shadow-subtle cursor-pointer"
                           >
                             <span>Move to {nextStep.shortLabel}</span>
                             <ArrowRight size={12} weight="bold" />
                           </button>
                         ) : (
-                          <div className="w-full py-1 text-center text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                          <div className="w-full py-1 text-center text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 rounded-sm border border-emerald-500/20">
                             ✓ Job Completed
                           </div>
                         )}
@@ -721,7 +721,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                     )
                   })}
                   {columnJobs.length === 0 && (
-                    <div className="h-28 flex items-center justify-center text-center text-xs text-app-muted italic border-2 border-dashed border-app-border/60 rounded-xl">
+                    <div className="h-28 flex items-center justify-center text-center text-xs text-app-muted italic border-2 border-dashed border-app-border/60 rounded-sm">
                       No vehicles
                     </div>
                   )}
@@ -736,7 +736,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
       <Modal isOpen={isQAGateOpen} onClose={() => setIsQAGateOpen(false)} title="Quality Assurance Pre-Delivery Gate">
         {selectedJob && (
           <div className="space-y-4 text-xs">
-            <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-3">
+            <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-sm flex items-center gap-3">
               <ShieldCheck size={28} className="text-emerald-500 flex-shrink-0" weight="duotone" />
               <div>
                 <h4 className="font-bold text-emerald-800 dark:text-emerald-300">
@@ -748,8 +748,8 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
               </div>
             </div>
 
-            <div className="space-y-2 p-3 bg-app-input rounded-xl border border-app-border">
-              <label className="flex items-center gap-2.5 p-2 rounded-lg bg-app-card border border-app-border cursor-pointer hover:bg-app-hover">
+            <div className="space-y-2 p-3 bg-app-input rounded-sm border border-app-border">
+              <label className="flex items-center gap-2.5 p-2 rounded-sm bg-app-card border border-app-border cursor-pointer hover:bg-app-hover active:scale-[0.98]">
                 <input
                   type="checkbox"
                   checked={qaChecks.roadTest}
@@ -759,7 +759,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                 <span className="font-medium">1. Road test completed & initial customer symptoms resolved</span>
               </label>
 
-              <label className="flex items-center gap-2.5 p-2 rounded-lg bg-app-card border border-app-border cursor-pointer hover:bg-app-hover">
+              <label className="flex items-center gap-2.5 p-2 rounded-sm bg-app-card border border-app-border cursor-pointer hover:bg-app-hover active:scale-[0.98]">
                 <input
                   type="checkbox"
                   checked={qaChecks.dtcCleared}
@@ -769,7 +769,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                 <span className="font-medium">2. Diagnostic Trouble Codes (DTC / OBD-II) scanned & cleared</span>
               </label>
 
-              <label className="flex items-center gap-2.5 p-2 rounded-lg bg-app-card border border-app-border cursor-pointer hover:bg-app-hover">
+              <label className="flex items-center gap-2.5 p-2 rounded-sm bg-app-card border border-app-border cursor-pointer hover:bg-app-hover active:scale-[0.98]">
                 <input
                   type="checkbox"
                   checked={qaChecks.fluidsTorque}
@@ -779,7 +779,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                 <span className="font-medium">3. Fluid levels topped up & wheel lug nut torque verified</span>
               </label>
 
-              <label className="flex items-center gap-2.5 p-2 rounded-lg bg-app-card border border-app-border cursor-pointer hover:bg-app-hover">
+              <label className="flex items-center gap-2.5 p-2 rounded-sm bg-app-card border border-app-border cursor-pointer hover:bg-app-hover active:scale-[0.98]">
                 <input
                   type="checkbox"
                   checked={qaChecks.cleaned}
@@ -794,7 +794,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
               <button
                 type="button"
                 onClick={() => setIsQAGateOpen(false)}
-                className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
+                className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
               >
                 Cancel
               </button>
@@ -802,7 +802,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                 type="button"
                 onClick={handleConfirmQAGate}
                 disabled={!qaChecks.roadTest || !qaChecks.dtcCleared}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-colors shadow-subtle flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-sm text-xs font-bold transition-colors shadow-subtle flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
               >
                 <CheckCircle size={15} weight="bold" />
                 <span>Pass QA & Mark Ready for Pickup</span>
@@ -816,7 +816,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
       <Modal isOpen={isAddPartOpen} onClose={() => setIsAddPartOpen(false)} title="Add Extra Spare Part to Order">
         {selectedJob && (
           <form onSubmit={handleAddPartSubmit} className="space-y-4 text-xs">
-            <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+            <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-sm">
               <p className="text-amber-800 dark:text-amber-300 font-semibold flex items-center gap-1.5">
                 <Package size={15} />
                 Live Stock-Out for {selectedJob.orderNumber} ({selectedJob.vehicle})
@@ -832,7 +832,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                 required
                 value={partSelection.sparePartId}
                 onChange={(e) => setPartSelection({ ...partSelection, sparePartId: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text font-medium focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text font-medium focus:outline-none focus:border-app-accent"
               >
                 <option value="">-- Choose Spare Part --</option>
                 {inventory.map((p) => (
@@ -851,7 +851,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                 required
                 value={partSelection.quantity}
                 onChange={(e) => setPartSelection({ ...partSelection, quantity: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text font-bold focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text font-bold focus:outline-none focus:border-app-accent"
               />
             </div>
 
@@ -859,7 +859,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
               <button
                 type="button"
                 onClick={() => setIsAddPartOpen(false)}
-                className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
+                className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
               >
                 Cancel
               </button>
@@ -875,7 +875,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
       <Modal isOpen={isNotifyOpen} onClose={() => setIsNotifyOpen(false)} title="Customer Pickup Notification">
         {selectedJob && (
           <div className="space-y-4 text-xs">
-            <div className="p-3.5 bg-app-input rounded-xl border border-app-border space-y-2">
+            <div className="p-3.5 bg-app-input rounded-sm border border-app-border space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold text-app-text flex items-center gap-1.5">
                   <ChatCircleDots size={15} className="text-emerald-500" />
@@ -887,14 +887,14 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                     navigator.clipboard?.writeText(msg)
                     addToast('Pickup message copied to clipboard!', 'success')
                   }}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-app-card border border-app-border text-app-text hover:bg-app-hover font-semibold text-[11px] transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm bg-app-card border border-app-border text-app-text hover:bg-app-hover active:scale-[0.98] font-semibold text-[11px] transition-colors cursor-pointer"
                 >
                   <Copy size={13} />
                   <span>Copy Text</span>
                 </button>
               </div>
 
-              <div className="p-3 bg-app-card rounded-lg border border-app-border font-mono text-[11px] text-app-text leading-relaxed">
+              <div className="p-3 bg-app-card rounded-sm border border-app-border font-mono text-[11px] text-app-text leading-relaxed">
                 Dear <span className="text-emerald-600 font-bold">{selectedJob.customer}</span>, your vehicle{' '}
                 <span className="text-app-text font-bold">{selectedJob.vehicle}</span> (Plate:{' '}
                 <span className="font-bold">{selectedJob.plate}</span>) is{' '}
@@ -912,7 +912,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
               <button
                 type="button"
                 onClick={() => setIsNotifyOpen(false)}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-colors shadow-subtle cursor-pointer"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-sm text-xs font-bold transition-colors shadow-subtle cursor-pointer"
               >
                 Done
               </button>
@@ -925,7 +925,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
       <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title="Vehicle Repair Pipeline Details">
         {selectedJob && (
           <div className="space-y-4 text-xs">
-            <div className="flex items-center justify-between p-3.5 bg-app-hover/50 rounded-xl border border-app-border">
+            <div className="flex items-center justify-between p-3.5 bg-app-hover/50 rounded-sm border border-app-border">
               <div>
                 <p className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">{selectedJob.orderNumber}</p>
                 <h3 className="text-sm font-bold text-app-text mt-0.5">{selectedJob.vehicle}</h3>
@@ -935,7 +935,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
             </div>
 
             {/* Quick 1-Click Status Bar inside modal */}
-            <div className="p-3.5 bg-app-input rounded-xl border border-app-border space-y-2">
+            <div className="p-3.5 bg-app-input rounded-sm border border-app-border space-y-2">
               <label className="text-[11px] text-app-muted uppercase font-bold">1-Click Fast Pipeline Stage Jump:</label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                 {PIPELINE_STEPS.map((s) => {
@@ -947,10 +947,10 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                         handleSetStatus(selectedJob, s.id)
                         setSelectedJob((prev) => ({ ...prev, status: s.id }))
                       }}
-                      className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+                      className={`px-3 py-2 rounded-sm text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
                         isCurrent
                           ? 'bg-emerald-600 text-white shadow-md'
-                          : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover hover:text-app-text'
+                          : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover active:scale-[0.98] hover:text-app-text'
                       }`}
                     >
                       <CheckCircle size={14} weight={isCurrent ? 'fill' : 'regular'} />
@@ -962,13 +962,13 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-app-card rounded-xl border border-app-border">
+              <div className="p-3 bg-app-card rounded-sm border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold flex items-center gap-1">
                   <User size={12} /> Customer
                 </p>
                 <p className="font-semibold text-app-text mt-0.5">{selectedJob.customer}</p>
               </div>
-              <div className="p-3 bg-app-card rounded-xl border border-app-border">
+              <div className="p-3 bg-app-card rounded-sm border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold flex items-center gap-1">
                   <Wrench size={12} /> Assigned Technician
                 </p>
@@ -978,20 +978,20 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
               </div>
             </div>
 
-            <div className="p-3 bg-app-card rounded-xl border border-app-border">
+            <div className="p-3 bg-app-card rounded-sm border border-app-border">
               <p className="text-[10px] text-app-muted uppercase font-semibold">Problem / Work Requested</p>
               <p className="text-app-text mt-1">{selectedJob.problem}</p>
             </div>
 
             {selectedJob.diagnosis && (
-              <div className="p-3 bg-app-card rounded-xl border border-app-border">
+              <div className="p-3 bg-app-card rounded-sm border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold">Diagnosis & Tech Notes</p>
                 <p className="text-app-text mt-1">{selectedJob.diagnosis}</p>
               </div>
             )}
 
             {/* Deducted Spare Parts */}
-            <div className="p-3 bg-app-card rounded-xl border border-app-border space-y-2">
+            <div className="p-3 bg-app-card rounded-sm border border-app-border space-y-2">
               <div className="flex items-center justify-between">
                 <p className="text-[10px] text-app-muted uppercase font-semibold flex items-center gap-1.5">
                   <Package size={14} className="text-amber-500" />
@@ -1013,7 +1013,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                   {selectedJob.partsUsed.map((p, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between p-2 rounded-lg bg-app-hover/50 border border-app-border text-xs"
+                      className="flex items-center justify-between p-2 rounded-sm bg-app-hover/50 border border-app-border text-xs"
                     >
                       <span className="font-medium">
                         {p.quantity}x {p.name} ({p.partCode})

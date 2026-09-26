@@ -2,10 +2,11 @@
 // api/routes/auth.php
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../utils/jwt.php';
+require_once __DIR__ . '/../utils/rateLimit.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $path = $segments[1] ?? '';
-$secret = getenv('JWT_SECRET') ?: 'carrepair_super_secret_jwt_key_2026_x89!@#%^&_workshop_pro';
+$secret = function_exists('getJwtSecret') ? getJwtSecret() : (getenv('JWT_SECRET') ?: 'carrepair_super_secret_jwt_key_2026_x89!@#%^&_workshop_pro');
 
 $DEFAULT_ROLE_ACCOUNTS = [
     'admin' => ['username' => 'admin', 'name' => 'Jane Doe', 'email' => 'admin@carrepair.com', 'roleName' => 'Admin', 'roleId' => 1, 'roleTitle' => 'System Administrator'],
@@ -29,6 +30,18 @@ if ($method === 'POST' && $path === 'login') {
 
     $cleanUsername = strtolower(trim($username));
     
+    // -------------------------------------------------------------------------
+    // Rate Limiting: 5 failed attempts per 15-minute window
+    // -------------------------------------------------------------------------
+    if (RateLimiter::isRateLimited($cleanUsername, 5, 15)) {
+        http_response_code(429);
+        echo json_encode([
+            'error' => 'Too Many Requests',
+            'message' => 'Too many failed login attempts. Please wait 15 minutes before trying again.'
+        ]);
+        exit;
+    }
+    
     $user = get(
         "SELECT u.*, r.name as role_name 
          FROM users u 
@@ -38,6 +51,7 @@ if ($method === 'POST' && $path === 'login') {
     );
 
     if (!$user) {
+        RateLimiter::recordFailure($cleanUsername);
         http_response_code(401);
         echo json_encode(['error' => 'Invalid username or password']);
         exit;
@@ -61,10 +75,14 @@ if ($method === 'POST' && $path === 'login') {
     }
 
     if (!$isPasswordValid) {
+        RateLimiter::recordFailure($cleanUsername);
         http_response_code(401);
         echo json_encode(['error' => 'Invalid username or password']);
         exit;
     }
+
+    // Reset failed attempts on successful authentication
+    RateLimiter::resetAttempts($cleanUsername);
 
     run('UPDATE users SET last_login = NOW() WHERE id = ?', [$user['id']]);
 

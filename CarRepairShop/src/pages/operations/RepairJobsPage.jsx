@@ -131,7 +131,7 @@ export default function RepairJobsPage() {
       intakeNotes: job.intakeInspection?.notes || '',
       customerApproval: job.customerApproval || 'Approved',
     })
-    setIsEditOpen(true)
+    setIsViewOpen(false); setIsEditOpen(true)
   }
 
   const handleOpenView = (job) => {
@@ -172,7 +172,7 @@ export default function RepairJobsPage() {
 
   const handleOpenDelete = (job) => {
     setSelectedJob(job)
-    setIsDeleteOpen(true)
+    setIsViewOpen(false); setIsDeleteOpen(true)
   }
 
   const handleConfirmDelete = () => {
@@ -218,7 +218,7 @@ export default function RepairJobsPage() {
   })
 
   return (
-    <div className="space-y-6 font-sans text-app-text animate-fade-in">
+    <div className="space-y-6 font-sans text-app-text">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -228,7 +228,7 @@ export default function RepairJobsPage() {
         {can('repair_jobs', 'create') && (
           <button
             onClick={handleOpenAdd}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover text-app-accentText text-xs font-semibold rounded-xl transition-colors shadow-subtle cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText text-xs font-semibold rounded-sm transition-colors shadow-subtle cursor-pointer"
           >
             <Plus size={16} weight="bold" />
             {t('repairJobs.newJob')}
@@ -242,10 +242,10 @@ export default function RepairJobsPage() {
           <button
             key={tab}
             onClick={() => setActiveFilter(tab)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+            className={`px-3 py-1.5 rounded-sm text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
               activeFilter === tab
                 ? 'bg-app-accent text-app-accentText shadow-subtle'
-                : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover hover:text-app-text'
+                : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover active:scale-[0.98] hover:text-app-text'
             }`}
           >
             {tab === 'All' ? t('common.all') : t(`status.${tab}`)}
@@ -254,7 +254,7 @@ export default function RepairJobsPage() {
       </div>
 
       {/* Main Table */}
-      <div className="bg-app-card rounded-2xl border border-app-border shadow-card overflow-hidden transition-colors duration-200">
+      <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden transition-colors duration-200">
         <div className="p-4 border-b border-app-border">
           <div className="relative max-w-md">
             <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
@@ -263,7 +263,7 @@ export default function RepairJobsPage() {
               placeholder={t('common.quickSearch')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-xl text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-sm text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
             />
           </div>
         </div>
@@ -289,32 +289,32 @@ export default function RepairJobsPage() {
             <table className="w-full text-xs">
               <thead>
                 <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                  <th className="px-6 py-3 font-semibold">{t('repairJobs.orderId')}</th>
-                  <th className="px-6 py-3 font-semibold">{t('appointments.vehicle')}</th>
-                  <th className="px-6 py-3 hidden md:table-cell font-semibold">{t('appointments.customer')}</th>
-                  <th className="px-6 py-3 hidden lg:table-cell font-semibold">{t('repairJobs.technician')}</th>
-                  <th className="px-6 py-3 font-semibold">Stock-Out Parts</th>
-                  <th className="px-6 py-3 hidden md:table-cell font-semibold">{t('repairJobs.totalCost')}</th>
-                  <th className="px-6 py-3 font-semibold">{t('common.status')}</th>
-                  <th className="px-6 py-3 font-semibold text-right">{t('common.actions')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('repairJobs.orderId')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('appointments.vehicle')}</th>
+                  <th className="px-4 py-3 hidden md:table-cell font-semibold">{t('appointments.customer')}</th>
+                  <th className="px-4 py-3 hidden lg:table-cell font-semibold">{t('repairJobs.technician')}</th>
+                  <th className="px-4 py-3 font-semibold">Stock-Out Parts</th>
+                  <th className="px-4 py-3 hidden md:table-cell font-semibold">{t('repairJobs.totalCost')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('common.status')}</th>
+                  <th className="px-4 py-3 font-semibold text-right">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-app-border">
                 {filtered.map((job) => (
-                  <tr key={job.id} className="hover:bg-app-hover/60 transition-colors group">
-                    <td className="px-6 py-3.5 font-mono font-bold text-app-accent">{job.orderNumber}</td>
-                    <td className="px-6 py-3.5">
+                  <tr key={job.id} className="hover:bg-app-hover /60 active:scale-[0.98] transition-colors group">
+                    <td className="px-4 py-3.5 font-mono font-bold text-app-accent">{job.orderNumber}</td>
+                    <td className="px-4 py-3.5">
                       <p className="font-semibold text-app-text">{job.vehicle}</p>
                       <p className="text-[10px] text-app-muted font-mono">{job.plate}</p>
                     </td>
-                    <td className="px-6 py-3.5 text-app-muted hidden md:table-cell">{job.customer}</td>
-                    <td className="px-6 py-3.5 hidden lg:table-cell">
+                    <td className="px-4 py-3.5 text-app-muted hidden md:table-cell">{job.customer}</td>
+                    <td className="px-4 py-3.5 hidden lg:table-cell">
                       <span className="inline-flex items-center gap-1.5 text-app-muted">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                         {job.mechanic}
                       </span>
                     </td>
-                    <td className="px-6 py-3.5">
+                    <td className="px-4 py-3.5">
                       {job.partsUsed && job.partsUsed.length > 0 ? (
                         <div className="flex flex-wrap gap-1 max-w-xs">
                           {job.partsUsed.map((p, idx) => (
@@ -334,19 +334,19 @@ export default function RepairJobsPage() {
                         <span className="text-[11px] text-app-muted italic">No parts</span>
                       )}
                     </td>
-                    <td className="px-6 py-3.5 font-semibold text-app-text tabular-nums hidden md:table-cell">
+                    <td className="px-4 py-3.5 font-semibold text-app-text tabular-nums hidden md:table-cell">
                       {job.estimatedCost}
                     </td>
-                    <td className="px-6 py-3.5">
+                    <td className="px-4 py-3.5">
                       <StatusBadge status={job.status} />
                     </td>
-                    <td className="px-6 py-3.5 text-right">
+                    <td className="px-4 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-1">
                         {/* 1-Click Fast Invoice on Completed Orders */}
                         {job.status === 'Completed' && (
                           <button
                             onClick={() => handle1ClickInvoice(job)}
-                            className="p-1.5 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-sm text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors cursor-pointer"
                             title="Generate Invoice"
                           >
                             <Receipt size={15} />
@@ -354,7 +354,7 @@ export default function RepairJobsPage() {
                         )}
                         <button
                           onClick={() => handleOpenView(job)}
-                          className="p-1.5 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
+                          className="p-1.5 rounded-sm text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
                           title={t('common.view')}
                         >
                           <Eye size={15} />
@@ -362,7 +362,7 @@ export default function RepairJobsPage() {
                         {can('repair_jobs', 'update') && (
                           <button
                             onClick={() => handleOpenEdit(job)}
-                            className="p-1.5 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
+                            className="p-1.5 rounded-sm text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
                             title={t('repairJobs.updateProgress')}
                           >
                             <PencilSimple size={15} />
@@ -371,7 +371,7 @@ export default function RepairJobsPage() {
                         {can('repair_jobs', 'delete') && (
                           <button
                             onClick={() => handleOpenDelete(job)}
-                            className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-sm text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
                             title={t('common.delete')}
                           >
                             <Trash size={15} />
@@ -391,7 +391,7 @@ export default function RepairJobsPage() {
       <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('repairJobs.createWorkOrder')}>
         <form onSubmit={handleCreate} className="space-y-4 text-xs">
           {/* Service Package Quick Selector */}
-          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl space-y-2">
+          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-sm space-y-2">
             <label className="block text-emerald-800 dark:text-emerald-300 font-semibold flex items-center gap-1.5">
               <Sparkle size={15} weight="fill" className="text-emerald-500" />
               Select Service Package (Auto-configures cost & parts stock-out)
@@ -399,7 +399,7 @@ export default function RepairJobsPage() {
             <select
               value={formData.serviceId}
               onChange={(e) => handleServiceSelect(e.target.value)}
-              className="w-full px-3 py-2 bg-app-card border border-emerald-500/30 rounded-xl text-app-text font-medium focus:outline-none focus:border-emerald-500"
+              className="w-full px-3 py-2 bg-app-card border border-emerald-500/30 rounded-sm text-app-text font-medium focus:outline-none focus:border-emerald-500"
             >
               <option value="">-- Choose Service Package (e.g. Oil Change, Brake Service) --</option>
               {services.map((s) => (
@@ -423,7 +423,7 @@ export default function RepairJobsPage() {
                       return (
                         <div
                           key={idx}
-                          className={`p-2 rounded-lg border flex items-center justify-between text-[11px] ${
+                          className={`p-2 rounded-sm border flex items-center justify-between text-[11px] ${
                             isAvailable
                               ? 'bg-emerald-500/5 border-emerald-500/20 text-app-text'
                               : 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400'
@@ -465,7 +465,7 @@ export default function RepairJobsPage() {
                   const c = customers.find((x) => x.name === e.target.value)
                   setFormData({ ...formData, customer: e.target.value, customerId: c ? c.id : '' })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
                 {customers.map((c) => (
                   <option key={c.id} value={c.name}>
@@ -488,7 +488,7 @@ export default function RepairJobsPage() {
                     odometer: v ? String(v.mileage || '') : formData.odometer,
                   })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
                 {vehicles.map((v) => (
                   <option key={v.id} value={v.number}>
@@ -500,7 +500,7 @@ export default function RepairJobsPage() {
           </div>
 
           {/* DVI: Odometer, Fuel Level & Estimate Authorization */}
-          <div className="p-3 bg-app-hover/40 border border-app-border rounded-xl space-y-2">
+          <div className="p-3 bg-app-hover/40 border border-app-border rounded-sm space-y-2">
             <p className="text-[11px] font-bold text-app-text flex items-center gap-1.5">
               <ShieldCheck size={14} className="text-emerald-500" />
               Digital Vehicle Intake (DVI) & Check-in Verification
@@ -515,7 +515,7 @@ export default function RepairJobsPage() {
                   value={formData.odometer}
                   onChange={(e) => setFormData({ ...formData, odometer: e.target.value })}
                   placeholder="e.g. 52300"
-                  className="w-full px-3 py-1.5 bg-app-input border border-app-border rounded-lg text-app-text font-mono focus:outline-none focus:border-app-accent"
+                  className="w-full px-3 py-1.5 bg-app-input border border-app-border rounded-sm text-app-text font-mono focus:outline-none focus:border-app-accent"
                 />
               </div>
               <div>
@@ -525,7 +525,7 @@ export default function RepairJobsPage() {
                 <select
                   value={formData.fuelLevel}
                   onChange={(e) => setFormData({ ...formData, fuelLevel: e.target.value })}
-                  className="w-full px-3 py-1.5 bg-app-input border border-app-border rounded-lg text-app-text focus:outline-none focus:border-app-accent"
+                  className="w-full px-3 py-1.5 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
                 >
                   <option value="Empty">Empty (Reserve)</option>
                   <option value="1/4">1/4 Tank</option>
@@ -539,7 +539,7 @@ export default function RepairJobsPage() {
                 <select
                   value={formData.customerApproval}
                   onChange={(e) => setFormData({ ...formData, customerApproval: e.target.value })}
-                  className="w-full px-3 py-1.5 bg-app-input border border-app-border rounded-lg text-app-text font-semibold focus:outline-none focus:border-app-accent"
+                  className="w-full px-3 py-1.5 bg-app-input border border-app-border rounded-sm text-app-text font-semibold focus:outline-none focus:border-app-accent"
                 >
                   <option value="Approved">Customer Approved</option>
                   <option value="Pending Approval">Pending Quote Approval</option>
@@ -554,7 +554,7 @@ export default function RepairJobsPage() {
                 value={formData.intakeNotes}
                 onChange={(e) => setFormData({ ...formData, intakeNotes: e.target.value })}
                 placeholder="e.g. Minor scratch on rear right bumper, clean windshield"
-                className="w-full px-3 py-1.5 bg-app-input border border-app-border rounded-lg text-app-text focus:outline-none focus:border-app-accent text-xs"
+                className="w-full px-3 py-1.5 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent text-xs"
               />
             </div>
           </div>
@@ -568,7 +568,7 @@ export default function RepairJobsPage() {
                   const m = mechanics.find((x) => x.name === e.target.value)
                   setFormData({ ...formData, mechanic: e.target.value, mechanicId: m ? m.id : '' })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
                 {mechanics.map((m) => (
                   <option key={m.id} value={m.name}>
@@ -584,7 +584,7 @@ export default function RepairJobsPage() {
                 value={formData.estimatedCost}
                 onChange={(e) => setFormData({ ...formData, estimatedCost: e.target.value })}
                 placeholder="$450"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-semibold"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
               />
             </div>
           </div>
@@ -597,7 +597,7 @@ export default function RepairJobsPage() {
               value={formData.problem}
               onChange={(e) => setFormData({ ...formData, problem: e.target.value })}
               placeholder="e.g. Engine shaking while idle, check engine light on"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
 
@@ -608,7 +608,7 @@ export default function RepairJobsPage() {
               value={formData.diagnosis}
               onChange={(e) => setFormData({ ...formData, diagnosis: e.target.value })}
               placeholder="e.g. Routine 50k miles inspection and filter replacement"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
 
@@ -616,7 +616,7 @@ export default function RepairJobsPage() {
             <button
               type="button"
               onClick={() => setIsAddOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
+              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
             >
               {t('common.cancel')}
             </button>
@@ -636,7 +636,7 @@ export default function RepairJobsPage() {
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-semibold"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
               >
                 <option value="Pending">{t('status.Pending')}</option>
                 <option value="Diagnosing">{t('status.Diagnosing')}</option>
@@ -654,7 +654,7 @@ export default function RepairJobsPage() {
                   const m = mechanics.find((x) => x.name === e.target.value)
                   setFormData({ ...formData, mechanic: e.target.value, mechanicId: m ? m.id : '' })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
                 {mechanics.map((m) => (
                   <option key={m.id} value={m.name}>
@@ -671,7 +671,7 @@ export default function RepairJobsPage() {
               rows={3}
               value={formData.diagnosis || ''}
               onChange={(e) => setFormData({ ...formData, diagnosis: e.target.value })}
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
 
@@ -679,7 +679,7 @@ export default function RepairJobsPage() {
             <button
               type="button"
               onClick={() => setIsEditOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
+              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
             >
               {t('common.cancel')}
             </button>
@@ -694,7 +694,7 @@ export default function RepairJobsPage() {
       <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('common.details')}>
         {selectedJob && (
           <div className="space-y-4 text-xs">
-            <div className="flex items-center justify-between p-3.5 bg-app-hover/50 rounded-xl border border-app-border">
+            <div className="flex items-center justify-between p-3.5 bg-app-hover/50 rounded-sm border border-app-border">
               <div>
                 <p className="font-mono text-app-accent font-semibold">{selectedJob.orderNumber}</p>
                 <h3 className="text-sm font-bold text-app-text mt-0.5">{selectedJob.vehicle}</h3>
@@ -703,13 +703,13 @@ export default function RepairJobsPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+              <div className="p-3 bg-app-input rounded-sm border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold flex items-center gap-1">
                   <User size={12} /> {t('appointments.customer')}
                 </p>
                 <p className="font-semibold text-app-text mt-0.5">{selectedJob.customer}</p>
               </div>
-              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+              <div className="p-3 bg-app-input rounded-sm border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold flex items-center gap-1">
                   <Car size={12} /> {t('appointments.vehicle')}
                 </p>
@@ -719,20 +719,20 @@ export default function RepairJobsPage() {
             </div>
 
             {/* DVI Intake Verification Card */}
-            <div className="p-3 bg-app-card rounded-xl border border-app-border space-y-1.5">
+            <div className="p-3 bg-app-card rounded-sm border border-app-border space-y-1.5">
               <p className="text-[10px] text-app-muted uppercase font-semibold flex items-center gap-1">
                 <ShieldCheck size={13} className="text-emerald-500" /> Digital Vehicle Intake Record
               </p>
               <div className="grid grid-cols-3 gap-2 pt-1 text-[11px]">
-                <div className="p-1.5 rounded-lg bg-app-hover">
+                <div className="p-1.5 rounded-sm bg-app-hover">
                   <span className="text-[10px] text-app-muted block">Mileage</span>
                   <span className="font-mono font-bold text-app-text">{selectedJob.odometer || '0'} km</span>
                 </div>
-                <div className="p-1.5 rounded-lg bg-app-hover">
+                <div className="p-1.5 rounded-sm bg-app-hover">
                   <span className="text-[10px] text-app-muted block">Fuel Level</span>
                   <span className="font-bold text-app-text">{selectedJob.fuelLevel || '1/2'}</span>
                 </div>
-                <div className="p-1.5 rounded-lg bg-app-hover">
+                <div className="p-1.5 rounded-sm bg-app-hover">
                   <span className="text-[10px] text-app-muted block">Customer Quote</span>
                   <span className="font-bold text-emerald-600 dark:text-emerald-400">
                     {selectedJob.customerApproval || 'Approved'}
@@ -746,20 +746,20 @@ export default function RepairJobsPage() {
               )}
             </div>
 
-            <div className="p-3 bg-app-input rounded-xl border border-app-border">
+            <div className="p-3 bg-app-input rounded-sm border border-app-border">
               <p className="text-[10px] text-app-muted uppercase font-semibold">{t('common.description')}</p>
               <p className="text-app-text mt-1">{selectedJob.problem}</p>
             </div>
 
             {selectedJob.diagnosis && (
-              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+              <div className="p-3 bg-app-input rounded-sm border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold">{t('repairJobs.diagnosticReport')}</p>
                 <p className="text-app-text mt-1">{selectedJob.diagnosis}</p>
               </div>
             )}
 
             {/* Deducted Spare Parts Section */}
-            <div className="p-3 bg-app-card rounded-xl border border-app-border space-y-2">
+            <div className="p-3 bg-app-card rounded-sm border border-app-border space-y-2">
               <p className="text-[10px] text-app-muted uppercase font-semibold flex items-center gap-1.5">
                 <Package size={14} className="text-amber-500" />
                 Inventory Parts Deducted (Auto Stock-Out)
@@ -767,7 +767,7 @@ export default function RepairJobsPage() {
               {selectedJob.partsUsed && selectedJob.partsUsed.length > 0 ? (
                 <div className="space-y-1.5">
                   {selectedJob.partsUsed.map((p, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-app-hover/50 border border-app-border">
+                    <div key={idx} className="flex items-center justify-between p-2 rounded-sm bg-app-hover/50 border border-app-border">
                       <div className="flex items-center gap-2">
                         <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold">
                           {p.quantity}x

@@ -1,14 +1,10 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import {
-  Printer,
-  Receipt,
   Car,
   User,
   Phone,
   EnvelopeSimple,
   MapPin,
-  Gauge,
-  Package,
   Wrench,
   CheckCircle,
   Clock,
@@ -17,6 +13,7 @@ import {
   Copy,
   CreditCard,
   ShieldCheck,
+  Printer,
 } from '@phosphor-icons/react'
 
 export default function InvoiceDocument({ invoice, onRecordPayment, onClose }) {
@@ -60,13 +57,13 @@ export default function InvoiceDocument({ invoice, onRecordPayment, onClose }) {
       {/* Printable Paper Canvas */}
       <div
         id="printable-invoice"
-        className="printable-invoice-container bg-white text-slate-900 rounded-2xl border border-slate-200 shadow-lg p-6 sm:p-8 font-sans transition-colors"
+        className="printable-invoice-container bg-white text-slate-900 rounded-sm border border-slate-200 shadow-lg p-4 sm:p-8 font-sans transition-colors"
       >
         {/* 1. Header Section: Workshop Identity & Invoice Title */}
         <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pb-6 border-b-2 border-slate-800">
           <div className="space-y-1 max-w-md">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center flex-shrink-0 shadow-sm">
+              <div className="w-10 h-10 rounded-sm bg-slate-900 text-white flex items-center justify-center flex-shrink-0 shadow-sm">
                 <Wrench size={22} weight="bold" />
               </div>
               <div>
@@ -106,7 +103,7 @@ export default function InvoiceDocument({ invoice, onRecordPayment, onClose }) {
             {/* Official Status Stamp */}
             <div className="pt-1">
               {isPaid ? (
-                <div className="inline-flex flex-col items-center sm:items-end px-3 py-1.5 rounded-xl border-2 border-emerald-600 bg-emerald-50 text-emerald-800 shadow-sm">
+                <div className="inline-flex flex-col items-center sm:items-end px-3 py-1.5 rounded-sm border-2 border-emerald-600 bg-emerald-50 text-emerald-800 shadow-sm">
                   <div className="flex items-center gap-1 font-black text-xs uppercase tracking-widest text-emerald-700">
                     <CheckCircle size={15} weight="fill" className="text-emerald-600" />
                     PAID IN FULL
@@ -116,7 +113,7 @@ export default function InvoiceDocument({ invoice, onRecordPayment, onClose }) {
                   </span>
                 </div>
               ) : invoice.status === 'Partially Paid' ? (
-                <div className="inline-flex flex-col items-center sm:items-end px-3 py-1.5 rounded-xl border-2 border-sky-600 bg-sky-50 text-sky-800 shadow-sm">
+                <div className="inline-flex flex-col items-center sm:items-end px-3 py-1.5 rounded-sm border-2 border-sky-600 bg-sky-50 text-sky-800 shadow-sm">
                   <div className="flex items-center gap-1 font-black text-xs uppercase tracking-widest text-sky-700">
                     <Clock size={15} weight="fill" className="text-sky-600" />
                     PARTIALLY PAID
@@ -126,7 +123,7 @@ export default function InvoiceDocument({ invoice, onRecordPayment, onClose }) {
                   </span>
                 </div>
               ) : invoice.status === 'Overdue' ? (
-                <div className="inline-flex flex-col items-center sm:items-end px-3 py-1.5 rounded-xl border-2 border-rose-600 bg-rose-50 text-rose-800 shadow-sm">
+                <div className="inline-flex flex-col items-center sm:items-end px-3 py-1.5 rounded-sm border-2 border-rose-600 bg-rose-50 text-rose-800 shadow-sm">
                   <div className="flex items-center gap-1 font-black text-xs uppercase tracking-widest text-rose-700">
                     OVERDUE
                   </div>
@@ -135,7 +132,7 @@ export default function InvoiceDocument({ invoice, onRecordPayment, onClose }) {
                   </span>
                 </div>
               ) : (
-                <div className="inline-flex flex-col items-center sm:items-end px-3 py-1.5 rounded-xl border-2 border-amber-600 bg-amber-50 text-amber-800 shadow-sm">
+                <div className="inline-flex flex-col items-center sm:items-end px-3 py-1.5 rounded-sm border-2 border-amber-600 bg-amber-50 text-amber-800 shadow-sm">
                   <div className="flex items-center gap-1 font-black text-xs uppercase tracking-widest text-amber-700">
                     PAYMENT DUE
                   </div>
@@ -169,9 +166,9 @@ export default function InvoiceDocument({ invoice, onRecordPayment, onClose }) {
         </div>
 
         {/* 2. Customer & Vehicle 2-Column Info Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-5 border-b border-slate-200 text-xs">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-3.5 border-b border-slate-200 text-xs">
           {/* Bill To Customer */}
-          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+          <div className="p-3.5 rounded-sm bg-slate-50 border border-slate-200 space-y-1.5">
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
               <User size={13} className="text-slate-700" weight="bold" />
               BILL TO (CUSTOMER)
@@ -202,7 +199,7 @@ export default function InvoiceDocument({ invoice, onRecordPayment, onClose }) {
           </div>
 
           {/* Vehicle Serviced */}
-          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+          <div className="p-3.5 rounded-sm bg-slate-50 border border-slate-200 space-y-1.5">
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
               <Car size={13} className="text-slate-700" weight="bold" />
               VEHICLE SERVICED (SERVICE UNIT)
@@ -250,7 +247,7 @@ export default function InvoiceDocument({ invoice, onRecordPayment, onClose }) {
           <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
             SERVICE SCOPE & DIAGNOSTIC FINDINGS
           </p>
-          <div className="p-2.5 rounded-lg bg-slate-100/70 border border-slate-200/80 space-y-1 text-[11px]">
+          <div className="p-2.5 rounded-sm bg-slate-100/70 border border-slate-200/80 space-y-1 text-[11px]">
             <p className="text-slate-800">
               <strong className="font-semibold text-slate-900">Customer Request / Concern:</strong>{' '}
               {invoice.problem || 'Routine scheduled vehicle service & multi-point diagnostics'}
@@ -273,7 +270,7 @@ export default function InvoiceDocument({ invoice, onRecordPayment, onClose }) {
             <span className="text-[10px] font-mono text-slate-500">Cur: USD ($)</span>
           </div>
 
-          <div className="overflow-x-auto border border-slate-200 rounded-xl">
+          <div className="overflow-x-auto border border-slate-200 rounded-sm">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-100 text-slate-700 border-b border-slate-200 font-semibold text-[11px]">
                 <tr>
@@ -351,7 +348,7 @@ export default function InvoiceDocument({ invoice, onRecordPayment, onClose }) {
         {/* 5. Settlement / KHQR Box & Financial Summary Totals */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-3 pb-6 border-b border-slate-200">
           {/* Left: Payment Method & KHQR Scan */}
-          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2 flex flex-col justify-between">
+          <div className="p-3.5 rounded-sm bg-slate-50 border border-slate-200 space-y-2 flex flex-col justify-between">
             <div className="space-y-1.5">
               <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
                 <CreditCard size={13} className="text-slate-700" />
@@ -378,7 +375,7 @@ export default function InvoiceDocument({ invoice, onRecordPayment, onClose }) {
             {/* If Balance Due, Show Instant KHQR Code */}
             {!isPaid && (
               <div className="pt-2 border-t border-slate-200 flex items-center gap-3">
-                <div className="p-2 bg-white rounded-lg border border-slate-300 shadow-sm flex flex-col items-center flex-shrink-0">
+                <div className="p-2 bg-white rounded-sm border border-slate-300 shadow-sm flex flex-col items-center flex-shrink-0">
                   <QrCode size={44} className="text-rose-600" weight="bold" />
                   <span className="text-[8px] font-mono font-bold text-slate-700 mt-0.5">KHQR PAY</span>
                 </div>
@@ -423,7 +420,7 @@ export default function InvoiceDocument({ invoice, onRecordPayment, onClose }) {
               <span className="font-mono font-bold">${paidAmount.toFixed(2)}</span>
             </div>
 
-            <div className={`flex items-center justify-between text-sm font-bold p-2 rounded-lg ${
+            <div className={`flex items-center justify-between text-sm font-bold p-2 rounded-sm ${
               isPaid ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'
             }`}>
               <span>BALANCE DUE:</span>
@@ -434,7 +431,7 @@ export default function InvoiceDocument({ invoice, onRecordPayment, onClose }) {
 
         {/* 6. Legal Terms, Warranty & Signature Block */}
         <div className="pt-4 space-y-4 text-[10px] text-slate-600">
-          <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+          <div className="p-3 rounded-sm bg-slate-50 border border-slate-200 space-y-1">
             <p className="font-bold text-slate-800 flex items-center gap-1 uppercase tracking-wider text-[10px]">
               <ShieldCheck size={13} className="text-emerald-700" weight="bold" />
               GARAGE WARRANTY & SERVICE POLICY
@@ -472,7 +469,7 @@ export default function InvoiceDocument({ invoice, onRecordPayment, onClose }) {
           {!isPaid && onRecordPayment && (
             <button
               onClick={() => onRecordPayment(invoice)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-subtle transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-sm shadow-subtle transition-colors cursor-pointer"
             >
               <CheckCircle size={15} weight="bold" />
               Record Payment (${balanceDue.toFixed(2)})
@@ -483,7 +480,7 @@ export default function InvoiceDocument({ invoice, onRecordPayment, onClose }) {
         <div className="flex items-center gap-2">
           <button
             onClick={handlePrint}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-subtle transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-sm shadow-subtle transition-colors cursor-pointer"
           >
             <Printer size={15} weight="bold" />
             Print Official Invoice / PDF
@@ -491,7 +488,7 @@ export default function InvoiceDocument({ invoice, onRecordPayment, onClose }) {
           {onClose && (
             <button
               onClick={onClose}
-              className="px-4 py-2 bg-app-hover hover:bg-app-hover/80 text-app-text text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+              className="px-4 py-2 bg-app-hover hover:bg-app-hover active:scale-[0.98]/80 text-app-text text-xs font-semibold rounded-sm transition-colors cursor-pointer"
             >
               Close
             </button>

@@ -155,7 +155,7 @@ export default function AppointmentsPage() {
       notes: apt.notes || '',
       status: apt.status,
     })
-    setIsEditOpen(true)
+    setIsViewOpen(false); setIsEditOpen(true)
   }
 
   const handleOpenView = (apt) => {
@@ -240,7 +240,7 @@ export default function AppointmentsPage() {
   })
 
   return (
-    <div className="space-y-6 font-sans text-app-text animate-fade-in">
+    <div className="space-y-6 font-sans text-app-text">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -261,7 +261,7 @@ export default function AppointmentsPage() {
                 })
                 setIsAddReminderOpen(true)
               }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl transition-colors shadow-subtle cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-sm transition-colors shadow-subtle cursor-pointer"
             >
               <Plus size={16} weight="bold" />
               <span>Schedule Service Reminder</span>
@@ -270,7 +270,7 @@ export default function AppointmentsPage() {
             can('appointments', 'create') && (
               <button
                 onClick={handleOpenAdd}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover text-app-accentText text-xs font-semibold rounded-xl transition-colors shadow-subtle cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText text-xs font-semibold rounded-sm transition-colors shadow-subtle cursor-pointer"
               >
                 <Plus size={16} weight="bold" />
                 {t('appointments.newAppointment')}
@@ -284,10 +284,10 @@ export default function AppointmentsPage() {
       <div className="flex items-center gap-2 border-b border-app-border pb-3">
         <button
           onClick={() => setActiveTab('calendar')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-sm text-xs font-semibold transition-all cursor-pointer ${
             activeTab === 'calendar'
               ? 'bg-app-accent text-app-accentText shadow-subtle'
-              : 'text-app-muted hover:text-app-text hover:bg-app-hover'
+              : 'text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98]'
           }`}
         >
           <CalendarBlank size={16} weight="bold" />
@@ -297,10 +297,10 @@ export default function AppointmentsPage() {
 
         <button
           onClick={() => setActiveTab('reminders')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-sm text-xs font-semibold transition-all cursor-pointer ${
             activeTab === 'reminders'
               ? 'bg-app-accent text-app-accentText shadow-subtle'
-              : 'text-app-muted hover:text-app-text hover:bg-app-hover'
+              : 'text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98]'
           }`}
         >
           <Bell size={16} weight="bold" />
@@ -313,7 +313,7 @@ export default function AppointmentsPage() {
         /* Grid: Left Calendar + Right Main Table */
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Left Calendar Picker */}
-          <div className="bg-app-card rounded-2xl border border-app-border p-4 shadow-card self-start transition-colors duration-200">
+          <div className="bg-app-card rounded-sm border border-app-border p-4 shadow-card self-start transition-colors duration-200">
             <div className="flex items-center justify-between mb-3">
               <button
                 onClick={() => {
@@ -322,7 +322,7 @@ export default function AppointmentsPage() {
                     setCalYear(calYear - 1)
                   } else setCalMonth(calMonth - 1)
                 }}
-                className="p-1.5 rounded-lg text-app-muted hover:bg-app-hover hover:text-app-text transition-colors cursor-pointer"
+                className="p-1.5 rounded-sm text-app-muted hover:bg-app-hover active:scale-[0.98] hover:text-app-text transition-colors cursor-pointer"
               >
                 <CaretLeft size={14} weight="bold" />
               </button>
@@ -334,7 +334,7 @@ export default function AppointmentsPage() {
                     setCalYear(calYear + 1)
                   } else setCalMonth(calMonth + 1)
                 }}
-                className="p-1.5 rounded-lg text-app-muted hover:bg-app-hover hover:text-app-text transition-colors cursor-pointer"
+                className="p-1.5 rounded-sm text-app-muted hover:bg-app-hover active:scale-[0.98] hover:text-app-text transition-colors cursor-pointer"
               >
                 <CaretRight size={14} weight="bold" />
               </button>
@@ -358,7 +358,7 @@ export default function AppointmentsPage() {
                   <button
                     key={day}
                     onClick={() => setSelectedDate(isSelected ? null : day)}
-                    className={`h-8 rounded-lg flex flex-col items-center justify-center relative text-xs font-medium transition-colors cursor-pointer ${
+                    className={`h-8 rounded-sm flex flex-col items-center justify-center relative text-xs font-medium transition-colors cursor-pointer ${
                       isSelected
                         ? 'bg-app-accent text-app-accentText font-bold shadow-subtle'
                         : isToday
@@ -397,10 +397,10 @@ export default function AppointmentsPage() {
                 <button
                   key={st}
                   onClick={() => setActiveFilter(st)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-sm text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                     activeFilter === st
                       ? 'bg-app-accent text-app-accentText shadow-subtle'
-                      : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover hover:text-app-text'
+                      : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover active:scale-[0.98] hover:text-app-text'
                   }`}
                 >
                   {st === 'All' ? t('common.all') : t(`status.${st}`, st)}
@@ -408,7 +408,7 @@ export default function AppointmentsPage() {
               ))}
             </div>
 
-            <div className="bg-app-card rounded-2xl border border-app-border shadow-card overflow-hidden transition-colors duration-200">
+            <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden transition-colors duration-200">
               <div className="p-4 border-b border-app-border">
                 <div className="relative max-w-md">
                   <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
@@ -417,7 +417,7 @@ export default function AppointmentsPage() {
                     placeholder={t('common.quickSearch')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-xl text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+                    className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-sm text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
                   />
                 </div>
               </div>
@@ -444,37 +444,37 @@ export default function AppointmentsPage() {
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                        <th className="px-6 py-3 font-semibold">{t('appointments.code')}</th>
-                        <th className="px-6 py-3 font-semibold">{t('appointments.customer')}</th>
-                        <th className="px-6 py-3 font-semibold">{t('appointments.vehicle')}</th>
-                        <th className="px-6 py-3 hidden md:table-cell font-semibold">{t('appointments.service')}</th>
-                        <th className="px-6 py-3 hidden lg:table-cell font-semibold">{t('common.date')} / {t('common.time')}</th>
-                        <th className="px-6 py-3 font-semibold">{t('common.status')}</th>
-                        <th className="px-6 py-3 font-semibold text-right">{t('common.actions')}</th>
+                        <th className="px-4 py-3 font-semibold">{t('appointments.code')}</th>
+                        <th className="px-4 py-3 font-semibold">{t('appointments.customer')}</th>
+                        <th className="px-4 py-3 font-semibold">{t('appointments.vehicle')}</th>
+                        <th className="px-4 py-3 hidden md:table-cell font-semibold">{t('appointments.service')}</th>
+                        <th className="px-4 py-3 hidden lg:table-cell font-semibold">{t('common.date')} / {t('common.time')}</th>
+                        <th className="px-4 py-3 font-semibold">{t('common.status')}</th>
+                        <th className="px-4 py-3 font-semibold text-right">{t('common.actions')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-app-border">
                       {filtered.map((apt) => (
-                        <tr key={apt.id} className="hover:bg-app-hover/60 transition-colors group">
-                          <td className="px-6 py-3.5 font-mono font-bold text-app-accent">{apt.code}</td>
-                          <td className="px-6 py-3.5 font-semibold text-app-text">{apt.customer}</td>
-                          <td className="px-6 py-3.5">
+                        <tr key={apt.id} className="hover:bg-app-hover /60 active:scale-[0.98] transition-colors group">
+                          <td className="px-4 py-3.5 font-mono font-bold text-app-accent">{apt.code}</td>
+                          <td className="px-4 py-3.5 font-semibold text-app-text">{apt.customer}</td>
+                          <td className="px-4 py-3.5">
                             <p className="font-semibold text-app-text">{apt.vehicle}</p>
                             <p className="text-[10px] text-app-muted font-mono">{apt.plate}</p>
                           </td>
-                          <td className="px-6 py-3.5 text-app-muted hidden md:table-cell">{apt.service}</td>
-                          <td className="px-6 py-3.5 text-app-muted hidden lg:table-cell">
+                          <td className="px-4 py-3.5 text-app-muted hidden md:table-cell">{apt.service}</td>
+                          <td className="px-4 py-3.5 text-app-muted hidden lg:table-cell">
                             <span className="font-medium text-app-text">{apt.date}</span>
                             <span className="text-[10px] text-app-muted block">{apt.time}</span>
                           </td>
-                          <td className="px-6 py-3.5">
+                          <td className="px-4 py-3.5">
                             <StatusBadge status={apt.status} />
                           </td>
-                          <td className="px-6 py-3.5 text-right">
+                          <td className="px-4 py-3.5 text-right">
                             <div className="flex items-center justify-end gap-1">
                               <button
                                 onClick={() => handleOpenView(apt)}
-                                className="p-1.5 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
+                                className="p-1.5 rounded-sm text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
                                 title={t('common.view')}
                               >
                                 <Eye size={15} />
@@ -482,7 +482,7 @@ export default function AppointmentsPage() {
                               {can('appointments', 'update') && (
                                 <button
                                   onClick={() => handleOpenEdit(apt)}
-                                  className="p-1.5 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
+                                  className="p-1.5 rounded-sm text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
                                   title={t('common.edit')}
                                 >
                                   <PencilSimple size={15} />
@@ -491,7 +491,7 @@ export default function AppointmentsPage() {
                               {can('appointments', 'delete') && apt.status !== 'Cancelled' && (
                                 <button
                                   onClick={() => handleCancelApt(apt.id)}
-                                  className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                                  className="p-1.5 rounded-sm text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
                                   title={t('appointments.cancelAppointment')}
                                 >
                                   <XCircle size={15} />
@@ -510,7 +510,7 @@ export default function AppointmentsPage() {
         </div>
       ) : (
         /* Maintenance Reminders (Service CRM) Tab */
-        <div className="bg-app-card rounded-2xl border border-app-border shadow-card overflow-hidden space-y-3">
+        <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden space-y-3">
           <div className="p-4 border-b border-app-border flex items-center justify-between">
             <div>
               <h2 className="text-sm font-bold text-app-text flex items-center gap-2">
@@ -535,35 +535,35 @@ export default function AppointmentsPage() {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                    <th className="px-6 py-3 font-semibold">Customer & Contact</th>
-                    <th className="px-6 py-3 font-semibold">Vehicle</th>
-                    <th className="px-6 py-3 font-semibold">Service Type</th>
-                    <th className="px-6 py-3 font-semibold">Due Date / Mileage</th>
-                    <th className="px-6 py-3 font-semibold">Status</th>
-                    <th className="px-6 py-3 font-semibold text-right">Actions</th>
+                    <th className="px-4 py-3 font-semibold">Customer & Contact</th>
+                    <th className="px-4 py-3 font-semibold">Vehicle</th>
+                    <th className="px-4 py-3 font-semibold">Service Type</th>
+                    <th className="px-4 py-3 font-semibold">Due Date / Mileage</th>
+                    <th className="px-4 py-3 font-semibold">Status</th>
+                    <th className="px-4 py-3 font-semibold text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-app-border">
                   {reminders.map((rem) => (
-                    <tr key={rem.id} className="hover:bg-app-hover/60 transition-colors">
-                      <td className="px-6 py-3.5">
+                    <tr key={rem.id} className="hover:bg-app-hover /60 active:scale-[0.98] transition-colors">
+                      <td className="px-4 py-3.5">
                         <p className="font-semibold text-app-text">{rem.customer}</p>
                         <p className="text-[10px] text-app-muted">{rem.customerPhone || 'No phone'}</p>
                       </td>
-                      <td className="px-6 py-3.5">
+                      <td className="px-4 py-3.5">
                         <p className="font-semibold text-app-text">{rem.vehicle}</p>
                         <p className="text-[10px] font-mono text-app-accent font-bold">{rem.plate}</p>
                       </td>
-                      <td className="px-6 py-3.5 font-medium text-app-text">{rem.serviceType}</td>
-                      <td className="px-6 py-3.5">
+                      <td className="px-4 py-3.5 font-medium text-app-text">{rem.serviceType}</td>
+                      <td className="px-4 py-3.5">
                         <p className="font-semibold text-app-text">{rem.dueDate || 'Upon mileage'}</p>
                         {rem.dueOdometer && (
                           <p className="text-[10px] text-app-muted font-mono">Target: {rem.dueOdometer} km</p>
                         )}
                       </td>
-                      <td className="px-6 py-3.5">
+                      <td className="px-4 py-3.5">
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
+                          className={`inline-flex items-center px-2 py-0.5 rounded-sm text-[11px] font-semibold border ${
                             rem.status === 'Booked'
                               ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
                               : rem.status === 'Notified'
@@ -574,7 +574,7 @@ export default function AppointmentsPage() {
                           {rem.status}
                         </span>
                       </td>
-                      <td className="px-6 py-3.5 text-right">
+                      <td className="px-4 py-3.5 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           {/* Send Notification */}
                           <button
@@ -584,7 +584,7 @@ export default function AppointmentsPage() {
                               updateReminderMutation.mutate({ id: rem.id, data: { status: 'Notified' } })
                               addToast('Reminder text copied & status updated to Notified!', 'success')
                             }}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 text-[11px] font-semibold border border-emerald-500/30 transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 text-[11px] font-semibold border border-emerald-500/30 transition-colors cursor-pointer"
                             title="Copy SMS / WhatsApp text"
                           >
                             <ChatCircleDots size={13} />
@@ -594,7 +594,7 @@ export default function AppointmentsPage() {
                           {/* 1-Click Book Appointment */}
                           <button
                             onClick={() => handleBookFromReminder(rem)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-app-accent hover:bg-app-accentHover text-app-accentText text-[11px] font-semibold transition-colors shadow-subtle cursor-pointer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText text-[11px] font-semibold transition-colors shadow-subtle cursor-pointer"
                             title="Book appointment from this reminder"
                           >
                             <CalendarCheck size={13} weight="bold" />
@@ -603,7 +603,7 @@ export default function AppointmentsPage() {
 
                           <button
                             onClick={() => deleteReminderMutation.mutate(rem.id)}
-                            className="p-1.5 rounded-lg text-app-muted hover:text-rose-500 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-sm text-app-muted hover:text-rose-500 transition-colors cursor-pointer"
                             title="Delete reminder"
                           >
                             <Trash size={14} />
@@ -629,7 +629,7 @@ export default function AppointmentsPage() {
                 required
                 value={reminderForm.customerId}
                 onChange={(e) => setReminderForm({ ...reminderForm, customerId: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
                 <option value="">-- Choose Customer --</option>
                 {customers.map((c) => (
@@ -645,7 +645,7 @@ export default function AppointmentsPage() {
                 required
                 value={reminderForm.vehicleId}
                 onChange={(e) => setReminderForm({ ...reminderForm, vehicleId: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
                 <option value="">-- Choose Vehicle --</option>
                 {vehicles.map((v) => (
@@ -665,7 +665,7 @@ export default function AppointmentsPage() {
               value={reminderForm.serviceType}
               onChange={(e) => setReminderForm({ ...reminderForm, serviceType: e.target.value })}
               placeholder="e.g. 5,000 km Oil & Filter Service or Brake Pad Inspection"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
 
@@ -676,7 +676,7 @@ export default function AppointmentsPage() {
                 type="date"
                 value={reminderForm.dueDate}
                 onChange={(e) => setReminderForm({ ...reminderForm, dueDate: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -686,7 +686,7 @@ export default function AppointmentsPage() {
                 value={reminderForm.dueOdometer}
                 onChange={(e) => setReminderForm({ ...reminderForm, dueOdometer: e.target.value })}
                 placeholder="e.g. 60000"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text font-mono focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text font-mono focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
@@ -695,7 +695,7 @@ export default function AppointmentsPage() {
             <button
               type="button"
               onClick={() => setIsAddReminderOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
+              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
             >
               Cancel
             </button>
@@ -718,7 +718,7 @@ export default function AppointmentsPage() {
                   const c = customers.find((x) => x.name === e.target.value)
                   setFormData({ ...formData, customer: e.target.value, customerId: c ? c.id : '' })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
                 {customers.map((c) => (
                   <option key={c.id} value={c.name}>
@@ -740,7 +740,7 @@ export default function AppointmentsPage() {
                     vehicleId: v ? v.id : '',
                   })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
                 {vehicles.map((v) => (
                   <option key={v.id} value={v.number}>
@@ -757,7 +757,7 @@ export default function AppointmentsPage() {
               <select
                 value={formData.service}
                 onChange={(e) => setFormData({ ...formData, service: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
                 {services.map((s) => (
                   <option key={s.id} value={s.name}>
@@ -774,7 +774,7 @@ export default function AppointmentsPage() {
                   const m = mechanics.find((x) => x.name === e.target.value)
                   setFormData({ ...formData, mechanic: e.target.value, mechanicId: m ? m.id : '' })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
                 {mechanics.map((m) => (
                   <option key={m.id} value={m.name}>
@@ -793,7 +793,7 @@ export default function AppointmentsPage() {
                 required
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -803,7 +803,7 @@ export default function AppointmentsPage() {
                 required
                 value={formData.time}
                 onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
@@ -815,7 +815,7 @@ export default function AppointmentsPage() {
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               placeholder="e.g. Engine rattling at high speed"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
 
@@ -823,7 +823,7 @@ export default function AppointmentsPage() {
             <button
               type="button"
               onClick={() => setIsAddOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
+              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
             >
               {t('common.cancel')}
             </button>
@@ -843,7 +843,7 @@ export default function AppointmentsPage() {
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-semibold"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
               >
                 <option value="Scheduled">{t('status.Scheduled')}</option>
                 <option value="Confirmed">{t('status.Confirmed')}</option>
@@ -860,7 +860,7 @@ export default function AppointmentsPage() {
                   const m = mechanics.find((x) => x.name === e.target.value)
                   setFormData({ ...formData, mechanic: e.target.value, mechanicId: m ? m.id : '' })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-semibold"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
               >
                 {mechanics.map((m) => (
                   <option key={m.id} value={m.name}>
@@ -878,7 +878,7 @@ export default function AppointmentsPage() {
                 type="date"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -887,7 +887,7 @@ export default function AppointmentsPage() {
                 type="time"
                 value={formData.time}
                 onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
@@ -896,7 +896,7 @@ export default function AppointmentsPage() {
             <button
               type="button"
               onClick={() => setIsEditOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
+              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
             >
               {t('common.cancel')}
             </button>
@@ -911,7 +911,7 @@ export default function AppointmentsPage() {
       <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('common.details')}>
         {selectedApt && (
           <div className="space-y-4 text-xs">
-            <div className="flex items-center justify-between p-3 bg-app-hover/50 rounded-xl border border-app-border">
+            <div className="flex items-center justify-between p-3 bg-app-hover/50 rounded-sm border border-app-border">
               <div>
                 <p className="font-mono text-app-accent font-semibold">{selectedApt.code}</p>
                 <h3 className="text-sm font-bold text-app-text mt-0.5">{selectedApt.service}</h3>
@@ -920,18 +920,18 @@ export default function AppointmentsPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+              <div className="p-3 bg-app-input rounded-sm border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold">{t('appointments.customer')}</p>
                 <p className="font-semibold text-app-text mt-0.5">{selectedApt.customer}</p>
               </div>
-              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+              <div className="p-3 bg-app-input rounded-sm border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold">{t('appointments.vehicle')}</p>
                 <p className="font-semibold text-app-text mt-0.5">{selectedApt.vehicle}</p>
                 <p className="text-[10px] font-mono text-app-muted">{selectedApt.plate}</p>
               </div>
             </div>
 
-            <div className="p-3 bg-app-input rounded-xl border border-app-border">
+            <div className="p-3 bg-app-input rounded-sm border border-app-border">
               <p className="text-[10px] text-app-muted uppercase font-semibold">{t('common.date')} & {t('common.time')}</p>
               <p className="font-semibold text-app-text mt-0.5">{selectedApt.date} at {selectedApt.time}</p>
             </div>

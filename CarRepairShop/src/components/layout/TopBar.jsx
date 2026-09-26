@@ -154,12 +154,12 @@ export default function TopBar({ onToggleSidebar }) {
   }
 
   return (
-    <header className="sticky top-0 flex items-center justify-between h-16 sm:h-20 px-3 sm:px-6 lg:px-8 bg-[var(--bg-card)]/90 backdrop-blur-md border-b border-[var(--border-color)] text-[var(--text-primary)] z-20 font-sans transition-colors duration-200">
+    <header className="sticky top-0 flex items-center justify-between h-16 sm:h-20 px-3 sm:px-4 lg:px-8 bg-[var(--bg-card)]/90 backdrop-blur-md border-b border-[var(--border-color)] text-[var(--text-primary)] z-20 font-sans transition-colors duration-200">
       {/* Left: Sidebar Toggle + Breadcrumb + Global Search */}
       <div className="flex items-center gap-2 sm:gap-4 lg:gap-6 min-w-0">
         <button
           onClick={onToggleSidebar}
-          className="p-2 rounded-xl text-app-muted hover:bg-app-hover hover:text-app-text transition-colors lg:hidden flex-shrink-0"
+          className="p-2 rounded-sm text-app-muted hover:bg-app-hover active:scale-[0.98] hover:text-app-text transition-colors lg:hidden flex-shrink-0"
           aria-label="Toggle navigation menu"
         >
           <List size={22} weight="bold" />
@@ -169,7 +169,7 @@ export default function TopBar({ onToggleSidebar }) {
         <div className="flex items-center gap-2 text-xs text-app-muted min-w-0">
           <span className="hover:text-app-text transition-colors cursor-default hidden md:inline truncate">{t('common.appName')}</span>
           <span className="hidden md:inline">/</span>
-          <span className="text-app-text font-bold bg-app-hover/70 px-2.5 py-1 rounded-lg border border-app-border truncate">
+          <span className="text-app-text font-bold bg-app-hover/70 px-2.5 py-1 rounded-sm border border-app-border truncate">
             {currentTitle}
           </span>
         </div>
@@ -186,7 +186,7 @@ export default function TopBar({ onToggleSidebar }) {
               setSearchQuery(e.target.value)
               setIsSearchOpen(true)
             }}
-            className="w-48 md:w-60 lg:w-80 pl-9 pr-12 py-2 bg-app-input border border-app-border rounded-xl text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent focus:ring-1 focus:ring-app-accent transition-all shadow-subtle"
+            className="w-48 md:w-60 lg:w-80 pl-9 pr-12 py-2 bg-app-input border border-app-border rounded-sm text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent focus:ring-1 focus:ring-app-accent transition-all shadow-subtle"
           />
           <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
             {searchQuery ? (
@@ -205,7 +205,7 @@ export default function TopBar({ onToggleSidebar }) {
 
           {/* Quick Search Results Dropdown */}
           {isSearchOpen && query.length >= 2 && (
-            <div className="absolute left-0 top-full mt-2 w-80 sm:w-96 bg-app-card border border-app-border rounded-2xl shadow-card py-2 z-50 animate-fade-in text-xs max-h-[75vh] overflow-y-auto max-w-[calc(100vw-2rem)]">
+            <div className="absolute left-0 top-full mt-2 w-80 sm:w-96 bg-app-card border border-app-border rounded-sm shadow-card py-2 z-50 text-xs max-h-[75vh] overflow-y-auto max-w-[calc(100vw-2rem)]">
               <div className="px-4 py-2 border-b border-app-border flex items-center justify-between text-[10px] text-app-muted font-bold uppercase tracking-wider">
                 <span>
                   {t('common.searchResults')} ({totalResults})
@@ -214,7 +214,7 @@ export default function TopBar({ onToggleSidebar }) {
               </div>
 
               {totalResults === 0 ? (
-                <div className="p-5 text-center text-xs text-app-muted">
+                <div className="p-3.5 text-center text-xs text-app-muted">
                   {t('common.noResultsFound')} "{searchQuery}".
                 </div>
               ) : (
@@ -229,7 +229,7 @@ export default function TopBar({ onToggleSidebar }) {
                         <button
                           key={j.id}
                           onClick={() => handleSelectResult('/repair-jobs')}
-                          className="w-full px-4 py-2 hover:bg-app-hover flex items-center gap-2.5 text-left transition-colors"
+                          className="w-full px-4 py-2 hover:bg-app-hover active:scale-[0.98] flex items-center gap-2.5 text-left transition-colors"
                         >
                           <Wrench size={15} className="text-app-accent flex-shrink-0" />
                           <div className="truncate flex-1">
@@ -252,7 +252,7 @@ export default function TopBar({ onToggleSidebar }) {
                         <button
                           key={c.id}
                           onClick={() => handleSelectResult('/customers')}
-                          className="w-full px-4 py-2 hover:bg-app-hover flex items-center gap-2.5 text-left transition-colors"
+                          className="w-full px-4 py-2 hover:bg-app-hover active:scale-[0.98] flex items-center gap-2.5 text-left transition-colors"
                         >
                           <User size={15} className="text-emerald-500 flex-shrink-0" />
                           <div className="truncate flex-1">
@@ -274,7 +274,7 @@ export default function TopBar({ onToggleSidebar }) {
                         <button
                           key={v.id}
                           onClick={() => handleSelectResult('/vehicles')}
-                          className="w-full px-4 py-2 hover:bg-app-hover flex items-center gap-2.5 text-left transition-colors"
+                          className="w-full px-4 py-2 hover:bg-app-hover active:scale-[0.98] flex items-center gap-2.5 text-left transition-colors"
                         >
                           <Car size={15} className="text-sky-500 flex-shrink-0" />
                           <div className="truncate flex-1">
@@ -299,7 +299,7 @@ export default function TopBar({ onToggleSidebar }) {
                         <button
                           key={p.id}
                           onClick={() => handleSelectResult('/inventory')}
-                          className="w-full px-4 py-2 hover:bg-app-hover flex items-center gap-2.5 text-left transition-colors"
+                          className="w-full px-4 py-2 hover:bg-app-hover active:scale-[0.98] flex items-center gap-2.5 text-left transition-colors"
                         >
                           <Package size={15} className="text-amber-500 flex-shrink-0" />
                           <div className="truncate flex-1">
@@ -322,7 +322,7 @@ export default function TopBar({ onToggleSidebar }) {
         {/* Mobile Search Icon Button */}
         <button
           onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
-          className="p-2 rounded-xl text-app-muted hover:bg-app-hover hover:text-app-text transition-all sm:hidden"
+          className="p-2 rounded-sm text-app-muted hover:bg-app-hover active:scale-[0.98] hover:text-app-text transition-all sm:hidden"
           title={t('common.quickSearch')}
         >
           <MagnifyingGlass size={18} weight="bold" />
@@ -332,11 +332,11 @@ export default function TopBar({ onToggleSidebar }) {
         <LanguageSwitcher />
 
         {/* Theme and Alerts controls */}
-        <div className="flex items-center gap-0.5 sm:gap-1 bg-app-hover/50 border border-app-border p-0.5 sm:p-1 rounded-2xl">
+        <div className="flex items-center gap-0.5 sm:gap-1 bg-app-hover/50 border border-app-border p-0.5 sm:p-1 rounded-sm">
           {/* Theme Switcher Button */}
           <button
             onClick={toggleTheme}
-            className="p-1.5 sm:p-2 rounded-xl text-app-muted hover:bg-app-card hover:text-app-text transition-all"
+            className="p-1.5 sm:p-2 rounded-sm text-app-muted hover:bg-app-card hover:text-app-text transition-all"
             title={isDark ? t('common.lightMode') : t('common.darkMode')}
           >
             {isDark ? <Sun size={17} weight="bold" className="text-amber-400" /> : <Moon size={17} weight="bold" />}
@@ -344,7 +344,7 @@ export default function TopBar({ onToggleSidebar }) {
 
           {/* Refresh Button (desktop only) */}
           <button
-            className="p-2 rounded-xl text-app-muted hover:bg-app-card hover:text-app-text transition-all hidden sm:block"
+            className="p-2 rounded-sm text-app-muted hover:bg-app-card hover:text-app-text transition-all hidden sm:block"
             title={t('common.refresh')}
             onClick={() => window.location.reload()}
           >
@@ -385,7 +385,7 @@ export default function TopBar({ onToggleSidebar }) {
                       setNotifOpen(!notifOpen)
                       setProfileOpen(false)
                     }}
-                    className="relative p-1.5 sm:p-2 rounded-xl text-app-muted hover:bg-app-card hover:text-app-text transition-all"
+                    className="relative p-1.5 sm:p-2 rounded-sm text-app-muted hover:bg-app-card hover:text-app-text transition-all"
                     aria-label="Notifications"
                   >
                     <Bell size={17} weight={notifOpen ? 'fill' : 'bold'} />
@@ -395,7 +395,7 @@ export default function TopBar({ onToggleSidebar }) {
                   </button>
 
                   {notifOpen && (
-                    <div className="absolute right-0 mt-3 w-72 sm:w-80 bg-app-card border border-app-border rounded-2xl shadow-card py-2 z-50 animate-fade-in max-w-[calc(100vw-1.5rem)]">
+                    <div className="absolute right-0 mt-3 w-72 sm:w-80 bg-app-card border border-app-border rounded-sm shadow-card py-2 z-50 max-w-[calc(100vw-1.5rem)]">
                       <div className="px-4 py-2.5 border-b border-app-border flex items-center justify-between">
                         <h3 className="text-xs font-bold text-app-text uppercase tracking-wider">{t('common.liveAlerts')}</h3>
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-semibold font-mono">
@@ -444,10 +444,10 @@ export default function TopBar({ onToggleSidebar }) {
               setProfileOpen(!profileOpen)
               setNotifOpen(false)
             }}
-            className="flex items-center gap-2 p-1 sm:p-1.5 sm:pr-2.5 rounded-2xl hover:bg-app-hover transition-all border border-transparent hover:border-app-border"
+            className="flex items-center gap-2 p-1 sm:p-1.5 sm:pr-2.5 rounded-sm hover:bg-app-hover transition-all border border-transparent hover:border-app-border"
           >
             <div className="relative">
-              <div className="w-8 h-8 bg-app-accent/15 border border-app-accent/30 rounded-xl flex items-center justify-center text-app-accent font-bold text-xs shadow-subtle">
+              <div className="w-8 h-8 bg-app-accent/15 border border-app-accent/30 rounded-sm flex items-center justify-center text-app-accent font-bold text-xs shadow-subtle">
                 {user?.name ? user.name.split(' ').map((n) => n[0]).join('') : '?'}
               </div>
               <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-[var(--bg-card)]" />
@@ -462,10 +462,10 @@ export default function TopBar({ onToggleSidebar }) {
           </button>
 
           {profileOpen && (
-            <div className="absolute right-0 mt-3 w-56 sm:w-64 bg-app-card border border-app-border rounded-2xl shadow-card py-2 z-50 animate-fade-in text-xs max-w-[calc(100vw-1.5rem)]">
+            <div className="absolute right-0 mt-3 w-56 sm:w-64 bg-app-card border border-app-border rounded-sm shadow-card py-2 z-50 text-xs max-w-[calc(100vw-1.5rem)]">
               <div className="px-4 py-3 border-b border-app-border">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-app-accent/15 border border-app-accent/30 rounded-xl flex items-center justify-center text-app-accent font-bold text-sm flex-shrink-0">
+                  <div className="w-10 h-10 bg-app-accent/15 border border-app-accent/30 rounded-sm flex items-center justify-center text-app-accent font-bold text-sm flex-shrink-0">
                     {user?.name ? user.name.split(' ').map((n) => n[0]).join('') : '?'}
                   </div>
                   <div className="truncate flex-1 min-w-0">
@@ -481,7 +481,7 @@ export default function TopBar({ onToggleSidebar }) {
               <div className="p-1.5">
                 <button
                   onClick={handleSignOut}
-                  className="w-full flex items-center gap-2 px-3.5 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors font-medium text-xs"
+                  className="w-full flex items-center gap-2 px-3.5 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 rounded-sm transition-colors font-medium text-xs"
                 >
                   <SignOut size={15} />
                   {t('common.signOut')}
@@ -494,8 +494,8 @@ export default function TopBar({ onToggleSidebar }) {
 
       {/* Mobile Search Full Overlay */}
       {mobileSearchOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm sm:hidden flex flex-col p-4 animate-fade-in">
-          <div ref={mobileSearchRef} className="bg-app-card border border-app-border rounded-2xl p-4 shadow-card space-y-3">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm sm:hidden flex flex-col p-4">
+          <div ref={mobileSearchRef} className="bg-app-card border border-app-border rounded-sm p-4 shadow-card space-y-3">
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
                 <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
@@ -505,7 +505,7 @@ export default function TopBar({ onToggleSidebar }) {
                   placeholder={t('common.quickSearch')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-9 py-2.5 bg-app-input border border-app-border rounded-xl text-xs text-app-text focus:outline-none focus:border-app-accent"
+                  className="w-full pl-9 pr-9 py-2.5 bg-app-input border border-app-border rounded-sm text-xs text-app-text focus:outline-none focus:border-app-accent"
                 />
                 {searchQuery && (
                   <button
@@ -528,7 +528,7 @@ export default function TopBar({ onToggleSidebar }) {
             {query.length >= 2 && (
               <div className="max-h-[60vh] overflow-y-auto divide-y divide-app-border pt-2 text-xs">
                 {totalResults === 0 ? (
-                  <p className="text-center py-6 text-app-muted">{t('common.noResultsFound')}</p>
+                  <p className="text-center py-4 text-app-muted">{t('common.noResultsFound')}</p>
                 ) : (
                   <>
                     {matchingJobs.map((j) => (

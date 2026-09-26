@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../config/db.php';
 
 $authPayload = authenticate(); 
+authorizeRoles(['admin', 'manager', 'storekeeper'], $authPayload);
 
 $method = $_SERVER['REQUEST_METHOD'];
 $id = null;

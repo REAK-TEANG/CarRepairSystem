@@ -3,8 +3,14 @@
 require_once __DIR__ . '/../config/db.php';
 
 $authPayload = authenticate(); 
+authorizeRoles(['admin', 'manager', 'service_advisor', 'mechanic', 'storekeeper'], $authPayload);
 
 $method = $_SERVER['REQUEST_METHOD'];
+
+// Restrict stock mutations to authorized roles only
+if (in_array($method, ['POST', 'PUT', 'DELETE', 'PATCH'])) {
+    authorizeRoles(['admin', 'manager', 'storekeeper'], $authPayload);
+}
 $id = null;
 $action = null;
 

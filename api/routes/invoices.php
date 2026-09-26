@@ -1,8 +1,10 @@
 <?php
 // api/routes/invoices.php
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../utils/eventBus.php';
 
 $authPayload = authenticate(); 
+authorizeRoles(['admin', 'manager', 'service_advisor', 'cashier'], $authPayload);
 
 $method = $_SERVER['REQUEST_METHOD'];
 $id = null;
@@ -244,9 +246,18 @@ if ($method === 'GET' && !$id) {
              VALUES (?, ?, ?, ?, NOW(), ?)",
             [$payNum, $updated['id'], $addPaid, $pMethod, $userId]
         );
-    } catch (Exception $payErr) {
-        // ignore payment table error 
+    } catch (Throwable $payErr) {
+        error_log("Payment record warning: " . $payErr->getMessage());
     }
+
+    EventBus::publish('invoices', 'paid', [
+        'id' => (int)$updated['id'],
+        'invoiceNumber' => $updated['invoice_number'],
+        'paidAmount' => $addPaid,
+        'totalPaid' => $newTotalPaid,
+        'status' => $newStatus,
+        'customer' => $customer['full_name'] ?? ''
+    ]);
 
     echo json_encode(['data' => [
         'id' => $updated['id'],

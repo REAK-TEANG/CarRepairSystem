@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MagnifyingGlass, Plus, PencilSimple, Trash, Eye, Wrench, Car, UsersThree } from '@phosphor-icons/react'
+import { MagnifyingGlass, Plus, PencilSimple, Trash, Wrench, Car, UsersThree } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useMechanics, useCreateMechanic, useUpdateMechanic, useDeleteMechanic } from '../../hooks/useMechanics'
 import { useAuth } from '../../context/AuthContext'
@@ -56,7 +56,7 @@ export default function MechanicsPage() {
   const handleOpenEdit = (m) => {
     setSelectedMechanic(m)
     setFormData({ ...m })
-    setIsEditOpen(true)
+    setIsViewOpen(false); setIsEditOpen(true)
   }
 
   const handleOpenView = (m) => {
@@ -66,7 +66,7 @@ export default function MechanicsPage() {
 
   const handleOpenDelete = (m) => {
     setSelectedMechanic(m)
-    setIsDeleteOpen(true)
+    setIsViewOpen(false); setIsDeleteOpen(true)
   }
 
   const handleCreate = async (e) => {
@@ -119,7 +119,7 @@ export default function MechanicsPage() {
         {can('mechanics', 'create') && activeTab === 'roster' && (
           <button
             onClick={handleOpenAdd}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover text-app-accentText font-semibold rounded-xl text-xs transition-colors shadow-subtle"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText font-semibold rounded-sm text-xs transition-colors shadow-subtle"
           >
             <Plus size={16} weight="bold" />
             {t('mechanics.addMechanic')}
@@ -131,10 +131,10 @@ export default function MechanicsPage() {
       <div className="flex items-center gap-2 border-b border-app-border pb-3">
         <button
           onClick={() => setActiveTab('pipeline')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-sm text-xs font-semibold transition-all ${
             activeTab === 'pipeline'
               ? 'bg-app-accent text-app-accentText shadow-subtle'
-              : 'text-app-muted hover:text-app-text hover:bg-app-hover'
+              : 'text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98]'
           }`}
         >
           <Car size={16} weight="bold" />
@@ -143,10 +143,10 @@ export default function MechanicsPage() {
 
         <button
           onClick={() => setActiveTab('roster')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-sm text-xs font-semibold transition-all ${
             activeTab === 'roster'
               ? 'bg-app-accent text-app-accentText shadow-subtle'
-              : 'text-app-muted hover:text-app-text hover:bg-app-hover'
+              : 'text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98]'
           }`}
         >
           <UsersThree size={16} weight="bold" />
@@ -169,10 +169,10 @@ export default function MechanicsPage() {
             <button
               key={st}
               onClick={() => setActiveFilter(st)}
-              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-colors ${
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-sm text-xs font-medium whitespace-nowrap transition-colors ${
                 isActive
                   ? 'bg-app-accent text-app-accentText shadow-subtle'
-                  : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover hover:text-app-text'
+                  : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover active:scale-[0.98] hover:text-app-text'
               }`}
             >
               {translatedSt}
@@ -189,7 +189,7 @@ export default function MechanicsPage() {
       </div>
 
       {/* Main Table */}
-      <div className="bg-app-card rounded-2xl border border-app-border shadow-card overflow-hidden transition-colors duration-200">
+      <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden transition-colors duration-200">
         <div className="p-4 border-b border-app-border flex items-center justify-between gap-3">
           <div className="relative flex-1 max-w-md">
             <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
@@ -198,7 +198,7 @@ export default function MechanicsPage() {
               placeholder={t('common.quickSearch')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-xl text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-sm text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
             />
           </div>
           {(searchQuery || activeFilter !== 'All') && (
@@ -235,20 +235,19 @@ export default function MechanicsPage() {
             <table className="w-full text-xs">
               <thead>
                 <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                  <th className="px-6 py-3 font-semibold">{t('mechanics.name')}</th>
-                  <th className="px-6 py-3 font-semibold">{t('mechanics.specialization')}</th>
-                  <th className="px-6 py-3 hidden md:table-cell font-semibold">{t('mechanics.experience')}</th>
-                  <th className="px-6 py-3 hidden lg:table-cell font-semibold">{t('mechanics.hourlyRate')}</th>
-                  <th className="px-6 py-3 font-semibold">{t('mechanics.status')}</th>
-                  <th className="px-6 py-3 font-semibold text-right">{t('common.actions')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('mechanics.name')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('mechanics.specialization')}</th>
+                  <th className="px-4 py-3 hidden md:table-cell font-semibold">{t('mechanics.experience')}</th>
+                  <th className="px-4 py-3 hidden lg:table-cell font-semibold">{t('mechanics.hourlyRate')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('mechanics.status')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-app-border">
                 {filtered.map((m) => (
-                  <tr key={m.id} className="hover:bg-app-hover/60 transition-colors group">
-                    <td className="px-6 py-3.5">
+                  <tr key={m.id} onClick={() => handleOpenView(m)} className="hover:bg-app-hover /60 active:scale-[0.98] transition-colors group cursor-pointer">
+                    <td className="px-4 py-3.5">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-app-accent/15 flex items-center justify-center text-app-accent font-bold text-xs flex-shrink-0">
+                        <div className="w-8 h-8 rounded-sm bg-app-accent/15 flex items-center justify-center text-app-accent font-bold text-xs flex-shrink-0">
                           <Wrench size={16} />
                         </div>
                         <div>
@@ -257,16 +256,16 @@ export default function MechanicsPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-3.5 text-app-text font-medium">{m.specialization}</td>
-                    <td className="px-6 py-3.5 text-app-muted tabular-nums hidden md:table-cell">
+                    <td className="px-4 py-3.5 text-app-text font-medium">{m.specialization}</td>
+                    <td className="px-4 py-3.5 text-app-muted tabular-nums hidden md:table-cell">
                       {m.experienceYears} {t('mechanics.experience')}
                     </td>
-                    <td className="px-6 py-3.5 font-bold text-app-accent tabular-nums hidden lg:table-cell">
+                    <td className="px-4 py-3.5 font-bold text-app-accent tabular-nums hidden lg:table-cell">
                       ${m.hourlyRate}/hr
                     </td>
-                    <td className="px-6 py-3.5">
+                    <td className="px-4 py-3.5">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
+                        className={`inline-flex items-center px-2 py-0.5 rounded-sm text-[11px] font-semibold ${
                           m.status === 'Active'
                             ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
                             : m.status === 'On Leave'
@@ -276,35 +275,6 @@ export default function MechanicsPage() {
                       >
                         {t(`status.${m.status}`, m.status)}
                       </span>
-                    </td>
-                    <td className="px-6 py-3.5 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => handleOpenView(m)}
-                          className="p-1.5 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors"
-                          title={t('common.view')}
-                        >
-                          <Eye size={15} />
-                        </button>
-                        {can('mechanics', 'update') && (
-                          <button
-                            onClick={() => handleOpenEdit(m)}
-                            className="p-1.5 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors"
-                            title={t('common.edit')}
-                          >
-                            <PencilSimple size={15} />
-                          </button>
-                        )}
-                        {can('mechanics', 'delete') && (
-                          <button
-                            onClick={() => handleOpenDelete(m)}
-                            className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors"
-                            title={t('common.delete')}
-                          >
-                            <Trash size={15} />
-                          </button>
-                        )}
-                      </div>
                     </td>
                   </tr>
                 ))}
@@ -327,7 +297,7 @@ export default function MechanicsPage() {
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="e.g. Mike Johnson"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -339,7 +309,7 @@ export default function MechanicsPage() {
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 placeholder="012 999 888"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -349,7 +319,7 @@ export default function MechanicsPage() {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="mechanic@workshop.com"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
@@ -361,7 +331,7 @@ export default function MechanicsPage() {
                 value={formData.specialization}
                 onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
                 placeholder="Engine Diagnostics"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -370,7 +340,7 @@ export default function MechanicsPage() {
                 type="number"
                 value={formData.experienceYears}
                 onChange={(e) => setFormData({ ...formData, experienceYears: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -379,7 +349,7 @@ export default function MechanicsPage() {
                 type="number"
                 value={formData.hourlyRate}
                 onChange={(e) => setFormData({ ...formData, hourlyRate: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-semibold"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
               />
             </div>
           </div>
@@ -387,7 +357,7 @@ export default function MechanicsPage() {
             <button
               type="button"
               onClick={() => setIsAddOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
+              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
             >
               {t('common.cancel')}
             </button>
@@ -408,7 +378,7 @@ export default function MechanicsPage() {
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -418,7 +388,7 @@ export default function MechanicsPage() {
                 type="text"
                 value={formData.specialization}
                 onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -427,7 +397,7 @@ export default function MechanicsPage() {
                 type="number"
                 value={formData.hourlyRate}
                 onChange={(e) => setFormData({ ...formData, hourlyRate: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-semibold"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
               />
             </div>
             <div>
@@ -435,7 +405,7 @@ export default function MechanicsPage() {
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent font-semibold"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
               >
                 <option value="Active">{t('status.Active')}</option>
                 <option value="On Leave">{t('status.On Leave')}</option>
@@ -447,7 +417,7 @@ export default function MechanicsPage() {
             <button
               type="button"
               onClick={() => setIsEditOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
+              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
             >
               {t('common.cancel')}
             </button>
@@ -462,8 +432,8 @@ export default function MechanicsPage() {
       <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('mechanics.title')}>
         {selectedMechanic && (
           <div className="space-y-4 text-xs">
-            <div className="flex items-center gap-3 p-3 bg-app-hover/50 rounded-xl border border-app-border">
-              <div className="w-10 h-10 rounded-xl bg-app-accent/15 flex items-center justify-center text-app-accent flex-shrink-0">
+            <div className="flex items-center gap-3 p-3 bg-app-hover/50 rounded-sm border border-app-border">
+              <div className="w-10 h-10 rounded-sm bg-app-accent/15 flex items-center justify-center text-app-accent flex-shrink-0">
                 <Wrench size={22} weight="bold" />
               </div>
               <div>
@@ -473,14 +443,35 @@ export default function MechanicsPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+              <div className="p-3 bg-app-input rounded-sm border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold">{t('mechanics.phone')}</p>
                 <p className="font-semibold text-app-text mt-0.5">{selectedMechanic.phone}</p>
               </div>
-              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+              <div className="p-3 bg-app-input rounded-sm border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold">{t('mechanics.hourlyRate')}</p>
                 <p className="font-bold text-app-accent mt-0.5">${selectedMechanic.hourlyRate}/hr</p>
               </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-4">
+              {can('mechanics', 'update') && (
+                <button
+                  onClick={() => handleOpenEdit(selectedMechanic)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-app-card hover:bg-app-hover active:scale-[0.98] border border-app-border text-app-text font-semibold rounded-sm text-xs transition-colors cursor-pointer"
+                >
+                  <PencilSimple size={14} weight="bold" />
+                  Edit
+                </button>
+              )}
+              {can('mechanics', 'delete') && (
+                <button
+                  onClick={() => handleOpenDelete(selectedMechanic)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 font-semibold rounded-sm text-xs transition-colors cursor-pointer border border-rose-500/20"
+                >
+                  <Trash size={14} weight="bold" />
+                  Delete
+                </button>
+              )}
             </div>
           </div>
         )}

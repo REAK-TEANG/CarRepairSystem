@@ -1,6 +1,7 @@
 <?php
 // api/routes/repairJobs.php
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../utils/eventBus.php';
 
 $authPayload = authenticate(); 
 
@@ -64,34 +65,44 @@ function autoStockOutForRepair($repairOrderId, $orderNumber, $serviceId, $usedPa
         }
     }
 
-    // 3. Execute
-    foreach ($partsToDeduct as $part) {
-        run(
-            "UPDATE spare_parts
-             SET stock_quantity = GREATEST(0, stock_quantity - ?), updated_at = NOW()
-             WHERE id = ?",
-            [$part['quantity'], $part['sparePartId']]
-        );
+    // 3. Execute atomically within transaction
+    return transaction(function() use ($partsToDeduct, $orderNumber, $performedBy, $repairOrderId) {
+        foreach ($partsToDeduct as $part) {
+            run(
+                "UPDATE spare_parts
+                 SET stock_quantity = GREATEST(0, stock_quantity - ?), updated_at = NOW()
+                 WHERE id = ?",
+                [$part['quantity'], $part['sparePartId']]
+            );
 
-        $notes = $part['serviceName']
-            ? "Auto Stock-Out for Service \"{$part['serviceName']}\" on Job {$orderNumber}"
-            : "Auto Stock-Out for Repair Job {$orderNumber}";
+            $notes = $part['serviceName']
+                ? "Auto Stock-Out for Service \"{$part['serviceName']}\" on Job {$orderNumber}"
+                : "Auto Stock-Out for Repair Job {$orderNumber}";
 
-        run(
-            "INSERT INTO inventory_transactions (spare_part_id, type, quantity, reference_id, reference_type, notes, performed_by)
-             VALUES (?, 'Stock Out', ?, ?, 'repair_order', ?, ?)",
-            [$part['sparePartId'], $part['quantity'], $repairOrderId, $notes, $performedBy]
-        );
+            run(
+                "INSERT INTO inventory_transactions (spare_part_id, type, quantity, reference_id, reference_type, notes, performed_by)
+                 VALUES (?, 'Stock Out', ?, ?, 'repair_order', ?, ?)",
+                [$part['sparePartId'], $part['quantity'], $repairOrderId, $notes, $performedBy]
+            );
 
-        $totalPrice = $part['unitPrice'] * $part['quantity'];
-        run(
-            "INSERT INTO repair_parts (repair_order_id, spare_part_id, quantity, unit_price, total_price)
-             VALUES (?, ?, ?, ?, ?)",
-            [$repairOrderId, $part['sparePartId'], $part['quantity'], $part['unitPrice'], $totalPrice]
-        );
-    }
-    
-    return $partsToDeduct;
+            $totalPrice = $part['unitPrice'] * $part['quantity'];
+            run(
+                "INSERT INTO repair_parts (repair_order_id, spare_part_id, quantity, unit_price, total_price)
+                 VALUES (?, ?, ?, ?, ?)",
+                [$repairOrderId, $part['sparePartId'], $part['quantity'], $part['unitPrice'], $totalPrice]
+            );
+        }
+
+        if (count($partsToDeduct) > 0) {
+            EventBus::publish('inventory', 'stock_deducted', [
+                'repairOrderId' => $repairOrderId,
+                'orderNumber' => $orderNumber,
+                'deductions' => count($partsToDeduct)
+            ]);
+        }
+
+        return $partsToDeduct;
+    });
 }
 
 
@@ -314,6 +325,14 @@ if ($method === 'GET' && !$id) {
     $customer = get('SELECT full_name FROM customers WHERE id = ?', [$inserted['customer_id']]);
     $vehicle = get('SELECT vehicle_number, brand, model FROM vehicles WHERE id = ?', [$inserted['vehicle_id']]);
 
+    EventBus::publish('repair_jobs', 'created', [
+        'id' => (int)$inserted['id'],
+        'orderNumber' => $orderNumber,
+        'status' => $inserted['status'],
+        'customer' => $customer['full_name'] ?? '',
+        'mechanicId' => $inserted['mechanic_id']
+    ]);
+
     http_response_code(201);
     echo json_encode(['data' => [
         'id' => $inserted['id'],
@@ -414,6 +433,14 @@ if ($method === 'GET' && !$id) {
 
     $qa = $updated['qa_checklist'] ? json_decode($updated['qa_checklist'], true) : new stdClass();
     $ii = $updated['intake_inspection'] ? json_decode($updated['intake_inspection'], true) : new stdClass();
+
+    EventBus::publish('repair_jobs', 'updated', [
+        'id' => (int)$updated['id'],
+        'orderNumber' => $updated['order_number'],
+        'status' => $updated['status'],
+        'mechanicId' => $updated['mechanic_id'],
+        'customer' => $customer['full_name'] ?? ''
+    ]);
 
     echo json_encode(['data' => [
         'id' => $updated['id'],

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MagnifyingGlass, Plus, PencilSimple, Trash, Eye, CheckCircle } from '@phosphor-icons/react'
+import { MagnifyingGlass, Plus, PencilSimple, Trash, CheckCircle } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useEmployees, useCreateEmployee, useUpdateEmployee, useToggleAttendance, useDeleteEmployee } from '../../hooks/useEmployees'
 import { useAuth } from '../../context/AuthContext'
@@ -69,7 +69,7 @@ export default function EmployeesPage() {
       attendanceToday: emp.attendanceToday,
       image: emp.image || '',
     })
-    setIsEditOpen(true)
+    setIsViewOpen(false); setIsEditOpen(true)
   }
 
   const handleOpenView = (emp) => {
@@ -79,7 +79,7 @@ export default function EmployeesPage() {
 
   const handleOpenDelete = (emp) => {
     setSelectedEmp(emp)
-    setIsDeleteOpen(true)
+    setIsViewOpen(false); setIsDeleteOpen(true)
   }
 
   const handleToggleAttendanceClick = (emp) => {
@@ -139,7 +139,7 @@ export default function EmployeesPage() {
         {can('employees', 'create') && (
           <button
             onClick={handleOpenAdd}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover text-app-accentText font-semibold rounded-xl text-xs transition-colors shadow-subtle"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText font-semibold rounded-sm text-xs transition-colors shadow-subtle"
           >
             <Plus size={16} weight="bold" />
             {t('employees.addEmployee')}
@@ -154,10 +154,10 @@ export default function EmployeesPage() {
             <button
               key={dept}
               onClick={() => setRoleFilter(dept)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-colors ${
+              className={`px-3 py-1.5 rounded-sm text-xs font-medium whitespace-nowrap transition-colors ${
                 roleFilter === dept
                   ? 'bg-app-accent text-app-accentText shadow-subtle'
-                  : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover hover:text-app-text'
+                  : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover active:scale-[0.98] hover:text-app-text'
               }`}
             >
               {dept === 'All' ? t('common.all') : dept}
@@ -171,7 +171,7 @@ export default function EmployeesPage() {
             <button
               key={att}
               onClick={() => setAttendanceFilter(att)}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-medium whitespace-nowrap transition-colors ${
+              className={`px-2.5 py-1 rounded-sm text-[11px] font-medium whitespace-nowrap transition-colors ${
                 attendanceFilter === att
                   ? 'bg-app-hover text-app-text border border-app-border font-semibold'
                   : 'text-app-muted hover:text-app-text'
@@ -184,7 +184,7 @@ export default function EmployeesPage() {
       </div>
 
       {/* Main Table */}
-      <div className="bg-app-card rounded-2xl border border-app-border shadow-card overflow-hidden transition-colors duration-200">
+      <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden transition-colors duration-200">
         <div className="p-4 border-b border-app-border flex items-center justify-between gap-3">
           <div className="relative flex-1 max-w-md">
             <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
@@ -193,7 +193,7 @@ export default function EmployeesPage() {
               placeholder={t('common.quickSearch')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-xl text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-sm text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
             />
           </div>
           {(searchQuery || roleFilter !== 'All' || attendanceFilter !== 'All Attendance') && (
@@ -231,28 +231,27 @@ export default function EmployeesPage() {
             <table className="w-full text-xs">
               <thead>
                 <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                  <th className="px-6 py-3 font-semibold">{t('employees.employeeId')}</th>
-                  <th className="px-6 py-3 font-semibold">{t('employees.name')}</th>
-                  <th className="px-6 py-3 hidden md:table-cell font-semibold">{t('employees.position')}</th>
-                  <th className="px-6 py-3 hidden lg:table-cell font-semibold">{t('employees.department')}</th>
-                  <th className="px-6 py-3 font-semibold">{t('employees.attendance')}</th>
-                  <th className="px-6 py-3 font-semibold text-right">{t('common.actions')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('employees.employeeId')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('employees.name')}</th>
+                  <th className="px-4 py-3 hidden md:table-cell font-semibold">{t('employees.position')}</th>
+                  <th className="px-4 py-3 hidden lg:table-cell font-semibold">{t('employees.department')}</th>
+                  <th className="px-4 py-3 font-semibold">{t('employees.attendance')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-app-border">
                 {filtered.map((emp) => (
-                  <tr key={emp.id} className="hover:bg-app-hover/60 transition-colors group">
-                    <td className="px-6 py-3.5 font-mono font-semibold text-app-accent">{emp.empCode}</td>
-                    <td className="px-6 py-3.5">
+                  <tr key={emp.id} onClick={() => handleOpenView(emp)} className="hover:bg-app-hover /60 active:scale-[0.98] transition-colors group cursor-pointer">
+                    <td className="px-4 py-3.5 font-mono font-semibold text-app-accent">{emp.empCode}</td>
+                    <td className="px-4 py-3.5">
                       <div className="flex items-center gap-3">
                         {emp.image ? (
                           <img
                             src={emp.image}
                             alt={emp.name}
-                            className="w-8 h-8 rounded-xl object-cover ring-1 ring-app-border flex-shrink-0"
+                            className="w-8 h-8 rounded-sm object-cover ring-1 ring-app-border flex-shrink-0"
                           />
                         ) : (
-                          <div className="w-8 h-8 rounded-xl bg-app-accent/15 flex items-center justify-center text-app-accent font-bold text-xs flex-shrink-0">
+                          <div className="w-8 h-8 rounded-sm bg-app-accent/15 flex items-center justify-center text-app-accent font-bold text-xs flex-shrink-0">
                             {emp.name[0]}
                           </div>
                         )}
@@ -262,12 +261,12 @@ export default function EmployeesPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-3.5 text-app-text font-medium hidden md:table-cell">{emp.roleTitle}</td>
-                    <td className="px-6 py-3.5 text-app-muted hidden lg:table-cell">{emp.department}</td>
-                    <td className="px-6 py-3.5">
+                    <td className="px-4 py-3.5 text-app-text font-medium hidden md:table-cell">{emp.roleTitle}</td>
+                    <td className="px-4 py-3.5 text-app-muted hidden lg:table-cell">{emp.department}</td>
+                    <td className="px-4 py-3.5">
                       <button
                         onClick={() => can('employees', 'update') && handleToggleAttendanceClick(emp)}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold transition-colors ${
+                        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm text-[11px] font-semibold transition-colors ${
                           emp.attendanceToday === 'Present'
                             ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
                             : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
@@ -276,35 +275,6 @@ export default function EmployeesPage() {
                         <CheckCircle size={13} weight={emp.attendanceToday === 'Present' ? 'fill' : 'regular'} />
                         {t(`status.${emp.attendanceToday}`, emp.attendanceToday)}
                       </button>
-                    </td>
-                    <td className="px-6 py-3.5 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => handleOpenView(emp)}
-                          className="p-1.5 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors"
-                          title={t('common.view')}
-                        >
-                          <Eye size={15} />
-                        </button>
-                        {can('employees', 'update') && (
-                          <button
-                            onClick={() => handleOpenEdit(emp)}
-                            className="p-1.5 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover transition-colors"
-                            title={t('common.edit')}
-                          >
-                            <PencilSimple size={15} />
-                          </button>
-                        )}
-                        {can('employees', 'delete') && (
-                          <button
-                            onClick={() => handleOpenDelete(emp)}
-                            className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors"
-                            title={t('common.delete')}
-                          >
-                            <Trash size={15} />
-                          </button>
-                        )}
-                      </div>
                     </td>
                   </tr>
                 ))}
@@ -325,7 +295,7 @@ export default function EmployeesPage() {
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="e.g. Sreysros Keo"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -337,7 +307,7 @@ export default function EmployeesPage() {
                 value={formData.roleTitle}
                 onChange={(e) => setFormData({ ...formData, roleTitle: e.target.value })}
                 placeholder="Service Advisor, Chief Cashier..."
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -345,7 +315,7 @@ export default function EmployeesPage() {
               <select
                 value={formData.department}
                 onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
                 <option value="Service">Service</option>
                 <option value="Workshop">Workshop</option>
@@ -364,7 +334,7 @@ export default function EmployeesPage() {
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 placeholder="012 345 678"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -374,7 +344,7 @@ export default function EmployeesPage() {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="staff@workshop.com"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
@@ -382,7 +352,7 @@ export default function EmployeesPage() {
             <button
               type="button"
               onClick={() => setIsAddOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
+              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
             >
               {t('common.cancel')}
             </button>
@@ -403,7 +373,7 @@ export default function EmployeesPage() {
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -413,7 +383,7 @@ export default function EmployeesPage() {
                 type="text"
                 value={formData.roleTitle}
                 onChange={(e) => setFormData({ ...formData, roleTitle: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -421,7 +391,7 @@ export default function EmployeesPage() {
               <select
                 value={formData.department}
                 onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-xl text-app-text focus:outline-none focus:border-app-accent"
+                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               >
                 <option value="Service">Service</option>
                 <option value="Workshop">Workshop</option>
@@ -435,7 +405,7 @@ export default function EmployeesPage() {
             <button
               type="button"
               onClick={() => setIsEditOpen(false)}
-              className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
+              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
             >
               {t('common.cancel')}
             </button>
@@ -450,8 +420,8 @@ export default function EmployeesPage() {
       <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('employees.title')}>
         {selectedEmp && (
           <div className="space-y-4 text-xs">
-            <div className="flex items-center gap-3 p-3 bg-app-hover/50 rounded-xl border border-app-border">
-              <div className="w-10 h-10 rounded-xl bg-app-accent/15 flex items-center justify-center text-app-accent font-bold text-xs flex-shrink-0">
+            <div className="flex items-center gap-3 p-3 bg-app-hover/50 rounded-sm border border-app-border">
+              <div className="w-10 h-10 rounded-sm bg-app-accent/15 flex items-center justify-center text-app-accent font-bold text-xs flex-shrink-0">
                 {selectedEmp.name[0]}
               </div>
               <div>
@@ -461,14 +431,35 @@ export default function EmployeesPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+              <div className="p-3 bg-app-input rounded-sm border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold">{t('common.phone')}</p>
                 <p className="font-semibold text-app-text mt-0.5">{selectedEmp.phone}</p>
               </div>
-              <div className="p-3 bg-app-input rounded-xl border border-app-border">
+              <div className="p-3 bg-app-input rounded-sm border border-app-border">
                 <p className="text-[10px] text-app-muted uppercase font-semibold">{t('common.email')}</p>
                 <p className="font-semibold text-app-text mt-0.5">{selectedEmp.email || '—'}</p>
               </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-4">
+              {can('employees', 'update') && (
+                <button
+                  onClick={() => handleOpenEdit(selectedEmp)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-app-card hover:bg-app-hover active:scale-[0.98] border border-app-border text-app-text font-semibold rounded-sm text-xs transition-colors cursor-pointer"
+                >
+                  <PencilSimple size={14} weight="bold" />
+                  Edit
+                </button>
+              )}
+              {can('employees', 'delete') && (
+                <button
+                  onClick={() => handleOpenDelete(selectedEmp)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 font-semibold rounded-sm text-xs transition-colors cursor-pointer border border-rose-500/20"
+                >
+                  <Trash size={14} weight="bold" />
+                  Delete
+                </button>
+              )}
             </div>
           </div>
         )}

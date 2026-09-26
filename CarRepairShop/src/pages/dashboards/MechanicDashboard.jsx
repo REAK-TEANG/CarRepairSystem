@@ -5,6 +5,7 @@ import { useRepairJobs } from '../../hooks/useRepairJobs'
 import { useMechanics } from '../../hooks/useMechanics'
 import { useAuth } from '../../context/AuthContext'
 import RepairPipelineTracker from '../../components/workshop/RepairPipelineTracker'
+import { StaggerGroup } from '../../components/animation/AnimeWrapper'
 
 export default function MechanicDashboard() {
   const { t } = useTranslation()
@@ -27,7 +28,7 @@ export default function MechanicDashboard() {
   const completedJobs = jobs.filter((j) => j.status === 'Completed' || j.status === 'Ready for Pickup')
 
   return (
-    <div className="space-y-4 sm:space-y-6 font-sans text-app-text animate-fade-in">
+    <div className="space-y-4 sm:space-y-6 font-sans text-app-text">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
@@ -40,13 +41,13 @@ export default function MechanicDashboard() {
 
         {/* Admin / Manager Technician Filter */}
         {!isMechanicUser && (
-          <div className="flex items-center gap-2 bg-app-card border border-app-border p-1.5 rounded-xl shadow-subtle text-xs self-start sm:self-auto">
+          <div className="flex items-center gap-2 bg-app-card border border-app-border p-1.5 rounded-sm shadow-subtle text-xs self-start sm:self-auto">
             <User size={15} className="text-app-accent ml-1" />
             <span className="text-app-muted font-medium">{t('repairJobs.technician')}:</span>
             <select
               value={selectedMechanicId}
               onChange={(e) => setSelectedMechanicId(e.target.value)}
-              className="bg-app-input border border-app-border rounded-lg px-2.5 py-1 text-xs text-app-text focus:outline-none focus:border-app-accent font-medium"
+              className="bg-app-input border border-app-border rounded-sm px-2.5 py-1 text-xs text-app-text focus:outline-none focus:border-app-accent font-medium"
             >
               <option value="all">
                 {t('common.all')} ({jobs.length} {t('nav.repairJobs')})
@@ -62,12 +63,12 @@ export default function MechanicDashboard() {
       </div>
 
       {/* BENTO GRID: 3-Tile Work Status Cards for Mobile & Desktop */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+      <StaggerGroup staggerDelay={75} duration={600} className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
         {/* Bento Metric 1: In Progress */}
-        <div className="col-span-1 bg-app-card rounded-2xl p-4 border border-app-border shadow-card flex flex-col justify-between">
+        <div className="col-span-1 bg-app-card rounded-sm p-4 border border-app-border shadow-card flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-            <div className="w-8 h-8 bg-app-accent/15 text-app-accent rounded-xl flex items-center justify-center">
+            <span className="w-2 h-2 rounded-full bg-blue-500" />
+            <div className="w-8 h-8 bg-app-accent/15 text-app-accent rounded-sm flex items-center justify-center">
               <Wrench size={18} weight="bold" />
             </div>
           </div>
@@ -80,10 +81,10 @@ export default function MechanicDashboard() {
         </div>
 
         {/* Bento Metric 2: Waiting Parts */}
-        <div className="col-span-1 bg-app-card rounded-2xl p-4 border border-app-border shadow-card flex flex-col justify-between">
+        <div className="col-span-1 bg-app-card rounded-sm p-4 border border-app-border shadow-card flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="w-2 h-2 rounded-full bg-amber-500" />
-            <div className="w-8 h-8 bg-amber-500/15 text-amber-500 rounded-xl flex items-center justify-center">
+            <div className="w-8 h-8 bg-amber-500/15 text-amber-500 rounded-sm flex items-center justify-center">
               <WarningCircle size={18} weight="bold" />
             </div>
           </div>
@@ -96,10 +97,10 @@ export default function MechanicDashboard() {
         </div>
 
         {/* Bento Metric 3: Ready / Completed (Spans 2 on small mobile, 1 on tablet+) */}
-        <div className="col-span-2 sm:col-span-1 bg-app-card rounded-2xl p-4 border border-app-border shadow-card flex flex-col justify-between">
+        <div className="col-span-2 sm:col-span-1 bg-app-card rounded-sm p-4 border border-app-border shadow-card flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <div className="w-8 h-8 bg-emerald-500/15 text-emerald-500 rounded-xl flex items-center justify-center">
+            <div className="w-8 h-8 bg-emerald-500/15 text-emerald-500 rounded-sm flex items-center justify-center">
               <CheckCircle size={18} weight="bold" />
             </div>
           </div>
@@ -110,7 +111,7 @@ export default function MechanicDashboard() {
             </p>
           </div>
         </div>
-      </div>
+      </StaggerGroup>
 
       {/* Active Work Queue & Repair Pipeline */}
       <RepairPipelineTracker mechanicFilter={effectiveMechanicId} />

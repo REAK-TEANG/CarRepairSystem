@@ -8,6 +8,14 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 if ($path === '/reports' || $path === '/reports/') {
     if ($method === 'GET') {
+        $cacheKey = 'reports_summary';
+        $cachedData = Cache::get($cacheKey);
+        
+        if ($cachedData) {
+            echo json_encode(['data' => $cachedData, 'cached' => true]);
+            exit;
+        }
+
         $custCount = get('SELECT COUNT(*) AS cnt FROM customers');
         $vehCount = get('SELECT COUNT(*) AS cnt FROM vehicles');
         $jobCount = get('SELECT COUNT(*) AS cnt FROM repair_orders');
@@ -19,15 +27,9 @@ if ($path === '/reports' || $path === '/reports/') {
         $currentYear = date('Y');
         $currentMonthName = date('F Y');
 
-        $reportsList = [
-            ['id' => 1, 'title' => 'Monthly Revenue & Profit Breakdown', 'category' => 'Financial', 'date' => $currentMonthName, 'format' => 'PDF / Excel'],
-            ['id' => 2, 'title' => 'Mechanic Workload & Efficiency Report', 'category' => 'Operations', 'date' => $currentMonthName, 'format' => 'PDF'],
-            ['id' => 3, 'title' => 'Spare Parts Inventory Valuation & Stock Turnover', 'category' => 'Inventory', 'date' => "Q3 $currentYear", 'format' => 'Excel'],
-            ['id' => 4, 'title' => 'Customer Retention & Lifetime Value Analysis', 'category' => 'Marketing', 'date' => "$currentYear YTD", 'format' => 'PDF'],
-            ['id' => 5, 'title' => 'Vehicle Service History & Warranty Summary', 'category' => 'Service', 'date' => 'Past 12 Months', 'format' => 'PDF / Excel']
-        ];
+        $reportsList = [];
 
-        echo json_encode(['data' => [
+        $responseData = [
             'reports' => $reportsList,
             'metrics' => [
                 'totalCustomers' => (int)($custCount['cnt'] ?? 0),
@@ -40,11 +42,23 @@ if ($path === '/reports' || $path === '/reports/') {
                 'totalStockUnits' => (int)($partStats['total_units'] ?? 0),
                 'totalEmployees' => (int)($empStats['total_staff'] ?? 0)
             ]
-        ]]);
+        ];
+
+        Cache::set($cacheKey, $responseData, 300); // cache for 5 minutes
+
+        echo json_encode(['data' => $responseData]);
         exit;
     }
 } else if ($path === '/reports/dashboard-metrics' || $path === '/dashboard-metrics') {
     if ($method === 'GET') {
+        $cacheKey = 'dashboard_metrics';
+        $cachedData = Cache::get($cacheKey);
+        
+        if ($cachedData) {
+            echo json_encode(['data' => $cachedData, 'cached' => true]);
+            exit;
+        }
+
         $invStats = get('SELECT COALESCE(SUM(total_amount), 0) AS total_invoiced, COALESCE(SUM(amount_paid), 0) AS total_collected FROM invoices');
         $jobStats = get("SELECT COUNT(*) AS total_jobs, COUNT(*) FILTER (WHERE status = 'Completed') AS completed_jobs FROM repair_orders");
         $custStats = get('SELECT COUNT(*) AS total_customers FROM customers');
@@ -57,27 +71,33 @@ if ($path === '/reports' || $path === '/reports/') {
 
         $completedRate = $totalJobs > 0 ? round(($completedJobs / $totalJobs) * 100) . '%' : '100%';
 
-        echo json_encode(['data' => [
+        $responseData = [
             'netRevenue' => '$' . number_format($totalRev, 2, '.', ','),
             'totalCollected' => '$' . number_format($totalColl, 2, '.', ','),
             'activeOrders' => $totalJobs - $completedJobs,
             'totalCustomers' => $totalCust,
             'completedRate' => $completedRate
-        ]]);
+        ];
+
+        Cache::set($cacheKey, $responseData, 120); // cache for 2 minutes
+
+        echo json_encode(['data' => $responseData]);
         exit;
     }
 } else if (preg_match('#^/reports/revenue#', $path)) {
     if ($method === 'GET') {
         $period = $_GET['period'] ?? 'monthly';
-        // Basic implementation for revenue chart
-        echo json_encode(['data' => [
-            ['month' => 'Jan', 'revenue' => 12000],
-            ['month' => 'Feb', 'revenue' => 15000],
-            ['month' => 'Mar', 'revenue' => 14000],
-            ['month' => 'Apr', 'revenue' => 18000],
-            ['month' => 'May', 'revenue' => 22000],
-            ['month' => 'Jun', 'revenue' => 25000]
-        ]]);
+        // Proper DB query for revenue by month (for PostgreSQL)
+        $revenueData = getAll("
+            SELECT TO_CHAR(created_at, 'Mon') as month, 
+                   COALESCE(SUM(total_amount), 0) as revenue 
+            FROM invoices 
+            WHERE created_at >= NOW() - INTERVAL '6 months'
+            GROUP BY TO_CHAR(created_at, 'Mon'), DATE_TRUNC('month', created_at)
+            ORDER BY DATE_TRUNC('month', created_at) ASC
+        ");
+        
+        echo json_encode(['data' => $revenueData ?: []]);
         exit;
     }
 }
