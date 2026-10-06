@@ -101,3 +101,11 @@ function transaction(callable $callback) {
         throw $e;
     }
 }
+
+class Database {
+    public static function query($sql, $params = []) { return query($sql, $params); }
+    public static function get($sql, $params = []) { return get($sql, $params); }
+    public static function all($sql, $params = []) { return all($sql, $params); }
+    public static function run($sql, $params = []) { return run($sql, $params); }
+    public static function transaction(callable $callback) { return transaction($callback); }
+}

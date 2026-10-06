@@ -61,7 +61,11 @@ html.dark {
   }
 
   html, body, #root, button, input, select, textarea, p, span, h1, h2, h3, h4, h5, h6, table, tr, th, td, a, label {
-    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+    font-family: "Inter", "Kantumruy Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  }
+
+  html[lang="km"], html[lang="km"] body, html[lang="km"] #root, html[lang="km"] button, html[lang="km"] input, html[lang="km"] select, html[lang="km"] textarea, html[lang="km"] p, html[lang="km"] span, html[lang="km"] h1, html[lang="km"] h2, html[lang="km"] h3, html[lang="km"] h4, html[lang="km"] h5, html[lang="km"] h6, html[lang="km"] table, html[lang="km"] tr, html[lang="km"] th, html[lang="km"] td, html[lang="km"] a, html[lang="km"] label {
+    font-family: "Kantumruy Pro", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
   }
 
   html {
