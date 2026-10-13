@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { MagnifyingGlass, Plus, PencilSimple, Trash, CheckCircle, XCircle, Package } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useServicesCatalog, useCreateService, useUpdateService, useDeleteService } from '../../hooks/useServicesCatalog'
 import { useInventory } from '../../hooks/useInventory'
 import { useDebounce } from '../../hooks/useDebounce'
 import { useAuth } from '../../context/AuthContext'
-import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, Input, SearchableSelect } from '../../components/ui'
+import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, SearchableSelect } from '../../components/ui'
 
 const statusOptions = ['All Status', 'Active Only', 'Inactive Only']
 
@@ -18,9 +18,6 @@ export default function ServicesPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [statusFilter, setStatusFilter] = useState('All Status')
 
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [debouncedSearch, statusFilter])
 
   const { data: servicesResponse, isLoading } = useServicesCatalog({
     search: debouncedSearch,
@@ -196,7 +193,10 @@ export default function ServicesPage() {
           {statusOptions.map((st) => (
             <button
               key={st}
-              onClick={() => setStatusFilter(st)}
+              onClick={() => {
+                setStatusFilter(st)
+                setCurrentPage(1)
+              }}
               className={`px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                 statusFilter === st
                   ? 'bg-app-accent text-app-accentText font-semibold'
@@ -214,7 +214,10 @@ export default function ServicesPage() {
             type="text"
             placeholder={t('common.quickSearch')}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value)
+              setCurrentPage(1)
+            }}
             className="w-full pl-8 pr-3 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
           />
         </div>
@@ -234,6 +237,7 @@ export default function ServicesPage() {
                 ? () => {
                     setSearchQuery('')
                     setStatusFilter('All Status')
+                    setCurrentPage(1)
                   }
                 : undefined
             }

@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { MagnifyingGlass, Plus, PencilSimple, Trash, Buildings, Star } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from '../../hooks/useSuppliers'
 import { useDebounce } from '../../hooks/useDebounce'
 import { useAuth } from '../../context/AuthContext'
-import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, Input } from '../../components/ui'
+import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button } from '../../components/ui'
 
 export default function SuppliersPage() {
   const { t } = useTranslation()
@@ -14,9 +14,6 @@ export default function SuppliersPage() {
   const debouncedSearch = useDebounce(searchQuery, 300)
   const [currentPage, setCurrentPage] = useState(1)
 
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [debouncedSearch])
 
   const { data: suppliersResponse, isLoading } = useSuppliers({
     search: debouncedSearch,
@@ -123,7 +120,10 @@ export default function SuppliersPage() {
               type="text"
               placeholder={t('common.quickSearch')}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value)
+                setCurrentPage(1)
+              }}
               className="w-full pl-8 pr-3 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
             />
           </div>
@@ -150,7 +150,14 @@ export default function SuppliersPage() {
             title={t('common.noRecords')}
             description={t('common.noData')}
             actionText={searchQuery ? t('common.filter') : undefined}
-            onAction={searchQuery ? () => setSearchQuery('') : undefined}
+            onAction={
+              searchQuery
+                ? () => {
+                    setSearchQuery('')
+                    setCurrentPage(1)
+                  }
+                : undefined
+            }
           />
         </div>
       ) : (

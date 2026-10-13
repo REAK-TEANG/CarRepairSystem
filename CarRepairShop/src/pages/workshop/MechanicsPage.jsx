@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { MagnifyingGlass, Plus, PencilSimple, Trash, Wrench, Car, UsersThree } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useMechanics, useCreateMechanic, useUpdateMechanic, useDeleteMechanic } from '../../hooks/useMechanics'
 import { useDebounce } from '../../hooks/useDebounce'
 import { useAuth } from '../../context/AuthContext'
-import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, Input, SearchableSelect } from '../../components/ui'
+import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, SearchableSelect } from '../../components/ui'
 import RepairPipelineTracker from '../../components/workshop/RepairPipelineTracker'
 
 const statusFilters = ['All', 'Active', 'On Leave', 'Terminated']
@@ -19,9 +19,6 @@ export default function MechanicsPage() {
   const [activeFilter, setActiveFilter] = useState('All')
   const [currentPage, setCurrentPage] = useState(1)
 
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [debouncedSearch, activeFilter])
 
   const { data: mechanicsResponse, isLoading } = useMechanics({
     search: debouncedSearch,
@@ -176,7 +173,10 @@ export default function MechanicsPage() {
                 return (
                   <button
                     key={st}
-                    onClick={() => setActiveFilter(st)}
+                    onClick={() => {
+                      setActiveFilter(st)
+                      setCurrentPage(1)
+                    }}
                     className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                       isActive
                         ? 'bg-app-accent text-app-accentText font-semibold'
@@ -196,7 +196,10 @@ export default function MechanicsPage() {
                 type="text"
                 placeholder={t('common.quickSearch')}
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  setCurrentPage(1)
+                }}
                 className="w-full pl-8 pr-3 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
               />
             </div>
@@ -216,6 +219,7 @@ export default function MechanicsPage() {
                     ? () => {
                         setSearchQuery('')
                         setActiveFilter('All')
+                        setCurrentPage(1)
                       }
                     : undefined
                 }

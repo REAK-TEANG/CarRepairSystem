@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { MagnifyingGlass, Plus, PencilSimple, Trash, ArrowUp, ArrowDown, Package, ClockCounterClockwise } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useInventory, useInventoryTransactions, useCreatePart, useUpdatePart, useAdjustStock, useDeletePart } from '../../hooks/useInventory'
@@ -7,7 +7,6 @@ import { useDebounce } from '../../hooks/useDebounce'
 import { useAuth } from '../../context/AuthContext'
 import { Modal, StatusBadge, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Button, Input, ImageUpload, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, SearchableSelect } from '../../components/ui'
 
-const stockStatusOptions = ['All Stock', 'In Stock', 'Low Stock', 'Out of Stock']
 
 export default function InventoryPage() {
   const { t } = useTranslation()
@@ -20,9 +19,6 @@ export default function InventoryPage() {
   const [stockFilter, setStockFilter] = useState('All Stock')
   const [page, setPage] = useState(1)
 
-  useEffect(() => {
-    setPage(1)
-  }, [debouncedSearch, categoryFilter])
 
   const { data: response, isLoading } = useInventory({
     page,
@@ -228,7 +224,10 @@ export default function InventoryPage() {
               {categories.slice(0, 6).map((cat) => (
                 <button
                   key={cat}
-                  onClick={() => setCategoryFilter(cat)}
+                  onClick={() => {
+                    setCategoryFilter(cat)
+                    setPage(1)
+                  }}
                   className={`px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                     categoryFilter === cat
                       ? 'bg-app-accent text-app-accentText font-semibold'
@@ -246,7 +245,10 @@ export default function InventoryPage() {
                 type="text"
                 placeholder={t('common.quickSearch')}
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  setPage(1)
+                }}
                 className="w-full pl-8 pr-3 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
               />
             </div>
@@ -267,6 +269,7 @@ export default function InventoryPage() {
                     setSearchQuery('')
                     setCategoryFilter('All')
                     setStockFilter('All Stock')
+                    setPage(1)
                   }
                 : undefined
             }

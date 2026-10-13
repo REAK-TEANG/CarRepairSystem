@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   MagnifyingGlass,
   Plus,
@@ -249,7 +249,10 @@ export default function RepairJobsPage() {
           {statusFilters.map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveFilter(tab)}
+              onClick={() => {
+                setActiveFilter(tab)
+                setPage(1)
+              }}
               className={`px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                 activeFilter === tab
                   ? 'bg-app-accent text-app-accentText font-semibold'
@@ -267,7 +270,10 @@ export default function RepairJobsPage() {
             type="text"
             placeholder={t('common.quickSearch')}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value)
+              setPage(1)
+            }}
             className="w-full pl-8 pr-3 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
           />
         </div>
@@ -287,6 +293,7 @@ export default function RepairJobsPage() {
                 ? () => {
                     setSearchQuery('')
                     setActiveFilter('All')
+                    setPage(1)
                   }
                 : undefined
             }
@@ -405,7 +412,7 @@ export default function RepairJobsPage() {
         <form onSubmit={handleCreate} className="space-y-4 text-xs">
           {/* Service Package Quick Selector */}
           <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-sm space-y-2">
-            <label className="block text-emerald-800 dark:text-emerald-300 font-semibold flex items-center gap-1.5">
+            <label className="text-emerald-800 dark:text-emerald-300 font-semibold flex items-center gap-1.5">
               <Sparkle size={15} weight="fill" className="text-emerald-500" />
               Select Service Package (Auto-configures cost & parts stock-out)
             </label>
@@ -519,7 +526,7 @@ export default function RepairJobsPage() {
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-app-muted font-medium mb-1 flex items-center gap-1">
+                <label className="text-app-muted font-medium mb-1 flex items-center gap-1">
                   <Gauge size={12} /> Odometer (km)
                 </label>
                 <input
@@ -531,7 +538,7 @@ export default function RepairJobsPage() {
                 />
               </div>
               <div>
-                <label className="block text-app-muted font-medium mb-1 flex items-center gap-1">
+                <label className="text-app-muted font-medium mb-1 flex items-center gap-1">
                   <GasPump size={12} /> Fuel Level
                 </label>
                 <SearchableSelect

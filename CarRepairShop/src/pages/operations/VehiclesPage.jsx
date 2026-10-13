@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   MagnifyingGlass,
   Plus,
@@ -31,7 +31,7 @@ import { useServicesCatalog } from '../../hooks/useServicesCatalog'
 import { useDebounce } from '../../hooks/useDebounce'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
-import { Modal, ImageUpload, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Button, Input, StatusBadge, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, SearchableSelect } from '../../components/ui'
+import { Modal, ImageUpload, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Button, StatusBadge, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, SearchableSelect } from '../../components/ui'
 
 const fuelOptions = ['All', 'Petrol', 'Diesel', 'Hybrid', 'Electric']
 
@@ -45,9 +45,6 @@ export default function VehiclesPage() {
   const [fuelFilter, setFuelFilter] = useState('All')
   const [page, setPage] = useState(1)
 
-  useEffect(() => {
-    setPage(1)
-  }, [debouncedSearch, fuelFilter])
 
   const { data: response, isLoading } = useVehicles({ page, limit: 10, search: debouncedSearch })
   const vehicles = Array.isArray(response) ? response : (response?.data || [])
@@ -349,7 +346,10 @@ export default function VehiclesPage() {
             return (
               <button
                 key={f}
-                onClick={() => setFuelFilter(f)}
+                onClick={() => {
+                  setFuelFilter(f)
+                  setPage(1)
+                }}
                 className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                   isActive
                     ? 'bg-app-accent text-app-accentText font-semibold'
@@ -369,7 +369,10 @@ export default function VehiclesPage() {
             type="text"
             placeholder={t('common.quickSearch')}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value)
+              setPage(1)
+            }}
             className="w-full pl-8 pr-3 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
           />
         </div>
@@ -389,6 +392,7 @@ export default function VehiclesPage() {
                 ? () => {
                     setSearchQuery('')
                     setFuelFilter('All')
+                    setPage(1)
                   }
                 : undefined
             }
