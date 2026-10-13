@@ -2,12 +2,33 @@
 // api/controllers/VehicleController.php
 
 require_once __DIR__ . '/../models/VehicleModel.php';
+require_once __DIR__ . '/../utils/pagination.php';
 
 class VehicleController
 {
     public function index(): void
     {
-        echo json_encode(['data' => VehicleModel::getAll()]);
+        $search = $_GET['search'] ?? '';
+        $params = Pagination::getParams(10);
+
+        if ($params['isAll']) {
+            echo json_encode(['data' => VehicleModel::getAll()]);
+            return;
+        }
+
+        $result = VehicleModel::getPaginated($search, $params['page'], $params['limit']);
+        echo json_encode(Pagination::formatResponse($result['data'], $result['total'], $params['page'], $params['limit']));
+    }
+
+    public function show(int $id): void
+    {
+        $vehicle = VehicleModel::findById($id);
+        if (!$vehicle) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Vehicle not found']);
+            return;
+        }
+        echo json_encode(['data' => $vehicle]);
     }
 
     public function store(): void

@@ -1,8 +1,8 @@
 import { apiClient } from '@/services/apiClient'
 
 export const employeeService = {
-  async getAll() {
-    return apiClient.get('/employees')
+  async getAll(params = {}) {
+    return apiClient.get('/employees', { params })
   },
 
   async getById(id) {

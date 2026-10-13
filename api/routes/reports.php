@@ -88,7 +88,7 @@ if ($path === '/reports' || $path === '/reports/') {
     if ($method === 'GET') {
         $period = $_GET['period'] ?? 'monthly';
         // Proper DB query for revenue by month (for PostgreSQL)
-        $revenueData = getAll("
+        $revenueData = all("
             SELECT TO_CHAR(created_at, 'Mon') as month, 
                    COALESCE(SUM(total_amount), 0) as revenue 
             FROM invoices 

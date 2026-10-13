@@ -27,7 +27,7 @@ import { useMechanics } from '../../hooks/useMechanics'
 import { useInventory } from '../../hooks/useInventory'
 import { useCreateInvoice } from '../../hooks/useInvoices'
 import { useToast } from '../../context/ToastContext'
-import { StatusBadge, Modal, LoadingButton } from '../ui'
+import { StatusBadge, Modal, LoadingButton, SearchableSelect } from '../ui'
 
 const PIPELINE_STEPS = [
   {
@@ -88,10 +88,14 @@ const PIPELINE_STEPS = [
 
 export default function RepairPipelineTracker({ mechanicFilter = null }) {
   const { addToast } = useToast()
-  const params = mechanicFilter ? { mechanicId: mechanicFilter } : {}
-  const { data: jobs = [] } = useRepairJobs(params)
-  const { data: mechanics = [] } = useMechanics()
-  const { data: inventory = [] } = useInventory()
+  const params = mechanicFilter ? { mechanicId: mechanicFilter, all: true } : { all: true }
+  const { data: rawJobs = [] } = useRepairJobs(params)
+  const { data: rawMechanics = [] } = useMechanics({ all: true })
+  const { data: rawInventory = [] } = useInventory({ all: true })
+
+  const jobs = Array.isArray(rawJobs) ? rawJobs : (rawJobs?.data || [])
+  const mechanics = Array.isArray(rawMechanics) ? rawMechanics : (rawMechanics?.data || [])
+  const inventory = Array.isArray(rawInventory) ? rawInventory : (rawInventory?.data || [])
 
   const updateJobMutation = useUpdateRepairJob()
   const createInvoiceMutation = useCreateInvoice()
@@ -288,20 +292,21 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
 
             {/* Mechanic Filter */}
             {!mechanicFilter && (
-              <div className="flex items-center gap-1.5 bg-app-input border border-app-border rounded-sm px-2.5 py-1.5 text-xs">
-                <User size={14} className="text-app-muted flex-shrink-0" />
-                <select
+              <div className="w-56">
+                <SearchableSelect
                   value={selectedMechanic}
-                  onChange={(e) => setSelectedMechanic(e.target.value)}
-                  className="bg-transparent border-none text-xs text-app-text focus:outline-none font-medium pr-1 cursor-pointer"
-                >
-                  <option value="all">All Mechanics ({mechanics.length})</option>
-                  {mechanics.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setSelectedMechanic(val)}
+                  options={[
+                    { value: 'all', label: `All Mechanics (${mechanics.length})` },
+                    ...mechanics.map((m) => ({
+                      value: m.id,
+                      label: m.name,
+                      sublabel: m.specialization ? `Spec: ${m.specialization}` : undefined,
+                    })),
+                  ]}
+                  placeholder="Filter mechanic..."
+                  searchPlaceholder="Search mechanic..."
+                />
               </div>
             )}
 
@@ -828,19 +833,17 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
 
             <div>
               <label className="block text-app-muted font-medium mb-1">Select Spare Part *</label>
-              <select
-                required
+              <SearchableSelect
                 value={partSelection.sparePartId}
-                onChange={(e) => setPartSelection({ ...partSelection, sparePartId: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text font-medium focus:outline-none focus:border-app-accent"
-              >
-                <option value="">-- Choose Spare Part --</option>
-                {inventory.map((p) => (
-                  <option key={p.id} value={p.id} disabled={p.stockQty === 0}>
-                    {p.partCode} - {p.name} (${Number(p.unitPrice).toFixed(2)}) — {p.stockQty} in stock
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setPartSelection({ ...partSelection, sparePartId: val })}
+                options={inventory.map((p) => ({
+                  value: p.id,
+                  label: `${p.partCode} - ${p.name} ($${Number(p.unitPrice).toFixed(2)})`,
+                  sublabel: `${p.stockQty} in stock`,
+                }))}
+                placeholder="-- Choose Spare Part --"
+                searchPlaceholder="Search spare part by code or name..."
+              />
             </div>
 
             <div>

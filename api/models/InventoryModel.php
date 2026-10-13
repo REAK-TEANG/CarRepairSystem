@@ -15,6 +15,52 @@ class InventoryModel
         return array_map([self::class, 'format'], $rows);
     }
 
+    public static function getPaginated(string $search = '', int $page = 1, int $limit = 10, ?string $category = null): array
+    {
+        $countSql = "
+          SELECT COUNT(*) AS cnt
+          FROM spare_parts sp
+          LEFT JOIN suppliers s ON sp.supplier_id = s.id
+          WHERE 1=1
+        ";
+        $countParams = [];
+        if ($search) {
+            $countSql .= " AND (sp.part_code ILIKE ? OR sp.name ILIKE ? OR sp.brand ILIKE ? OR sp.category ILIKE ? OR s.name ILIKE ?)";
+            $countParams = array_merge($countParams, ["%$search%", "%$search%", "%$search%", "%$search%", "%$search%"]);
+        }
+        if ($category && $category !== 'All') {
+            $countSql .= " AND sp.category = ?";
+            $countParams[] = $category;
+        }
+
+        $countRow = Database::get($countSql, $countParams);
+        $total = (int) ($countRow['cnt'] ?? 0);
+
+        $offset = max(0, ($page - 1) * $limit);
+        $sql = "
+          SELECT sp.*, s.name AS supplier_name
+          FROM spare_parts sp
+          LEFT JOIN suppliers s ON sp.supplier_id = s.id
+          WHERE 1=1
+        ";
+        $params = [];
+        if ($search) {
+            $sql .= " AND (sp.part_code ILIKE ? OR sp.name ILIKE ? OR sp.brand ILIKE ? OR sp.category ILIKE ? OR s.name ILIKE ?)";
+            $params = array_merge($params, ["%$search%", "%$search%", "%$search%", "%$search%", "%$search%"]);
+        }
+        if ($category && $category !== 'All') {
+            $sql .= " AND sp.category = ?";
+            $params[] = $category;
+        }
+        $sql .= " ORDER BY sp.id DESC LIMIT $limit OFFSET $offset";
+
+        $rows = Database::all($sql, $params);
+        return [
+            'data' => array_map([self::class, 'format'], $rows),
+            'total' => $total,
+        ];
+    }
+
     public static function getTransactions(): array
     {
         $rows = Database::all("

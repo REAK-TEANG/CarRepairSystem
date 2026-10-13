@@ -2,8 +2,7 @@ import { apiClient } from '@/services/apiClient'
 
 export const appointmentService = {
   async getAll(params = {}) {
-    const queryStr = params?.date ? `?date=${encodeURIComponent(params.date)}` : ''
-    return apiClient.get(`/appointments${queryStr}`)
+    return apiClient.get('/appointments', { params })
   },
 
   async getById(id) {

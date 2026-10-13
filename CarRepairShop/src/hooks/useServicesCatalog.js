@@ -4,11 +4,12 @@ import { useToast } from '@/context/ToastContext'
 
 const QUERY_KEY = ['services_catalog']
 
-export function useServicesCatalog(options = {}) {
+export function useServicesCatalog(params = {}, options = {}) {
   return useQuery({
-    queryKey: QUERY_KEY,
-    queryFn: () => serviceCatalogService.getAll(),
-    staleTime: 1000 * 60 * 5,
+    queryKey: ['services_catalog', params],
+    queryFn: () => serviceCatalogService.getAll(params),
+    placeholderData: (previousData) => previousData,
+    staleTime: 1000 * 60 * 2,
     ...options,
   })
 }

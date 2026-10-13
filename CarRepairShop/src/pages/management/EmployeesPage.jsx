@@ -1,25 +1,39 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MagnifyingGlass, Plus, PencilSimple, Trash, CheckCircle } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useEmployees, useCreateEmployee, useUpdateEmployee, useToggleAttendance, useDeleteEmployee } from '../../hooks/useEmployees'
+import { useDebounce } from '../../hooks/useDebounce'
 import { useAuth } from '../../context/AuthContext'
-import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton } from '../../components/ui'
-
-const attendanceFilters = ['All Attendance', 'Present', 'On Leave']
+import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, SearchableSelect } from '../../components/ui'
 
 export default function EmployeesPage() {
   const { t } = useTranslation()
   const { can } = useAuth()
-  const { data: employees = [], isLoading } = useEmployees()
+
+  const [searchQuery, setSearchQuery] = useState('')
+  const debouncedSearch = useDebounce(searchQuery, 300)
+  const [currentPage, setCurrentPage] = useState(1)
+
+  const { data: employeesResponse, isLoading } = useEmployees({
+    search: debouncedSearch,
+    page: currentPage,
+    limit: 10,
+  })
+
+  const employees = employeesResponse?.data || (Array.isArray(employeesResponse) ? employeesResponse : [])
+  const pagination = employeesResponse?.pagination || {
+    page: currentPage,
+    limit: 10,
+    total: employees.length,
+    totalPages: Math.ceil(employees.length / 10) || 1,
+    hasNextPage: false,
+    hasPrevPage: false,
+  }
 
   const createEmpMutation = useCreateEmployee()
   const updateEmpMutation = useUpdateEmployee()
   const toggleAttendanceMutation = useToggleAttendance()
   const deleteEmpMutation = useDeleteEmployee()
-
-  const [searchQuery, setSearchQuery] = useState('')
-  const [roleFilter, setRoleFilter] = useState('All')
-  const [attendanceFilter, setAttendanceFilter] = useState('All Attendance')
 
   // Modals
   const [isAddOpen, setIsAddOpen] = useState(false)
@@ -44,7 +58,7 @@ export default function EmployeesPage() {
   const handleOpenAdd = () => {
     setFormData({
       name: '',
-      empCode: `EMP-2026-${String(employees.length + 1).padStart(3, '0')}`,
+      empCode: `EMP-2026-${String(pagination.total + 1).padStart(3, '0')}`,
       roleTitle: 'Service Advisor',
       department: 'Service',
       phone: '',
@@ -106,183 +120,126 @@ export default function EmployeesPage() {
     setIsDeleteOpen(false)
   }
 
-  const departments = ['All', ...new Set(employees.map((e) => e.department).filter(Boolean))]
-
-  const query = searchQuery.trim().toLowerCase()
-  const empList = Array.isArray(employees) ? employees : []
-  const filtered = empList.filter((emp) => {
-    const matchesSearch =
-      !query ||
-      (emp?.name || '').toLowerCase().includes(query) ||
-      (emp?.empCode || '').toLowerCase().includes(query) ||
-      (emp?.roleTitle || '').toLowerCase().includes(query) ||
-      (emp?.phone || '').toLowerCase().includes(query) ||
-      (emp?.email || '').toLowerCase().includes(query)
-
-    const matchesDept = roleFilter === 'All' || emp.department === roleFilter
-
-    let matchesAtt = true
-    if (attendanceFilter === 'Present') matchesAtt = emp.attendanceToday === 'Present'
-    if (attendanceFilter === 'On Leave') matchesAtt = emp.attendanceToday === 'On Leave'
-
-    return matchesSearch && matchesDept && matchesAtt
-  })
-
   return (
-    <div className="space-y-6 text-app-text font-sans">
+    <div className="space-y-3 sm:space-y-4 text-app-text font-sans">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-app-text">{t('titles.staffAttendance')}</h1>
-          <p className="text-xs text-app-muted mt-1">{employees.length} {t('employees.subtitle')}</p>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <h1 className="text-lg font-semibold tracking-tight text-app-text">{t('titles.staffAttendance')}</h1>
+          <span className="text-[11px] font-mono text-app-muted px-2 py-0.5 bg-app-card border border-app-border rounded-md">
+            {pagination.total}
+          </span>
         </div>
         {can('employees', 'create') && (
-          <button
+          <Button
             onClick={handleOpenAdd}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText font-semibold rounded-sm text-xs transition-colors shadow-subtle"
+            size="sm"
+            className="gap-1.5"
           >
-            <Plus size={16} weight="bold" />
-            {t('employees.addEmployee')}
-          </button>
+            <Plus size={14} weight="bold" />
+            <span>{t('employees.addEmployee')}</span>
+          </Button>
         )}
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
-          {departments.map((dept) => (
-            <button
-              key={dept}
-              onClick={() => setRoleFilter(dept)}
-              className={`px-3 py-1.5 rounded-sm text-xs font-medium whitespace-nowrap transition-colors ${
-                roleFilter === dept
-                  ? 'bg-app-accent text-app-accentText shadow-subtle'
-                  : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover active:scale-[0.98] hover:text-app-text'
-              }`}
-            >
-              {dept === 'All' ? t('common.all') : dept}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
-          <span className="text-xs text-app-muted flex items-center gap-1 mr-1">{t('employees.attendance')}:</span>
-          {attendanceFilters.map((att) => (
-            <button
-              key={att}
-              onClick={() => setAttendanceFilter(att)}
-              className={`px-2.5 py-1 rounded-sm text-[11px] font-medium whitespace-nowrap transition-colors ${
-                attendanceFilter === att
-                  ? 'bg-app-hover text-app-text border border-app-border font-semibold'
-                  : 'text-app-muted hover:text-app-text'
-              }`}
-            >
-              {att === 'All Attendance' ? t('common.all') : t(`status.${att}`, att)}
-            </button>
-          ))}
+      {/* Integrated Filter Bar & Search */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="relative w-full sm:w-60">
+          <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted" />
+          <input
+            type="text"
+            placeholder={t('common.quickSearch')}
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value)
+              setCurrentPage(1)
+            }}
+            className="w-full pl-8 pr-3 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+          />
         </div>
       </div>
 
       {/* Main Table */}
-      <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden transition-colors duration-200">
-        <div className="p-4 border-b border-app-border flex items-center justify-between gap-3">
-          <div className="relative flex-1 max-w-md">
-            <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
-            <input
-              type="text"
-              placeholder={t('common.quickSearch')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-sm text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
-            />
-          </div>
-          {(searchQuery || roleFilter !== 'All' || attendanceFilter !== 'All Attendance') && (
-            <button
-              onClick={() => {
-                setSearchQuery('')
-                setRoleFilter('All')
-                setAttendanceFilter('All Attendance')
-              }}
-              className="text-xs text-app-muted hover:text-app-text px-2 py-1 transition-colors"
-            >
-              {t('common.cancel')}
-            </button>
-          )}
+      {isLoading && employees.length === 0 ? (
+        <TableSkeleton rows={6} columns={5} />
+      ) : employees.length === 0 ? (
+        <div className="bg-app-card rounded-lg border border-app-border shadow-xs overflow-hidden">
+          <EmptyState
+            title={t('common.noRecords')}
+            description={t('common.noData')}
+            actionText={searchQuery ? t('common.filter') : undefined}
+            onAction={
+              searchQuery
+                ? () => {
+                    setSearchQuery('')
+                    setCurrentPage(1)
+                  }
+                : undefined
+            }
+          />
         </div>
-
-        <div className="overflow-x-auto">
-          {isLoading && employees.length === 0 ? (
-            <TableSkeleton rows={6} columns={6} />
-          ) : filtered.length === 0 ? (
-            <EmptyState
-              title={t('common.noRecords')}
-              description={t('common.noData')}
-              actionText={searchQuery || roleFilter !== 'All' ? t('common.filter') : undefined}
-              onAction={
-                searchQuery || roleFilter !== 'All'
-                  ? () => {
-                      setSearchQuery('')
-                      setRoleFilter('All')
-                    }
-                  : undefined
-              }
-            />
-          ) : (
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                  <th className="px-4 py-3 font-semibold">{t('employees.employeeId')}</th>
-                  <th className="px-4 py-3 font-semibold">{t('employees.name')}</th>
-                  <th className="px-4 py-3 hidden md:table-cell font-semibold">{t('employees.position')}</th>
-                  <th className="px-4 py-3 hidden lg:table-cell font-semibold">{t('employees.department')}</th>
-                  <th className="px-4 py-3 font-semibold">{t('employees.attendance')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-app-border">
-                {filtered.map((emp) => (
-                  <tr key={emp.id} onClick={() => handleOpenView(emp)} className="hover:bg-app-hover /60 active:scale-[0.98] transition-colors group cursor-pointer">
-                    <td className="px-4 py-3.5 font-mono font-semibold text-app-accent">{emp.empCode}</td>
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-3">
-                        {emp.image ? (
-                          <img
-                            src={emp.image}
-                            alt={emp.name}
-                            className="w-8 h-8 rounded-sm object-cover ring-1 ring-app-border flex-shrink-0"
-                          />
-                        ) : (
-                          <div className="w-8 h-8 rounded-sm bg-app-accent/15 flex items-center justify-center text-app-accent font-bold text-xs flex-shrink-0">
-                            {emp.name[0]}
-                          </div>
-                        )}
-                        <div>
-                          <p className="font-semibold text-app-text">{emp.name}</p>
-                          <p className="text-[10px] text-app-muted">{emp.phone}</p>
-                        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{t('employees.employeeId')}</TableHead>
+              <TableHead>{t('employees.name')}</TableHead>
+              <TableHead className="hidden md:table-cell">{t('employees.position')}</TableHead>
+              <TableHead className="hidden lg:table-cell">{t('employees.department')}</TableHead>
+              <TableHead>{t('employees.attendance')}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {employees.map((emp) => (
+              <TableRow
+                key={emp.id}
+                onClick={() => handleOpenView(emp)}
+                className="cursor-pointer"
+              >
+                <TableCell className="font-mono font-semibold text-app-accent">{emp.empCode}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2.5">
+                    {emp.image ? (
+                      <img
+                        src={emp.image}
+                        alt={emp.name}
+                        className="w-8 h-8 rounded-sm object-cover ring-1 ring-app-border flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-sm bg-app-accent/15 flex items-center justify-center text-app-accent font-bold text-xs flex-shrink-0">
+                        {emp.name[0]}
                       </div>
-                    </td>
-                    <td className="px-4 py-3.5 text-app-text font-medium hidden md:table-cell">{emp.roleTitle}</td>
-                    <td className="px-4 py-3.5 text-app-muted hidden lg:table-cell">{emp.department}</td>
-                    <td className="px-4 py-3.5">
-                      <button
-                        onClick={() => can('employees', 'update') && handleToggleAttendanceClick(emp)}
-                        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm text-[11px] font-semibold transition-colors ${
-                          emp.attendanceToday === 'Present'
-                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                            : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
-                        }`}
-                      >
-                        <CheckCircle size={13} weight={emp.attendanceToday === 'Present' ? 'fill' : 'regular'} />
-                        {t(`status.${emp.attendanceToday}`, emp.attendanceToday)}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
+                    )}
+                    <div>
+                      <p className="font-semibold text-app-text">{emp.name}</p>
+                      <p className="text-[10px] text-app-muted">{emp.phone}</p>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell className="text-app-text font-medium hidden md:table-cell">{emp.roleTitle}</TableCell>
+                <TableCell className="text-app-muted hidden lg:table-cell">{emp.department}</TableCell>
+                <TableCell>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      can('employees', 'update') && handleToggleAttendanceClick(emp)
+                    }}
+                    className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm text-[11px] font-semibold transition-colors cursor-pointer ${
+                      emp.attendanceToday === 'Present'
+                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                        : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+                    }`}
+                  >
+                    <CheckCircle size={13} weight={emp.attendanceToday === 'Present' ? 'fill' : 'regular'} />
+                    {t(`status.${emp.attendanceToday}`, emp.attendanceToday)}
+                  </button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+          <TableFooterBar pagination={pagination} onPageChange={setCurrentPage} />
+        </Table>
+      )}
 
       {/* Add Employee Modal */}
       <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('employees.createEmployee')}>
@@ -312,17 +269,13 @@ export default function EmployeesPage() {
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('employees.department')}</label>
-              <select
+              <SearchableSelect
                 value={formData.department}
-                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
-              >
-                <option value="Service">Service</option>
-                <option value="Workshop">Workshop</option>
-                <option value="Inventory">Inventory</option>
-                <option value="Finance">Finance</option>
-                <option value="Management">Management</option>
-              </select>
+                onChange={(val) => setFormData({ ...formData, department: val })}
+                options={['Service', 'Workshop', 'Inventory', 'Finance', 'Management']}
+                placeholder="Select department..."
+                searchPlaceholder="Search department..."
+              />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -348,14 +301,15 @@ export default function EmployeesPage() {
               />
             </div>
           </div>
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-app-border">
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={() => setIsAddOpen(false)}
-              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
             >
               {t('common.cancel')}
-            </button>
+            </Button>
             <LoadingButton type="submit" loading={createEmpMutation.isPending}>
               {t('employees.createEmployee')}
             </LoadingButton>
@@ -388,27 +342,24 @@ export default function EmployeesPage() {
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('employees.department')}</label>
-              <select
+              <SearchableSelect
                 value={formData.department}
-                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
-              >
-                <option value="Service">Service</option>
-                <option value="Workshop">Workshop</option>
-                <option value="Inventory">Inventory</option>
-                <option value="Finance">Finance</option>
-                <option value="Management">Management</option>
-              </select>
+                onChange={(val) => setFormData({ ...formData, department: val })}
+                options={['Service', 'Workshop', 'Inventory', 'Finance', 'Management']}
+                placeholder="Select department..."
+                searchPlaceholder="Search department..."
+              />
             </div>
           </div>
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-app-border">
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={() => setIsEditOpen(false)}
-              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
             >
               {t('common.cancel')}
-            </button>
+            </Button>
             <LoadingButton type="submit" loading={updateEmpMutation.isPending}>
               {t('common.saveChanges')}
             </LoadingButton>

@@ -14,7 +14,7 @@ export default function LoadingButton({
   ...props
 }) {
   const baseStyles =
-    'inline-flex items-center justify-center gap-2 rounded-sm text-xs font-semibold transition-all select-none disabled:opacity-50 disabled:cursor-not-allowed shadow-subtle'
+    'inline-flex items-center justify-center gap-2 rounded-lg text-xs font-semibold transition-all select-none disabled:opacity-50 disabled:cursor-not-allowed shadow-subtle cursor-pointer'
 
   const variants = {
     primary:

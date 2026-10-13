@@ -1,25 +1,50 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MagnifyingGlass, Plus, PencilSimple, Trash, CheckCircle, XCircle, Package } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useServicesCatalog, useCreateService, useUpdateService, useDeleteService } from '../../hooks/useServicesCatalog'
 import { useInventory } from '../../hooks/useInventory'
+import { useDebounce } from '../../hooks/useDebounce'
 import { useAuth } from '../../context/AuthContext'
-import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton } from '../../components/ui'
+import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, Input, SearchableSelect } from '../../components/ui'
 
 const statusOptions = ['All Status', 'Active Only', 'Inactive Only']
 
 export default function ServicesPage() {
   const { t } = useTranslation()
   const { can } = useAuth()
-  const { data: services = [], isLoading } = useServicesCatalog()
-  const { data: inventory = [] } = useInventory()
+
+  const [searchQuery, setSearchQuery] = useState('')
+  const debouncedSearch = useDebounce(searchQuery, 300)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [statusFilter, setStatusFilter] = useState('All Status')
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [debouncedSearch, statusFilter])
+
+  const { data: servicesResponse, isLoading } = useServicesCatalog({
+    search: debouncedSearch,
+    status: statusFilter,
+    page: currentPage,
+    limit: 10,
+  })
+
+  const { data: invData } = useInventory({ all: true })
+  const inventory = Array.isArray(invData) ? invData : (invData?.data || [])
+
+  const services = servicesResponse?.data || (Array.isArray(servicesResponse) ? servicesResponse : [])
+  const pagination = servicesResponse?.pagination || {
+    page: currentPage,
+    limit: 10,
+    total: services.length,
+    totalPages: Math.ceil(services.length / 10) || 1,
+    hasNextPage: false,
+    hasPrevPage: false,
+  }
+
   const createServiceMutation = useCreateService()
   const updateServiceMutation = useUpdateService()
   const deleteServiceMutation = useDeleteService()
-
-  const [searchQuery, setSearchQuery] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('All')
-  const [statusFilter, setStatusFilter] = useState('All Status')
 
   // Modals
   const [isAddOpen, setIsAddOpen] = useState(false)
@@ -143,199 +168,152 @@ export default function ServicesPage() {
     setIsDeleteOpen(false)
   }
 
-  const categories = ['All', ...new Set(services.map((s) => s.category))]
-
-  const query = searchQuery.trim().toLowerCase()
-  const serviceList = Array.isArray(services) ? services : []
-  const filtered = serviceList.filter((s) => {
-    const matchesSearch =
-      !query ||
-      (s?.name || '').toLowerCase().includes(query) ||
-      (s?.category || '').toLowerCase().includes(query) ||
-      (s?.description || '').toLowerCase().includes(query) ||
-      (s?.requiredParts || []).some(
-        (p) =>
-          (p?.name || '').toLowerCase().includes(query) ||
-          (p?.partCode || '').toLowerCase().includes(query)
-      )
-
-    const matchesCat = categoryFilter === 'All' || s.category === categoryFilter
-
-    let matchesStatus = true
-    if (statusFilter === 'Active Only') matchesStatus = s.isActive === true
-    if (statusFilter === 'Inactive Only') matchesStatus = s.isActive === false
-
-    return matchesSearch && matchesCat && matchesStatus
-  })
-
   return (
-    <div className="space-y-6 text-app-text font-sans">
+    <div className="space-y-3 sm:space-y-4 text-app-text font-sans">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-app-text">{t('titles.serviceCatalog')}</h1>
-          <p className="text-xs text-app-muted mt-1">{services.length} {t('services.subtitle')}</p>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <h1 className="text-lg font-semibold tracking-tight text-app-text">{t('titles.serviceCatalog')}</h1>
+          <span className="text-[11px] font-mono text-app-muted px-2 py-0.5 bg-app-card border border-app-border rounded-md">
+            {pagination.total}
+          </span>
         </div>
         {can('services', 'create') && (
-          <button
+          <Button
             onClick={handleOpenAdd}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText font-semibold rounded-sm text-xs transition-colors shadow-subtle"
+            size="sm"
+            className="gap-1.5"
           >
-            <Plus size={16} weight="bold" />
-            {t('services.addService')}
-          </button>
+            <Plus size={14} weight="bold" />
+            <span>{t('services.addService')}</span>
+          </Button>
         )}
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setCategoryFilter(cat)}
-              className={`px-3 py-1.5 rounded-sm text-xs font-medium whitespace-nowrap transition-colors ${
-                categoryFilter === cat
-                  ? 'bg-app-accent text-app-accentText shadow-subtle'
-                  : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover active:scale-[0.98] hover:text-app-text'
-              }`}
-            >
-              {cat === 'All' ? t('common.all') : cat}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
-          <span className="text-xs text-app-muted flex items-center gap-1 mr-1">{t('common.status')}:</span>
+      {/* Integrated Filter Bar & Search */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
           {statusOptions.map((st) => (
             <button
               key={st}
               onClick={() => setStatusFilter(st)}
-              className={`px-2.5 py-1 rounded-sm text-[11px] font-medium whitespace-nowrap transition-colors ${
+              className={`px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                 statusFilter === st
-                  ? 'bg-app-hover text-app-text border border-app-border font-semibold'
-                  : 'text-app-muted hover:text-app-text'
+                  ? 'bg-app-accent text-app-accentText font-semibold'
+                  : 'text-app-muted hover:text-app-text hover:bg-app-hover'
               }`}
             >
-              {st === 'All Status' ? t('common.all') : st}
+              {st}
             </button>
           ))}
+        </div>
+
+        <div className="relative w-full sm:w-60">
+          <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted" />
+          <input
+            type="text"
+            placeholder={t('common.quickSearch')}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-8 pr-3 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+          />
         </div>
       </div>
 
       {/* Main Table */}
-      <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden transition-colors duration-200">
-        <div className="p-4 border-b border-app-border flex items-center justify-between gap-3">
-          <div className="relative flex-1 max-w-md">
-            <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
-            <input
-              type="text"
-              placeholder={t('common.quickSearch')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-sm text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
-            />
-          </div>
-          {(searchQuery || categoryFilter !== 'All' || statusFilter !== 'All Status') && (
-            <button
-              onClick={() => {
-                setSearchQuery('')
-                setCategoryFilter('All')
-                setStatusFilter('All Status')
-              }}
-              className="text-xs text-app-muted hover:text-app-text px-2 py-1 transition-colors"
-            >
-              {t('common.cancel')}
-            </button>
-          )}
+      {isLoading && services.length === 0 ? (
+        <TableSkeleton rows={6} columns={6} />
+      ) : services.length === 0 ? (
+        <div className="bg-app-card rounded-lg border border-app-border shadow-xs overflow-hidden">
+          <EmptyState
+            title={t('common.noRecords')}
+            description={t('common.noData')}
+            actionText={searchQuery || statusFilter !== 'All Status' ? t('common.filter') : undefined}
+            onAction={
+              searchQuery || statusFilter !== 'All Status'
+                ? () => {
+                    setSearchQuery('')
+                    setStatusFilter('All Status')
+                  }
+                : undefined
+            }
+          />
         </div>
-
-        <div className="overflow-x-auto">
-          {isLoading && services.length === 0 ? (
-            <TableSkeleton rows={6} columns={6} />
-          ) : filtered.length === 0 ? (
-            <EmptyState
-              title={t('common.noRecords')}
-              description={t('common.noData')}
-              actionText={searchQuery || categoryFilter !== 'All' ? t('common.filter') : undefined}
-              onAction={
-                searchQuery || categoryFilter !== 'All'
-                  ? () => {
-                      setSearchQuery('')
-                      setCategoryFilter('All')
-                    }
-                  : undefined
-              }
-            />
-          ) : (
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                  <th className="px-4 py-3 font-semibold">{t('services.serviceName')}</th>
-                  <th className="px-4 py-3 hidden md:table-cell font-semibold">{t('services.category')}</th>
-                  <th className="px-4 py-3 font-semibold">Auto Stock-Out Parts</th>
-                  <th className="px-4 py-3 hidden lg:table-cell font-semibold">{t('services.estimatedHours')}</th>
-                  <th className="px-4 py-3 font-semibold">{t('services.standardPrice')}</th>
-                  <th className="px-4 py-3 font-semibold">{t('common.status')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-app-border">
-                {filtered.map((s) => (
-                  <tr key={s.id} onClick={() => handleOpenView(s)} className="hover:bg-app-hover /60 active:scale-[0.98] transition-colors group cursor-pointer">
-                    <td className="px-4 py-3.5">
-                      <p className="font-semibold text-app-text">{s.name}</p>
-                      <p className="text-[10px] text-app-muted truncate max-w-xs">{s.description || 'Standard service procedure'}</p>
-                    </td>
-                    <td className="px-4 py-3.5 text-app-muted hidden md:table-cell">{s.category}</td>
-                    <td className="px-4 py-3.5">
-                      {s.requiredParts && s.requiredParts.length > 0 ? (
-                        <div className="flex flex-wrap gap-1.5 max-w-xs">
-                          {s.requiredParts.map((p, idx) => (
-                            <span
-                              key={idx}
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 text-[10px] font-medium"
-                              title={`${p.name} (${p.partCode}) - Qty: ${p.quantity}`}
-                            >
-                              <Package size={12} />
-                              <span>{p.quantity}x {p.partCode || p.name}</span>
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-[11px] text-app-muted italic">Labor only (No parts)</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3.5 text-app-muted tabular-nums hidden lg:table-cell">{s.laborHours} hrs</td>
-                    <td className="px-4 py-3.5 font-bold text-app-text tabular-nums">
-                      ${Number(s.estimatedCost || 0).toFixed(2)}
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <button
-                        onClick={() => can('services', 'update') && handleToggleActive(s)}
-                        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm text-[11px] font-semibold transition-colors ${
-                          s.isActive
-                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                            : 'bg-app-hover text-app-muted border border-app-border'
-                        }`}
-                      >
-                        {s.isActive ? (
-                          <>
-                            <CheckCircle size={13} weight="fill" /> {t('status.Active')}
-                          </>
-                        ) : (
-                          <>
-                            <XCircle size={13} /> {t('status.Draft')}
-                          </>
-                        )}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{t('services.serviceName')}</TableHead>
+              <TableHead className="hidden md:table-cell">{t('services.category')}</TableHead>
+              <TableHead>Auto Stock-Out Parts</TableHead>
+              <TableHead className="hidden lg:table-cell">{t('services.estimatedHours')}</TableHead>
+              <TableHead>{t('services.standardPrice')}</TableHead>
+              <TableHead>{t('common.status')}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {services.map((s) => (
+              <TableRow
+                key={s.id}
+                onClick={() => handleOpenView(s)}
+                className="cursor-pointer"
+              >
+                <TableCell>
+                  <p className="font-semibold text-app-text">{s.name}</p>
+                  <p className="text-[10px] text-app-muted truncate max-w-xs">{s.description || 'Standard service procedure'}</p>
+                </TableCell>
+                <TableCell className="text-app-muted hidden md:table-cell">{s.category}</TableCell>
+                <TableCell>
+                  {s.requiredParts && s.requiredParts.length > 0 ? (
+                    <div className="flex flex-wrap gap-1 max-w-xs">
+                      {s.requiredParts.map((p, idx) => (
+                        <span
+                          key={idx}
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 text-[10px] font-medium"
+                          title={`${p.name} (${p.partCode}) - Qty: ${p.quantity}`}
+                        >
+                          <Package size={11} />
+                          <span>{p.quantity}x {p.partCode || p.name}</span>
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-[11px] text-app-muted italic">Labor only (No parts)</span>
+                  )}
+                </TableCell>
+                <TableCell className="text-app-muted tabular-nums hidden lg:table-cell">{s.laborHours} hrs</TableCell>
+                <TableCell className="font-bold text-app-text tabular-nums">
+                  ${Number(s.estimatedCost || 0).toFixed(2)}
+                </TableCell>
+                <TableCell>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      can('services', 'update') && handleToggleActive(s)
+                    }}
+                    className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm text-[11px] font-semibold transition-colors cursor-pointer ${
+                      s.isActive
+                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                        : 'bg-app-hover text-app-muted border border-app-border'
+                    }`}
+                  >
+                    {s.isActive ? (
+                      <>
+                        <CheckCircle size={13} weight="fill" /> {t('status.Active')}
+                      </>
+                    ) : (
+                      <>
+                        <XCircle size={13} /> {t('status.Draft')}
+                      </>
+                    )}
+                  </button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+          <TableFooterBar pagination={pagination} onPageChange={setCurrentPage} />
+        </Table>
+      )}
 
       {/* Add Service Modal */}
       <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('services.createService')}>
@@ -354,18 +332,20 @@ export default function ServicesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('services.category')}</label>
-              <select
+              <SearchableSelect
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
-              >
-                <option value="Routine Maintenance">Routine Maintenance</option>
-                <option value="Brake System">Brake System</option>
-                <option value="Engine & Transmission">Engine & Transmission</option>
-                <option value="Electrical Diagnostics">Electrical Diagnostics</option>
-                <option value="Suspension & Steering">Suspension & Steering</option>
-                <option value="HVAC & AC System">HVAC & AC System</option>
-              </select>
+                onChange={(val) => setFormData({ ...formData, category: val })}
+                options={[
+                  'Routine Maintenance',
+                  'Brake System',
+                  'Engine & Transmission',
+                  'Electrical Diagnostics',
+                  'Suspension & Steering',
+                  'HVAC & AC System',
+                ]}
+                placeholder="Select category..."
+                searchPlaceholder="Search category..."
+              />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('services.estimatedHours')}</label>
@@ -410,18 +390,19 @@ export default function ServicesPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <select
-                value={selectedPartId}
-                onChange={(e) => setSelectedPartId(e.target.value)}
-                className="flex-1 px-3 py-1.5 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent text-xs"
-              >
-                <option value="">-- Select Spare Part from Inventory --</option>
-                {inventory.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} ({p.partCode}) - Stock: {p.stockQty} - ${Number(p.unitPrice || 0).toFixed(2)}
-                  </option>
-                ))}
-              </select>
+              <div className="flex-1">
+                <SearchableSelect
+                  value={selectedPartId}
+                  onChange={(val) => setSelectedPartId(val)}
+                  options={inventory.map((p) => ({
+                    value: p.id,
+                    label: `${p.name} (${p.partCode})`,
+                    sublabel: `Stock: ${p.stockQty} · $${Number(p.unitPrice || 0).toFixed(2)}`,
+                  }))}
+                  placeholder="-- Select Spare Part from Inventory --"
+                  searchPlaceholder="Search part by name or code..."
+                />
+              </div>
               <input
                 type="number"
                 min="1"
@@ -469,11 +450,11 @@ export default function ServicesPage() {
             )}
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-app-border">
             <button
               type="button"
               onClick={() => setIsAddOpen(false)}
-              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
+              className="px-3.5 py-2 rounded-lg border border-app-border bg-app-card text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98] transition-all text-xs font-medium cursor-pointer shadow-xs"
             >
               {t('common.cancel')}
             </button>
@@ -500,18 +481,20 @@ export default function ServicesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('services.category')}</label>
-              <select
+              <SearchableSelect
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
-              >
-                <option value="Routine Maintenance">Routine Maintenance</option>
-                <option value="Brake System">Brake System</option>
-                <option value="Engine & Transmission">Engine & Transmission</option>
-                <option value="Electrical Diagnostics">Electrical Diagnostics</option>
-                <option value="Suspension & Steering">Suspension & Steering</option>
-                <option value="HVAC & AC System">HVAC & AC System</option>
-              </select>
+                onChange={(val) => setFormData({ ...formData, category: val })}
+                options={[
+                  'Routine Maintenance',
+                  'Brake System',
+                  'Engine & Transmission',
+                  'Electrical Diagnostics',
+                  'Suspension & Steering',
+                  'HVAC & AC System',
+                ]}
+                placeholder="Select category..."
+                searchPlaceholder="Search category..."
+              />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('services.estimatedHours')}</label>
@@ -555,18 +538,19 @@ export default function ServicesPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <select
-                value={selectedPartId}
-                onChange={(e) => setSelectedPartId(e.target.value)}
-                className="flex-1 px-3 py-1.5 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent text-xs"
-              >
-                <option value="">-- Select Spare Part from Inventory --</option>
-                {inventory.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} ({p.partCode}) - Stock: {p.stockQty} - ${Number(p.unitPrice || 0).toFixed(2)}
-                  </option>
-                ))}
-              </select>
+              <div className="flex-1">
+                <SearchableSelect
+                  value={selectedPartId}
+                  onChange={(val) => setSelectedPartId(val)}
+                  options={inventory.map((p) => ({
+                    value: p.id,
+                    label: `${p.name} (${p.partCode})`,
+                    sublabel: `Stock: ${p.stockQty} · $${Number(p.unitPrice || 0).toFixed(2)}`,
+                  }))}
+                  placeholder="-- Select Spare Part from Inventory --"
+                  searchPlaceholder="Search part by name or code..."
+                />
+              </div>
               <input
                 type="number"
                 min="1"
@@ -614,11 +598,11 @@ export default function ServicesPage() {
             )}
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-app-border">
             <button
               type="button"
               onClick={() => setIsEditOpen(false)}
-              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
+              className="px-3.5 py-2 rounded-lg border border-app-border bg-app-card text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98] transition-all text-xs font-medium cursor-pointer shadow-xs"
             >
               {t('common.cancel')}
             </button>

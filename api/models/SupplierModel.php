@@ -18,6 +18,45 @@ class SupplierModel
         return array_map([self::class, 'format'], $rows);
     }
 
+    public static function getPaginated(string $search = '', int $page = 1, int $limit = 10): array
+    {
+        $countSql = "
+          SELECT COUNT(*) AS cnt
+          FROM suppliers s
+          WHERE 1=1
+        ";
+        $countParams = [];
+        if ($search) {
+            $countSql .= " AND (s.name ILIKE ? OR s.contact_name ILIKE ? OR s.phone ILIKE ? OR s.email ILIKE ? OR s.address ILIKE ?)";
+            $countParams = array_merge($countParams, ["%$search%", "%$search%", "%$search%", "%$search%", "%$search%"]);
+        }
+
+        $countRow = Database::get($countSql, $countParams);
+        $total = (int) ($countRow['cnt'] ?? 0);
+
+        $offset = max(0, ($page - 1) * $limit);
+        $sql = "
+          SELECT s.*,
+                 COUNT(sp.id) AS parts_count,
+                 COALESCE(STRING_AGG(DISTINCT sp.category, ', '), 'OEM Parts, Fluids') AS categories_list
+          FROM suppliers s
+          LEFT JOIN spare_parts sp ON sp.supplier_id = s.id
+          WHERE 1=1
+        ";
+        $params = [];
+        if ($search) {
+            $sql .= " AND (s.name ILIKE ? OR s.contact_name ILIKE ? OR s.phone ILIKE ? OR s.email ILIKE ? OR s.address ILIKE ?)";
+            $params = array_merge($params, ["%$search%", "%$search%", "%$search%", "%$search%", "%$search%"]);
+        }
+        $sql .= " GROUP BY s.id ORDER BY s.id DESC LIMIT $limit OFFSET $offset";
+
+        $rows = Database::all($sql, $params);
+        return [
+            'data' => array_map([self::class, 'format'], $rows),
+            'total' => $total,
+        ];
+    }
+
     public static function create(array $input): array
     {
         Database::run(

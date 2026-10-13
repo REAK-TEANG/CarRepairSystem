@@ -12,7 +12,7 @@ import {
 } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { CardSkeleton } from '../../components/ui'
+import { CardSkeleton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '../../components/ui'
 import { useInvoices } from '../../hooks/useInvoices'
 import { useCustomers } from '../../hooks/useCustomers'
 import { useRepairJobs } from '../../hooks/useRepairJobs'
@@ -23,12 +23,19 @@ import { StaggerGroup } from '../../components/animation/AnimeWrapper'
 
 export default function AdminDashboard() {
   const { t } = useTranslation()
-  const { data: invoices = [], isLoading: loadingInvoices } = useInvoices()
-  const { data: customers = [], isLoading: loadingCustomers } = useCustomers()
-  const { data: repairJobs = [], isLoading: loadingJobs } = useRepairJobs()
-  const { data: inventory = [], isLoading: loadingInventory } = useInventory()
-  const { data: employees = [] } = useEmployees()
-  const { data: appointments = [] } = useAppointments()
+  const { data: rawInvoices = [], isLoading: loadingInvoices } = useInvoices({ all: true })
+  const { data: rawCustomers = [], isLoading: loadingCustomers } = useCustomers({ all: true })
+  const { data: rawRepairJobs = [], isLoading: loadingJobs } = useRepairJobs({ all: true })
+  const { data: rawInventory = [], isLoading: loadingInventory } = useInventory({ all: true })
+  const { data: rawEmployees = [] } = useEmployees({ all: true })
+  const { data: rawAppointments = [] } = useAppointments({ all: true })
+
+  const invoices = Array.isArray(rawInvoices) ? rawInvoices : (rawInvoices?.data || [])
+  const customers = Array.isArray(rawCustomers) ? rawCustomers : (rawCustomers?.data || [])
+  const repairJobs = Array.isArray(rawRepairJobs) ? rawRepairJobs : (rawRepairJobs?.data || [])
+  const inventory = Array.isArray(rawInventory) ? rawInventory : (rawInventory?.data || [])
+  const employees = Array.isArray(rawEmployees) ? rawEmployees : (rawEmployees?.data || [])
+  const appointments = Array.isArray(rawAppointments) ? rawAppointments : (rawAppointments?.data || [])
 
   const isInitialLoading = (loadingInvoices || loadingJobs || loadingCustomers || loadingInventory) && invoices.length === 0
 
@@ -58,150 +65,128 @@ export default function AdminDashboard() {
   const staffList = employees.slice(0, 5)
 
   return (
-    <div className="space-y-4 sm:space-y-6 text-app-text font-sans transition-colors duration-200">
+    <div className="space-y-4 sm:space-y-5 text-app-text font-sans transition-colors duration-200">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-app-text">{t('titles.adminOverview')}</h1>
-          <p className="text-xs text-app-muted mt-0.5 font-normal">{t('dashboard.adminSubtitle')}</p>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <h1 className="text-lg font-semibold tracking-tight text-app-text">{t('titles.adminOverview')}</h1>
+          <span className="text-[11px] font-mono text-app-muted px-2 py-0.5 bg-app-card border border-app-border rounded-md">Live</span>
         </div>
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-app-card border border-app-border text-app-muted rounded-sm text-xs font-medium shadow-subtle">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            {t('reports.thisMonth')} ▾
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-app-card border border-app-border text-app-muted rounded-md text-xs font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            {t('reports.thisMonth')}
           </span>
         </div>
       </div>
 
       {/* ============================================================ */}
-      {/* MOBILE & DESKTOP BENTO GRID (High Information Density)      */}
+      {/* BENTO GRID (High Information Density)                        */}
       {/* ============================================================ */}
       {isInitialLoading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {Array.from({ length: 4 }).map((_, idx) => (
             <CardSkeleton key={idx} />
           ))}
         </div>
       ) : (
-        <StaggerGroup staggerDelay={75} duration={600} className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
-          {/* BENTO TILE 1: Primary Revenue Hero Tile (Spans 2 on Mobile) */}
-          <div className="col-span-2 md:col-span-2 lg:col-span-2 bg-app-card rounded-sm border border-app-border p-3 shadow-card relative overflow-hidden flex flex-col justify-between group">
-            <div className="flex items-start justify-between relative z-10">
+        <StaggerGroup staggerDelay={75} duration={600} className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          {/* BENTO TILE 1: Primary Revenue Hero Tile */}
+          <div className="col-span-2 md:col-span-2 lg:col-span-2 bg-app-card rounded-lg border border-app-border p-3.5 hover:border-app-border/80 transition-colors flex flex-col justify-between group">
+            <div className="flex items-start justify-between">
               <div>
-                <p className="text-[10px] sm:text-xs font-bold text-app-muted uppercase tracking-wider">
+                <p className="text-[11px] font-medium text-app-muted tracking-tight">
                   {t('dashboard.totalRevenue')}
                 </p>
-                <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-app-text mt-1 tabular-nums">
+                <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-app-text mt-0.5 tabular-nums">
                   ${totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </h2>
               </div>
-              <div className="w-10 h-10 rounded-sm bg-app-accent/15 border border-app-accent/30 flex items-center justify-center text-app-accent shadow-subtle flex-shrink-0">
-                <CurrencyDollar size={22} weight="bold" />
+              <div className="w-8 h-8 rounded-md bg-app-accent/10 border border-app-accent/20 flex items-center justify-center text-app-accent flex-shrink-0">
+                <CurrencyDollar size={18} weight="bold" />
               </div>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-app-border/70 flex items-center justify-between text-xs relative z-10">
-              <div className="flex items-center gap-1.5 text-emerald-600 dark:text-[#13F287] font-semibold text-[11px]">
-                <TrendUp size={14} weight="bold" />
-                <span>+12.4% {t('reports.thisMonth')}</span>
+            <div className="mt-3 pt-2.5 border-t border-app-border/60 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-1 text-emerald-600 dark:text-[#13F287] font-medium text-[11px]">
+                <TrendUp size={12} weight="bold" />
+                <span>+12.4%</span>
               </div>
               <span className="text-[11px] text-app-muted tabular-nums">
                 ${totalPaid.toLocaleString('en-US', { minimumFractionDigits: 2 })} {t('common.paid')}
               </span>
             </div>
-
-
           </div>
 
           {/* BENTO TILE 2: Active Repair Jobs */}
           <Link
             to="/repair-jobs"
-            className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-sm border border-app-border p-3.5 sm:p-4 shadow-card hover:border-app-accent/40 transition-all flex flex-col justify-between group"
+            className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-lg border border-app-border p-3.5 hover:border-app-border/80 transition-colors flex flex-col justify-between group"
           >
             <div className="flex items-center justify-between">
-              <span className="w-2 h-2 rounded-full bg-blue-500" />
-              <div className="w-8 h-8 rounded-sm bg-blue-500/10 text-blue-500 flex items-center justify-center">
-                <Wrench size={16} weight="bold" />
-              </div>
+              <p className="text-[11px] font-medium text-app-muted tracking-tight truncate">{t('dashboard.activeJobs')}</p>
+              <Wrench size={15} weight="bold" className="text-blue-500 flex-shrink-0" />
             </div>
-            <div className="mt-2">
-              <p className="text-xl sm:text-2xl font-black text-app-text tabular-nums">{activeOrders}</p>
-              <p className="text-[10px] sm:text-xs text-app-muted font-medium mt-0.5 truncate">{t('dashboard.activeJobs')}</p>
+            <div className="mt-1">
+              <p className="text-2xl font-semibold tracking-tight text-app-text tabular-nums">{activeOrders}</p>
             </div>
-            <div className="mt-2 pt-2 border-t border-app-border/50 flex items-center justify-between text-[10px] text-app-muted">
+            <div className="mt-2 pt-2 border-t border-app-border/60 flex items-center justify-between text-[11px] text-app-muted">
               <span>{completedOrders} {t('status.Completed')}</span>
-              <ArrowUpRight size={12} className="group-hover:text-app-accent transition-colors" />
+              <ArrowUpRight size={12} className="group-hover:text-app-text transition-colors" />
             </div>
           </Link>
 
           {/* BENTO TILE 3: Spare Parts Inventory */}
           <Link
             to="/inventory"
-            className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-sm border border-app-border p-3.5 sm:p-4 shadow-card hover:border-app-accent/40 transition-all flex flex-col justify-between group"
+            className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-lg border border-app-border p-3.5 hover:border-app-border/80 transition-colors flex flex-col justify-between group"
           >
             <div className="flex items-center justify-between">
-              {lowStockItems.length > 0 ? (
-                <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                  {lowStockItems.length} Low
-                </span>
-              ) : (
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              )}
-              <div className="w-8 h-8 rounded-sm bg-amber-500/10 text-amber-500 flex items-center justify-center">
-                <Package size={16} weight="bold" />
-              </div>
+              <p className="text-[11px] font-medium text-app-muted tracking-tight truncate">{t('inventory.stockQty')}</p>
+              <Package size={15} weight="bold" className="text-amber-500 flex-shrink-0" />
             </div>
-            <div className="mt-2">
-              <p className="text-xl sm:text-2xl font-black text-app-text tabular-nums">{totalParts}</p>
-              <p className="text-[10px] sm:text-xs text-app-muted font-medium mt-0.5 truncate">{t('inventory.stockQty')}</p>
+            <div className="mt-1">
+              <p className="text-2xl font-semibold tracking-tight text-app-text tabular-nums">{totalParts}</p>
             </div>
-            <div className="mt-2 pt-2 border-t border-app-border/50 flex items-center justify-between text-[10px] text-app-muted">
+            <div className="mt-2 pt-2 border-t border-app-border/60 flex items-center justify-between text-[11px] text-app-muted">
               <span>{inventory.length} items</span>
-              <ArrowUpRight size={12} className="group-hover:text-app-accent transition-colors" />
+              <ArrowUpRight size={12} className="group-hover:text-app-text transition-colors" />
             </div>
           </Link>
 
           {/* BENTO TILE 4: Customers Total */}
           <Link
             to="/customers"
-            className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-sm border border-app-border p-3.5 sm:p-4 shadow-card hover:border-app-accent/40 transition-all flex flex-col justify-between group"
+            className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-lg border border-app-border p-3.5 hover:border-app-border/80 transition-colors flex flex-col justify-between group"
           >
             <div className="flex items-center justify-between">
-              <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">
-                +12%
-              </span>
-              <div className="w-8 h-8 rounded-sm bg-sky-500/10 text-sky-500 flex items-center justify-center">
-                <Users size={16} weight="bold" />
-              </div>
+              <p className="text-[11px] font-medium text-app-muted tracking-tight truncate">{t('customers.title')}</p>
+              <Users size={15} weight="bold" className="text-sky-500 flex-shrink-0" />
             </div>
-            <div className="mt-2">
-              <p className="text-xl sm:text-2xl font-black text-app-text tabular-nums">{customers.length}</p>
-              <p className="text-[10px] sm:text-xs text-app-muted font-medium mt-0.5 truncate">{t('customers.title')}</p>
+            <div className="mt-1">
+              <p className="text-2xl font-semibold tracking-tight text-app-text tabular-nums">{customers.length}</p>
             </div>
-            <div className="mt-2 pt-2 border-t border-app-border/50 flex items-center justify-between text-[10px] text-app-muted">
+            <div className="mt-2 pt-2 border-t border-app-border/60 flex items-center justify-between text-[11px] text-app-muted">
               <span>{t('common.active')}</span>
-              <ArrowUpRight size={12} className="group-hover:text-app-accent transition-colors" />
+              <ArrowUpRight size={12} className="group-hover:text-app-text transition-colors" />
             </div>
           </Link>
 
           {/* BENTO TILE 5: Appointments Scheduled */}
           <Link
             to="/appointments"
-            className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-sm border border-app-border p-3.5 sm:p-4 shadow-card hover:border-app-accent/40 transition-all flex flex-col justify-between group"
+            className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-lg border border-app-border p-3.5 hover:border-app-border/80 transition-colors flex flex-col justify-between group"
           >
             <div className="flex items-center justify-between">
-              <span className="w-2 h-2 rounded-full bg-purple-500" />
-              <div className="w-8 h-8 rounded-sm bg-purple-500/10 text-purple-500 flex items-center justify-center">
-                <CalendarBlank size={16} weight="bold" />
-              </div>
+              <p className="text-[11px] font-medium text-app-muted tracking-tight truncate">{t('appointments.title')}</p>
+              <CalendarBlank size={15} weight="bold" className="text-purple-500 flex-shrink-0" />
             </div>
-            <div className="mt-2">
-              <p className="text-xl sm:text-2xl font-black text-app-text tabular-nums">{scheduledApts}</p>
-              <p className="text-[10px] sm:text-xs text-app-muted font-medium mt-0.5 truncate">{t('appointments.title')}</p>
+            <div className="mt-1">
+              <p className="text-2xl font-semibold tracking-tight text-app-text tabular-nums">{scheduledApts}</p>
             </div>
-            <div className="mt-2 pt-2 border-t border-app-border/50 flex items-center justify-between text-[10px] text-app-muted">
+            <div className="mt-2 pt-2 border-t border-app-border/60 flex items-center justify-between text-[11px] text-app-muted">
               <span>{appointments.length} Total</span>
-              <ArrowUpRight size={12} className="group-hover:text-app-accent transition-colors" />
+              <ArrowUpRight size={12} className="group-hover:text-app-text transition-colors" />
             </div>
           </Link>
         </StaggerGroup>
@@ -349,40 +334,38 @@ export default function AdminDashboard() {
               </Link>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="text-app-muted text-left border-b border-app-border/60">
-                    <th className="pb-3 font-semibold">{t('common.name')}</th>
-                    <th className="pb-3 font-semibold">{t('common.phone')}</th>
-                    <th className="pb-3 font-semibold text-right">{t('customers.totalSpent')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-app-border/40">
-                  {customers.slice(0, 5).map((customer) => (
-                    <tr key={customer.id} className="hover:bg-app-hover transition-colors group">
-                      <td className="py-2.5 sm:py-3">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-sm bg-app-hover border border-app-border flex items-center justify-center text-app-muted flex-shrink-0 font-bold text-[11px]">
-                            {customer.name[0]}
-                          </div>
-                          <div>
-                            <p className="font-semibold text-app-text group-hover:text-app-accent transition-colors">
-                              {customer.name}
-                            </p>
-                            <p className="text-[10px] text-app-muted">{customer.code}</p>
-                          </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('common.name')}</TableHead>
+                  <TableHead>{t('common.phone')}</TableHead>
+                  <TableHead className="text-right">{t('customers.totalSpent')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {customers.slice(0, 5).map((customer) => (
+                  <TableRow key={customer.id} className="cursor-pointer">
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-sm bg-app-hover border border-app-border flex items-center justify-center text-app-muted flex-shrink-0 font-bold text-[10px]">
+                          {customer.name[0]}
                         </div>
-                      </td>
-                      <td className="py-2.5 sm:py-3 font-mono text-app-muted">{customer.phone}</td>
-                      <td className="py-2.5 sm:py-3 font-bold text-app-text text-right tabular-nums">
-                        {customer.totalSpent || '$0.00'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                        <div>
+                          <p className="font-semibold text-app-text group-hover:text-app-accent transition-colors">
+                            {customer.name}
+                          </p>
+                          <p className="text-[10px] text-app-muted font-mono">{customer.code}</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-mono text-app-muted">{customer.phone}</TableCell>
+                    <TableCell className="font-bold text-app-text text-right tabular-nums">
+                      {customer.totalSpent || '$0.00'}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         </div>
 

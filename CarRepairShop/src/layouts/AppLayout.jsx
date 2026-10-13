@@ -41,8 +41,8 @@ export default function AppLayout() {
         />
 
         {/* Page Content Viewport */}
-        <main className="flex-1 overflow-y-auto p-2 sm:p-4 bg-[var(--bg-canvas)] text-[var(--text-primary)] transition-colors duration-250">
-          <FadeIn key={location.pathname} duration={300} delay={0} className="w-full mx-auto pb-12">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-5 bg-[var(--bg-canvas)] text-[var(--text-primary)] transition-colors duration-250">
+          <FadeIn key={location.pathname} duration={250} delay={0} className="w-full max-w-[1600px] mx-auto pb-6">
             <Outlet />
           </FadeIn>
         </main>

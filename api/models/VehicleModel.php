@@ -17,6 +17,52 @@ class VehicleModel
         return array_map([self::class, 'format'], $rows);
     }
 
+    public static function getPaginated(string $search = '', int $page = 1, int $limit = 10): array
+    {
+        $countSql = "
+          SELECT COUNT(*) AS cnt
+          FROM vehicles v
+          LEFT JOIN customers c ON v.customer_id = c.id
+        ";
+        $countParams = [];
+        if ($search) {
+            $countSql .= " WHERE v.vehicle_number ILIKE ? OR v.brand ILIKE ? OR v.model ILIKE ? OR v.vin ILIKE ? OR c.full_name ILIKE ?";
+            $countParams = ["%$search%", "%$search%", "%$search%", "%$search%", "%$search%"];
+        }
+        $countRow = Database::get($countSql, $countParams);
+        $total = (int) ($countRow['cnt'] ?? 0);
+
+        $offset = max(0, ($page - 1) * $limit);
+        $sql = "
+          SELECT v.*, c.full_name AS customer_name
+          FROM vehicles v
+          LEFT JOIN customers c ON v.customer_id = c.id
+        ";
+        $params = [];
+        if ($search) {
+            $sql .= " WHERE v.vehicle_number ILIKE ? OR v.brand ILIKE ? OR v.model ILIKE ? OR v.vin ILIKE ? OR c.full_name ILIKE ?";
+            $params = ["%$search%", "%$search%", "%$search%", "%$search%", "%$search%"];
+        }
+        $sql .= " ORDER BY v.id DESC LIMIT $limit OFFSET $offset";
+
+        $rows = Database::all($sql, $params);
+        return [
+            'data' => array_map([self::class, 'format'], $rows),
+            'total' => $total,
+        ];
+    }
+
+    public static function findById(int $id): ?array
+    {
+        $r = Database::get("
+          SELECT v.*, c.full_name AS customer_name
+          FROM vehicles v
+          LEFT JOIN customers c ON v.customer_id = c.id
+          WHERE v.id = ?
+        ", [$id]);
+        return $r ? self::format($r) : null;
+    }
+
     public static function create(array $input): array
     {
         $customerId  = self::resolveCustomerId($input['ownerId'] ?? null);

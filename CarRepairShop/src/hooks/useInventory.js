@@ -4,11 +4,12 @@ import { useToast } from '@/context/ToastContext'
 
 const QUERY_KEY = ['inventory']
 
-export function useInventory(options = {}) {
+export function useInventory(params = {}, options = {}) {
   return useQuery({
-    queryKey: QUERY_KEY,
-    queryFn: () => inventoryService.getAll(),
-    staleTime: 1000 * 60 * 5,
+    queryKey: ['inventory', params],
+    queryFn: () => inventoryService.getAll(params),
+    placeholderData: (previousData) => previousData,
+    staleTime: 1000 * 60 * 2,
     ...options,
   })
 }

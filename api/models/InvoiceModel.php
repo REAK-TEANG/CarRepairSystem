@@ -40,6 +40,79 @@ class InvoiceModel
         return array_map([self::class, 'format'], $rows);
     }
 
+    public static function getPaginated(string $search = '', int $page = 1, int $limit = 10, ?string $status = null): array
+    {
+        $countSql = "
+          SELECT COUNT(i.id) AS cnt
+          FROM invoices i
+          LEFT JOIN customers     c  ON i.customer_id      = c.id
+          LEFT JOIN repair_orders ro ON i.repair_order_id  = ro.id
+          LEFT JOIN vehicles      v  ON ro.vehicle_id      = v.id
+          WHERE 1=1
+        ";
+        $countParams = [];
+        if ($search) {
+            $countSql .= " AND (i.invoice_number ILIKE ? OR c.full_name ILIKE ? OR ro.order_number ILIKE ? OR v.vehicle_number ILIKE ?)";
+            $countParams = array_merge($countParams, ["%$search%", "%$search%", "%$search%", "%$search%"]);
+        }
+        if ($status && $status !== 'All' && $status !== 'All Status') {
+            $countSql .= " AND i.status::text = ?";
+            $countParams[] = $status;
+        }
+
+        $countRow = Database::get($countSql, $countParams);
+        $total = (int) ($countRow['cnt'] ?? 0);
+
+        $offset = max(0, ($page - 1) * $limit);
+        $sql = "
+          SELECT i.*,
+                 c.full_name AS customer_name,
+                 c.customer_code, c.phone AS customer_phone,
+                 c.email AS customer_email, c.address AS customer_address,
+                 ro.order_number, ro.problem_description, ro.diagnosis,
+                 ro.odometer, ro.fuel_level, ro.labor_minutes, ro.labor_rate,
+                 v.vehicle_number, v.brand AS vehicle_brand, v.model AS vehicle_model,
+                 v.year AS vehicle_year, v.color AS vehicle_color, v.vin AS vehicle_vin,
+                 u.full_name AS mechanic_name,
+                 COALESCE(
+                   (SELECT json_agg(json_build_object(
+                     'id', rp.id, 'sparePartId', sp.id, 'partCode', sp.part_code,
+                     'name', sp.name, 'quantity', rp.quantity,
+                     'unitPrice', rp.unit_price, 'totalPrice', rp.total_price))
+                    FROM repair_parts rp JOIN spare_parts sp ON rp.spare_part_id = sp.id
+                    WHERE rp.repair_order_id = ro.id), '[]') AS parts_used,
+                 COALESCE(
+                   (SELECT json_agg(json_build_object(
+                     'id', p.id, 'paymentNumber', p.payment_number,
+                     'amount', p.amount, 'paymentMethod', p.payment_method,
+                     'paymentDate', p.payment_date))
+                    FROM payments p WHERE p.invoice_id = i.id), '[]') AS payments_list
+          FROM invoices i
+          LEFT JOIN customers     c  ON i.customer_id      = c.id
+          LEFT JOIN repair_orders ro ON i.repair_order_id  = ro.id
+          LEFT JOIN vehicles      v  ON ro.vehicle_id      = v.id
+          LEFT JOIN employees     e  ON ro.mechanic_id     = e.id
+          LEFT JOIN users         u  ON e.user_id          = u.id
+          WHERE 1=1
+        ";
+        $params = [];
+        if ($search) {
+            $sql .= " AND (i.invoice_number ILIKE ? OR c.full_name ILIKE ? OR ro.order_number ILIKE ? OR v.vehicle_number ILIKE ?)";
+            $params = array_merge($params, ["%$search%", "%$search%", "%$search%", "%$search%"]);
+        }
+        if ($status && $status !== 'All' && $status !== 'All Status') {
+            $sql .= " AND i.status::text = ?";
+            $params[] = $status;
+        }
+        $sql .= " ORDER BY i.id DESC LIMIT $limit OFFSET $offset";
+
+        $rows = Database::all($sql, $params);
+        return [
+            'data' => array_map([self::class, 'format'], $rows),
+            'total' => $total,
+        ];
+    }
+
     public static function create(array $input): array
     {
         $countRow     = Database::get('SELECT COUNT(*) AS cnt FROM invoices');

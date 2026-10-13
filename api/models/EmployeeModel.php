@@ -15,6 +15,52 @@ class EmployeeModel
         return array_map([self::class, 'format'], $rows);
     }
 
+    public static function getPaginated(string $search = '', int $page = 1, int $limit = 10, ?string $status = null): array
+    {
+        $countSql = "
+          SELECT COUNT(e.id) AS cnt
+          FROM employees e
+          LEFT JOIN users u ON e.user_id = u.id
+          WHERE 1=1
+        ";
+        $countParams = [];
+        if ($search) {
+            $countSql .= " AND (u.full_name ILIKE ? OR e.employee_code ILIKE ? OR e.position ILIKE ? OR u.phone ILIKE ? OR u.email ILIKE ?)";
+            $countParams = array_merge($countParams, ["%$search%", "%$search%", "%$search%", "%$search%", "%$search%"]);
+        }
+        if ($status && $status !== 'All' && $status !== 'All Status') {
+            $countSql .= " AND e.employment_status = ?";
+            $countParams[] = $status;
+        }
+
+        $countRow = Database::get($countSql, $countParams);
+        $total = (int) ($countRow['cnt'] ?? 0);
+
+        $offset = max(0, ($page - 1) * $limit);
+        $sql = "
+          SELECT e.*, u.full_name, u.phone, u.email
+          FROM employees e
+          LEFT JOIN users u ON e.user_id = u.id
+          WHERE 1=1
+        ";
+        $params = [];
+        if ($search) {
+            $sql .= " AND (u.full_name ILIKE ? OR e.employee_code ILIKE ? OR e.position ILIKE ? OR u.phone ILIKE ? OR u.email ILIKE ?)";
+            $params = array_merge($params, ["%$search%", "%$search%", "%$search%", "%$search%", "%$search%"]);
+        }
+        if ($status && $status !== 'All' && $status !== 'All Status') {
+            $sql .= " AND e.employment_status = ?";
+            $params[] = $status;
+        }
+        $sql .= " ORDER BY e.id ASC LIMIT $limit OFFSET $offset";
+
+        $rows = Database::all($sql, $params);
+        return [
+            'data' => array_map([self::class, 'format'], $rows),
+            'total' => $total,
+        ];
+    }
+
     public static function create(array $input): array
     {
         $name     = trim($input['name'] ?? '');

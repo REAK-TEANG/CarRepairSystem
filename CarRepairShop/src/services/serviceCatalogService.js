@@ -1,8 +1,8 @@
 import { apiClient } from '@/services/apiClient'
 
 export const serviceCatalogService = {
-  async getAll() {
-    return apiClient.get('/services')
+  async getAll(params = {}) {
+    return apiClient.get('/services', { params })
   },
 
   async getById(id) {

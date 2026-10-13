@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:backend": "cd api && php -S localhost:8000",
+    "dev:backend": "cd api && php -S 127.0.0.1:8000 index.php",
     "dev:frontend": "cd CarRepairShop && npm run dev",
     "build": "cd CarRepairShop && npm run build"
   },

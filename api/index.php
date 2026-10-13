@@ -48,8 +48,10 @@ header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/config/db.php';
+require_once __DIR__ . '/utils/headers.php';
 require_once __DIR__ . '/utils/jwt.php';
 require_once __DIR__ . '/utils/cache.php';
+require_once __DIR__ . '/utils/pagination.php';
 require_once __DIR__ . '/middleware/AuthMiddleware.php';
 
 // Helper: Safely resolve JWT secret
@@ -69,16 +71,14 @@ function getJwtSecret() {
 
 // Auth middleware function
 function authenticate() {
-    $headers = getallheaders();
-    $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? '';
+    $token = getBearerToken();
     
-    if (!$authHeader || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+    if (!$token) {
         http_response_code(401);
         echo json_encode(['error' => 'No authorization token provided']);
         exit;
     }
     
-    $token = $matches[1];
     $secret = getJwtSecret();
     
     $payload = JWT::decode($token, $secret);
@@ -107,17 +107,28 @@ function authorizeRoles(array $allowedRoles, array $authPayload) {
     }
 }
 
-// Router
-$requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-// Base path might be /api/ in production, but with php -S it might just be /
-// Let's normalize it
-$path = str_replace('/api/', '/', $requestUri);
-if (strpos($path, '/') !== 0) {
-    $path = '/' . $path;
+// Router: normalize $path and extract $module regardless of root/subfolder deployment
+$requestUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/';
+
+// Strip script filename if present (e.g. index.php)
+$cleanUri = preg_replace('#^.*?/index\.php#i', '', $requestUri);
+
+// If URL contains /api or /api/, extract whatever follows /api
+if (preg_match('#(?:^|/)api(?:/(.*))?$#i', $cleanUri, $apiMatches)) {
+    $path = '/' . ($apiMatches[1] ?? '');
+} else {
+    // If running under a subfolder in WAMP without explicit /api/ prefix
+    $scriptDir = trim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/');
+    if ($scriptDir && str_starts_with($cleanUri, '/' . $scriptDir)) {
+        $cleanUri = substr($cleanUri, strlen('/' . $scriptDir));
+    }
+    $path = '/' . ltrim($cleanUri, '/');
 }
 
-$segments = explode('/', trim($path, '/'));
-$module = $segments[0] ?? '';
+$path = '/' . trim($path, '/');
+if ($path === '//') $path = '/';
+$segments = array_values(array_filter(explode('/', trim($path, '/'))));
+$module = strtolower($segments[0] ?? '');
 
 try {
     switch ($module) {

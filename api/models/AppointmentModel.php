@@ -21,6 +21,61 @@ class AppointmentModel
         return array_map([self::class, 'format'], $rows);
     }
 
+    public static function getPaginated(string $search = '', int $page = 1, int $limit = 10, ?string $status = null): array
+    {
+        $countSql = "
+          SELECT COUNT(*) AS cnt
+          FROM appointments a
+          LEFT JOIN customers c ON a.customer_id = c.id
+          LEFT JOIN vehicles v ON a.vehicle_id = v.id
+          LEFT JOIN employees e ON a.mechanic_id = e.id
+          LEFT JOIN users u ON e.user_id = u.id
+          WHERE 1=1
+        ";
+        $countParams = [];
+        if ($search) {
+            $countSql .= " AND (a.appointment_code ILIKE ? OR c.full_name ILIKE ? OR v.vehicle_number ILIKE ? OR v.brand ILIKE ? OR v.model ILIKE ? OR u.full_name ILIKE ?)";
+            $countParams = array_merge($countParams, ["%$search%", "%$search%", "%$search%", "%$search%", "%$search%", "%$search%"]);
+        }
+        if ($status && $status !== 'All') {
+            $countSql .= " AND a.status = ?";
+            $countParams[] = $status;
+        }
+
+        $countRow = Database::get($countSql, $countParams);
+        $total = (int) ($countRow['cnt'] ?? 0);
+
+        $offset = max(0, ($page - 1) * $limit);
+        $sql = "
+          SELECT a.*,
+                 c.full_name AS customer_name,
+                 v.vehicle_number, v.brand, v.model,
+                 u.full_name AS mechanic_name
+          FROM appointments a
+          LEFT JOIN customers  c ON a.customer_id  = c.id
+          LEFT JOIN vehicles   v ON a.vehicle_id   = v.id
+          LEFT JOIN employees  e ON a.mechanic_id  = e.id
+          LEFT JOIN users      u ON e.user_id      = u.id
+          WHERE 1=1
+        ";
+        $params = [];
+        if ($search) {
+            $sql .= " AND (a.appointment_code ILIKE ? OR c.full_name ILIKE ? OR v.vehicle_number ILIKE ? OR v.brand ILIKE ? OR v.model ILIKE ? OR u.full_name ILIKE ?)";
+            $params = array_merge($params, ["%$search%", "%$search%", "%$search%", "%$search%", "%$search%", "%$search%"]);
+        }
+        if ($status && $status !== 'All') {
+            $sql .= " AND a.status = ?";
+            $params[] = $status;
+        }
+        $sql .= " ORDER BY a.scheduled_date DESC, a.scheduled_time DESC LIMIT $limit OFFSET $offset";
+
+        $rows = Database::all($sql, $params);
+        return [
+            'data' => array_map([self::class, 'format'], $rows),
+            'total' => $total,
+        ];
+    }
+
     public static function create(array $input): array
     {
         $countRow = Database::get('SELECT COUNT(*) AS cnt FROM appointments');

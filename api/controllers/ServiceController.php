@@ -2,12 +2,23 @@
 // api/controllers/ServiceController.php
 
 require_once __DIR__ . '/../models/ServiceModel.php';
+require_once __DIR__ . '/../utils/pagination.php';
 
 class ServiceController
 {
     public function index(): void
     {
-        echo json_encode(['data' => ServiceModel::getAll()]);
+        $search = $_GET['search'] ?? '';
+        $status = $_GET['status'] ?? null;
+        $params = Pagination::getParams(10);
+
+        if ($params['isAll']) {
+            echo json_encode(['data' => ServiceModel::getAll()]);
+            return;
+        }
+
+        $result = ServiceModel::getPaginated($search, $params['page'], $params['limit'], $status);
+        echo json_encode(Pagination::formatResponse($result['data'], $result['total'], $params['page'], $params['limit']));
     }
 
     public function show(int $id): void

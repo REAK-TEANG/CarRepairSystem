@@ -8,6 +8,7 @@ $method      = $_SERVER['REQUEST_METHOD'];
 
 if (preg_match('#^/mechanics/(\d+)$#', $path, $m)) {
     $id = (int) $m[1];
+    if ($method === 'GET')    { $ctrl->show($id);    exit; }
     if ($method === 'PUT')    { $ctrl->update($id);  exit; }
     if ($method === 'DELETE') { $ctrl->destroy($id); exit; }
 }

@@ -210,6 +210,97 @@ if ($method === 'POST' && $path === 'login') {
         ]
     ]);
     exit;
+
+} else if ($method === 'POST' && ($path === 'change-password' || $path === 'change_password')) {
+    $authPayload = authenticate();
+    $input = json_decode(file_get_contents('php://input'), true) ?? [];
+    $current = $input['currentPassword'] ?? '';
+    $new = $input['newPassword'] ?? '';
+
+    if (!$current || !$new) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Current password and new password are required']);
+        exit;
+    }
+
+    $user = get('SELECT id, password_hash FROM users WHERE id = ?', [$authPayload['id']]);
+    if (!$user) {
+        http_response_code(404);
+        echo json_encode(['error' => 'User not found']);
+        exit;
+    }
+
+    $valid = password_verify($current, $user['password_hash']) || ($user['password_hash'] === $current);
+    if (!$valid) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Current password is incorrect']);
+        exit;
+    }
+
+    $newHash = password_hash($new, PASSWORD_BCRYPT);
+    run('UPDATE users SET password_hash = ?, updated_at = NOW() WHERE id = ?', [$newHash, $user['id']]);
+
+    echo json_encode(['success' => true, 'message' => 'Password changed successfully']);
+    exit;
+
+} else if ($method === 'POST' && ($path === 'forgot-password' || $path === 'forgot_password')) {
+    $input = json_decode(file_get_contents('php://input'), true) ?? [];
+    $ident = strtolower(trim($input['emailOrUsername'] ?? $input['email'] ?? ''));
+
+    if (!$ident) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Email or username is required']);
+        exit;
+    }
+
+    $user = get('SELECT id, email FROM users WHERE LOWER(username) = ? OR LOWER(email) = ?', [$ident, $ident]);
+    if ($user) {
+        $code = (string) random_int(100000, 999999);
+        run(
+            "UPDATE users SET reset_token = ?, reset_expires_at = NOW() + INTERVAL '1 hour' WHERE id = ?",
+            [$code, $user['id']]
+        );
+    }
+
+    echo json_encode([
+        'success' => true,
+        'message' => 'If an account matches that email or username, a reset code has been sent.'
+    ]);
+    exit;
+
+} else if ($method === 'POST' && ($path === 'reset-password' || $path === 'reset_password')) {
+    $input = json_decode(file_get_contents('php://input'), true) ?? [];
+    $ident = strtolower(trim($input['emailOrUsername'] ?? $input['email'] ?? ''));
+    $code = trim($input['resetCode'] ?? '');
+    $newPass = $input['newPassword'] ?? '';
+
+    if (!$ident || !$code || !$newPass) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Email/username, reset code, and new password are required']);
+        exit;
+    }
+
+    $user = get(
+        "SELECT id, reset_token, reset_expires_at 
+         FROM users 
+         WHERE (LOWER(username) = ? OR LOWER(email) = ?) AND reset_token = ? AND reset_expires_at > NOW()",
+        [$ident, $ident, $code]
+    );
+
+    if (!$user) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid or expired password reset code']);
+        exit;
+    }
+
+    $hash = password_hash($newPass, PASSWORD_BCRYPT);
+    run(
+        "UPDATE users SET password_hash = ?, reset_token = NULL, reset_expires_at = NULL, updated_at = NOW() WHERE id = ?",
+        [$hash, $user['id']]
+    );
+
+    echo json_encode(['success' => true, 'message' => 'Password has been reset successfully. You can now log in.']);
+    exit;
 }
 
 http_response_code(404);

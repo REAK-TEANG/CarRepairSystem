@@ -1,8 +1,8 @@
 import { apiClient } from '@/services/apiClient'
 
 export const inventoryService = {
-  async getAll() {
-    return apiClient.get('/spare-parts')
+  async getAll(params = {}) {
+    return apiClient.get('/spare-parts', { params })
   },
 
   async getTransactions() {

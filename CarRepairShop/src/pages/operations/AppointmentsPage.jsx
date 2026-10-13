@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   MagnifyingGlass,
   Plus,
@@ -20,9 +20,10 @@ import { useCustomers } from '../../hooks/useCustomers'
 import { useVehicles } from '../../hooks/useVehicles'
 import { useMechanics } from '../../hooks/useMechanics'
 import { useServicesCatalog } from '../../hooks/useServicesCatalog'
+import { useDebounce } from '../../hooks/useDebounce'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
-import { Modal, StatusBadge, EmptyState, TableSkeleton, LoadingButton } from '../../components/ui'
+import { Modal, StatusBadge, EmptyState, TableSkeleton, LoadingButton, Button, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, SearchableSelect } from '../../components/ui'
 
 const statusFilters = ['All', 'Scheduled', 'Confirmed', 'In Progress', 'Completed', 'Cancelled']
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -43,12 +44,28 @@ export default function AppointmentsPage() {
   const { can } = useAuth()
   const { addToast } = useToast()
 
-  const { data: appointments = [], isLoading } = useAppointments()
-  const { data: reminders = [], isLoading: remLoading } = useServiceReminders()
-  const { data: customers = [] } = useCustomers()
-  const { data: vehicles = [] } = useVehicles()
-  const { data: mechanics = [] } = useMechanics()
-  const { data: services = [] } = useServicesCatalog()
+  const [searchQuery, setSearchQuery] = useState('')
+  const debouncedSearch = useDebounce(searchQuery, 300)
+  const [activeFilter, setActiveFilter] = useState('All')
+  const [page, setPage] = useState(1)
+
+  const { data: response, isLoading } = useAppointments({ page, limit: 10, search: debouncedSearch, status: activeFilter })
+  const appointments = Array.isArray(response) ? response : (response?.data || [])
+  const pagination = response?.pagination || null
+  const totalCount = pagination ? pagination.total : appointments.length
+  const totalPages = pagination ? pagination.totalPages : 1
+
+  const { data: rawReminders = [], isLoading: remLoading } = useServiceReminders()
+  const { data: rawCustomers = [] } = useCustomers({ all: true })
+  const { data: rawVehicles = [] } = useVehicles({ all: true })
+  const { data: rawMechanics = [] } = useMechanics({ all: true })
+  const { data: rawServices = [] } = useServicesCatalog({ all: true })
+
+  const reminders = Array.isArray(rawReminders) ? rawReminders : (rawReminders?.data || [])
+  const customers = Array.isArray(rawCustomers) ? rawCustomers : (rawCustomers?.data || [])
+  const vehicles = Array.isArray(rawVehicles) ? rawVehicles : (rawVehicles?.data || [])
+  const mechanics = Array.isArray(rawMechanics) ? rawMechanics : (rawMechanics?.data || [])
+  const services = Array.isArray(rawServices) ? rawServices : (rawServices?.data || [])
 
   const createAptMutation = useCreateAppointment()
   const updateAptMutation = useUpdateAppointment()
@@ -58,8 +75,6 @@ export default function AppointmentsPage() {
   const deleteReminderMutation = useDeleteServiceReminder()
 
   const [activeTab, setActiveTab] = useState('calendar') // 'calendar' | 'reminders'
-  const [searchQuery, setSearchQuery] = useState('')
-  const [activeFilter, setActiveFilter] = useState('All')
   const [calMonth, setCalMonth] = useState(new Date().getMonth())
   const [calYear, setCalYear] = useState(new Date().getFullYear())
   const [selectedDate, setSelectedDate] = useState(null)
@@ -205,23 +220,9 @@ export default function AppointmentsPage() {
 
   // Filter pipeline
   const filtered = appointments.filter((a) => {
-    const q = searchQuery.toLowerCase()
-    const matchesSearch =
-      (a?.code || '').toLowerCase().includes(q) ||
-      (a?.customer || '').toLowerCase().includes(q) ||
-      (a?.vehicle || '').toLowerCase().includes(q) ||
-      (a?.plate || '').toLowerCase().includes(q) ||
-      (a?.mechanic || '').toLowerCase().includes(q)
-
-    const matchesStatus = activeFilter === 'All' || a.status === activeFilter
-
-    let matchesDate = true
-    if (selectedDate) {
-      const targetDateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(selectedDate).padStart(2, '0')}`
-      matchesDate = a.date === targetDateStr
-    }
-
-    return matchesSearch && matchesStatus && matchesDate
+    if (!selectedDate) return true
+    const targetDateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(selectedDate).padStart(2, '0')}`
+    return a.date === targetDateStr
   })
 
   // Mini calendar data
@@ -240,12 +241,14 @@ export default function AppointmentsPage() {
   })
 
   return (
-    <div className="space-y-6 font-sans text-app-text">
+    <div className="space-y-4 sm:space-y-5 font-sans text-app-text">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-app-text">{t('titles.appointmentsSchedule')}</h1>
-          <p className="text-xs text-app-muted mt-1">{t('appointments.subtitle')}</p>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <h1 className="text-lg font-semibold tracking-tight text-app-text">{t('titles.appointmentsSchedule')}</h1>
+          <span className="text-[11px] font-mono text-app-muted px-2 py-0.5 bg-app-card border border-app-border rounded-md">
+            {activeTab === 'calendar' ? totalCount : reminders.length}
+          </span>
         </div>
         <div className="flex items-center gap-2">
           {activeTab === 'reminders' ? (
@@ -261,51 +264,51 @@ export default function AppointmentsPage() {
                 })
                 setIsAddReminderOpen(true)
               }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-sm transition-colors shadow-subtle cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-md transition-colors cursor-pointer"
             >
-              <Plus size={16} weight="bold" />
-              <span>Schedule Service Reminder</span>
+              <Plus size={14} weight="bold" />
+              <span>New Reminder</span>
             </button>
           ) : (
             can('appointments', 'create') && (
-              <button
+              <Button
                 onClick={handleOpenAdd}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText text-xs font-semibold rounded-sm transition-colors shadow-subtle cursor-pointer"
+                size="sm"
               >
-                <Plus size={16} weight="bold" />
-                {t('appointments.newAppointment')}
-              </button>
+                <Plus size={14} weight="bold" />
+                <span>{t('appointments.newAppointment')}</span>
+              </Button>
             )
           )}
         </div>
       </div>
 
       {/* View Switcher Tabs */}
-      <div className="flex items-center gap-2 border-b border-app-border pb-3">
+      <div className="flex items-center gap-1.5 border-b border-app-border pb-2.5">
         <button
           onClick={() => setActiveTab('calendar')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-sm text-xs font-semibold transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
             activeTab === 'calendar'
-              ? 'bg-app-accent text-app-accentText shadow-subtle'
-              : 'text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98]'
+              ? 'bg-app-card text-app-text border border-app-border shadow-xs'
+              : 'text-app-muted hover:text-app-text hover:bg-app-hover'
           }`}
         >
-          <CalendarBlank size={16} weight="bold" />
-          <span>Appointments & Calendar Schedule</span>
-          <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/10 dark:bg-white/10">{appointments.length}</span>
+          <CalendarBlank size={15} weight="bold" />
+          <span>Appointments</span>
+          <span className="text-[10px] font-mono text-app-muted">{appointments.length}</span>
         </button>
 
         <button
           onClick={() => setActiveTab('reminders')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-sm text-xs font-semibold transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
             activeTab === 'reminders'
-              ? 'bg-app-accent text-app-accentText shadow-subtle'
-              : 'text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98]'
+              ? 'bg-app-card text-app-text border border-app-border shadow-xs'
+              : 'text-app-muted hover:text-app-text hover:bg-app-hover'
           }`}
         >
-          <Bell size={16} weight="bold" />
-          <span>Maintenance Reminders (CRM)</span>
-          <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/10 dark:bg-white/10">{reminders.length}</span>
+          <Bell size={15} weight="bold" />
+          <span>Reminders</span>
+          <span className="text-[10px] font-mono text-app-muted">{reminders.length}</span>
         </button>
       </div>
 
@@ -390,122 +393,137 @@ export default function AppointmentsPage() {
           </div>
 
           {/* Right Main Table */}
-          <div className="lg:col-span-3 space-y-4">
-            {/* Filter Tabs */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1">
-              {statusFilters.map((st) => (
-                <button
-                  key={st}
-                  onClick={() => setActiveFilter(st)}
-                  className={`px-3 py-1.5 rounded-sm text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
-                    activeFilter === st
-                      ? 'bg-app-accent text-app-accentText shadow-subtle'
-                      : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover active:scale-[0.98] hover:text-app-text'
-                  }`}
-                >
-                  {st === 'All' ? t('common.all') : t(`status.${st}`, st)}
-                </button>
-              ))}
-            </div>
-
-            <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden transition-colors duration-200">
-              <div className="p-4 border-b border-app-border">
-                <div className="relative max-w-md">
-                  <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
-                  <input
-                    type="text"
-                    placeholder={t('common.quickSearch')}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-sm text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
-                  />
-                </div>
+          <div className="lg:col-span-3 space-y-2.5">
+            {/* Integrated Toolbar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              {/* Filter Tabs */}
+              <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
+                {statusFilters.map((st) => (
+                  <button
+                    key={st}
+                    onClick={() => {
+                      setActiveFilter(st)
+                      setPage(1)
+                    }}
+                    className={`px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                      activeFilter === st
+                        ? 'bg-app-accent text-app-accentText font-semibold'
+                        : 'text-app-muted hover:text-app-text hover:bg-app-hover'
+                    }`}
+                  >
+                    {st === 'All' ? t('common.all') : t(`status.${st}`, st)}
+                  </button>
+                ))}
               </div>
 
-              <div className="overflow-x-auto">
-                {isLoading && appointments.length === 0 ? (
-                  <TableSkeleton rows={6} columns={7} />
-                ) : filtered.length === 0 ? (
-                  <EmptyState
-                    title={t('common.noRecords')}
-                    description={t('common.noData')}
-                    actionText={searchQuery || activeFilter !== 'All' ? t('common.filter') : undefined}
-                    onAction={
-                      searchQuery || activeFilter !== 'All'
-                        ? () => {
-                            setSearchQuery('')
-                            setActiveFilter('All')
-                            setSelectedDate(null)
-                          }
-                        : undefined
-                    }
-                  />
-                ) : (
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                        <th className="px-4 py-3 font-semibold">{t('appointments.code')}</th>
-                        <th className="px-4 py-3 font-semibold">{t('appointments.customer')}</th>
-                        <th className="px-4 py-3 font-semibold">{t('appointments.vehicle')}</th>
-                        <th className="px-4 py-3 hidden md:table-cell font-semibold">{t('appointments.service')}</th>
-                        <th className="px-4 py-3 hidden lg:table-cell font-semibold">{t('common.date')} / {t('common.time')}</th>
-                        <th className="px-4 py-3 font-semibold">{t('common.status')}</th>
-                        <th className="px-4 py-3 font-semibold text-right">{t('common.actions')}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-app-border">
-                      {filtered.map((apt) => (
-                        <tr key={apt.id} className="hover:bg-app-hover /60 active:scale-[0.98] transition-colors group">
-                          <td className="px-4 py-3.5 font-mono font-bold text-app-accent">{apt.code}</td>
-                          <td className="px-4 py-3.5 font-semibold text-app-text">{apt.customer}</td>
-                          <td className="px-4 py-3.5">
-                            <p className="font-semibold text-app-text">{apt.vehicle}</p>
-                            <p className="text-[10px] text-app-muted font-mono">{apt.plate}</p>
-                          </td>
-                          <td className="px-4 py-3.5 text-app-muted hidden md:table-cell">{apt.service}</td>
-                          <td className="px-4 py-3.5 text-app-muted hidden lg:table-cell">
-                            <span className="font-medium text-app-text">{apt.date}</span>
-                            <span className="text-[10px] text-app-muted block">{apt.time}</span>
-                          </td>
-                          <td className="px-4 py-3.5">
-                            <StatusBadge status={apt.status} />
-                          </td>
-                          <td className="px-4 py-3.5 text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              <button
-                                onClick={() => handleOpenView(apt)}
-                                className="p-1.5 rounded-sm text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
-                                title={t('common.view')}
-                              >
-                                <Eye size={15} />
-                              </button>
-                              {can('appointments', 'update') && (
-                                <button
-                                  onClick={() => handleOpenEdit(apt)}
-                                  className="p-1.5 rounded-sm text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
-                                  title={t('common.edit')}
-                                >
-                                  <PencilSimple size={15} />
-                                </button>
-                              )}
-                              {can('appointments', 'delete') && apt.status !== 'Cancelled' && (
-                                <button
-                                  onClick={() => handleCancelApt(apt.id)}
-                                  className="p-1.5 rounded-sm text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                                  title={t('appointments.cancelAppointment')}
-                                >
-                                  <XCircle size={15} />
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
+              {/* Inline Search */}
+              <div className="relative w-full sm:w-60">
+                <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted" />
+                <input
+                  type="text"
+                  placeholder={t('common.quickSearch')}
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value)
+                    setPage(1)
+                  }}
+                  className="w-full pl-8 pr-3 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+                />
               </div>
             </div>
+
+            {isLoading && appointments.length === 0 ? (
+              <TableSkeleton rows={6} columns={7} />
+            ) : filtered.length === 0 ? (
+              <div className="bg-app-card rounded-lg border border-app-border shadow-xs overflow-hidden">
+                <EmptyState
+                  title={t('common.noRecords')}
+                  description={t('common.noData')}
+                  actionText={searchQuery || activeFilter !== 'All' ? t('common.filter') : undefined}
+                  onAction={
+                    searchQuery || activeFilter !== 'All'
+                      ? () => {
+                          setSearchQuery('')
+                          setActiveFilter('All')
+                          setSelectedDate(null)
+                          setPage(1)
+                        }
+                      : undefined
+                  }
+                />
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('appointments.code')}</TableHead>
+                    <TableHead>{t('appointments.customer')}</TableHead>
+                    <TableHead>{t('appointments.vehicle')}</TableHead>
+                    <TableHead className="hidden md:table-cell">{t('appointments.service')}</TableHead>
+                    <TableHead className="hidden lg:table-cell">{t('common.date')} / {t('common.time')}</TableHead>
+                    <TableHead>{t('common.status')}</TableHead>
+                    <TableHead className="text-right">{t('common.actions')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((apt) => (
+                    <TableRow key={apt.id}>
+                      <TableCell className="font-mono font-bold text-app-accent">{apt.code}</TableCell>
+                      <TableCell className="font-semibold text-app-text">{apt.customer}</TableCell>
+                      <TableCell>
+                        <p className="font-semibold text-app-text">{apt.vehicle}</p>
+                        <p className="text-[10px] text-app-muted font-mono">{apt.plate}</p>
+                      </TableCell>
+                      <TableCell className="text-app-muted hidden md:table-cell">{apt.service}</TableCell>
+                      <TableCell className="text-app-muted hidden lg:table-cell">
+                        <span className="font-medium text-app-text">{apt.date}</span>
+                        <span className="text-[10px] text-app-muted block">{apt.time}</span>
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={apt.status} />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => handleOpenView(apt)}
+                            className="p-1 rounded-sm text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
+                            title={t('common.view')}
+                          >
+                            <Eye size={14} />
+                          </button>
+                          {can('appointments', 'update') && (
+                            <button
+                              onClick={() => handleOpenEdit(apt)}
+                              className="p-1 rounded-sm text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
+                              title={t('common.edit')}
+                            >
+                              <PencilSimple size={14} />
+                            </button>
+                          )}
+                          {can('appointments', 'delete') && apt.status !== 'Cancelled' && (
+                            <button
+                              onClick={() => handleCancelApt(apt.id)}
+                              className="p-1 rounded-sm text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                              title={t('appointments.cancelAppointment')}
+                            >
+                              <XCircle size={14} />
+                            </button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+                <TableFooterBar
+                  page={page}
+                  totalPages={totalPages}
+                  totalCount={totalCount}
+                  pageSize={10}
+                  onPrev={() => setPage((p) => Math.max(1, p - 1))}
+                  onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
+                />
+              </Table>
+            )}
           </div>
         </div>
       ) : (
@@ -523,7 +541,6 @@ export default function AppointmentsPage() {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
             {remLoading && reminders.length === 0 ? (
               <TableSkeleton rows={5} columns={6} />
             ) : reminders.length === 0 ? (
@@ -532,36 +549,36 @@ export default function AppointmentsPage() {
                 description="Click 'Schedule Service Reminder' to set an oil change or service recall alert for a customer."
               />
             ) : (
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                    <th className="px-4 py-3 font-semibold">Customer & Contact</th>
-                    <th className="px-4 py-3 font-semibold">Vehicle</th>
-                    <th className="px-4 py-3 font-semibold">Service Type</th>
-                    <th className="px-4 py-3 font-semibold">Due Date / Mileage</th>
-                    <th className="px-4 py-3 font-semibold">Status</th>
-                    <th className="px-4 py-3 font-semibold text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-app-border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Customer & Contact</TableHead>
+                    <TableHead>Vehicle</TableHead>
+                    <TableHead>Service Type</TableHead>
+                    <TableHead>Due Date / Mileage</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {reminders.map((rem) => (
-                    <tr key={rem.id} className="hover:bg-app-hover /60 active:scale-[0.98] transition-colors">
-                      <td className="px-4 py-3.5">
+                    <TableRow key={rem.id}>
+                      <TableCell>
                         <p className="font-semibold text-app-text">{rem.customer}</p>
                         <p className="text-[10px] text-app-muted">{rem.customerPhone || 'No phone'}</p>
-                      </td>
-                      <td className="px-4 py-3.5">
+                      </TableCell>
+                      <TableCell>
                         <p className="font-semibold text-app-text">{rem.vehicle}</p>
                         <p className="text-[10px] font-mono text-app-accent font-bold">{rem.plate}</p>
-                      </td>
-                      <td className="px-4 py-3.5 font-medium text-app-text">{rem.serviceType}</td>
-                      <td className="px-4 py-3.5">
+                      </TableCell>
+                      <TableCell className="font-medium text-app-text">{rem.serviceType}</TableCell>
+                      <TableCell>
                         <p className="font-semibold text-app-text">{rem.dueDate || 'Upon mileage'}</p>
                         {rem.dueOdometer && (
                           <p className="text-[10px] text-app-muted font-mono">Target: {rem.dueOdometer} km</p>
                         )}
-                      </td>
-                      <td className="px-4 py-3.5">
+                      </TableCell>
+                      <TableCell>
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded-sm text-[11px] font-semibold border ${
                             rem.status === 'Booked'
@@ -573,8 +590,8 @@ export default function AppointmentsPage() {
                         >
                           {rem.status}
                         </span>
-                      </td>
-                      <td className="px-4 py-3.5 text-right">
+                      </TableCell>
+                      <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           {/* Send Notification */}
                           <button
@@ -584,7 +601,7 @@ export default function AppointmentsPage() {
                               updateReminderMutation.mutate({ id: rem.id, data: { status: 'Notified' } })
                               addToast('Reminder text copied & status updated to Notified!', 'success')
                             }}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 text-[11px] font-semibold border border-emerald-500/30 transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 text-[11px] font-semibold border border-emerald-500/30 transition-colors cursor-pointer"
                             title="Copy SMS / WhatsApp text"
                           >
                             <ChatCircleDots size={13} />
@@ -594,7 +611,7 @@ export default function AppointmentsPage() {
                           {/* 1-Click Book Appointment */}
                           <button
                             onClick={() => handleBookFromReminder(rem)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText text-[11px] font-semibold transition-colors shadow-subtle cursor-pointer"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText text-[11px] font-semibold transition-colors shadow-subtle cursor-pointer"
                             title="Book appointment from this reminder"
                           >
                             <CalendarCheck size={13} weight="bold" />
@@ -603,19 +620,19 @@ export default function AppointmentsPage() {
 
                           <button
                             onClick={() => deleteReminderMutation.mutate(rem.id)}
-                            className="p-1.5 rounded-sm text-app-muted hover:text-rose-500 transition-colors cursor-pointer"
+                            className="p-1 rounded-sm text-app-muted hover:text-rose-500 transition-colors cursor-pointer"
                             title="Delete reminder"
                           >
                             <Trash size={14} />
                           </button>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+                <TableFooterBar totalCount={reminders.length} currentCount={reminders.length} />
+              </Table>
             )}
-          </div>
         </div>
       )}
 
@@ -625,35 +642,31 @@ export default function AppointmentsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">Customer *</label>
-              <select
-                required
+              <SearchableSelect
                 value={reminderForm.customerId}
-                onChange={(e) => setReminderForm({ ...reminderForm, customerId: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
-              >
-                <option value="">-- Choose Customer --</option>
-                {customers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.phone})
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setReminderForm({ ...reminderForm, customerId: val })}
+                options={customers.map((c) => ({
+                  value: c.id,
+                  label: c.name,
+                  sublabel: c.phone ? `Phone: ${c.phone}` : undefined,
+                }))}
+                placeholder="-- Choose Customer --"
+                searchPlaceholder="Search customer by name or phone..."
+              />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">Vehicle *</label>
-              <select
-                required
+              <SearchableSelect
                 value={reminderForm.vehicleId}
-                onChange={(e) => setReminderForm({ ...reminderForm, vehicleId: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
-              >
-                <option value="">-- Choose Vehicle --</option>
-                {vehicles.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.number} - {v.brand} {v.model}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setReminderForm({ ...reminderForm, vehicleId: val })}
+                options={vehicles.map((v) => ({
+                  value: v.id,
+                  label: `${v.number} - ${v.brand} ${v.model}`,
+                  sublabel: v.owner ? `Owner: ${v.owner}` : undefined,
+                }))}
+                placeholder="-- Choose Vehicle --"
+                searchPlaceholder="Search vehicle by plate or model..."
+              />
             </div>
           </div>
 
@@ -691,11 +704,11 @@ export default function AppointmentsPage() {
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-app-border">
             <button
               type="button"
               onClick={() => setIsAddReminderOpen(false)}
-              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
+              className="px-3.5 py-2 rounded-lg border border-app-border bg-app-card text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98] transition-all text-xs font-medium cursor-pointer shadow-xs"
             >
               Cancel
             </button>
@@ -712,76 +725,76 @@ export default function AppointmentsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('appointments.customer')} *</label>
-              <select
+              <SearchableSelect
                 value={formData.customer}
-                onChange={(e) => {
-                  const c = customers.find((x) => x.name === e.target.value)
-                  setFormData({ ...formData, customer: e.target.value, customerId: c ? c.id : '' })
+                onChange={(val) => {
+                  const c = customers.find((x) => x.name === val)
+                  setFormData({ ...formData, customer: val, customerId: c ? c.id : '' })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
-              >
-                {customers.map((c) => (
-                  <option key={c.id} value={c.name}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+                options={customers.map((c) => ({
+                  value: c.name,
+                  label: c.name,
+                  sublabel: c.phone ? `Phone: ${c.phone}` : undefined,
+                }))}
+                placeholder="Select customer..."
+                searchPlaceholder="Search customer by name or phone..."
+              />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('appointments.vehicle')} *</label>
-              <select
+              <SearchableSelect
                 value={formData.plate}
-                onChange={(e) => {
-                  const v = vehicles.find((x) => x.number === e.target.value)
+                onChange={(val) => {
+                  const v = vehicles.find((x) => x.number === val)
                   setFormData({
                     ...formData,
-                    plate: e.target.value,
+                    plate: val,
                     vehicle: v ? `${v.brand} ${v.model}` : '',
                     vehicleId: v ? v.id : '',
                   })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
-              >
-                {vehicles.map((v) => (
-                  <option key={v.id} value={v.number}>
-                    {v.number} - {v.brand} {v.model}
-                  </option>
-                ))}
-              </select>
+                options={vehicles.map((v) => ({
+                  value: v.number,
+                  label: `${v.number} - ${v.brand} ${v.model}`,
+                  sublabel: v.owner ? `Owner: ${v.owner}` : undefined,
+                }))}
+                placeholder="Select vehicle..."
+                searchPlaceholder="Search vehicle by plate or model..."
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('appointments.service')} *</label>
-              <select
+              <SearchableSelect
                 value={formData.service}
-                onChange={(e) => setFormData({ ...formData, service: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
-              >
-                {services.map((s) => (
-                  <option key={s.id} value={s.name}>
-                    {s.name} (${s.estimatedCost})
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setFormData({ ...formData, service: val })}
+                options={services.map((s) => ({
+                  value: s.name,
+                  label: s.name,
+                  sublabel: s.estimatedCost ? `$${Number(s.estimatedCost).toFixed(2)}` : undefined,
+                }))}
+                placeholder="Select service..."
+                searchPlaceholder="Search service..."
+              />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('repairJobs.technician')}</label>
-              <select
+              <SearchableSelect
                 value={formData.mechanic}
-                onChange={(e) => {
-                  const m = mechanics.find((x) => x.name === e.target.value)
-                  setFormData({ ...formData, mechanic: e.target.value, mechanicId: m ? m.id : '' })
+                onChange={(val) => {
+                  const m = mechanics.find((x) => x.name === val)
+                  setFormData({ ...formData, mechanic: val, mechanicId: m ? m.id : '' })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
-              >
-                {mechanics.map((m) => (
-                  <option key={m.id} value={m.name}>
-                    {m.name} ({m.specialization})
-                  </option>
-                ))}
-              </select>
+                options={mechanics.map((m) => ({
+                  value: m.name,
+                  label: m.name,
+                  sublabel: m.specialization ? `Specialization: ${m.specialization}` : undefined,
+                }))}
+                placeholder="Select technician..."
+                searchPlaceholder="Search technician..."
+              />
             </div>
           </div>
 
@@ -819,11 +832,11 @@ export default function AppointmentsPage() {
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-app-border">
             <button
               type="button"
               onClick={() => setIsAddOpen(false)}
-              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
+              className="px-3.5 py-2 rounded-lg border border-app-border bg-app-card text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98] transition-all text-xs font-medium cursor-pointer shadow-xs"
             >
               {t('common.cancel')}
             </button>
@@ -840,34 +853,36 @@ export default function AppointmentsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('common.status')}</label>
-              <select
+              <SearchableSelect
                 value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
-              >
-                <option value="Scheduled">{t('status.Scheduled')}</option>
-                <option value="Confirmed">{t('status.Confirmed')}</option>
-                <option value="In Progress">{t('status.In Progress')}</option>
-                <option value="Completed">{t('status.Completed')}</option>
-                <option value="Cancelled">{t('status.Cancelled')}</option>
-              </select>
+                onChange={(val) => setFormData({ ...formData, status: val })}
+                options={[
+                  { value: 'Scheduled', label: t('status.Scheduled') },
+                  { value: 'Confirmed', label: t('status.Confirmed') },
+                  { value: 'In Progress', label: t('status.In Progress') },
+                  { value: 'Completed', label: t('status.Completed') },
+                  { value: 'Cancelled', label: t('status.Cancelled') },
+                ]}
+                placeholder="Select status..."
+                searchPlaceholder="Search status..."
+              />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('repairJobs.technician')}</label>
-              <select
+              <SearchableSelect
                 value={formData.mechanic}
-                onChange={(e) => {
-                  const m = mechanics.find((x) => x.name === e.target.value)
-                  setFormData({ ...formData, mechanic: e.target.value, mechanicId: m ? m.id : '' })
+                onChange={(val) => {
+                  const m = mechanics.find((x) => x.name === val)
+                  setFormData({ ...formData, mechanic: val, mechanicId: m ? m.id : '' })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
-              >
-                {mechanics.map((m) => (
-                  <option key={m.id} value={m.name}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
+                options={mechanics.map((m) => ({
+                  value: m.name,
+                  label: m.name,
+                  sublabel: m.specialization ? `Specialization: ${m.specialization}` : undefined,
+                }))}
+                placeholder="Select technician..."
+                searchPlaceholder="Search technician..."
+              />
             </div>
           </div>
 
@@ -892,11 +907,11 @@ export default function AppointmentsPage() {
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-app-border">
             <button
               type="button"
               onClick={() => setIsEditOpen(false)}
-              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
+              className="px-3.5 py-2 rounded-lg border border-app-border bg-app-card text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98] transition-all text-xs font-medium cursor-pointer shadow-xs"
             >
               {t('common.cancel')}
             </button>

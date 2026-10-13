@@ -1,8 +1,8 @@
 import { apiClient } from '@/services/apiClient'
 
 export const mechanicService = {
-  async getAll() {
-    return apiClient.get('/mechanics')
+  async getAll(params = {}) {
+    return apiClient.get('/mechanics', { params })
   },
 
   async getById(id) {

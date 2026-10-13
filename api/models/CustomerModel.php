@@ -25,6 +25,37 @@ class CustomerModel
         return array_map([self::class, 'format'], Database::all($sql, $params));
     }
 
+    public static function getPaginated(string $search = '', int $page = 1, int $limit = 10): array
+    {
+        $countSql = "SELECT COUNT(*) AS cnt FROM customers c";
+        $countParams = [];
+        if ($search) {
+            $countSql .= " WHERE c.full_name ILIKE ? OR c.phone ILIKE ? OR c.customer_code ILIKE ?";
+            $countParams = ["%$search%", "%$search%", "%$search%"];
+        }
+        $countRow = Database::get($countSql, $countParams);
+        $total = (int) ($countRow['cnt'] ?? 0);
+
+        $offset = max(0, ($page - 1) * $limit);
+        $sql = "
+          SELECT c.*,
+                 COUNT(DISTINCT v.id)         AS vehicles_count,
+                 COALESCE(SUM(i.amount_paid), 0) AS total_spent
+          FROM customers c
+          LEFT JOIN vehicles v ON v.customer_id = c.id
+          LEFT JOIN invoices i ON i.customer_id = c.id
+        ";
+        $params = [];
+        if ($search) {
+            $sql .= " WHERE c.full_name ILIKE ? OR c.phone ILIKE ? OR c.customer_code ILIKE ?";
+            $params = ["%$search%", "%$search%", "%$search%"];
+        }
+        $sql .= " GROUP BY c.id ORDER BY c.id DESC LIMIT $limit OFFSET $offset";
+
+        $rows = array_map([self::class, 'format'], Database::all($sql, $params));
+        return ['data' => $rows, 'total' => $total];
+    }
+
     public static function findById(int $id): ?array
     {
         $r = Database::get('SELECT * FROM customers WHERE id = ?', [$id]);

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { FileText, DownloadSimple, CurrencyDollar, Wrench, Package, Users } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useReports } from '../../hooks/useReports'
-import { CardSkeleton } from '../../components/ui'
+import { CardSkeleton, Button } from '../../components/ui'
 
 export default function ReportsPage() {
   const { t } = useTranslation()
@@ -64,89 +64,75 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="space-y-6 text-app-text font-sans">
+    <div className="space-y-3 sm:space-y-4 text-app-text font-sans">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-app-text">{t('titles.analyticsReports')}</h1>
-          <p className="text-xs text-app-muted mt-1">{t('reports.subtitle')}</p>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <h1 className="text-lg font-semibold tracking-tight text-app-text">{t('titles.analyticsReports')}</h1>
+          <span className="text-[11px] font-mono text-app-muted px-2 py-0.5 bg-app-card border border-app-border rounded-md">
+            {reportsList.length}
+          </span>
         </div>
-        <button
+        <Button
           onClick={handleExportAll}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText font-semibold rounded-sm text-xs transition-colors shadow-subtle"
+          size="sm"
         >
-          <DownloadSimple size={16} weight="bold" />
-          {t('reports.exportReport')} (Full System Archive)
-        </button>
+          <DownloadSimple size={14} weight="bold" />
+          <span>{t('reports.exportReport')}</span>
+        </Button>
       </div>
 
-      {/* Metric Summary Bento Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      {/* Metric Summary Grid (Linear Style) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
         {isLoading ? (
           Array.from({ length: 4 }).map((_, idx) => <CardSkeleton key={idx} />)
         ) : (
           <>
-            <div className="bg-app-card rounded-sm border border-app-border p-4 shadow-card">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] text-app-muted font-bold uppercase tracking-wider">{t('dashboard.totalRevenue')}</p>
-                  <p className="text-xl font-bold text-app-text mt-0.5 tabular-nums">${totalInvoiced.toFixed(2)}</p>
-                </div>
-                <div className="w-10 h-10 rounded-sm bg-app-accent/15 flex items-center justify-center text-app-accent">
-                  <CurrencyDollar size={22} weight="bold" />
-                </div>
+            <div className="bg-app-card rounded-lg border border-app-border p-3 flex items-center justify-between gap-2">
+              <div>
+                <p className="text-[11px] font-medium text-app-muted tracking-tight">{t('dashboard.totalRevenue')}</p>
+                <p className="font-mono font-semibold text-xl text-app-text mt-0.5 tabular-nums">${totalInvoiced.toFixed(2)}</p>
               </div>
+              <CurrencyDollar size={18} weight="bold" className="text-app-accent flex-shrink-0" />
             </div>
 
-            <div className="bg-app-card rounded-sm border border-app-border p-4 shadow-card">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] text-app-muted font-bold uppercase tracking-wider">{t('repairJobs.title')}</p>
-                  <p className="text-xl font-bold text-app-text mt-0.5 tabular-nums">{completedRepairs} / {totalRepairJobs}</p>
-                </div>
-                <div className="w-10 h-10 rounded-sm bg-emerald-500/15 flex items-center justify-center text-emerald-500">
-                  <Wrench size={22} weight="bold" />
-                </div>
+            <div className="bg-app-card rounded-lg border border-app-border p-3 flex items-center justify-between gap-2">
+              <div>
+                <p className="text-[11px] font-medium text-app-muted tracking-tight">{t('repairJobs.title')}</p>
+                <p className="font-mono font-semibold text-xl text-app-text mt-0.5 tabular-nums">{completedRepairs} / {totalRepairJobs}</p>
               </div>
+              <Wrench size={18} weight="bold" className="text-emerald-500 flex-shrink-0" />
             </div>
 
-            <div className="bg-app-card rounded-sm border border-app-border p-4 shadow-card">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] text-app-muted font-bold uppercase tracking-wider">{t('inventory.stockQty')}</p>
-                  <p className="text-xl font-bold text-app-text mt-0.5 tabular-nums">{totalStockUnits}</p>
-                </div>
-                <div className="w-10 h-10 rounded-sm bg-amber-500/15 flex items-center justify-center text-amber-500">
-                  <Package size={22} weight="bold" />
-                </div>
+            <div className="bg-app-card rounded-lg border border-app-border p-3 flex items-center justify-between gap-2">
+              <div>
+                <p className="text-[11px] font-medium text-app-muted tracking-tight">{t('inventory.stockQty')}</p>
+                <p className="font-mono font-semibold text-xl text-app-text mt-0.5 tabular-nums">{totalStockUnits}</p>
               </div>
+              <Package size={18} weight="bold" className="text-amber-500 flex-shrink-0" />
             </div>
 
-            <div className="bg-app-card rounded-sm border border-app-border p-4 shadow-card">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] text-app-muted font-bold uppercase tracking-wider">{t('customers.title')}</p>
-                  <p className="text-xl font-bold text-app-text mt-0.5 tabular-nums">{totalCustomers}</p>
-                </div>
-                <div className="w-10 h-10 rounded-sm bg-sky-500/15 flex items-center justify-center text-sky-500">
-                  <Users size={22} weight="bold" />
-                </div>
+            <div className="bg-app-card rounded-lg border border-app-border p-3 flex items-center justify-between gap-2">
+              <div>
+                <p className="text-[11px] font-medium text-app-muted tracking-tight">{t('customers.title')}</p>
+                <p className="font-mono font-semibold text-xl text-app-text mt-0.5 tabular-nums">{totalCustomers}</p>
               </div>
+              <Users size={18} weight="bold" className="text-sky-500 flex-shrink-0" />
             </div>
           </>
         )}
       </div>
 
       {/* Category Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+      <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
         {categories.map((cat) => (
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
-            className={`px-3 py-1.5 rounded-sm text-xs font-medium whitespace-nowrap transition-colors ${
+            className={`px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
               selectedCategory === cat
-                ? 'bg-app-accent text-app-accentText shadow-subtle'
-                : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover active:scale-[0.98] hover:text-app-text'
+                ? 'bg-app-accent text-app-accentText font-semibold'
+                : 'text-app-muted hover:text-app-text hover:bg-app-hover'
             }`}
           >
             {cat === 'All' ? t('common.all') : cat}
@@ -155,7 +141,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Reports List */}
-      <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden">
+      <div className="bg-app-card rounded-lg border border-app-border shadow-xs overflow-hidden">
         <div className="divide-y divide-app-border">
           {filtered.map((report) => (
             <div
@@ -179,13 +165,14 @@ export default function ReportsPage() {
               </div>
 
               <div className="flex items-center gap-2 self-end sm:self-center">
-                <button
+                <Button
                   onClick={() => handleExportData(report.title, report.data)}
-                  className="px-3 py-1.5 bg-app-hover hover:bg-app-border border border-app-border rounded-sm text-xs font-semibold text-app-text transition-colors flex items-center gap-1.5 shadow-subtle"
+                  variant="outline"
+                  size="sm"
                 >
                   <DownloadSimple size={14} weight="bold" />
                   {t('common.export')}
-                </button>
+                </Button>
               </div>
             </div>
           ))}

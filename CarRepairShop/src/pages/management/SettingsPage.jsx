@@ -36,6 +36,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { settingsService } from '../../services/settingsService'
 import { useAuth, DEFAULT_PERMISSIONS_MATRIX } from '../../context/AuthContext'
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell, SearchableSelect } from '../../components/ui'
 
 const MODULE_DEFINITIONS = [
   // Operations Category
@@ -405,77 +406,55 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6 text-app-text font-sans max-w-6xl mx-auto pb-16 transition-colors duration-200">
+    <div className="space-y-4 text-app-text font-sans max-w-6xl mx-auto pb-12 transition-colors duration-200">
       {/* Top Header & Page Identity */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-app-card border border-app-border rounded-sm p-3.5 shadow-card">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-sm bg-app-accent/15 border border-app-accent/30 flex items-center justify-center text-app-accent flex-shrink-0 shadow-subtle">
-            <Gear size={26} weight="duotone" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-xl font-bold tracking-tight text-app-text">{t('titles.systemSettings')}</h1>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                Live System
-              </span>
-            </div>
-            <p className="text-xs text-app-muted mt-0.5">{t('settings.subtitle')}</p>
-          </div>
-        </div>
-
-        {/* Global Quick Action Stats */}
-        <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-3 px-3.5 py-2 bg-app-hover/60 border border-app-border rounded-sm text-xs">
-            <div className="text-right">
-              <p className="text-[10px] text-app-muted uppercase font-bold tracking-wider">Access Model</p>
-              <p className="font-semibold text-app-text font-mono">RBAC Matrix (v2)</p>
-            </div>
-            <div className="w-2 h-2 rounded-full bg-emerald-500" />
-          </div>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <h1 className="text-lg font-semibold tracking-tight text-app-text">{t('titles.systemSettings')}</h1>
+          <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            Live
+          </span>
         </div>
       </div>
 
       {/* Modern Navigation Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-app-border">
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-app-border">
         {user?.role === 'admin' && (
           <button
             onClick={() => setActiveTab('permissions')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-sm text-xs font-semibold transition-all ${
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
               activeTab === 'permissions'
-                ? 'bg-app-accent text-app-accentText shadow-subtle'
-                : 'text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98]'
+                ? 'bg-app-card text-app-text border border-app-border shadow-xs'
+                : 'text-app-muted hover:text-app-text hover:bg-app-hover'
             }`}
           >
-            <LockKey size={16} weight={activeTab === 'permissions' ? 'bold' : 'regular'} />
-            {t('settings.rbacMatrix')}
-            <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-600 dark:text-blue-400 font-bold uppercase ml-1">
-              Admin
-            </span>
+            <LockKey size={15} weight={activeTab === 'permissions' ? 'bold' : 'regular'} />
+            <span>{t('settings.rbacMatrix')}</span>
           </button>
         )}
 
         <button
           onClick={() => setActiveTab('profile')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-sm text-xs font-semibold transition-all ${
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
             activeTab === 'profile'
-              ? 'bg-app-accent text-app-accentText shadow-subtle'
-              : 'text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98]'
+              ? 'bg-app-card text-app-text border border-app-border shadow-xs'
+              : 'text-app-muted hover:text-app-text hover:bg-app-hover'
           }`}
         >
-          <Buildings size={16} weight={activeTab === 'profile' ? 'bold' : 'regular'} />
-          {t('settings.workshopProfile')}
+          <Buildings size={15} weight={activeTab === 'profile' ? 'bold' : 'regular'} />
+          <span>{t('settings.workshopProfile')}</span>
         </button>
 
         <button
           onClick={() => setActiveTab('language')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-sm text-xs font-semibold transition-all ${
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
             activeTab === 'language'
-              ? 'bg-app-accent text-app-accentText shadow-subtle'
-              : 'text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98]'
+              ? 'bg-app-card text-app-text border border-app-border shadow-xs'
+              : 'text-app-muted hover:text-app-text hover:bg-app-hover'
           }`}
         >
-          <Translate size={16} weight={activeTab === 'language' ? 'bold' : 'regular'} />
-          {t('settings.language')}
+          <Translate size={15} weight={activeTab === 'language' ? 'bold' : 'regular'} />
+          <span>{t('settings.language')}</span>
         </button>
 
         <button
@@ -632,108 +611,106 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                    <th className="px-4 py-3.5 font-bold uppercase tracking-wider text-[10px]">{t('settings.moduleName')}</th>
-                    {PERM_ACTIONS.map((a) => (
-                      <th key={a.key} className="px-3 py-3.5 text-center w-24 font-bold uppercase tracking-wider text-[10px]">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleActionColumn(selectedRole, a.key)}
-                          className="hover:text-app-text transition-colors inline-flex items-center gap-1"
-                        >
-                          {a.short}
-                        </button>
-                      </th>
-                    ))}
-                    <th className="px-4 py-3.5 text-center w-28 font-bold uppercase tracking-wider text-[10px]">{t('settings.quickPresets')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-app-border">
-                  {filteredModules.map((mod) => {
-                    const Icon = mod.icon
-                    const rolePerms = localMatrix[mod.key]?.[selectedRole] || []
-                    const isAllChecked = PERM_ACTIONS.every((a) => rolePerms.includes(a.key))
-                    const isNoneChecked = rolePerms.length === 0
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-[10px] uppercase font-bold">{t('settings.moduleName')}</TableHead>
+                  {PERM_ACTIONS.map((a) => (
+                    <TableHead key={a.key} className="text-center w-24 text-[10px] uppercase font-bold">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleActionColumn(selectedRole, a.key)}
+                        className="hover:text-app-text transition-colors inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        {a.short}
+                      </button>
+                    </TableHead>
+                  ))}
+                  <TableHead className="text-center w-28 text-[10px] uppercase font-bold">{t('settings.quickPresets')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredModules.map((mod) => {
+                  const Icon = mod.icon
+                  const rolePerms = localMatrix[mod.key]?.[selectedRole] || []
+                  const isAllChecked = PERM_ACTIONS.every((a) => rolePerms.includes(a.key))
+                  const isNoneChecked = rolePerms.length === 0
 
-                    return (
-                      <tr key={mod.key} className="hover:bg-app-hover /50 active:scale-[0.98] transition-colors group">
-                        <td className="px-4 py-3.5">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-sm bg-app-hover border border-app-border flex items-center justify-center text-app-muted group-hover:text-app-accent group-hover:border-app-accent/30 transition-colors flex-shrink-0">
-                              <Icon size={18} weight="regular" />
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <p className="font-semibold text-app-text">{t(mod.titleKey)}</p>
-                                <span className="text-[9px] px-1.5 py-0.2 rounded bg-app-hover text-app-muted border border-app-border">
-                                  {mod.category}
-                                </span>
-                              </div>
-                              <p className="text-[11px] text-app-muted mt-0.5">{mod.desc}</p>
-                            </div>
+                  return (
+                    <TableRow key={mod.key}>
+                      <TableCell>
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-sm bg-app-hover border border-app-border flex items-center justify-center text-app-muted group-hover:text-app-accent group-hover:border-app-accent/30 transition-colors flex-shrink-0">
+                            <Icon size={16} weight="regular" />
                           </div>
-                        </td>
-
-                        {PERM_ACTIONS.map((action) => {
-                          const isChecked = rolePerms.includes(action.key)
-                          return (
-                            <td key={action.key} className="px-3 py-3.5 text-center">
-                              <button
-                                type="button"
-                                onClick={() => handleToggleLocalPerm(selectedRole, mod.key, action.key)}
-                                className={`w-6 h-6 rounded-sm border inline-flex items-center justify-center transition-all ${
-                                  isChecked
-                                    ? action.danger
-                                      ? 'bg-rose-500/20 border-rose-500 text-rose-600 dark:text-rose-400'
-                                      : 'bg-emerald-500 text-white dark:bg-emerald-500 dark:text-gray-900 border-emerald-500 shadow-sm'
-                                    : 'border-app-border bg-app-input hover:border-app-muted/60 text-transparent'
-                                }`}
-                              >
-                                <Check size={14} weight="bold" />
-                              </button>
-                            </td>
-                          )
-                        })}
-
-                        <td className="px-4 py-3.5 text-center">
-                          <div className="inline-flex items-center gap-1 bg-app-hover/70 border border-app-border p-0.5 rounded-sm text-[10px]">
-                            <button
-                              onClick={() => handleSetRowPreset(selectedRole, mod.key, 'full')}
-                              className={`px-1.5 py-0.5 rounded ${
-                                isAllChecked ? 'bg-app-card text-app-text font-bold shadow-subtle' : 'text-app-muted hover:text-app-text'
-                              }`}
-                            >
-                              {t('settings.full')}
-                            </button>
-                            <button
-                              onClick={() => handleSetRowPreset(selectedRole, mod.key, 'read')}
-                              className={`px-1.5 py-0.5 rounded ${
-                                rolePerms.length === 1 && rolePerms[0] === 'read'
-                                  ? 'bg-app-card text-app-text font-bold shadow-subtle'
-                                  : 'text-app-muted hover:text-app-text'
-                              }`}
-                            >
-                              {t('settings.read')}
-                            </button>
-                            <button
-                              onClick={() => handleSetRowPreset(selectedRole, mod.key, 'none')}
-                              className={`px-1.5 py-0.5 rounded ${
-                                isNoneChecked ? 'bg-app-card text-rose-500 font-bold shadow-subtle' : 'text-app-muted hover:text-rose-500'
-                              }`}
-                            >
-                              {t('settings.off')}
-                            </button>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-semibold text-app-text">{t(mod.titleKey)}</p>
+                              <span className="text-[9px] px-1.5 py-0.2 rounded bg-app-hover text-app-muted border border-app-border">
+                                {mod.category}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-app-muted mt-0.5">{mod.desc}</p>
                           </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+                        </div>
+                      </TableCell>
+
+                      {PERM_ACTIONS.map((action) => {
+                        const isChecked = rolePerms.includes(action.key)
+                        return (
+                          <TableCell key={action.key} className="text-center">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleLocalPerm(selectedRole, mod.key, action.key)}
+                              className={`w-5 h-5 rounded-sm border inline-flex items-center justify-center transition-all cursor-pointer ${
+                                isChecked
+                                  ? action.danger
+                                    ? 'bg-rose-500/20 border-rose-500 text-rose-600 dark:text-rose-400'
+                                    : 'bg-emerald-500 text-white dark:bg-emerald-500 dark:text-gray-900 border-emerald-500 shadow-sm'
+                                  : 'border-app-border bg-app-input hover:border-app-muted/60 text-transparent'
+                              }`}
+                            >
+                              <Check size={12} weight="bold" />
+                            </button>
+                          </TableCell>
+                        )
+                      })}
+
+                      <TableCell className="text-center">
+                        <div className="inline-flex items-center gap-1 bg-app-hover/70 border border-app-border p-0.5 rounded-sm text-[10px]">
+                          <button
+                            onClick={() => handleSetRowPreset(selectedRole, mod.key, 'full')}
+                            className={`px-1.5 py-0.5 rounded cursor-pointer ${
+                              isAllChecked ? 'bg-app-card text-app-text font-bold shadow-subtle' : 'text-app-muted hover:text-app-text'
+                            }`}
+                          >
+                            {t('settings.full')}
+                          </button>
+                          <button
+                            onClick={() => handleSetRowPreset(selectedRole, mod.key, 'read')}
+                            className={`px-1.5 py-0.5 rounded cursor-pointer ${
+                              rolePerms.length === 1 && rolePerms[0] === 'read'
+                                ? 'bg-app-card text-app-text font-bold shadow-subtle'
+                                : 'text-app-muted hover:text-app-text'
+                            }`}
+                          >
+                            {t('settings.read')}
+                          </button>
+                          <button
+                            onClick={() => handleSetRowPreset(selectedRole, mod.key, 'none')}
+                            className={`px-1.5 py-0.5 rounded cursor-pointer ${
+                              isNoneChecked ? 'bg-app-card text-rose-500 font-bold shadow-subtle' : 'text-app-muted hover:text-rose-500'
+                            }`}
+                          >
+                            {t('settings.off')}
+                          </button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
 
             <div className="p-4 border-t border-app-border bg-app-hover/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-2 text-[11px] text-app-muted">
@@ -1000,17 +977,19 @@ export default function SettingsPage() {
 
                 <div>
                   <label className="block text-app-muted font-semibold mb-1.5">{t('settings.currencyFormat')}</label>
-                  <select
+                  <SearchableSelect
                     value={settings.currency}
-                    onChange={(e) => setSettings({ ...settings, currency: e.target.value })}
-                    className="w-full px-3.5 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
-                  >
-                    <option value="USD ($)">USD ($) - US Dollar</option>
-                    <option value="KHR (៛)">KHR (៛) - Cambodian Riel</option>
-                    <option value="EUR (€)">EUR (€) - Euro</option>
-                    <option value="GBP (£)">GBP (£) - British Pound</option>
-                    <option value="THB (฿)">THB (฿) - Thai Baht</option>
-                  </select>
+                    onChange={(val) => setSettings({ ...settings, currency: val })}
+                    options={[
+                      { value: 'USD ($)', label: 'USD ($) - US Dollar' },
+                      { value: 'KHR (៛)', label: 'KHR (៛) - Cambodian Riel' },
+                      { value: 'EUR (€)', label: 'EUR (€) - Euro' },
+                      { value: 'GBP (£)', label: 'GBP (£) - British Pound' },
+                      { value: 'THB (฿)', label: 'THB (฿) - Thai Baht' },
+                    ]}
+                    placeholder="Select currency..."
+                    searchPlaceholder="Search currency..."
+                  />
                 </div>
               </div>
             </div>

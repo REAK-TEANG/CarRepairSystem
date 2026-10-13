@@ -4,11 +4,12 @@ import { useToast } from '@/context/ToastContext'
 
 const QUERY_KEY = ['employees']
 
-export function useEmployees(options = {}) {
+export function useEmployees(params = {}, options = {}) {
   return useQuery({
-    queryKey: QUERY_KEY,
-    queryFn: () => employeeService.getAll(),
-    staleTime: 1000 * 60 * 5,
+    queryKey: ['employees', params],
+    queryFn: () => employeeService.getAll(params),
+    placeholderData: (previousData) => previousData,
+    staleTime: 1000 * 60 * 2,
     ...options,
   })
 }

@@ -1,8 +1,8 @@
 import { apiClient } from '@/services/apiClient'
 
 export const invoiceService = {
-  async getAll() {
-    return apiClient.get('/invoices')
+  async getAll(params = {}) {
+    return apiClient.get('/invoices', { params })
   },
 
   async getById(id) {

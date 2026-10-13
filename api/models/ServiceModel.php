@@ -32,6 +32,73 @@ class ServiceModel
         return array_map([self::class, 'format'], $rows);
     }
 
+    public static function getPaginated(string $search = '', int $page = 1, int $limit = 10, ?string $status = null): array
+    {
+        $countSql = "
+          SELECT COUNT(*) AS cnt
+          FROM services s
+          WHERE 1=1
+        ";
+        $countParams = [];
+        if ($search) {
+            $countSql .= " AND (s.name ILIKE ? OR s.description ILIKE ?)";
+            $countParams = array_merge($countParams, ["%$search%", "%$search%"]);
+        }
+        if ($status !== null && $status !== 'All Status' && $status !== '') {
+            if ($status === 'Active Only' || $status === 'true' || $status === '1') {
+                $countSql .= " AND s.is_active = TRUE";
+            } else if ($status === 'Inactive Only' || $status === 'false' || $status === '0') {
+                $countSql .= " AND s.is_active = FALSE";
+            }
+        }
+
+        $countRow = Database::get($countSql, $countParams);
+        $total = (int) ($countRow['cnt'] ?? 0);
+
+        $offset = max(0, ($page - 1) * $limit);
+        $sql = "
+          SELECT s.*,
+                 COALESCE(
+                   json_agg(
+                     json_build_object(
+                       'id', sp.id,
+                       'sparePartId', p.id,
+                       'partCode', p.part_code,
+                       'name', p.name,
+                       'brand', p.brand,
+                       'unitPrice', p.unit_price,
+                       'stockQuantity', p.stock_quantity,
+                       'quantity', sp.quantity
+                     )
+                   ) FILTER (WHERE sp.id IS NOT NULL),
+                   '[]'
+                 ) AS required_parts
+          FROM services s
+          LEFT JOIN service_parts sp ON sp.service_id = s.id
+          LEFT JOIN spare_parts p ON sp.spare_part_id = p.id
+          WHERE 1=1
+        ";
+        $params = [];
+        if ($search) {
+            $sql .= " AND (s.name ILIKE ? OR s.description ILIKE ?)";
+            $params = array_merge($params, ["%$search%", "%$search%"]);
+        }
+        if ($status !== null && $status !== 'All Status' && $status !== '') {
+            if ($status === 'Active Only' || $status === 'true' || $status === '1') {
+                $sql .= " AND s.is_active = TRUE";
+            } else if ($status === 'Inactive Only' || $status === 'false' || $status === '0') {
+                $sql .= " AND s.is_active = FALSE";
+            }
+        }
+        $sql .= " GROUP BY s.id ORDER BY s.id ASC LIMIT $limit OFFSET $offset";
+
+        $rows = Database::all($sql, $params);
+        return [
+            'data' => array_map([self::class, 'format'], $rows),
+            'total' => $total,
+        ];
+    }
+
     public static function findById(int $id): ?array
     {
         $r = Database::get("

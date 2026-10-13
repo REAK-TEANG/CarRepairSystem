@@ -2,13 +2,22 @@
 // api/controllers/CustomerController.php
 
 require_once __DIR__ . '/../models/CustomerModel.php';
+require_once __DIR__ . '/../utils/pagination.php';
 
 class CustomerController
 {
     public function index(): void
     {
         $search = $_GET['search'] ?? '';
-        echo json_encode(['data' => CustomerModel::getAll($search)]);
+        $params = Pagination::getParams(10);
+
+        if ($params['isAll']) {
+            echo json_encode(['data' => CustomerModel::getAll($search)]);
+            return;
+        }
+
+        $result = CustomerModel::getPaginated($search, $params['page'], $params['limit']);
+        echo json_encode(Pagination::formatResponse($result['data'], $result['total'], $params['page'], $params['limit']));
     }
 
     public function show(int $id): void

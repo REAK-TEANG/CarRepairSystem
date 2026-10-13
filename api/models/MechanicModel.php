@@ -19,6 +19,71 @@ class MechanicModel
         return array_map([self::class, 'format'], $rows);
     }
 
+    public static function getPaginated(string $search = '', int $page = 1, int $limit = 10, ?string $status = null): array
+    {
+        $countSql = "
+          SELECT COUNT(DISTINCT e.id) AS cnt
+          FROM employees e
+          LEFT JOIN users u ON e.user_id = u.id
+          WHERE 1=1
+        ";
+        $countParams = [];
+        if ($search) {
+            $countSql .= " AND (u.full_name ILIKE ? OR e.employee_code ILIKE ? OR e.specialization ILIKE ? OR u.phone ILIKE ? OR u.email ILIKE ?)";
+            $countParams = array_merge($countParams, ["%$search%", "%$search%", "%$search%", "%$search%", "%$search%"]);
+        }
+        if ($status && $status !== 'All Status' && $status !== 'All') {
+            $countSql .= " AND e.employment_status = ?";
+            $countParams[] = $status;
+        }
+
+        $countRow = Database::get($countSql, $countParams);
+        $total = (int) ($countRow['cnt'] ?? 0);
+
+        $offset = max(0, ($page - 1) * $limit);
+        $sql = "
+          SELECT e.*, u.full_name, u.phone, u.email,
+                 COUNT(CASE WHEN ro.status::text != 'Completed' AND ro.id IS NOT NULL THEN 1 END) AS active_jobs,
+                 COUNT(CASE WHEN ro.status::text = 'Completed' THEN 1 END) AS completed_jobs
+          FROM employees e
+          LEFT JOIN users u ON e.user_id = u.id
+          LEFT JOIN repair_orders ro ON ro.mechanic_id = e.id
+          WHERE 1=1
+        ";
+        $params = [];
+        if ($search) {
+            $sql .= " AND (u.full_name ILIKE ? OR e.employee_code ILIKE ? OR e.specialization ILIKE ? OR u.phone ILIKE ? OR u.email ILIKE ?)";
+            $params = array_merge($params, ["%$search%", "%$search%", "%$search%", "%$search%", "%$search%"]);
+        }
+        if ($status && $status !== 'All Status' && $status !== 'All') {
+            $sql .= " AND e.employment_status = ?";
+            $params[] = $status;
+        }
+        $sql .= " GROUP BY e.id, u.full_name, u.phone, u.email ORDER BY e.id ASC LIMIT $limit OFFSET $offset";
+
+        $rows = Database::all($sql, $params);
+        return [
+            'data' => array_map([self::class, 'format'], $rows),
+            'total' => $total,
+        ];
+    }
+
+    public static function findById(int $id): ?array
+    {
+        $r = Database::get("
+          SELECT e.*, u.full_name, u.phone, u.email,
+                 COUNT(CASE WHEN ro.status::text != 'Completed' AND ro.id IS NOT NULL THEN 1 END) AS active_jobs,
+                 COUNT(CASE WHEN ro.status::text = 'Completed' THEN 1 END) AS completed_jobs
+          FROM employees e
+          LEFT JOIN users u ON e.user_id = u.id
+          LEFT JOIN repair_orders ro ON ro.mechanic_id = e.id
+          WHERE e.id = ?
+          GROUP BY e.id, u.full_name, u.phone, u.email
+        ", [$id]);
+
+        return $r ? self::format($r) : null;
+    }
+
     public static function create(array $input): array
     {
         $name = trim($input['name'] ?? '');

@@ -2,17 +2,28 @@
 // api/controllers/RepairJobController.php
 
 require_once __DIR__ . '/../models/RepairJobModel.php';
+require_once __DIR__ . '/../utils/pagination.php';
 
 class RepairJobController
 {
     public function index(): void
     {
+        $search = $_GET['search'] ?? '';
+        $status = $_GET['status'] ?? null;
+        $params = Pagination::getParams(10);
         $filters = [
             'mechanicId' => $_GET['mechanicId'] ?? null,
             'vehicleId'  => $_GET['vehicleId']  ?? null,
             'customerId' => $_GET['customerId'] ?? null,
         ];
-        echo json_encode(['data' => RepairJobModel::getAll($filters)]);
+
+        if ($params['isAll']) {
+            echo json_encode(['data' => RepairJobModel::getAll($filters)]);
+            return;
+        }
+
+        $result = RepairJobModel::getPaginated($filters, $search, $params['page'], $params['limit'], $status);
+        echo json_encode(Pagination::formatResponse($result['data'], $result['total'], $params['page'], $params['limit']));
     }
 
     public function show(int $id): void

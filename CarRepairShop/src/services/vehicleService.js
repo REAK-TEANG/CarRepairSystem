@@ -2,8 +2,7 @@ import { apiClient } from '@/services/apiClient'
 
 export const vehicleService = {
   async getAll(params = {}) {
-    const queryStr = params?.customerId ? `?customerId=${encodeURIComponent(params.customerId)}` : ''
-    return apiClient.get(`/vehicles${queryStr}`)
+    return apiClient.get('/vehicles', { params })
   },
 
   async getById(id) {

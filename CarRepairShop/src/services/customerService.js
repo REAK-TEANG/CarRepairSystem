@@ -2,8 +2,7 @@ import { apiClient } from '@/services/apiClient'
 
 export const customerService = {
   async getAll(params = {}) {
-    const queryStr = params?.search ? `?search=${encodeURIComponent(params.search)}` : ''
-    return apiClient.get(`/customers${queryStr}`)
+    return apiClient.get('/customers', { params })
   },
 
   async getById(id) {

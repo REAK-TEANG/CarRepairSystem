@@ -19,6 +19,11 @@ class SettingsModel
         'settings'    => ['admin' => ['create','read','update','delete','export'], 'manager' => [], 'mechanic' => [], 'service_advisor' => []],
     ];
 
+    public static function get(): array
+    {
+        return self::getAll();
+    }
+
     public static function getAll(): array
     {
         $rows        = Database::all('SELECT * FROM settings');

@@ -76,10 +76,20 @@ function all($sql, $params = []) {
     return $stmt->fetchAll();
 }
 
+function getAll($sql, $params = []) {
+    return all($sql, $params);
+}
+
 function run($sql, $params = []) {
     global $pdo;
     $stmt = query($sql, $params);
-    return ['rowCount' => $stmt->rowCount(), 'lastInsertId' => $pdo->lastInsertId()];
+    $lastId = null;
+    try {
+        $lastId = $pdo->lastInsertId();
+    } catch (Throwable $e) {
+        $lastId = null;
+    }
+    return ['rowCount' => $stmt->rowCount(), 'lastInsertId' => $lastId];
 }
 
 /**
@@ -106,6 +116,7 @@ class Database {
     public static function query($sql, $params = []) { return query($sql, $params); }
     public static function get($sql, $params = []) { return get($sql, $params); }
     public static function all($sql, $params = []) { return all($sql, $params); }
+    public static function getAll($sql, $params = []) { return all($sql, $params); }
     public static function run($sql, $params = []) { return run($sql, $params); }
     public static function transaction(callable $callback) { return transaction($callback); }
 }

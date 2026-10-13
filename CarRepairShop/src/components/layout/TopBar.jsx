@@ -56,10 +56,15 @@ export default function TopBar({ onToggleSidebar }) {
   const { user, can, logout } = useAuth()
   const { isDark, toggleTheme } = useTheme()
 
-  const { data: customers = [] } = useCustomers({ enabled: Boolean(user && can('customers', 'read')) })
-  const { data: vehicles = [] } = useVehicles({ enabled: Boolean(user && can('vehicles', 'read')) })
-  const { data: repairJobs = [] } = useRepairJobs({}, { enabled: Boolean(user && can('repair_jobs', 'read')) })
-  const { data: inventory = [] } = useInventory({ enabled: Boolean(user && can('inventory', 'read')) })
+  const { data: rawCustomers } = useCustomers({ all: true }, { enabled: Boolean(user && can('customers', 'read')) })
+  const { data: rawVehicles } = useVehicles({ all: true }, { enabled: Boolean(user && can('vehicles', 'read')) })
+  const { data: rawRepairJobs } = useRepairJobs({ all: true }, { enabled: Boolean(user && can('repair_jobs', 'read')) })
+  const { data: rawInventory } = useInventory({ all: true }, { enabled: Boolean(user && can('inventory', 'read')) })
+
+  const customers = Array.isArray(rawCustomers) ? rawCustomers : (rawCustomers?.data || [])
+  const vehicles = Array.isArray(rawVehicles) ? rawVehicles : (rawVehicles?.data || [])
+  const repairJobs = Array.isArray(rawRepairJobs) ? rawRepairJobs : (rawRepairJobs?.data || [])
+  const inventory = Array.isArray(rawInventory) ? rawInventory : (rawInventory?.data || [])
 
   const currentTitle = routeTitleKeys[location.pathname] ? t(routeTitleKeys[location.pathname]) : t('nav.dashboards')
 
@@ -154,29 +159,29 @@ export default function TopBar({ onToggleSidebar }) {
   }
 
   return (
-    <header className="sticky top-0 flex items-center justify-between h-16 sm:h-20 px-3 sm:px-4 lg:px-8 bg-[var(--bg-card)]/90 backdrop-blur-md border-b border-[var(--border-color)] text-[var(--text-primary)] z-20 font-sans transition-colors duration-200">
+    <header className="sticky top-0 flex items-center justify-between h-14 px-3 sm:px-4 lg:px-6 bg-[var(--bg-card)]/95 backdrop-blur-md border-b border-[var(--border-color)] text-[var(--text-primary)] z-20 font-sans transition-colors duration-200">
       {/* Left: Sidebar Toggle + Breadcrumb + Global Search */}
-      <div className="flex items-center gap-2 sm:gap-4 lg:gap-6 min-w-0">
+      <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 min-w-0">
         <button
           onClick={onToggleSidebar}
-          className="p-2 rounded-sm text-app-muted hover:bg-app-hover active:scale-[0.98] hover:text-app-text transition-colors lg:hidden flex-shrink-0"
+          className="p-1.5 rounded-md text-app-muted hover:bg-app-hover active:scale-[0.98] hover:text-app-text transition-colors lg:hidden flex-shrink-0"
           aria-label="Toggle navigation menu"
         >
-          <List size={22} weight="bold" />
+          <List size={20} weight="bold" />
         </button>
 
         {/* Page Title / Breadcrumb Path */}
-        <div className="flex items-center gap-2 text-xs text-app-muted min-w-0">
-          <span className="hover:text-app-text transition-colors cursor-default hidden md:inline truncate">{t('common.appName')}</span>
-          <span className="hidden md:inline">/</span>
-          <span className="text-app-text font-bold bg-app-hover/70 px-2.5 py-1 rounded-sm border border-app-border truncate">
+        <div className="flex items-center gap-2 text-xs min-w-0">
+          <span className="text-app-muted hover:text-app-text transition-colors cursor-default hidden md:inline truncate">{t('common.appName')}</span>
+          <span className="hidden md:inline text-app-muted/60">/</span>
+          <span className="text-app-text font-semibold truncate">
             {currentTitle}
           </span>
         </div>
 
         {/* Desktop Global Search Bar with Live Popover */}
         <div ref={searchRef} className="relative hidden sm:block">
-          <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
+          <MagnifyingGlass size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted" />
           <input
             type="text"
             placeholder={t('common.quickSearch')}
@@ -186,7 +191,7 @@ export default function TopBar({ onToggleSidebar }) {
               setSearchQuery(e.target.value)
               setIsSearchOpen(true)
             }}
-            className="w-48 md:w-60 lg:w-80 pl-9 pr-12 py-2 bg-app-input border border-app-border rounded-sm text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent focus:ring-1 focus:ring-app-accent transition-all shadow-subtle"
+            className="w-44 md:w-56 lg:w-72 pl-8 pr-10 py-1.5 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent focus:ring-1 focus:ring-app-accent transition-all"
           />
           <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
             {searchQuery ? (

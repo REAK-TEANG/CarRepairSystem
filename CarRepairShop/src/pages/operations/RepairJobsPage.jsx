@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   MagnifyingGlass,
   Plus,
@@ -23,9 +23,10 @@ import { useVehicles } from '../../hooks/useVehicles'
 import { useMechanics } from '../../hooks/useMechanics'
 import { useServicesCatalog } from '../../hooks/useServicesCatalog'
 import { useCreateInvoice } from '../../hooks/useInvoices'
+import { useDebounce } from '../../hooks/useDebounce'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
-import { Modal, StatusBadge, EmptyState, ConfirmDialog, TableSkeleton, LoadingButton } from '../../components/ui'
+import { Modal, StatusBadge, EmptyState, ConfirmDialog, TableSkeleton, LoadingButton, Button, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, SearchableSelect } from '../../components/ui'
 
 const statusFilters = ['All', 'Pending', 'Diagnosing', 'Repairing', 'Waiting for Parts', 'Ready for Pickup', 'Completed']
 
@@ -33,20 +34,39 @@ export default function RepairJobsPage() {
   const { t } = useTranslation()
   const { can, user } = useAuth()
   const { addToast } = useToast()
-  const params = user?.role === 'mechanic' ? { mechanicId: user?.id } : {}
-  const { data: jobs = [], isLoading } = useRepairJobs(params)
-  const { data: customers = [] } = useCustomers()
-  const { data: vehicles = [] } = useVehicles()
-  const { data: mechanics = [] } = useMechanics()
-  const { data: services = [] } = useServicesCatalog()
+
+  const [searchQuery, setSearchQuery] = useState('')
+  const debouncedSearch = useDebounce(searchQuery, 300)
+  const [activeFilter, setActiveFilter] = useState('All')
+  const [page, setPage] = useState(1)
+
+  const queryParams = {
+    page,
+    limit: 10,
+    search: debouncedSearch,
+    status: activeFilter,
+    ...(user?.role === 'mechanic' ? { mechanicId: user?.id } : {}),
+  }
+  const { data: response, isLoading } = useRepairJobs(queryParams)
+  const jobs = Array.isArray(response) ? response : (response?.data || [])
+  const pagination = response?.pagination || null
+  const totalCount = pagination ? pagination.total : jobs.length
+  const totalPages = pagination ? pagination.totalPages : 1
+
+  const { data: rawCustomers = [] } = useCustomers({ all: true })
+  const { data: rawVehicles = [] } = useVehicles({ all: true })
+  const { data: rawMechanics = [] } = useMechanics({ all: true })
+  const { data: rawServices = [] } = useServicesCatalog({ all: true })
+
+  const customers = Array.isArray(rawCustomers) ? rawCustomers : (rawCustomers?.data || [])
+  const vehicles = Array.isArray(rawVehicles) ? rawVehicles : (rawVehicles?.data || [])
+  const mechanics = Array.isArray(rawMechanics) ? rawMechanics : (rawMechanics?.data || [])
+  const services = Array.isArray(rawServices) ? rawServices : (rawServices?.data || [])
 
   const createJobMutation = useCreateRepairJob()
   const updateJobMutation = useUpdateRepairJob()
   const deleteJobMutation = useDeleteRepairJob()
   const createInvoiceMutation = useCreateInvoice()
-
-  const [searchQuery, setSearchQuery] = useState('')
-  const [activeFilter, setActiveFilter] = useState('All')
 
   // Modals
   const [isAddOpen, setIsAddOpen] = useState(false)
@@ -200,192 +220,185 @@ export default function RepairJobsPage() {
     }
   }
 
-  const filtered = jobs.filter((j) => {
-    const q = searchQuery.toLowerCase()
-    const matchesSearch =
-      (j?.orderNumber || '').toLowerCase().includes(q) ||
-      (j?.customer || '').toLowerCase().includes(q) ||
-      (j?.vehicle || '').toLowerCase().includes(q) ||
-      (j?.plate || '').toLowerCase().includes(q) ||
-      (j?.problem || '').toLowerCase().includes(q) ||
-      (j?.mechanic || '').toLowerCase().includes(q) ||
-      (j?.partsUsed || []).some(
-        (p) => (p?.name || '').toLowerCase().includes(q) || (p?.partCode || '').toLowerCase().includes(q)
-      )
-
-    const matchesStatus = activeFilter === 'All' || j.status === activeFilter
-    return matchesSearch && matchesStatus
-  })
+  const filtered = jobs
 
   return (
-    <div className="space-y-6 font-sans text-app-text">
+    <div className="space-y-3 sm:space-y-4 font-sans text-app-text">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-app-text">{t('titles.repairJobsOrders')}</h1>
-          <p className="text-xs text-app-muted mt-1">{t('repairJobs.subtitle')}</p>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <h1 className="text-lg font-semibold tracking-tight text-app-text">{t('titles.repairJobsOrders')}</h1>
+          <span className="text-[11px] font-mono text-app-muted px-2 py-0.5 bg-app-card border border-app-border rounded-md">
+            {totalCount}
+          </span>
         </div>
         {can('repair_jobs', 'create') && (
-          <button
+          <Button
             onClick={handleOpenAdd}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText text-xs font-semibold rounded-sm transition-colors shadow-subtle cursor-pointer"
+            size="sm"
           >
-            <Plus size={16} weight="bold" />
-            {t('repairJobs.newJob')}
-          </button>
+            <Plus size={14} weight="bold" />
+            <span>{t('repairJobs.newJob')}</span>
+          </Button>
         )}
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
-        {statusFilters.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveFilter(tab)}
-            className={`px-3 py-1.5 rounded-sm text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
-              activeFilter === tab
-                ? 'bg-app-accent text-app-accentText shadow-subtle'
-                : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover active:scale-[0.98] hover:text-app-text'
-            }`}
-          >
-            {tab === 'All' ? t('common.all') : t(`status.${tab}`)}
-          </button>
-        ))}
-      </div>
-
-      {/* Main Table */}
-      <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden transition-colors duration-200">
-        <div className="p-4 border-b border-app-border">
-          <div className="relative max-w-md">
-            <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
-            <input
-              type="text"
-              placeholder={t('common.quickSearch')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-sm text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
-            />
-          </div>
+      {/* Integrated Filter Bar & Search */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
+          {statusFilters.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveFilter(tab)}
+              className={`px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                activeFilter === tab
+                  ? 'bg-app-accent text-app-accentText font-semibold'
+                  : 'text-app-muted hover:text-app-text hover:bg-app-hover'
+              }`}
+            >
+              {tab === 'All' ? t('common.all') : t(`status.${tab}`)}
+            </button>
+          ))}
         </div>
 
-        <div className="overflow-x-auto">
-          {isLoading && jobs.length === 0 ? (
-            <TableSkeleton rows={6} columns={7} />
-          ) : filtered.length === 0 ? (
-            <EmptyState
-              title={t('common.noRecords')}
-              description={t('common.noData')}
-              actionText={searchQuery || activeFilter !== 'All' ? t('common.filter') : undefined}
-              onAction={
-                searchQuery || activeFilter !== 'All'
-                  ? () => {
-                      setSearchQuery('')
-                      setActiveFilter('All')
-                    }
-                  : undefined
-              }
-            />
-          ) : (
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                  <th className="px-4 py-3 font-semibold">{t('repairJobs.orderId')}</th>
-                  <th className="px-4 py-3 font-semibold">{t('appointments.vehicle')}</th>
-                  <th className="px-4 py-3 hidden md:table-cell font-semibold">{t('appointments.customer')}</th>
-                  <th className="px-4 py-3 hidden lg:table-cell font-semibold">{t('repairJobs.technician')}</th>
-                  <th className="px-4 py-3 font-semibold">Stock-Out Parts</th>
-                  <th className="px-4 py-3 hidden md:table-cell font-semibold">{t('repairJobs.totalCost')}</th>
-                  <th className="px-4 py-3 font-semibold">{t('common.status')}</th>
-                  <th className="px-4 py-3 font-semibold text-right">{t('common.actions')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-app-border">
-                {filtered.map((job) => (
-                  <tr key={job.id} className="hover:bg-app-hover /60 active:scale-[0.98] transition-colors group">
-                    <td className="px-4 py-3.5 font-mono font-bold text-app-accent">{job.orderNumber}</td>
-                    <td className="px-4 py-3.5">
-                      <p className="font-semibold text-app-text">{job.vehicle}</p>
-                      <p className="text-[10px] text-app-muted font-mono">{job.plate}</p>
-                    </td>
-                    <td className="px-4 py-3.5 text-app-muted hidden md:table-cell">{job.customer}</td>
-                    <td className="px-4 py-3.5 hidden lg:table-cell">
-                      <span className="inline-flex items-center gap-1.5 text-app-muted">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        {job.mechanic}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3.5">
-                      {job.partsUsed && job.partsUsed.length > 0 ? (
-                        <div className="flex flex-wrap gap-1 max-w-xs">
-                          {job.partsUsed.map((p, idx) => (
-                            <span
-                              key={idx}
-                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 text-[10px] font-medium"
-                              title={`${p.name} - Qty: ${p.quantity}`}
-                            >
-                              <Package size={11} />
-                              <span>
-                                {p.quantity}x {p.partCode || p.name}
-                              </span>
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-[11px] text-app-muted italic">No parts</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3.5 font-semibold text-app-text tabular-nums hidden md:table-cell">
-                      {job.estimatedCost}
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <StatusBadge status={job.status} />
-                    </td>
-                    <td className="px-4 py-3.5 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {/* 1-Click Fast Invoice on Completed Orders */}
-                        {job.status === 'Completed' && (
-                          <button
-                            onClick={() => handle1ClickInvoice(job)}
-                            className="p-1.5 rounded-sm text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors cursor-pointer"
-                            title="Generate Invoice"
-                          >
-                            <Receipt size={15} />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleOpenView(job)}
-                          className="p-1.5 rounded-sm text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
-                          title={t('common.view')}
+        <div className="relative w-full sm:w-60">
+          <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted" />
+          <input
+            type="text"
+            placeholder={t('common.quickSearch')}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-8 pr-3 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+          />
+        </div>
+      </div>
+
+      {/* Main Table Container */}
+      {isLoading && jobs.length === 0 ? (
+        <TableSkeleton rows={6} columns={8} />
+      ) : filtered.length === 0 ? (
+        <div className="bg-app-card rounded-lg border border-app-border shadow-xs overflow-hidden">
+          <EmptyState
+            title={t('common.noRecords')}
+            description={t('common.noData')}
+            actionText={searchQuery || activeFilter !== 'All' ? t('common.filter') : undefined}
+            onAction={
+              searchQuery || activeFilter !== 'All'
+                ? () => {
+                    setSearchQuery('')
+                    setActiveFilter('All')
+                  }
+                : undefined
+            }
+          />
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{t('repairJobs.orderId')}</TableHead>
+              <TableHead>{t('appointments.vehicle')}</TableHead>
+              <TableHead className="hidden md:table-cell">{t('appointments.customer')}</TableHead>
+              <TableHead className="hidden lg:table-cell">{t('repairJobs.technician')}</TableHead>
+              <TableHead>Stock-Out Parts</TableHead>
+              <TableHead className="hidden md:table-cell">{t('repairJobs.totalCost')}</TableHead>
+              <TableHead>{t('common.status')}</TableHead>
+              <TableHead className="text-right">{t('common.actions')}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.map((job) => (
+              <TableRow key={job.id}>
+                <TableCell className="font-mono font-bold text-app-accent">{job.orderNumber}</TableCell>
+                <TableCell>
+                  <p className="font-semibold text-app-text">{job.vehicle}</p>
+                  <p className="text-[10px] text-app-muted font-mono">{job.plate}</p>
+                </TableCell>
+                <TableCell className="text-app-muted hidden md:table-cell">{job.customer}</TableCell>
+                <TableCell className="hidden lg:table-cell">
+                  <span className="inline-flex items-center gap-1.5 text-app-muted">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    {job.mechanic}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  {job.partsUsed && job.partsUsed.length > 0 ? (
+                    <div className="flex flex-wrap gap-1 max-w-xs">
+                      {job.partsUsed.map((p, idx) => (
+                        <span
+                          key={idx}
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 text-[10px] font-medium"
+                          title={`${p.name} - Qty: ${p.quantity}`}
                         >
-                          <Eye size={15} />
-                        </button>
-                        {can('repair_jobs', 'update') && (
-                          <button
-                            onClick={() => handleOpenEdit(job)}
-                            className="p-1.5 rounded-sm text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
-                            title={t('repairJobs.updateProgress')}
-                          >
-                            <PencilSimple size={15} />
-                          </button>
-                        )}
-                        {can('repair_jobs', 'delete') && (
-                          <button
-                            onClick={() => handleOpenDelete(job)}
-                            className="p-1.5 rounded-sm text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                            title={t('common.delete')}
-                          >
-                            <Trash size={15} />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
+                          <Package size={11} />
+                          <span>
+                            {p.quantity}x {p.partCode || p.name}
+                          </span>
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-[11px] text-app-muted italic">No parts</span>
+                  )}
+                </TableCell>
+                <TableCell className="font-semibold text-app-text tabular-nums hidden md:table-cell">
+                  {job.estimatedCost}
+                </TableCell>
+                <TableCell>
+                  <StatusBadge status={job.status} />
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex items-center justify-end gap-1">
+                    {/* 1-Click Fast Invoice on Completed Orders */}
+                    {job.status === 'Completed' && (
+                      <button
+                        onClick={() => handle1ClickInvoice(job)}
+                        className="p-1 rounded-sm text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors cursor-pointer"
+                        title="Generate Invoice"
+                      >
+                        <Receipt size={14} />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleOpenView(job)}
+                      className="p-1 rounded-sm text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
+                      title={t('common.view')}
+                    >
+                      <Eye size={14} />
+                    </button>
+                    {can('repair_jobs', 'update') && (
+                      <button
+                        onClick={() => handleOpenEdit(job)}
+                        className="p-1 rounded-sm text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
+                        title={t('repairJobs.updateProgress')}
+                      >
+                        <PencilSimple size={14} />
+                      </button>
+                    )}
+                    {can('repair_jobs', 'delete') && (
+                      <button
+                        onClick={() => handleOpenDelete(job)}
+                        className="p-1 rounded-sm text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                        title={t('common.delete')}
+                      >
+                        <Trash size={14} />
+                      </button>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+          <TableFooterBar
+            page={page}
+            totalPages={totalPages}
+            totalCount={totalCount}
+            pageSize={10}
+            onPrev={() => setPage((p) => Math.max(1, p - 1))}
+            onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
+          />
+        </Table>
+      )}
 
       {/* Create Repair Order Modal with Digital Vehicle Intake (DVI) */}
       <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('repairJobs.createWorkOrder')}>
@@ -396,18 +409,17 @@ export default function RepairJobsPage() {
               <Sparkle size={15} weight="fill" className="text-emerald-500" />
               Select Service Package (Auto-configures cost & parts stock-out)
             </label>
-            <select
+            <SearchableSelect
               value={formData.serviceId}
-              onChange={(e) => handleServiceSelect(e.target.value)}
-              className="w-full px-3 py-2 bg-app-card border border-emerald-500/30 rounded-sm text-app-text font-medium focus:outline-none focus:border-emerald-500"
-            >
-              <option value="">-- Choose Service Package (e.g. Oil Change, Brake Service) --</option>
-              {services.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} (${Number(s.estimatedCost || 0).toFixed(2)}) — {s.requiredParts?.length || 0} required parts
-                </option>
-              ))}
-            </select>
+              onChange={(val) => handleServiceSelect(val)}
+              options={services.map((s) => ({
+                value: s.id,
+                label: `${s.name} ($${Number(s.estimatedCost || 0).toFixed(2)})`,
+                sublabel: `${s.requiredParts?.length || 0} required parts`,
+              }))}
+              placeholder="-- Choose Service Package (e.g. Oil Change, Brake Service) --"
+              searchPlaceholder="Search service package..."
+            />
 
             {/* Live Auto Stock-Out Preview */}
             {activeService && (
@@ -459,43 +471,43 @@ export default function RepairJobsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('appointments.customer')} *</label>
-              <select
+              <SearchableSelect
                 value={formData.customer}
-                onChange={(e) => {
-                  const c = customers.find((x) => x.name === e.target.value)
-                  setFormData({ ...formData, customer: e.target.value, customerId: c ? c.id : '' })
+                onChange={(val) => {
+                  const c = customers.find((x) => x.name === val)
+                  setFormData({ ...formData, customer: val, customerId: c ? c.id : '' })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
-              >
-                {customers.map((c) => (
-                  <option key={c.id} value={c.name}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+                options={customers.map((c) => ({
+                  value: c.name,
+                  label: c.name,
+                  sublabel: c.phone ? `Phone: ${c.phone}` : undefined,
+                }))}
+                placeholder="Select customer..."
+                searchPlaceholder="Search customer by name or phone..."
+              />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('appointments.vehicle')} *</label>
-              <select
+              <SearchableSelect
                 value={formData.plate}
-                onChange={(e) => {
-                  const v = vehicles.find((x) => x.number === e.target.value)
+                onChange={(val) => {
+                  const v = vehicles.find((x) => x.number === val)
                   setFormData({
                     ...formData,
-                    plate: e.target.value,
+                    plate: val,
                     vehicle: v ? `${v.brand} ${v.model}` : '',
                     vehicleId: v ? v.id : '',
                     odometer: v ? String(v.mileage || '') : formData.odometer,
                   })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
-              >
-                {vehicles.map((v) => (
-                  <option key={v.id} value={v.number}>
-                    {v.number} - {v.brand} {v.model}
-                  </option>
-                ))}
-              </select>
+                options={vehicles.map((v) => ({
+                  value: v.number,
+                  label: `${v.number} - ${v.brand} ${v.model}`,
+                  sublabel: v.owner ? `Owner: ${v.owner}` : undefined,
+                }))}
+                placeholder="Select vehicle..."
+                searchPlaceholder="Search vehicle by plate or model..."
+              />
             </div>
           </div>
 
@@ -522,28 +534,32 @@ export default function RepairJobsPage() {
                 <label className="block text-app-muted font-medium mb-1 flex items-center gap-1">
                   <GasPump size={12} /> Fuel Level
                 </label>
-                <select
+                <SearchableSelect
                   value={formData.fuelLevel}
-                  onChange={(e) => setFormData({ ...formData, fuelLevel: e.target.value })}
-                  className="w-full px-3 py-1.5 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
-                >
-                  <option value="Empty">Empty (Reserve)</option>
-                  <option value="1/4">1/4 Tank</option>
-                  <option value="1/2">1/2 Tank</option>
-                  <option value="3/4">3/4 Tank</option>
-                  <option value="Full">Full Tank</option>
-                </select>
+                  onChange={(val) => setFormData({ ...formData, fuelLevel: val })}
+                  options={[
+                    { value: 'Empty', label: 'Empty (Reserve)' },
+                    { value: '1/4', label: '1/4 Tank' },
+                    { value: '1/2', label: '1/2 Tank' },
+                    { value: '3/4', label: '3/4 Tank' },
+                    { value: 'Full', label: 'Full Tank' },
+                  ]}
+                  placeholder="Fuel level..."
+                  searchPlaceholder="Search level..."
+                />
               </div>
               <div>
                 <label className="block text-app-muted font-medium mb-1">Customer Authorization</label>
-                <select
+                <SearchableSelect
                   value={formData.customerApproval}
-                  onChange={(e) => setFormData({ ...formData, customerApproval: e.target.value })}
-                  className="w-full px-3 py-1.5 bg-app-input border border-app-border rounded-sm text-app-text font-semibold focus:outline-none focus:border-app-accent"
-                >
-                  <option value="Approved">Customer Approved</option>
-                  <option value="Pending Approval">Pending Quote Approval</option>
-                </select>
+                  onChange={(val) => setFormData({ ...formData, customerApproval: val })}
+                  options={[
+                    { value: 'Approved', label: 'Customer Approved' },
+                    { value: 'Pending Approval', label: 'Pending Quote Approval' },
+                  ]}
+                  placeholder="Approval..."
+                  searchPlaceholder="Search approval..."
+                />
               </div>
             </div>
 
@@ -562,20 +578,20 @@ export default function RepairJobsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('repairJobs.technician')} *</label>
-              <select
+              <SearchableSelect
                 value={formData.mechanic}
-                onChange={(e) => {
-                  const m = mechanics.find((x) => x.name === e.target.value)
-                  setFormData({ ...formData, mechanic: e.target.value, mechanicId: m ? m.id : '' })
+                onChange={(val) => {
+                  const m = mechanics.find((x) => x.name === val)
+                  setFormData({ ...formData, mechanic: val, mechanicId: m ? m.id : '' })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
-              >
-                {mechanics.map((m) => (
-                  <option key={m.id} value={m.name}>
-                    {m.name} ({m.specialization})
-                  </option>
-                ))}
-              </select>
+                options={mechanics.map((m) => ({
+                  value: m.name,
+                  label: m.name,
+                  sublabel: m.specialization ? `Specialization: ${m.specialization}` : undefined,
+                }))}
+                placeholder="Select technician..."
+                searchPlaceholder="Search technician..."
+              />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('repairJobs.totalCost')}</label>
@@ -612,11 +628,11 @@ export default function RepairJobsPage() {
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-app-border">
             <button
               type="button"
               onClick={() => setIsAddOpen(false)}
-              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
+              className="px-3.5 py-2 rounded-lg border border-app-border bg-app-card text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98] transition-all text-xs font-medium cursor-pointer shadow-xs"
             >
               {t('common.cancel')}
             </button>
@@ -633,35 +649,37 @@ export default function RepairJobsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('common.status')}</label>
-              <select
+              <SearchableSelect
                 value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
-              >
-                <option value="Pending">{t('status.Pending')}</option>
-                <option value="Diagnosing">{t('status.Diagnosing')}</option>
-                <option value="Repairing">{t('status.Repairing')}</option>
-                <option value="Waiting for Parts">{t('status.Waiting for Parts')}</option>
-                <option value="Ready for Pickup">{t('status.Ready for Pickup')}</option>
-                <option value="Completed">{t('status.Completed')}</option>
-              </select>
+                onChange={(val) => setFormData({ ...formData, status: val })}
+                options={[
+                  { value: 'Pending', label: t('status.Pending') },
+                  { value: 'Diagnosing', label: t('status.Diagnosing') },
+                  { value: 'Repairing', label: t('status.Repairing') },
+                  { value: 'Waiting for Parts', label: t('status.Waiting for Parts') },
+                  { value: 'Ready for Pickup', label: t('status.Ready for Pickup') },
+                  { value: 'Completed', label: t('status.Completed') },
+                ]}
+                placeholder="Select status..."
+                searchPlaceholder="Search status..."
+              />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('repairJobs.technician')}</label>
-              <select
+              <SearchableSelect
                 value={formData.mechanic}
-                onChange={(e) => {
-                  const m = mechanics.find((x) => x.name === e.target.value)
-                  setFormData({ ...formData, mechanic: e.target.value, mechanicId: m ? m.id : '' })
+                onChange={(val) => {
+                  const m = mechanics.find((x) => x.name === val)
+                  setFormData({ ...formData, mechanic: val, mechanicId: m ? m.id : '' })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
-              >
-                {mechanics.map((m) => (
-                  <option key={m.id} value={m.name}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
+                options={mechanics.map((m) => ({
+                  value: m.name,
+                  label: m.name,
+                  sublabel: m.specialization ? `Specialization: ${m.specialization}` : undefined,
+                }))}
+                placeholder="Select technician..."
+                searchPlaceholder="Search technician..."
+              />
             </div>
           </div>
 
@@ -675,11 +693,11 @@ export default function RepairJobsPage() {
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-app-border">
             <button
               type="button"
               onClick={() => setIsEditOpen(false)}
-              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium cursor-pointer"
+              className="px-3.5 py-2 rounded-lg border border-app-border bg-app-card text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98] transition-all text-xs font-medium cursor-pointer shadow-xs"
             >
               {t('common.cancel')}
             </button>

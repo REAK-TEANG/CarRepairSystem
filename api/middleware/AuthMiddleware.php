@@ -1,6 +1,9 @@
 <?php
 // api/middleware/AuthMiddleware.php
 
+require_once __DIR__ . '/../utils/headers.php';
+require_once __DIR__ . '/../utils/jwt.php';
+
 class AuthMiddleware
 {
     /**
@@ -9,17 +12,15 @@ class AuthMiddleware
      */
     public static function requireAuth(): array
     {
-        $headers    = getallheaders();
-        $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? '';
+        $token = getBearerToken();
 
-        if (!$authHeader || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+        if (!$token) {
             http_response_code(401);
             echo json_encode(['error' => 'No token provided']);
             exit;
         }
 
-        $token  = $matches[1];
-        $secret = getenv('JWT_SECRET') ?: 'carrepair_super_secret_jwt_key_2026_x89!@#%^&_workshop_pro';
+        $secret = function_exists('getJwtSecret') ? getJwtSecret() : (getenv('JWT_SECRET') ?: 'carrepair_super_secret_jwt_key_2026_x89!@#%^&_workshop_pro');
 
         $payload = JWT::decode($token, $secret);
         if (!$payload) {

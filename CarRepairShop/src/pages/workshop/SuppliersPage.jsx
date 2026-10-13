@@ -1,19 +1,42 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MagnifyingGlass, Plus, PencilSimple, Trash, Buildings, Star } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from '../../hooks/useSuppliers'
+import { useDebounce } from '../../hooks/useDebounce'
 import { useAuth } from '../../context/AuthContext'
-import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton } from '../../components/ui'
+import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, Input } from '../../components/ui'
 
 export default function SuppliersPage() {
   const { t } = useTranslation()
   const { can } = useAuth()
-  const { data: suppliers = [], isLoading } = useSuppliers()
+
+  const [searchQuery, setSearchQuery] = useState('')
+  const debouncedSearch = useDebounce(searchQuery, 300)
+  const [currentPage, setCurrentPage] = useState(1)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [debouncedSearch])
+
+  const { data: suppliersResponse, isLoading } = useSuppliers({
+    search: debouncedSearch,
+    page: currentPage,
+    limit: 10,
+  })
+
+  const suppliers = suppliersResponse?.data || (Array.isArray(suppliersResponse) ? suppliersResponse : [])
+  const pagination = suppliersResponse?.pagination || {
+    page: currentPage,
+    limit: 10,
+    total: suppliers.length,
+    totalPages: Math.ceil(suppliers.length / 10) || 1,
+    hasNextPage: false,
+    hasPrevPage: false,
+  }
+
   const createSupplierMutation = useCreateSupplier()
   const updateSupplierMutation = useUpdateSupplier()
   const deleteSupplierMutation = useDeleteSupplier()
-
-  const [searchQuery, setSearchQuery] = useState('')
 
   // Modals
   const [isAddOpen, setIsAddOpen] = useState(false)
@@ -82,116 +105,101 @@ export default function SuppliersPage() {
     setIsDeleteOpen(false)
   }
 
-  const query = searchQuery.trim().toLowerCase()
-  const supplierList = Array.isArray(suppliers) ? suppliers : []
-  const filtered = supplierList.filter((s) => {
-    if (!query) return true
-    return (
-      (s?.name || '').toLowerCase().includes(query) ||
-      (s?.categories || '').toLowerCase().includes(query) ||
-      (s?.contactPerson || '').toLowerCase().includes(query) ||
-      (s?.phone || '').toLowerCase().includes(query) ||
-      (s?.email || '').toLowerCase().includes(query) ||
-      (s?.address || '').toLowerCase().includes(query)
-    )
-  })
-
   return (
-    <div className="space-y-6 text-app-text font-sans">
+    <div className="space-y-3 sm:space-y-4 text-app-text font-sans">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-app-text">{t('titles.suppliersProcurement')}</h1>
-          <p className="text-xs text-app-muted mt-1">{suppliers.length} {t('suppliers.subtitle')}</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2.5">
+          <h1 className="text-lg font-semibold tracking-tight text-app-text">{t('titles.suppliersProcurement')}</h1>
+          <span className="text-[11px] font-mono text-app-muted px-2 py-0.5 bg-app-card border border-app-border rounded-md">
+            {pagination.total}
+          </span>
         </div>
-        {can('suppliers', 'create') && (
-          <button
-            onClick={handleOpenAdd}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText font-semibold rounded-sm text-xs transition-colors shadow-subtle"
-          >
-            <Plus size={16} weight="bold" />
-            {t('suppliers.addSupplier')}
-          </button>
-        )}
-      </div>
 
-      {/* Main Table */}
-      <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden transition-colors duration-200">
-        <div className="p-4 border-b border-app-border flex items-center justify-between gap-3">
-          <div className="relative flex-1 max-w-md">
-            <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
+        <div className="flex items-center gap-2">
+          <div className="relative w-full sm:w-60">
+            <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted" />
             <input
               type="text"
               placeholder={t('common.quickSearch')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-sm text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+              className="w-full pl-8 pr-3 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
             />
           </div>
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="text-xs text-app-muted hover:text-app-text px-2 py-1 transition-colors"
-            >
-              {t('common.cancel')}
-            </button>
-          )}
-        </div>
 
-        <div className="overflow-x-auto">
-          {isLoading && suppliers.length === 0 ? (
-            <TableSkeleton rows={6} columns={6} />
-          ) : filtered.length === 0 ? (
-            <EmptyState
-              title={t('common.noRecords')}
-              description={t('common.noData')}
-              actionText={searchQuery ? t('common.filter') : undefined}
-              onAction={searchQuery ? () => setSearchQuery('') : undefined}
-            />
-          ) : (
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                  <th className="px-4 py-3 font-semibold">{t('suppliers.companyName')}</th>
-                  <th className="px-4 py-3 font-semibold">{t('suppliers.contactPerson')}</th>
-                  <th className="px-4 py-3 hidden md:table-cell font-semibold">{t('suppliers.categories')}</th>
-                  <th className="px-4 py-3 hidden lg:table-cell font-semibold">{t('suppliers.paymentTerms')}</th>
-                  <th className="px-4 py-3 font-semibold">Rating</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-app-border">
-                {filtered.map((s) => (
-                  <tr key={s.id} onClick={() => handleOpenView(s)} className="hover:bg-app-hover /60 active:scale-[0.98] transition-colors group cursor-pointer">
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-sm bg-app-accent/15 flex items-center justify-center text-app-accent font-bold text-xs flex-shrink-0">
-                          <Buildings size={16} />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-app-text">{s.name}</p>
-                          <p className="text-[10px] text-app-muted">{s.email || 'supplier@domain.com'}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <p className="font-medium text-app-text">{s.contactPerson}</p>
-                      <p className="text-[10px] text-app-muted font-mono">{s.phone}</p>
-                    </td>
-                    <td className="px-4 py-3.5 text-app-muted hidden md:table-cell">{s.categories}</td>
-                    <td className="px-4 py-3.5 text-app-muted hidden lg:table-cell">{s.address || 'Net 30 Days'}</td>
-                    <td className="px-4 py-3.5">
-                      <span className="inline-flex items-center gap-1 text-amber-500 font-semibold">
-                        <Star size={13} weight="fill" />
-                        {s.rating || 4.8}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {can('suppliers', 'create') && (
+            <Button
+              onClick={handleOpenAdd}
+              size="sm"
+              className="gap-1.5 flex-shrink-0"
+            >
+              <Plus size={14} weight="bold" />
+              <span>{t('suppliers.addSupplier')}</span>
+            </Button>
           )}
         </div>
       </div>
+
+      {/* Main Table */}
+      {isLoading && suppliers.length === 0 ? (
+        <TableSkeleton rows={6} columns={5} />
+      ) : suppliers.length === 0 ? (
+        <div className="bg-app-card rounded-lg border border-app-border shadow-xs overflow-hidden">
+          <EmptyState
+            title={t('common.noRecords')}
+            description={t('common.noData')}
+            actionText={searchQuery ? t('common.filter') : undefined}
+            onAction={searchQuery ? () => setSearchQuery('') : undefined}
+          />
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{t('suppliers.companyName')}</TableHead>
+              <TableHead>{t('suppliers.contactPerson')}</TableHead>
+              <TableHead className="hidden md:table-cell">{t('suppliers.categories')}</TableHead>
+              <TableHead className="hidden lg:table-cell">{t('suppliers.paymentTerms')}</TableHead>
+              <TableHead>Rating</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {suppliers.map((s) => (
+              <TableRow
+                key={s.id}
+                onClick={() => handleOpenView(s)}
+                className="cursor-pointer"
+              >
+                <TableCell>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-sm bg-app-accent/15 flex items-center justify-center text-app-accent font-bold text-xs flex-shrink-0">
+                      <Buildings size={14} />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-app-text">{s.name}</p>
+                      <p className="text-[10px] text-app-muted">{s.email || 'supplier@domain.com'}</p>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <p className="font-medium text-app-text">{s.contactPerson}</p>
+                  <p className="text-[10px] text-app-muted font-mono">{s.phone}</p>
+                </TableCell>
+                <TableCell className="text-app-muted hidden md:table-cell">{s.categories}</TableCell>
+                <TableCell className="text-app-muted hidden lg:table-cell">{s.address || 'Net 30 Days'}</TableCell>
+                <TableCell>
+                  <span className="inline-flex items-center gap-1 text-amber-500 font-semibold">
+                    <Star size={12} weight="fill" />
+                    {s.rating || 4.8}
+                  </span>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+          <TableFooterBar pagination={pagination} onPageChange={setCurrentPage} />
+        </Table>
+      )}
 
       {/* Add Supplier Modal */}
       <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('suppliers.createSupplier')}>
@@ -252,14 +260,15 @@ export default function SuppliersPage() {
               />
             </div>
           </div>
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-app-border">
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={() => setIsAddOpen(false)}
-              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
             >
               {t('common.cancel')}
-            </button>
+            </Button>
             <LoadingButton type="submit" loading={createSupplierMutation.isPending}>
               {t('suppliers.createSupplier')}
             </LoadingButton>
@@ -301,14 +310,15 @@ export default function SuppliersPage() {
               />
             </div>
           </div>
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-app-border">
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={() => setIsEditOpen(false)}
-              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
             >
               {t('common.cancel')}
-            </button>
+            </Button>
             <LoadingButton type="submit" loading={updateSupplierMutation.isPending}>
               {t('common.saveChanges')}
             </LoadingButton>

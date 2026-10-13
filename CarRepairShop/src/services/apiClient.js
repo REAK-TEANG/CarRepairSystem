@@ -104,6 +104,9 @@ class ApiClient {
     }
 
     const resData = await response.json()
+    if (resData && resData.pagination !== undefined) {
+      return resData
+    }
     return resData && resData.data !== undefined ? resData.data : resData
   }
 

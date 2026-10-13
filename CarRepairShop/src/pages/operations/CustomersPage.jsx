@@ -1,19 +1,28 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MagnifyingGlass, Plus, PencilSimple, Trash, MapPin, User } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useCustomers, useCreateCustomer, useUpdateCustomer, useDeleteCustomer } from '../../hooks/useCustomers'
+import { useDebounce } from '../../hooks/useDebounce'
 import { useAuth } from '../../context/AuthContext'
-import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton } from '../../components/ui'
+import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Button, Input, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar } from '../../components/ui'
 
 export default function CustomersPage() {
   const { t } = useTranslation()
   const { can } = useAuth()
-  const { data: customers = [], isLoading } = useCustomers()
+
+  const [searchQuery, setSearchQuery] = useState('')
+  const debouncedSearch = useDebounce(searchQuery, 300)
+  const [page, setPage] = useState(1)
+
+  const { data: response, isLoading } = useCustomers({ page, limit: 10, search: debouncedSearch })
+  const customers = Array.isArray(response) ? response : (response?.data || [])
+  const pagination = response?.pagination || null
+  const totalCount = pagination ? pagination.total : customers.length
+  const totalPages = pagination ? pagination.totalPages : 1
+
   const createCustomerMutation = useCreateCustomer()
   const updateCustomerMutation = useUpdateCustomer()
   const deleteCustomerMutation = useDeleteCustomer()
-
-  const [searchQuery, setSearchQuery] = useState('')
 
   // Modal states
   const [isAddOpen, setIsAddOpen] = useState(false)
@@ -76,160 +85,157 @@ export default function CustomersPage() {
     setIsDeleteOpen(false)
   }
 
-  const customerList = Array.isArray(customers) ? customers : []
-  const query = searchQuery.trim().toLowerCase()
-  const filtered = customerList.filter((c) => {
-    if (!query) return true
-    return (
-      (c?.name || '').toLowerCase().includes(query) ||
-      (c?.phone || '').toLowerCase().includes(query) ||
-      (c?.code || '').toLowerCase().includes(query) ||
-      (c?.email || '').toLowerCase().includes(query) ||
-      (c?.address || '').toLowerCase().includes(query)
-    )
-  })
-
   return (
-    <div className="space-y-6 text-app-text font-sans transition-colors duration-200">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-app-text">{t('titles.customerDirectory')}</h1>
-          <p className="text-xs text-app-muted mt-1">{customers.length} {t('customers.subtitle')}</p>
+    <div className="space-y-3 sm:space-y-4 text-app-text font-sans transition-colors duration-200">
+      {/* Page Header with Integrated Search and Action */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2.5">
+          <h1 className="text-lg font-semibold tracking-tight text-app-text">{t('titles.customerDirectory')}</h1>
+          <span className="text-[11px] font-mono text-app-muted px-2 py-0.5 bg-app-card border border-app-border rounded-md">
+            {totalCount}
+          </span>
         </div>
-        {can('customers', 'create') && (
-          <button
-            onClick={handleOpenAdd}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText font-semibold rounded-sm text-xs transition-colors shadow-subtle"
-          >
-            <Plus size={16} weight="bold" />
-            {t('customers.addCustomer')}
-          </button>
-        )}
-      </div>
 
-      <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden transition-colors duration-200">
-        <div className="p-4 border-b border-app-border flex items-center justify-between gap-3">
-          <div className="relative flex-1 max-w-md">
-            <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
+        <div className="flex items-center gap-2">
+          <div className="relative w-full sm:w-60">
+            <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted" />
             <input
               type="text"
               placeholder={t('common.quickSearch')}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-sm text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+              onChange={(e) => {
+                setSearchQuery(e.target.value)
+                setPage(1)
+              }}
+              className="w-full pl-8 pr-3 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
             />
           </div>
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="text-xs text-app-muted hover:text-app-text px-2 py-1 transition-colors"
-            >
-              {t('common.cancel')}
-            </button>
-          )}
-        </div>
 
-        <div className="overflow-x-auto">
-          {isLoading && customers.length === 0 ? (
-            <TableSkeleton rows={6} columns={6} />
-          ) : filtered.length === 0 ? (
-            <EmptyState
-              title={t('common.noRecords')}
-              description={t('common.noData')}
-              actionText={searchQuery ? t('common.filter') : undefined}
-              onAction={searchQuery ? () => setSearchQuery('') : undefined}
-            />
-          ) : (
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                  <th className="px-4 py-3 font-semibold">{t('customers.customerCode')}</th>
-                  <th className="px-4 py-3 font-semibold">{t('customers.fullName')}</th>
-                  <th className="px-4 py-3 font-semibold">{t('customers.phone')}</th>
-                  <th className="px-4 py-3 hidden md:table-cell font-semibold">{t('customers.email')}</th>
-                  <th className="px-4 py-3 hidden lg:table-cell font-semibold text-right">{t('customers.totalSpent')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-app-border">
-                {filtered.map((customer) => (
-                  <tr key={customer.id} onClick={() => handleOpenView(customer)} className="hover:bg-app-hover /60 active:scale-[0.98] transition-colors group cursor-pointer">
-                    <td className="px-4 py-3.5 font-mono font-semibold text-app-accent">{customer.code}</td>
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-sm bg-app-hover flex items-center justify-center text-app-muted font-bold text-[11px] flex-shrink-0">
-                          {customer.name[0]}
-                        </div>
-                        <span className="font-semibold text-app-text">{customer.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3.5 text-app-muted">{customer.phone}</td>
-                    <td className="px-4 py-3.5 text-app-muted hidden md:table-cell">{customer.email || '—'}</td>
-                      <td className="px-4 py-3.5 font-semibold text-app-text text-right tabular-nums hidden lg:table-cell">
-                        {customer.totalSpent || '$0.00'}
-                      </td>
-                    </tr>
-                ))}
-              </tbody>
-            </table>
+          {can('customers', 'create') && (
+            <Button
+              onClick={handleOpenAdd}
+              size="sm"
+              className="flex-shrink-0"
+            >
+              <Plus size={14} weight="bold" />
+              <span>{t('customers.addCustomer')}</span>
+            </Button>
           )}
         </div>
       </div>
+
+      {isLoading && customers.length === 0 ? (
+        <TableSkeleton rows={6} columns={5} />
+      ) : customers.length === 0 ? (
+        <div className="bg-app-card rounded-lg border border-app-border shadow-xs overflow-hidden">
+          <EmptyState
+            title={t('common.noRecords')}
+            description={t('common.noData')}
+            actionText={searchQuery ? t('common.filter') : undefined}
+            onAction={
+              searchQuery
+                ? () => {
+                    setSearchQuery('')
+                    setPage(1)
+                  }
+                : undefined
+            }
+          />
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{t('customers.customerCode')}</TableHead>
+              <TableHead>{t('customers.fullName')}</TableHead>
+              <TableHead>{t('customers.phone')}</TableHead>
+              <TableHead className="hidden md:table-cell">{t('customers.email')}</TableHead>
+              <TableHead className="hidden lg:table-cell text-right">{t('customers.totalSpent')}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {customers.map((customer) => (
+              <TableRow
+                key={customer.id}
+                onClick={() => handleOpenView(customer)}
+                className="cursor-pointer"
+              >
+                <TableCell className="font-mono font-semibold text-app-accent">{customer.code}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-sm bg-app-hover flex items-center justify-center text-app-muted font-bold text-[10px] flex-shrink-0">
+                      {customer.name[0]}
+                    </div>
+                    <span className="font-semibold text-app-text">{customer.name}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="text-app-muted">{customer.phone}</TableCell>
+                <TableCell className="text-app-muted hidden md:table-cell">{customer.email || '—'}</TableCell>
+                <TableCell className="font-semibold text-app-text text-right tabular-nums hidden lg:table-cell">
+                  {customer.totalSpent || '$0.00'}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+          <TableFooterBar
+            page={page}
+            totalPages={totalPages}
+            totalCount={totalCount}
+            pageSize={10}
+            onPrev={() => setPage((p) => Math.max(1, p - 1))}
+            onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
+          />
+        </Table>
+      )}
 
       {/* Add Customer Modal */}
       <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('customers.createCustomer')}>
         <form onSubmit={handleCreate} className="space-y-4 text-xs">
           <div>
             <label className="block text-app-muted font-medium mb-1">{t('customers.fullName')} *</label>
-            <input
-              type="text"
+            <Input
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="e.g. Sokha Chan"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('customers.phone')} *</label>
-              <input
-                type="text"
+              <Input
                 required
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 placeholder="012 345 678"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('customers.email')}</label>
-              <input
+              <Input
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="customer@email.com"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
           <div>
             <label className="block text-app-muted font-medium mb-1">{t('customers.address')}</label>
-            <input
-              type="text"
+            <Input
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               placeholder="Phnom Penh, Cambodia"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-app-border">
+            <Button
               type="button"
+              variant="outline"
               onClick={() => setIsAddOpen(false)}
-              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
             >
               {t('common.cancel')}
-            </button>
+            </Button>
             <LoadingButton type="submit" loading={createCustomerMutation.isPending}>
               {t('customers.createCustomer')}
             </LoadingButton>
@@ -242,52 +248,45 @@ export default function CustomersPage() {
         <form onSubmit={handleUpdate} className="space-y-4 text-xs">
           <div>
             <label className="block text-app-muted font-medium mb-1">{t('customers.fullName')} *</label>
-            <input
-              type="text"
+            <Input
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('customers.phone')} *</label>
-              <input
-                type="text"
+              <Input
                 required
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('customers.email')}</label>
-              <input
+              <Input
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
           <div>
             <label className="block text-app-muted font-medium mb-1">{t('customers.address')}</label>
-            <input
-              type="text"
+            <Input
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-app-border">
+            <Button
               type="button"
+              variant="outline"
               onClick={() => setIsEditOpen(false)}
-              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
             >
               {t('common.cancel')}
-            </button>
+            </Button>
             <LoadingButton type="submit" loading={updateCustomerMutation.isPending}>
               {t('common.saveChanges')}
             </LoadingButton>
@@ -340,22 +339,22 @@ export default function CustomersPage() {
 
             <div className="flex items-center justify-end gap-2 pt-4">
               {can('customers', 'update') && (
-                <button
+                <Button
+                  variant="outline"
                   onClick={() => handleOpenEdit(selectedCustomer)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-app-card hover:bg-app-hover active:scale-[0.98] border border-app-border text-app-text font-semibold rounded-sm text-xs transition-colors cursor-pointer"
                 >
                   <PencilSimple size={14} weight="bold" />
                   Edit
-                </button>
+                </Button>
               )}
               {can('customers', 'delete') && (
-                <button
+                <Button
+                  variant="destructive"
                   onClick={() => handleOpenDelete(selectedCustomer)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 font-semibold rounded-sm text-xs transition-colors cursor-pointer border border-rose-500/20"
                 >
                   <Trash size={14} weight="bold" />
                   Delete
-                </button>
+                </Button>
               )}
             </div>
           </div>

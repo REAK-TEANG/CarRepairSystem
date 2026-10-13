@@ -88,15 +88,14 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
       )}
     >
       {/* Brand Header */}
-      <div className="flex items-center justify-between h-20 px-4 border-b border-[var(--sidebar-border)]">
-        <div className="flex items-center gap-3 overflow-hidden">
-          <div className="flex-shrink-0 w-10 h-10 bg-app-accent rounded-sm flex items-center justify-center">
-            <Logo size={22} className="text-white dark:text-gray-950" strokeWidth={2.4} />
+      <div className="flex items-center justify-between h-14 px-3.5 border-b border-[var(--sidebar-border)]">
+        <div className="flex items-center gap-2.5 overflow-hidden">
+          <div className="flex-shrink-0 w-8 h-8 bg-app-accent rounded flex items-center justify-center">
+            <Logo size={18} className="text-white dark:text-gray-950" strokeWidth={2.4} />
           </div>
           {!collapsed && (
-            <div className="">
-              <h1 className="text-sm font-bold text-app-text leading-tight tracking-wide uppercase">{t('common.appName')}</h1>
-              <p className="text-[10px] text-app-muted font-semibold tracking-wider uppercase">{t('common.appSubtitle')}</p>
+            <div className="min-w-0">
+              <h1 className="text-xs font-bold text-app-text tracking-wide uppercase truncate">{t('common.appName')}</h1>
             </div>
           )}
         </div>
@@ -105,15 +104,15 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
         {mobileOpen && (
           <button
             onClick={onCloseMobile}
-            className="p-1.5 rounded-sm text-app-muted hover:bg-[var(--sidebar-hover)] hover:text-app-text lg:hidden"
+            className="p-1 rounded text-app-muted hover:bg-[var(--sidebar-hover)] hover:text-app-text lg:hidden"
           >
-            <X size={18} weight="bold" />
+            <X size={16} weight="bold" />
           </button>
         )}
       </div>
 
       {/* Navigation Sections */}
-      <div className="flex-1 py-4 space-y-5 px-3 overflow-y-auto">
+      <div className="flex-1 py-3 space-y-4 px-2.5 overflow-y-auto">
         {allNavLinks.map((section) => {
           const visibleItems = section.items.filter(isItemVisible)
           if (visibleItems.length === 0) return null
@@ -121,11 +120,11 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
           return (
             <div key={section.categoryKey}>
               {!collapsed && (
-                <p className="px-3 mb-1.5 text-[10px] font-bold text-app-muted uppercase tracking-wider">
+                <p className="px-2.5 mb-1 text-[10px] font-semibold text-app-muted/80 uppercase tracking-wider">
                   {t(section.categoryKey)}
                 </p>
               )}
-              <nav className="space-y-1">
+              <nav className="space-y-0.5">
                 {visibleItems.map((item) => {
                   const isActive = location.pathname === item.href
                   const translatedName = t(item.nameKey)
@@ -135,23 +134,23 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
                       to={item.href}
                       onClick={handleLinkClick}
                       className={clsx(
-                        'flex items-center gap-3 px-3 py-2.5 rounded-sm text-xs font-medium transition-all group relative',
+                        'flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors group relative',
                         isActive
-                          ? 'bg-app-accent/12 text-app-accent font-semibold ring-1 ring-app-accent/30 shadow-subtle'
+                          ? 'bg-app-accent/10 text-app-accent font-semibold ring-1 ring-app-accent/25'
                           : 'text-app-muted hover:bg-[var(--sidebar-hover)] hover:text-app-text'
                       )}
                       title={collapsed ? translatedName : undefined}
                     >
                       <item.icon
-                        size={18}
+                        size={16}
                         weight={isActive ? 'bold' : 'regular'}
                         className={clsx(
                           'flex-shrink-0 transition-colors',
-                          isActive ? 'text-app-accent' : 'text-app-muted group-hover:text-app-accent'
+                          isActive ? 'text-app-accent' : 'text-app-muted group-hover:text-app-text'
                         )}
                       />
                       {!collapsed && (
-                        <span className="whitespace-nowrap tracking-wide truncate flex-1">{translatedName}</span>
+                        <span className="whitespace-nowrap tracking-tight truncate flex-1">{translatedName}</span>
                       )}
                       {isActive && !collapsed && (
                         <span className="w-1.5 h-1.5 rounded-full bg-app-accent" />

@@ -19,64 +19,54 @@ export function Skeleton({ className, ...props }) {
 }
 
 /**
- * Realistic Table Skeleton Loader
+ * Realistic Table Skeleton Loader (21st.dev high-density matching)
  */
-export function TableSkeleton({ rows = 5, columns = 6 }) {
+export function TableSkeleton({ rows = 6, columns = 6 }) {
   return (
-    <div className="w-full font-sans overflow-hidden">
-      {/* Skeleton Table Header */}
-      <div className="flex items-center gap-4 px-4 py-3.5 border-b border-app-border bg-app-hover/40">
-        {Array.from({ length: columns }).map((_, idx) => (
-          <div
-            key={idx}
-            className={clsx(
-              'h-3.5 rounded bg-app-border/80 ',
-              idx === 0 ? 'w-24' : idx === 1 ? 'w-40' : idx === columns - 1 ? 'w-16 ml-auto' : 'w-28'
-            )}
-          />
-        ))}
+    <div className="w-full overflow-hidden rounded-lg border border-app-border bg-app-card shadow-xs">
+      <div className="relative w-full overflow-x-auto">
+        <table className="w-full caption-bottom text-xs border-collapse">
+          <thead className="bg-app-hover/50 border-b border-app-border">
+            <tr>
+              {Array.from({ length: columns }).map((_, idx) => (
+                <th key={idx} className="h-8 px-3 text-left align-middle text-[11px] font-semibold text-app-muted whitespace-nowrap">
+                  <div
+                    className={clsx(
+                      'h-2.5 rounded bg-app-border/80 animate-pulse',
+                      idx === 0 ? 'w-16' : idx === 1 ? 'w-28' : idx === columns - 1 ? 'w-14 ml-auto' : 'w-20'
+                    )}
+                  />
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-app-border/70">
+            {Array.from({ length: rows }).map((_, rowIdx) => (
+              <tr key={rowIdx} className="border-b border-app-border/70">
+                {Array.from({ length: columns }).map((_, colIdx) => (
+                  <td key={colIdx} className="px-3 py-2 text-xs align-middle whitespace-nowrap">
+                    <div
+                      className={clsx(
+                        'h-3 rounded bg-app-hover animate-pulse',
+                        colIdx === 0
+                          ? 'w-16 font-mono'
+                          : colIdx === 1
+                          ? 'w-32'
+                          : colIdx === columns - 1
+                          ? 'w-12 ml-auto'
+                          : 'w-24'
+                      )}
+                    />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-
-      {/* Skeleton Table Rows */}
-      <div className="divide-y divide-app-border/60">
-        {Array.from({ length: rows }).map((_, rowIdx) => (
-          <div
-            key={rowIdx}
-            className="flex items-center gap-4 px-4 py-4 hover:bg-app-hover active:scale-[0.98]/30 transition-colors"
-          >
-            {/* Column 1: ID / Code Badge */}
-            <div className="w-20">
-              <Skeleton className="h-4 w-16 rounded font-mono" />
-            </div>
-
-            {/* Column 2: Primary Name & Subtitle */}
-            <div className="w-48 space-y-1.5">
-              <Skeleton className="h-4 w-32 rounded" />
-              <Skeleton className="h-3 w-20 rounded opacity-70" />
-            </div>
-
-            {/* Column 3: Secondary Text */}
-            <div className="w-32 hidden md:block">
-              <Skeleton className="h-3.5 w-24 rounded" />
-            </div>
-
-            {/* Column 4: Numeric / Metric Amount */}
-            <div className="w-28 hidden lg:block">
-              <Skeleton className="h-4 w-16 rounded" />
-            </div>
-
-            {/* Column 5: Status Badge */}
-            <div className="w-24">
-              <Skeleton className="h-5 w-20 rounded-full" />
-            </div>
-
-            {/* Column 6: Action Buttons */}
-            <div className="ml-auto flex items-center gap-2">
-              <Skeleton className="h-7 w-7 rounded-sm" />
-              <Skeleton className="h-7 w-7 rounded-sm" />
-            </div>
-          </div>
-        ))}
+      <div className="flex items-center justify-between px-3 py-2 border-t border-app-border bg-app-card">
+        <div className="h-2.5 w-28 rounded bg-app-border/60 animate-pulse" />
+        <div className="h-2.5 w-16 rounded bg-app-border/60 animate-pulse" />
       </div>
     </div>
   )

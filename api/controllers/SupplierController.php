@@ -2,12 +2,22 @@
 // api/controllers/SupplierController.php
 
 require_once __DIR__ . '/../models/SupplierModel.php';
+require_once __DIR__ . '/../utils/pagination.php';
 
 class SupplierController
 {
     public function index(): void
     {
-        echo json_encode(['data' => SupplierModel::getAll()]);
+        $search = $_GET['search'] ?? '';
+        $params = Pagination::getParams(10);
+
+        if ($params['isAll']) {
+            echo json_encode(['data' => SupplierModel::getAll()]);
+            return;
+        }
+
+        $result = SupplierModel::getPaginated($search, $params['page'], $params['limit']);
+        echo json_encode(Pagination::formatResponse($result['data'], $result['total'], $params['page'], $params['limit']));
     }
 
     public function store(): void

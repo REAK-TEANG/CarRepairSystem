@@ -2,6 +2,7 @@
 // api/controllers/InventoryController.php
 
 require_once __DIR__ . '/../models/InventoryModel.php';
+require_once __DIR__ . '/../utils/pagination.php';
 
 class InventoryController
 {
@@ -12,7 +13,17 @@ class InventoryController
 
     public function index(): void
     {
-        echo json_encode(['data' => InventoryModel::getAll()]);
+        $search = $_GET['search'] ?? '';
+        $category = $_GET['category'] ?? null;
+        $params = Pagination::getParams(10);
+
+        if ($params['isAll']) {
+            echo json_encode(['data' => InventoryModel::getAll()]);
+            return;
+        }
+
+        $result = InventoryModel::getPaginated($search, $params['page'], $params['limit'], $category);
+        echo json_encode(Pagination::formatResponse($result['data'], $result['total'], $params['page'], $params['limit']));
     }
 
     public function store(): void

@@ -1,18 +1,12 @@
 <?php
 // api/routes/events.php
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../utils/headers.php';
 require_once __DIR__ . '/../utils/jwt.php';
 require_once __DIR__ . '/../utils/eventBus.php';
 
 // Support authentication via Header or ?token= query parameter (standard for EventSource)
-$token = null;
-$headers = getallheaders();
-$authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? '';
-if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-    $token = $matches[1];
-} else if (!empty($_GET['token'])) {
-    $token = $_GET['token'];
-}
+$token = getBearerToken();
 
 if (!$token) {
     http_response_code(401);

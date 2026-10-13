@@ -1,29 +1,48 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MagnifyingGlass, Plus, PencilSimple, Trash, ArrowUp, ArrowDown, Package, ClockCounterClockwise } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useInventory, useInventoryTransactions, useCreatePart, useUpdatePart, useAdjustStock, useDeletePart } from '../../hooks/useInventory'
 import { useSuppliers } from '../../hooks/useSuppliers'
+import { useDebounce } from '../../hooks/useDebounce'
 import { useAuth } from '../../context/AuthContext'
-import { Modal, StatusBadge, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, ImageUpload } from '../../components/ui'
+import { Modal, StatusBadge, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Button, Input, ImageUpload, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, SearchableSelect } from '../../components/ui'
 
 const stockStatusOptions = ['All Stock', 'In Stock', 'Low Stock', 'Out of Stock']
 
 export default function InventoryPage() {
   const { t } = useTranslation()
   const { can } = useAuth()
-  const { data: items = [], isLoading } = useInventory()
-  const { data: suppliers = [] } = useSuppliers()
+
+  const [activeTab, setActiveTab] = useState('inventory') // 'inventory' | 'transactions'
+  const [searchQuery, setSearchQuery] = useState('')
+  const debouncedSearch = useDebounce(searchQuery, 300)
+  const [categoryFilter, setCategoryFilter] = useState('All')
+  const [stockFilter, setStockFilter] = useState('All Stock')
+  const [page, setPage] = useState(1)
+
+  useEffect(() => {
+    setPage(1)
+  }, [debouncedSearch, categoryFilter])
+
+  const { data: response, isLoading } = useInventory({
+    page,
+    limit: 10,
+    search: debouncedSearch,
+    category: categoryFilter,
+  })
+  const items = Array.isArray(response) ? response : (response?.data || [])
+  const pagination = response?.pagination || null
+  const totalCount = pagination ? pagination.total : items.length
+  const totalPages = pagination ? pagination.totalPages : 1
+
+  const { data: rawSuppliers = [] } = useSuppliers({ all: true })
+  const suppliers = Array.isArray(rawSuppliers) ? rawSuppliers : (rawSuppliers?.data || [])
   const { data: transactions = [], isLoading: txLoading } = useInventoryTransactions()
 
   const createPartMutation = useCreatePart()
   const updatePartMutation = useUpdatePart()
   const adjustStockMutation = useAdjustStock()
   const deletePartMutation = useDeletePart()
-
-  const [activeTab, setActiveTab] = useState('inventory') // 'inventory' | 'transactions'
-  const [searchQuery, setSearchQuery] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('All')
-  const [stockFilter, setStockFilter] = useState('All Stock')
 
   // Modals
   const [isAddOpen, setIsAddOpen] = useState(false)
@@ -145,85 +164,75 @@ export default function InventoryPage() {
   const categories = ['All', ...new Set(items.map((p) => p.category).filter(Boolean))]
 
   const filtered = items.filter((p) => {
-    const q = searchQuery.toLowerCase()
-    const matchesSearch =
-      (p?.name || '').toLowerCase().includes(q) ||
-      (p?.partCode || '').toLowerCase().includes(q) ||
-      (p?.brand || '').toLowerCase().includes(q) ||
-      (p?.supplier || '').toLowerCase().includes(q) ||
-      (p?.location || '').toLowerCase().includes(q)
-
-    const matchesCat = categoryFilter === 'All' || p.category === categoryFilter
-
-    let matchesStock = true
-    if (stockFilter === 'In Stock') matchesStock = p.stockQty > p.minThreshold
-    else if (stockFilter === 'Low Stock') matchesStock = p.stockQty <= p.minThreshold && p.stockQty > 0
-    else if (stockFilter === 'Out of Stock') matchesStock = p.stockQty === 0
-
-    return matchesSearch && matchesCat && matchesStock
+    if (stockFilter === 'In Stock') return p.stockQty > p.minThreshold
+    if (stockFilter === 'Low Stock') return p.stockQty <= p.minThreshold && p.stockQty > 0
+    if (stockFilter === 'Out of Stock') return p.stockQty === 0
+    return true
   })
 
   return (
-    <div className="space-y-6 font-sans text-app-text">
+    <div className="space-y-3 sm:space-y-4 font-sans text-app-text">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-app-text">{t('titles.sparePartsInventory')}</h1>
-          <p className="text-xs text-app-muted mt-1">{items.length} {t('inventory.subtitle')}</p>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <h1 className="text-lg font-semibold tracking-tight text-app-text">{t('titles.sparePartsInventory')}</h1>
+          <span className="text-[11px] font-mono text-app-muted px-2 py-0.5 bg-app-card border border-app-border rounded-md">
+            {activeTab === 'inventory' ? totalCount : transactions.length}
+          </span>
         </div>
         {can('inventory', 'create') && (
-          <button
+          <Button
             onClick={handleOpenAdd}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText text-xs font-semibold rounded-sm transition-colors shadow-subtle"
+            size="sm"
           >
-            <Plus size={16} weight="bold" />
-            {t('inventory.addPart')}
-          </button>
+            <Plus size={14} weight="bold" />
+            <span>{t('inventory.addPart')}</span>
+          </Button>
         )}
       </div>
 
       {/* View Switcher Tabs */}
-      <div className="flex items-center gap-2 border-b border-app-border pb-3">
+      <div className="flex items-center gap-1.5 border-b border-app-border pb-2.5">
         <button
           onClick={() => setActiveTab('inventory')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-sm text-xs font-semibold transition-all ${
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
             activeTab === 'inventory'
-              ? 'bg-app-accent text-app-accentText shadow-subtle'
-              : 'text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98]'
+              ? 'bg-app-card text-app-text border border-app-border shadow-xs'
+              : 'text-app-muted hover:text-app-text hover:bg-app-hover'
           }`}
         >
-          <Package size={16} weight="bold" />
-          <span>Spare Parts Catalog</span>
-          <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/10 dark:bg-white/10">{items.length}</span>
+          <Package size={15} weight="bold" />
+          <span>Parts</span>
+          <span className="text-[10px] font-mono text-app-muted">{items.length}</span>
         </button>
 
         <button
           onClick={() => setActiveTab('transactions')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-sm text-xs font-semibold transition-all ${
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
             activeTab === 'transactions'
-              ? 'bg-app-accent text-app-accentText shadow-subtle'
-              : 'text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98]'
+              ? 'bg-app-card text-app-text border border-app-border shadow-xs'
+              : 'text-app-muted hover:text-app-text hover:bg-app-hover'
           }`}
         >
-          <ClockCounterClockwise size={16} weight="bold" />
-          <span>Stock Movement & Auto Stock-Out Logs</span>
-          <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/10 dark:bg-white/10">{transactions.length}</span>
+          <ClockCounterClockwise size={15} weight="bold" />
+          <span>Stock Logs</span>
+          <span className="text-[10px] font-mono text-app-muted">{transactions.length}</span>
         </button>
       </div>
 
       {activeTab === 'inventory' ? (
         <>
-          {/* Category and Status Filters */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-2 overflow-x-auto pb-1">
-              {categories.map((cat) => (
+          {/* Category and Status Filters + Inline Search */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
+              {categories.slice(0, 6).map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setCategoryFilter(cat)}
-                  className={`px-3 py-1.5 rounded-sm text-xs font-medium whitespace-nowrap transition-colors ${
+                  className={`px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                     categoryFilter === cat
-                      ? 'bg-app-accent text-app-accentText shadow-subtle'
-                      : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover active:scale-[0.98] hover:text-app-text'
+                      ? 'bg-app-accent text-app-accentText font-semibold'
+                      : 'text-app-muted hover:text-app-text hover:bg-app-hover'
                   }`}
                 >
                   {cat === 'All' ? t('common.all') : cat}
@@ -231,133 +240,112 @@ export default function InventoryPage() {
               ))}
             </div>
 
-            <div className="flex items-center gap-2 overflow-x-auto pb-1">
-              <span className="text-xs text-app-muted flex items-center gap-1 mr-1">{t('common.status')}:</span>
-              {stockStatusOptions.map((st) => (
-                <button
-                  key={st}
-                  onClick={() => setStockFilter(st)}
-                  className={`px-2.5 py-1 rounded-sm text-[11px] font-medium whitespace-nowrap transition-colors ${
-                    stockFilter === st
-                      ? 'bg-app-hover text-app-text border border-app-border font-semibold'
-                      : 'text-app-muted hover:text-app-text'
-                  }`}
-                >
-                  {st === 'All Stock' ? t('common.all') : t(`status.${st}`, st)}
-                </button>
-              ))}
+            <div className="relative w-full sm:w-60">
+              <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted" />
+              <input
+                type="text"
+                placeholder={t('common.quickSearch')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-3 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+              />
             </div>
           </div>
 
       {/* Table */}
-      <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden">
-        <div className="p-4 border-b border-app-border flex items-center justify-between gap-3">
-          <div className="relative flex-1 max-w-md">
-            <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
-            <input
-              type="text"
-              placeholder={t('common.quickSearch')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-sm text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
-            />
-          </div>
-          {(searchQuery || categoryFilter !== 'All' || stockFilter !== 'All Stock') && (
-            <button
-              onClick={() => {
-                setSearchQuery('')
-                setCategoryFilter('All')
-                setStockFilter('All Stock')
-              }}
-              className="text-xs text-app-muted hover:text-app-text px-2 py-1 transition-colors"
-            >
-              {t('common.cancel')}
-            </button>
-          )}
+      {isLoading && items.length === 0 ? (
+        <TableSkeleton rows={6} columns={7} />
+      ) : filtered.length === 0 ? (
+        <div className="bg-app-card rounded-lg border border-app-border shadow-xs overflow-hidden">
+          <EmptyState
+            title={t('common.noRecords')}
+            description={t('common.noData')}
+            actionText={searchQuery || categoryFilter !== 'All' || stockFilter !== 'All Stock' ? t('common.filter') : undefined}
+            onAction={
+              searchQuery || categoryFilter !== 'All' || stockFilter !== 'All Stock'
+                ? () => {
+                    setSearchQuery('')
+                    setCategoryFilter('All')
+                    setStockFilter('All Stock')
+                  }
+                : undefined
+            }
+          />
         </div>
-
-        <div className="overflow-x-auto">
-          {isLoading && items.length === 0 ? (
-            <TableSkeleton rows={6} columns={8} />
-          ) : filtered.length === 0 ? (
-            <EmptyState
-              title={t('common.noRecords')}
-              description={t('common.noData')}
-              actionText={searchQuery || categoryFilter !== 'All' || stockFilter !== 'All Stock' ? t('common.filter') : undefined}
-              onAction={
-                searchQuery || categoryFilter !== 'All' || stockFilter !== 'All Stock'
-                  ? () => {
-                      setSearchQuery('')
-                      setCategoryFilter('All')
-                      setStockFilter('All Stock')
-                    }
-                  : undefined
-              }
-            />
-          ) : (
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                  <th className="px-4 py-3 font-semibold">{t('inventory.partCode')}</th>
-                  <th className="px-4 py-3 font-semibold">{t('inventory.partName')}</th>
-                  <th className="px-4 py-3 font-semibold hidden md:table-cell">{t('inventory.category')}</th>
-                  <th className="px-4 py-3 font-semibold hidden lg:table-cell">{t('inventory.location')}</th>
-                  <th className="px-4 py-3 font-semibold">{t('inventory.stockQty')}</th>
-                  <th className="px-4 py-3 font-semibold">{t('inventory.sellingPrice')}</th>
-                  <th className="px-4 py-3 font-semibold">{t('common.status')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-app-border">
-                {filtered.map((part) => (
-                  <tr key={part.id} onClick={() => handleOpenView(part)} className="hover:bg-app-hover /60 active:scale-[0.98] transition-colors group cursor-pointer">
-                    <td className="px-4 py-3.5 font-mono font-semibold text-app-accent">{part.partCode}</td>
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-3">
-                        {part.image ? (
-                          <img
-                            src={part.image}
-                            alt={part.name}
-                            className="w-10 h-10 rounded-sm object-cover border border-app-border bg-app-card flex-shrink-0"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-sm bg-app-hover border border-app-border flex items-center justify-center flex-shrink-0 text-app-muted">
-                            <Package size={20} />
-                          </div>
-                        )}
-                        <div>
-                          <p className="font-semibold text-app-text">{part.name}</p>
-                          <p className="text-[10px] text-app-muted">
-                            {part.brand} · {t('inventory.supplier')}: {part.supplier}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3.5 text-app-muted hidden md:table-cell">{part.category}</td>
-                    <td className="px-4 py-3.5 text-app-muted hidden lg:table-cell font-mono">{part.location}</td>
-                    <td className="px-4 py-3.5">
-                      <span
-                        className={`font-bold tabular-nums ${part.stockQty <= part.minThreshold ? 'text-red-600 dark:text-red-400' : 'text-app-text'}`}
-                      >
-                        {part.stockQty}
-                      </span>
-                      <span className="text-[10px] text-app-muted ml-1">(min {part.minThreshold})</span>
-                    </td>
-                    <td className="px-4 py-3.5 font-semibold text-app-text tabular-nums">
-                      ${Number(part.unitPrice).toFixed(2)}
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <StatusBadge
-                        status={part.stockQty === 0 ? 'Out of Stock' : part.stockQty <= part.minThreshold ? 'Low Stock' : 'In Stock'}
-                        variant={part.stockQty === 0 ? 'danger' : part.stockQty <= part.minThreshold ? 'warning' : 'success'}
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{t('inventory.partCode')}</TableHead>
+              <TableHead>{t('inventory.partName')}</TableHead>
+              <TableHead className="hidden md:table-cell">{t('inventory.category')}</TableHead>
+              <TableHead className="hidden lg:table-cell">{t('inventory.location')}</TableHead>
+              <TableHead>{t('inventory.stockQty')}</TableHead>
+              <TableHead>{t('inventory.sellingPrice')}</TableHead>
+              <TableHead>{t('common.status')}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.map((part) => (
+              <TableRow
+                key={part.id}
+                onClick={() => handleOpenView(part)}
+                className="cursor-pointer"
+              >
+                <TableCell className="font-mono font-semibold text-app-accent">{part.partCode}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2.5">
+                    {part.image ? (
+                      <img
+                        src={part.image}
+                        alt={part.name}
+                        className="w-8 h-8 rounded-sm object-cover border border-app-border bg-app-card flex-shrink-0"
                       />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
+                    ) : (
+                      <div className="w-8 h-8 rounded-sm bg-app-hover border border-app-border flex items-center justify-center flex-shrink-0 text-app-muted">
+                        <Package size={16} />
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-semibold text-app-text">{part.name}</p>
+                      <p className="text-[10px] text-app-muted">
+                        {part.brand} · {t('inventory.supplier')}: {part.supplier}
+                      </p>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell className="text-app-muted hidden md:table-cell">{part.category}</TableCell>
+                <TableCell className="text-app-muted hidden lg:table-cell font-mono">{part.location}</TableCell>
+                <TableCell>
+                  <span
+                    className={`font-bold tabular-nums ${part.stockQty <= part.minThreshold ? 'text-red-600 dark:text-red-400' : 'text-app-text'}`}
+                  >
+                    {part.stockQty}
+                  </span>
+                  <span className="text-[10px] text-app-muted ml-1">(min {part.minThreshold})</span>
+                </TableCell>
+                <TableCell className="font-semibold text-app-text tabular-nums">
+                  ${Number(part.unitPrice).toFixed(2)}
+                </TableCell>
+                <TableCell>
+                  <StatusBadge
+                    status={part.stockQty === 0 ? 'Out of Stock' : part.stockQty <= part.minThreshold ? 'Low Stock' : 'In Stock'}
+                    variant={part.stockQty === 0 ? 'danger' : part.stockQty <= part.minThreshold ? 'warning' : 'success'}
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+          <TableFooterBar
+            page={page}
+            totalPages={totalPages}
+            totalCount={totalCount}
+            pageSize={10}
+            onPrev={() => setPage((p) => Math.max(1, p - 1))}
+            onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
+          />
+        </Table>
+      )}
     </>
   ) : (
     /* Stock Movement & Auto Stock-Out Transactions View */
@@ -372,7 +360,6 @@ export default function InventoryPage() {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
         {txLoading && transactions.length === 0 ? (
           <TableSkeleton rows={6} columns={6} />
         ) : transactions.length === 0 ? (
@@ -381,25 +368,25 @@ export default function InventoryPage() {
             description="Stock movements and auto stock-outs for services will automatically appear here."
           />
         ) : (
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                <th className="px-4 py-3 font-semibold">Part Code / Item</th>
-                <th className="px-4 py-3 font-semibold">Type</th>
-                <th className="px-4 py-3 font-semibold">Quantity</th>
-                <th className="px-4 py-3 font-semibold">Reason / Reference</th>
-                <th className="px-4 py-3 hidden sm:table-cell font-semibold">Performed By</th>
-                <th className="px-4 py-3 font-semibold text-right">Date & Time</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-app-border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Part Code / Item</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Quantity</TableHead>
+                <TableHead>Reason / Reference</TableHead>
+                <TableHead className="hidden sm:table-cell">Performed By</TableHead>
+                <TableHead className="text-right">Date & Time</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {transactions.map((tx) => (
-                <tr key={tx.id} className="hover:bg-app-hover /60 active:scale-[0.98] transition-colors">
-                  <td className="px-4 py-3.5">
+                <TableRow key={tx.id}>
+                  <TableCell>
                     <p className="font-semibold text-app-text">{tx.partName}</p>
                     <p className="font-mono text-[10px] text-app-accent">{tx.partCode}</p>
-                  </td>
-                  <td className="px-4 py-3.5">
+                  </TableCell>
+                  <TableCell>
                     <span
                       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[11px] font-semibold border ${
                         tx.type === 'Stock Out'
@@ -412,131 +399,111 @@ export default function InventoryPage() {
                       {tx.type === 'Stock Out' ? <ArrowDown size={12} weight="bold" /> : <ArrowUp size={12} weight="bold" />}
                       {tx.type}
                     </span>
-                  </td>
-                  <td className="px-4 py-3.5 font-bold tabular-nums text-app-text">
+                  </TableCell>
+                  <TableCell className="font-bold tabular-nums text-app-text">
                     {tx.type === 'Stock Out' ? `-${tx.quantity}` : `+${tx.quantity}`} units
-                  </td>
-                  <td className="px-4 py-3.5">
+                  </TableCell>
+                  <TableCell>
                     <p className="text-app-text font-medium max-w-sm">{tx.notes || 'Routine stock operation'}</p>
                     {tx.referenceType && (
                       <span className="text-[10px] text-app-muted uppercase font-mono">
                         Ref: {tx.referenceType} #{tx.referenceId}
                       </span>
                     )}
-                  </td>
-                  <td className="px-4 py-3.5 text-app-muted hidden sm:table-cell">
+                  </TableCell>
+                  <TableCell className="text-app-muted hidden sm:table-cell">
                     {tx.performedBy}
-                  </td>
-                  <td className="px-4 py-3.5 text-right font-mono text-[11px] text-app-muted">
+                  </TableCell>
+                  <TableCell className="text-right font-mono text-[11px] text-app-muted">
                     {tx.createdAt ? new Date(tx.createdAt).toLocaleString() : 'Recent'}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+            <TableFooterBar totalCount={transactions.length} currentCount={transactions.length} />
+          </Table>
         )}
       </div>
-    </div>
-  )}
+    )}
 
       {/* Add Part Modal */}
+      {/* Add New Part Modal */}
       <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('inventory.createPart')}>
         <form onSubmit={handleCreate} className="space-y-4 text-xs">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('inventory.partName')} *</label>
-              <input
+              <Input
                 type="text"
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="e.g. Ceramic Front Brake Pads"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('inventory.partCode')}</label>
-              <input
+              <Input
                 type="text"
                 value={formData.partCode}
                 onChange={(e) => setFormData({ ...formData, partCode: e.target.value })}
                 placeholder="Auto-generated if empty"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-mono"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-app-muted font-medium mb-1">{t('inventory.category')}</label>
-              <select
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
-              >
-                <option value="Engine">Engine</option>
-                <option value="Brakes">Brakes</option>
-                <option value="Fluids">Fluids</option>
-                <option value="Filters">Filters</option>
-                <option value="Ignition">Ignition</option>
-                <option value="Electrical">Electrical</option>
-                <option value="Tires">Tires</option>
-                <option value="Suspension">Suspension</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-app-muted font-medium mb-1">{t('inventory.brand')}</label>
-              <input
-                type="text"
-                value={formData.brand}
-                onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                placeholder="Bosch, Denso, Mobil..."
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
-              />
-            </div>
-            <div>
-              <label className="block text-app-muted font-medium mb-1">{t('inventory.location')}</label>
-              <input
-                type="text"
-                value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                placeholder="Shelf A-1"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
+                className="font-mono"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.category')} *</label>
+              <SearchableSelect
+                value={formData.category}
+                onChange={(cat) => setFormData({ ...formData, category: cat })}
+                options={['Engine', 'Brakes', 'Fluids', 'Filters', 'Ignition', 'Electrical', 'Tires', 'Suspension']}
+                placeholder="Select category..."
+                searchPlaceholder="Search category..."
+              />
+            </div>
+            <div>
               <label className="block text-app-muted font-medium mb-1">{t('inventory.supplier')}</label>
-              <select
+              <SearchableSelect
                 value={formData.supplierId}
-                onChange={(e) => {
-                  const sup = suppliers.find((s) => String(s.id) === e.target.value)
+                onChange={(val, item) => {
                   setFormData({
                     ...formData,
-                    supplierId: e.target.value,
-                    supplier: sup ? sup.name : formData.supplier,
+                    supplierId: val,
+                    supplier: item?.label || formData.supplier,
                   })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
-              >
-                <option value="">Select Supplier</option>
-                {suppliers.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
+                options={suppliers.map((s) => ({
+                  value: s.id,
+                  label: s.name,
+                  sublabel: s.phone || s.address || null,
+                }))}
+                placeholder="Search or select supplier..."
+                searchPlaceholder="Type supplier name..."
+                clearable
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-app-muted font-medium mb-1">{t('inventory.brand')}</label>
+              <Input
+                type="text"
+                value={formData.brand}
+                onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                placeholder="Bosch, Denso, Mobil..."
+              />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('inventory.location')}</label>
-              <input
+              <Input
                 type="text"
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 placeholder="Shelf A-1"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
@@ -544,40 +511,37 @@ export default function InventoryPage() {
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('inventory.stockQty')}</label>
-              <input
+              <Input
                 type="number"
                 value={formData.stockQty}
                 onChange={(e) => setFormData({ ...formData, stockQty: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('inventory.minStock')}</label>
-              <input
+              <Input
                 type="number"
                 value={formData.minThreshold}
                 onChange={(e) => setFormData({ ...formData, minThreshold: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('inventory.unitCost')} ($)</label>
-              <input
+              <Input
                 type="number"
                 step="0.01"
                 value={formData.costPrice}
                 onChange={(e) => setFormData({ ...formData, costPrice: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('inventory.sellingPrice')} ($)</label>
-              <input
+              <Input
                 type="number"
                 step="0.01"
                 value={formData.unitPrice}
                 onChange={(e) => setFormData({ ...formData, unitPrice: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
+                className="font-semibold text-app-accent"
               />
             </div>
           </div>
@@ -591,14 +555,15 @@ export default function InventoryPage() {
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-app-border">
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={() => setIsAddOpen(false)}
-              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
             >
               {t('common.cancel')}
-            </button>
+            </Button>
             <LoadingButton type="submit" loading={createPartMutation.isPending}>
               {t('inventory.createPart')}
             </LoadingButton>
@@ -612,21 +577,19 @@ export default function InventoryPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('inventory.partName')} *</label>
-              <input
+              <Input
                 type="text"
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('inventory.brand')}</label>
-              <input
+              <Input
                 type="text"
                 value={formData.brand}
                 onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
@@ -634,50 +597,41 @@ export default function InventoryPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('inventory.category')}</label>
-              <select
+              <SearchableSelect
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
-              >
-                <option value="Engine">Engine</option>
-                <option value="Brakes">Brakes</option>
-                <option value="Fluids">Fluids</option>
-                <option value="Filters">Filters</option>
-                <option value="Ignition">Ignition</option>
-                <option value="Electrical">Electrical</option>
-                <option value="Tires">Tires</option>
-                <option value="Suspension">Suspension</option>
-              </select>
+                onChange={(cat) => setFormData({ ...formData, category: cat })}
+                options={['Engine', 'Brakes', 'Fluids', 'Filters', 'Ignition', 'Electrical', 'Tires', 'Suspension']}
+                placeholder="Select category..."
+                searchPlaceholder="Search category..."
+              />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('inventory.supplier')}</label>
-              <select
+              <SearchableSelect
                 value={formData.supplierId}
-                onChange={(e) => {
-                  const sup = suppliers.find((s) => String(s.id) === e.target.value)
+                onChange={(val, item) => {
                   setFormData({
                     ...formData,
-                    supplierId: e.target.value,
-                    supplier: sup ? sup.name : formData.supplier,
+                    supplierId: val,
+                    supplier: item?.label || formData.supplier,
                   })
                 }}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
-              >
-                <option value="">Select Supplier</option>
-                {suppliers.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
+                options={suppliers.map((s) => ({
+                  value: s.id,
+                  label: s.name,
+                  sublabel: s.phone || s.address || null,
+                }))}
+                placeholder="Select Supplier"
+                searchPlaceholder="Search supplier..."
+                clearable
+              />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('inventory.location')}</label>
-              <input
+              <Input
                 type="text"
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
@@ -685,31 +639,30 @@ export default function InventoryPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('inventory.stockQty')}</label>
-              <input
+              <Input
                 type="number"
                 value={formData.stockQty}
                 onChange={(e) => setFormData({ ...formData, stockQty: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
+                className="font-semibold"
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('inventory.unitCost')} ($)</label>
-              <input
+              <Input
                 type="number"
                 step="0.01"
                 value={formData.costPrice}
                 onChange={(e) => setFormData({ ...formData, costPrice: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('inventory.sellingPrice')} ($)</label>
-              <input
+              <Input
                 type="number"
                 step="0.01"
                 value={formData.unitPrice}
                 onChange={(e) => setFormData({ ...formData, unitPrice: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
+                className="font-semibold text-app-accent"
               />
             </div>
           </div>
@@ -723,14 +676,15 @@ export default function InventoryPage() {
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-app-border">
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={() => setIsEditOpen(false)}
-              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
             >
               {t('common.cancel')}
-            </button>
+            </Button>
             <LoadingButton type="submit" loading={updatePartMutation.isPending}>
               {t('common.saveChanges')}
             </LoadingButton>
@@ -777,11 +731,11 @@ export default function InventoryPage() {
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-app-border">
             <button
               type="button"
               onClick={() => setIsAdjustOpen(false)}
-              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
+              className="px-3.5 py-2 rounded-lg border border-app-border bg-app-card text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98] transition-all text-xs font-medium cursor-pointer shadow-xs"
             >
               {t('common.cancel')}
             </button>
@@ -902,6 +856,7 @@ export default function InventoryPage() {
         isOpen={isDeleteOpen}
         onClose={() => setIsDeleteOpen(false)}
         onConfirm={handleDelete}
+        isLoading={deletePartMutation.isPending}
         title={t('common.delete')}
         message={t('inventory.confirmDelete')}
         confirmText={t('common.delete')}

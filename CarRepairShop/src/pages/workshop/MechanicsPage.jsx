@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MagnifyingGlass, Plus, PencilSimple, Trash, Wrench, Car, UsersThree } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useMechanics, useCreateMechanic, useUpdateMechanic, useDeleteMechanic } from '../../hooks/useMechanics'
+import { useDebounce } from '../../hooks/useDebounce'
 import { useAuth } from '../../context/AuthContext'
-import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton } from '../../components/ui'
+import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, Input, SearchableSelect } from '../../components/ui'
 import RepairPipelineTracker from '../../components/workshop/RepairPipelineTracker'
 
 const statusFilters = ['All', 'Active', 'On Leave', 'Terminated']
@@ -11,14 +12,37 @@ const statusFilters = ['All', 'Active', 'On Leave', 'Terminated']
 export default function MechanicsPage() {
   const { t } = useTranslation()
   const { can } = useAuth()
-  const { data: mechanics = [], isLoading } = useMechanics()
-  const createMechanicMutation = useCreateMechanic()
-  const updateMechanicMutation = useUpdateMechanic()
-  const deleteMechanicMutation = useDeleteMechanic()
 
   const [activeTab, setActiveTab] = useState('pipeline') // 'pipeline' | 'roster'
   const [searchQuery, setSearchQuery] = useState('')
+  const debouncedSearch = useDebounce(searchQuery, 300)
   const [activeFilter, setActiveFilter] = useState('All')
+  const [currentPage, setCurrentPage] = useState(1)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [debouncedSearch, activeFilter])
+
+  const { data: mechanicsResponse, isLoading } = useMechanics({
+    search: debouncedSearch,
+    status: activeFilter,
+    page: currentPage,
+    limit: 10,
+  })
+
+  const mechanics = mechanicsResponse?.data || (Array.isArray(mechanicsResponse) ? mechanicsResponse : [])
+  const pagination = mechanicsResponse?.pagination || {
+    page: currentPage,
+    limit: 10,
+    total: mechanics.length,
+    totalPages: Math.ceil(mechanics.length / 10) || 1,
+    hasNextPage: false,
+    hasPrevPage: false,
+  }
+
+  const createMechanicMutation = useCreateMechanic()
+  const updateMechanicMutation = useUpdateMechanic()
+  const deleteMechanicMutation = useDeleteMechanic()
 
   // Modals
   const [isAddOpen, setIsAddOpen] = useState(false)
@@ -41,7 +65,7 @@ export default function MechanicsPage() {
 
   const handleOpenAdd = () => {
     setFormData({
-      code: `MEC-${String(mechanics.length + 1).padStart(3, '0')}`,
+      code: `MEC-${String(pagination.total + 1).padStart(3, '0')}`,
       name: '',
       phone: '',
       email: '',
@@ -89,69 +113,53 @@ export default function MechanicsPage() {
     setIsDeleteOpen(false)
   }
 
-  const query = searchQuery.trim().toLowerCase()
-  const mechanicList = Array.isArray(mechanics) ? mechanics : []
-  const filtered = mechanicList.filter((m) => {
-    const matchesSearch =
-      !query ||
-      (m?.name || '').toLowerCase().includes(query) ||
-      (m?.code || '').toLowerCase().includes(query) ||
-      (m?.specialization || '').toLowerCase().includes(query) ||
-      (m?.phone || '').toLowerCase().includes(query) ||
-      (m?.email || '').toLowerCase().includes(query)
-
-    const matchesFilter = activeFilter === 'All' || m.status === activeFilter
-    return matchesSearch && matchesFilter
-  })
-
   return (
-    <div className="space-y-6 text-app-text font-sans">
+    <div className="space-y-3 sm:space-y-4 text-app-text font-sans">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-app-text">{t('titles.mechanicsStaffRoster')}</h1>
-          <p className="text-xs text-app-muted mt-1">
-            {activeTab === 'pipeline'
-              ? 'Real-time vehicle repair pipeline from Diagnosing to Completion with 1-click progression'
-              : `${mechanics.length} ${t('mechanics.subtitle')}`}
-          </p>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <h1 className="text-lg font-semibold tracking-tight text-app-text">{t('titles.mechanicsStaffRoster')}</h1>
+          <span className="text-[11px] font-mono text-app-muted px-2 py-0.5 bg-app-card border border-app-border rounded-md">
+            {pagination.total}
+          </span>
         </div>
         {can('mechanics', 'create') && activeTab === 'roster' && (
-          <button
+          <Button
             onClick={handleOpenAdd}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText font-semibold rounded-sm text-xs transition-colors shadow-subtle"
+            size="sm"
+            className="gap-1.5"
           >
-            <Plus size={16} weight="bold" />
-            {t('mechanics.addMechanic')}
-          </button>
+            <Plus size={14} weight="bold" />
+            <span>{t('mechanics.addMechanic')}</span>
+          </Button>
         )}
       </div>
 
       {/* View Switcher Tabs */}
-      <div className="flex items-center gap-2 border-b border-app-border pb-3">
+      <div className="flex items-center gap-1.5 border-b border-app-border pb-2.5">
         <button
           onClick={() => setActiveTab('pipeline')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-sm text-xs font-semibold transition-all ${
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
             activeTab === 'pipeline'
-              ? 'bg-app-accent text-app-accentText shadow-subtle'
-              : 'text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98]'
+              ? 'bg-app-card text-app-text border border-app-border shadow-xs'
+              : 'text-app-muted hover:text-app-text hover:bg-app-hover'
           }`}
         >
-          <Car size={16} weight="bold" />
-          <span>Vehicle Repair Pipeline Tracker</span>
+          <Car size={15} weight="bold" />
+          <span>Pipeline</span>
         </button>
 
         <button
           onClick={() => setActiveTab('roster')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-sm text-xs font-semibold transition-all ${
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
             activeTab === 'roster'
-              ? 'bg-app-accent text-app-accentText shadow-subtle'
-              : 'text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98]'
+              ? 'bg-app-card text-app-text border border-app-border shadow-xs'
+              : 'text-app-muted hover:text-app-text hover:bg-app-hover'
           }`}
         >
-          <UsersThree size={16} weight="bold" />
-          <span>Mechanics Staff Roster</span>
-          <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/10 dark:bg-white/10">{mechanics.length}</span>
+          <UsersThree size={15} weight="bold" />
+          <span>Mechanics</span>
+          <span className="text-[10px] font-mono text-app-muted">{pagination.total}</span>
         </button>
       </div>
 
@@ -159,130 +167,115 @@ export default function MechanicsPage() {
         <RepairPipelineTracker />
       ) : (
         <>
-          {/* Filter Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
-        {statusFilters.map((st) => {
-          const count = st === 'All' ? mechanics.length : mechanics.filter((m) => m.status === st).length
-          const isActive = activeFilter === st
-          const translatedSt = st === 'All' ? t('common.all') : t(`status.${st}`, st)
-          return (
-            <button
-              key={st}
-              onClick={() => setActiveFilter(st)}
-              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-sm text-xs font-medium whitespace-nowrap transition-colors ${
-                isActive
-                  ? 'bg-app-accent text-app-accentText shadow-subtle'
-                  : 'bg-app-card text-app-muted border border-app-border hover:bg-app-hover active:scale-[0.98] hover:text-app-text'
-              }`}
-            >
-              {translatedSt}
-              <span
-                className={`text-[10px] px-1.5 py-0.5 rounded-md ${
-                  isActive ? 'bg-black/20 text-app-accentText font-semibold' : 'bg-app-hover text-app-muted'
-                }`}
-              >
-                {count}
-              </span>
-            </button>
-          )
-        })}
-      </div>
+          {/* Integrated Filter Bar & Search */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
+              {statusFilters.map((st) => {
+                const isActive = activeFilter === st
+                const translatedSt = st === 'All' ? t('common.all') : t(`status.${st}`, st)
+                return (
+                  <button
+                    key={st}
+                    onClick={() => setActiveFilter(st)}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                      isActive
+                        ? 'bg-app-accent text-app-accentText font-semibold'
+                        : 'text-app-muted hover:text-app-text hover:bg-app-hover'
+                    }`}
+                  >
+                    <span>{translatedSt}</span>
+                    {st === 'All' && <span className="text-[10px] font-mono opacity-80">{pagination.total}</span>}
+                  </button>
+                )
+              })}
+            </div>
 
-      {/* Main Table */}
-      <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden transition-colors duration-200">
-        <div className="p-4 border-b border-app-border flex items-center justify-between gap-3">
-          <div className="relative flex-1 max-w-md">
-            <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
-            <input
-              type="text"
-              placeholder={t('common.quickSearch')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-app-input border border-app-border rounded-sm text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
-            />
+            <div className="relative w-full sm:w-60">
+              <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted" />
+              <input
+                type="text"
+                placeholder={t('common.quickSearch')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-3 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+              />
+            </div>
           </div>
-          {(searchQuery || activeFilter !== 'All') && (
-            <button
-              onClick={() => {
-                setSearchQuery('')
-                setActiveFilter('All')
-              }}
-              className="text-xs text-app-muted hover:text-app-text px-2 py-1 transition-colors"
-            >
-              {t('common.cancel')}
-            </button>
-          )}
-        </div>
 
-        <div className="overflow-x-auto">
+          {/* Main Table */}
           {isLoading && mechanics.length === 0 ? (
-            <TableSkeleton rows={6} columns={6} />
-          ) : filtered.length === 0 ? (
-            <EmptyState
-              title={t('common.noRecords')}
-              description={t('common.noData')}
-              actionText={searchQuery || activeFilter !== 'All' ? t('common.filter') : undefined}
-              onAction={
-                searchQuery || activeFilter !== 'All'
-                  ? () => {
-                      setSearchQuery('')
-                      setActiveFilter('All')
-                    }
-                  : undefined
-              }
-            />
+            <TableSkeleton rows={6} columns={5} />
+          ) : mechanics.length === 0 ? (
+            <div className="bg-app-card rounded-lg border border-app-border shadow-xs overflow-hidden">
+              <EmptyState
+                title={t('common.noRecords')}
+                description={t('common.noData')}
+                actionText={searchQuery || activeFilter !== 'All' ? t('common.filter') : undefined}
+                onAction={
+                  searchQuery || activeFilter !== 'All'
+                    ? () => {
+                        setSearchQuery('')
+                        setActiveFilter('All')
+                      }
+                    : undefined
+                }
+              />
+            </div>
           ) : (
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="text-app-muted text-left border-b border-app-border bg-app-hover/50">
-                  <th className="px-4 py-3 font-semibold">{t('mechanics.name')}</th>
-                  <th className="px-4 py-3 font-semibold">{t('mechanics.specialization')}</th>
-                  <th className="px-4 py-3 hidden md:table-cell font-semibold">{t('mechanics.experience')}</th>
-                  <th className="px-4 py-3 hidden lg:table-cell font-semibold">{t('mechanics.hourlyRate')}</th>
-                  <th className="px-4 py-3 font-semibold">{t('mechanics.status')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-app-border">
-                {filtered.map((m) => (
-                  <tr key={m.id} onClick={() => handleOpenView(m)} className="hover:bg-app-hover /60 active:scale-[0.98] transition-colors group cursor-pointer">
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-sm bg-app-accent/15 flex items-center justify-center text-app-accent font-bold text-xs flex-shrink-0">
-                          <Wrench size={16} />
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('mechanics.name')}</TableHead>
+                  <TableHead>{t('mechanics.specialization')}</TableHead>
+                  <TableHead className="hidden md:table-cell">{t('mechanics.experience')}</TableHead>
+                  <TableHead className="hidden lg:table-cell">{t('mechanics.hourlyRate')}</TableHead>
+                  <TableHead>{t('mechanics.status')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {mechanics.map((m) => (
+                  <TableRow
+                    key={m.id}
+                    onClick={() => handleOpenView(m)}
+                    className="cursor-pointer"
+                  >
+                    <TableCell>
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-sm bg-app-accent/15 flex items-center justify-center text-app-accent font-bold text-xs flex-shrink-0">
+                          <Wrench size={14} />
                         </div>
                         <div>
                           <p className="font-semibold text-app-text">{m.name}</p>
                           <p className="text-[10px] text-app-muted font-mono">{m.code} · {m.phone}</p>
                         </div>
                       </div>
-                    </td>
-                    <td className="px-4 py-3.5 text-app-text font-medium">{m.specialization}</td>
-                    <td className="px-4 py-3.5 text-app-muted tabular-nums hidden md:table-cell">
+                    </TableCell>
+                    <TableCell className="text-app-text font-medium">{m.specialization}</TableCell>
+                    <TableCell className="text-app-muted tabular-nums hidden md:table-cell">
                       {m.experienceYears} {t('mechanics.experience')}
-                    </td>
-                    <td className="px-4 py-3.5 font-bold text-app-accent tabular-nums hidden lg:table-cell">
+                    </TableCell>
+                    <TableCell className="font-bold text-app-accent tabular-nums hidden lg:table-cell">
                       ${m.hourlyRate}/hr
-                    </td>
-                    <td className="px-4 py-3.5">
+                    </TableCell>
+                    <TableCell>
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-sm text-[11px] font-semibold ${
+                        className={`inline-flex items-center px-2 py-0.5 rounded-sm text-[11px] font-semibold border ${
                           m.status === 'Active'
-                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
                             : m.status === 'On Leave'
-                            ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
-                            : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
+                            ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                            : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20'
                         }`}
                       >
                         {t(`status.${m.status}`, m.status)}
                       </span>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+              <TableFooterBar pagination={pagination} onPageChange={setCurrentPage} />
+            </Table>
           )}
-        </div>
-      </div>
       </>
       )}
 
@@ -353,14 +346,15 @@ export default function MechanicsPage() {
               />
             </div>
           </div>
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-app-border">
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={() => setIsAddOpen(false)}
-              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
             >
               {t('common.cancel')}
-            </button>
+            </Button>
             <LoadingButton type="submit" loading={createMechanicMutation.isPending}>
               {t('mechanics.createMechanic')}
             </LoadingButton>
@@ -402,25 +396,28 @@ export default function MechanicsPage() {
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('mechanics.status')}</label>
-              <select
+              <SearchableSelect
                 value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
-              >
-                <option value="Active">{t('status.Active')}</option>
-                <option value="On Leave">{t('status.On Leave')}</option>
-                <option value="Terminated">{t('status.Terminated')}</option>
-              </select>
+                onChange={(val) => setFormData({ ...formData, status: val })}
+                options={[
+                  { value: 'Active', label: t('status.Active') },
+                  { value: 'On Leave', label: t('status.On Leave') },
+                  { value: 'Terminated', label: t('status.Terminated') },
+                ]}
+                placeholder="Select status..."
+                searchPlaceholder="Search status..."
+              />
             </div>
           </div>
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
-            <button
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-app-border">
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={() => setIsEditOpen(false)}
-              className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors text-xs font-medium"
             >
               {t('common.cancel')}
-            </button>
+            </Button>
             <LoadingButton type="submit" loading={updateMechanicMutation.isPending}>
               {t('common.saveChanges')}
             </LoadingButton>

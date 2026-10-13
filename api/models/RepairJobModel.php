@@ -31,6 +31,79 @@ class RepairJobModel
         return array_map([self::class, 'format'], Database::all($sql, $params));
     }
 
+    public static function getPaginated(array $filters = [], string $search = '', int $page = 1, int $limit = 10, ?string $status = null): array
+    {
+        $countSql = "
+          SELECT COUNT(DISTINCT ro.id) AS cnt
+          FROM repair_orders ro
+          LEFT JOIN customers c ON ro.customer_id = c.id
+          LEFT JOIN vehicles v ON ro.vehicle_id = v.id
+          LEFT JOIN employees e ON ro.mechanic_id = e.id
+          LEFT JOIN users u ON e.user_id = u.id
+          WHERE 1=1
+        ";
+        $countParams = [];
+        if (!empty($filters['mechanicId'])) {
+            $countSql .= " AND ro.mechanic_id = ?";
+            $countParams[] = $filters['mechanicId'];
+        }
+        if (!empty($filters['vehicleId'])) {
+            $countSql .= " AND ro.vehicle_id = ?";
+            $countParams[] = $filters['vehicleId'];
+        }
+        if (!empty($filters['customerId'])) {
+            $countSql .= " AND ro.customer_id = ?";
+            $countParams[] = $filters['customerId'];
+        }
+        if ($status && $status !== 'All') {
+            $countSql .= " AND ro.status = ?";
+            $countParams[] = $status;
+        }
+        if ($search) {
+            $countSql .= " AND (ro.order_number ILIKE ? OR c.full_name ILIKE ? OR v.vehicle_number ILIKE ? OR v.brand ILIKE ? OR v.model ILIKE ? OR ro.problem_description ILIKE ?)";
+            $countParams = array_merge($countParams, ["%$search%", "%$search%", "%$search%", "%$search%", "%$search%", "%$search%"]);
+        }
+
+        $countRow = Database::get($countSql, $countParams);
+        $total = (int) ($countRow['cnt'] ?? 0);
+
+        $offset = max(0, ($page - 1) * $limit);
+        $sql = self::baseSql();
+        $params = [];
+        $where = [];
+
+        if (!empty($filters['mechanicId'])) {
+            $where[] = 'ro.mechanic_id = ?';
+            $params[] = $filters['mechanicId'];
+        }
+        if (!empty($filters['vehicleId'])) {
+            $where[] = 'ro.vehicle_id = ?';
+            $params[] = $filters['vehicleId'];
+        }
+        if (!empty($filters['customerId'])) {
+            $where[] = 'ro.customer_id = ?';
+            $params[] = $filters['customerId'];
+        }
+        if ($status && $status !== 'All') {
+            $where[] = 'ro.status = ?';
+            $params[] = $status;
+        }
+        if ($search) {
+            $where[] = '(ro.order_number ILIKE ? OR c.full_name ILIKE ? OR v.vehicle_number ILIKE ? OR v.brand ILIKE ? OR v.model ILIKE ? OR ro.problem_description ILIKE ?)';
+            $params = array_merge($params, ["%$search%", "%$search%", "%$search%", "%$search%", "%$search%", "%$search%"]);
+        }
+        if ($where) {
+            $sql .= ' WHERE ' . implode(' AND ', $where);
+        }
+        $sql .= ' GROUP BY ro.id, c.full_name, v.vehicle_number, v.brand, v.model, u.full_name ORDER BY ro.id DESC LIMIT ' . $limit . ' OFFSET ' . $offset;
+
+        $rows = Database::all($sql, $params);
+        return [
+            'data' => array_map([self::class, 'format'], $rows),
+            'total' => $total,
+        ];
+    }
+
     public static function findById(int $id): ?array
     {
         $r = Database::get(

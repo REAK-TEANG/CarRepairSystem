@@ -31,10 +31,15 @@ export default function ConfirmDialog({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={resolvedTitle} maxWidth="max-w-md">
       <div className="space-y-4 text-xs font-sans">
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-3.5">
           {variant === 'danger' && (
-            <div className="p-2 rounded-sm bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 flex-shrink-0">
-              <Warning size={20} weight="fill" />
+            <div className="p-2.5 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 flex-shrink-0">
+              <Warning size={22} weight="fill" />
+            </div>
+          )}
+          {variant === 'warning' && (
+            <div className="p-2.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex-shrink-0">
+              <Warning size={22} weight="fill" />
             </div>
           )}
           <div className="flex-1 text-app-text text-xs leading-relaxed pt-0.5">
@@ -42,12 +47,12 @@ export default function ConfirmDialog({
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 pt-3 border-t border-app-border">
+        <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-app-border">
           <button
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover active:scale-[0.98] hover:text-app-text transition-colors disabled:opacity-50"
+            className="px-3.5 py-2 rounded-lg border border-app-border bg-app-card text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98] transition-all text-xs font-medium cursor-pointer disabled:opacity-50 shadow-xs"
           >
             {resolvedCancelText}
           </button>
@@ -55,7 +60,7 @@ export default function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={isLoading}
-            className={`px-4 py-2 font-semibold rounded-sm transition-colors shadow-subtle disabled:opacity-50 ${getButtonClass()}`}
+            className={`px-4 py-2 font-semibold rounded-lg transition-all shadow-subtle active:scale-[0.98] disabled:opacity-50 cursor-pointer text-xs ${getButtonClass()}`}
           >
             {isLoading ? t('common.loading') : resolvedConfirmText}
           </button>
