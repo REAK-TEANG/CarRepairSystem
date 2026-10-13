@@ -18,16 +18,23 @@ $allowedOrigins = [
     'http://127.0.0.1:3000',
 ];
 if ($envFrontend = getenv('FRONTEND_URL')) {
-    $allowedOrigins[] = rtrim($envFrontend, '/');
+    foreach (explode(',', $envFrontend) as $url) {
+        $trimmed = trim(rtrim($url, '/'));
+        if ($trimmed) $allowedOrigins[] = $trimmed;
+    }
 }
 if ($envClient = getenv('CLIENT_URL')) {
-    $allowedOrigins[] = rtrim($envClient, '/');
+    foreach (explode(',', $envClient) as $url) {
+        $trimmed = trim(rtrim($url, '/'));
+        if ($trimmed) $allowedOrigins[] = $trimmed;
+    }
 }
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 $isDev = (getenv('APP_ENV') ?: 'development') === 'development';
+$isVercelOrigin = (bool) preg_match('#^https://[a-zA-Z0-9\-_.]+\.vercel\.app$#i', $origin);
 
-if ($origin && (in_array($origin, $allowedOrigins) || $isDev)) {
+if ($origin && (in_array($origin, $allowedOrigins) || $isVercelOrigin || $isDev)) {
     header("Access-Control-Allow-Origin: $origin");
     header("Access-Control-Allow-Credentials: true");
     header("Vary: Origin");
@@ -132,6 +139,16 @@ $module = strtolower($segments[0] ?? '');
 
 try {
     switch ($module) {
+    case '':
+    case 'health':
+        echo json_encode([
+            'status' => 'ok',
+            'service' => 'Car Repair Shop Management API',
+            'version' => '1.0.0',
+            'environment' => getenv('APP_ENV') ?: 'development',
+            'timestamp' => date('c'),
+        ]);
+        break;
     case 'auth':
         require_once __DIR__ . '/routes/auth.php';
         break;

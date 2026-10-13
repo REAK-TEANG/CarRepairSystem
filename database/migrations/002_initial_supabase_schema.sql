@@ -622,27 +622,27 @@ ON CONFLICT (name) DO UPDATE SET description = EXCLUDED.description;
 
 -- 2. Core RBAC Accounts (Bcrypt password for admin: 'admin123' | for all others: 'password123')
 INSERT INTO users (username, email, password_hash, full_name, phone, role_id, is_active)
-SELECT 'admin', 'admin@carrepair.com', '$2b$10$zkJwffuqX3ZcLrW8e.Vmru4cK2qMv3BsIG5bFcGNpCk8Ub6qcUhDC', 'System Administrator', '(555) 019-1000', id, TRUE FROM roles WHERE name = 'Admin'
+SELECT 'admin', 'admin@carrepair.com', '$2b$10$rvNF/UJrJxh5uf02i3MbYOAtOMX77dEZxidsOj0OODiA64WHs76Qy', 'System Administrator', '(555) 019-1000', id, TRUE FROM roles WHERE name = 'Admin'
 ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash, role_id = EXCLUDED.role_id, full_name = EXCLUDED.full_name;
 
 INSERT INTO users (username, email, password_hash, full_name, phone, role_id, is_active)
-SELECT 'manager', 'manager@workshop.com', '$2b$10$3BFisDQ2hJI/KwK48O/m4uVmX4MLPWbLJ2P3yqx07dp8lxOI8SyWm', 'Marcus Vance', '(555) 019-2000', id, TRUE FROM roles WHERE name = 'Manager'
+SELECT 'manager', 'manager@workshop.com', '$2b$10$wHbPGnIm4yXPk1HCxs2MTuuOyadZxRTKCg0rT3S64gBU7.xi1mvlW', 'Marcus Vance', '(555) 019-2000', id, TRUE FROM roles WHERE name = 'Manager'
 ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash, role_id = EXCLUDED.role_id, full_name = EXCLUDED.full_name;
 
 INSERT INTO users (username, email, password_hash, full_name, phone, role_id, is_active)
-SELECT 'advisor', 'advisor@workshop.com', '$2b$10$3BFisDQ2hJI/KwK48O/m4uVmX4MLPWbLJ2P3yqx07dp8lxOI8SyWm', 'Sarah Jenkins', '(555) 019-3000', id, TRUE FROM roles WHERE name = 'Service Advisor'
+SELECT 'advisor', 'advisor@workshop.com', '$2b$10$wHbPGnIm4yXPk1HCxs2MTuuOyadZxRTKCg0rT3S64gBU7.xi1mvlW', 'Sarah Jenkins', '(555) 019-3000', id, TRUE FROM roles WHERE name = 'Service Advisor'
 ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash, role_id = EXCLUDED.role_id, full_name = EXCLUDED.full_name;
 
 INSERT INTO users (username, email, password_hash, full_name, phone, role_id, is_active)
-SELECT 'mechanic', 'mike@workshop.com', '$2b$10$3BFisDQ2hJI/KwK48O/m4uVmX4MLPWbLJ2P3yqx07dp8lxOI8SyWm', 'Mike Johnson', '(555) 019-4000', id, TRUE FROM roles WHERE name = 'Mechanic'
+SELECT 'mechanic', 'mike@workshop.com', '$2b$10$wHbPGnIm4yXPk1HCxs2MTuuOyadZxRTKCg0rT3S64gBU7.xi1mvlW', 'Mike Johnson', '(555) 019-4000', id, TRUE FROM roles WHERE name = 'Mechanic'
 ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash, role_id = EXCLUDED.role_id, full_name = EXCLUDED.full_name;
 
 INSERT INTO users (username, email, password_hash, full_name, phone, role_id, is_active)
-SELECT 'cashier', 'cashier@workshop.com', '$2b$10$3BFisDQ2hJI/KwK48O/m4uVmX4MLPWbLJ2P3yqx07dp8lxOI8SyWm', 'Emily Watson', '(555) 019-5000', id, TRUE FROM roles WHERE name = 'Cashier'
+SELECT 'cashier', 'cashier@workshop.com', '$2b$10$wHbPGnIm4yXPk1HCxs2MTuuOyadZxRTKCg0rT3S64gBU7.xi1mvlW', 'Emily Watson', '(555) 019-5000', id, TRUE FROM roles WHERE name = 'Cashier'
 ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash, role_id = EXCLUDED.role_id, full_name = EXCLUDED.full_name;
 
 INSERT INTO users (username, email, password_hash, full_name, phone, role_id, is_active)
-SELECT 'storekeeper', 'store@workshop.com', '$2b$10$3BFisDQ2hJI/KwK48O/m4uVmX4MLPWbLJ2P3yqx07dp8lxOI8SyWm', 'David Miller', '(555) 019-6000', id, TRUE FROM roles WHERE name = 'Storekeeper'
+SELECT 'storekeeper', 'store@workshop.com', '$2b$10$wHbPGnIm4yXPk1HCxs2MTuuOyadZxRTKCg0rT3S64gBU7.xi1mvlW', 'David Miller', '(555) 019-6000', id, TRUE FROM roles WHERE name = 'Storekeeper'
 ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash, role_id = EXCLUDED.role_id, full_name = EXCLUDED.full_name;
 
 

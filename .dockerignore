@@ -1,0 +1,14 @@
+.git
+.gitignore
+.dockerignore
+node_modules
+CarRepairShop
+database
+.agents
+.gemini
+dist
+*.log
+*.md
+.env
+.env.*
+!api/.htaccess
