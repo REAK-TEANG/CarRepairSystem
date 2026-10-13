@@ -53,10 +53,17 @@ try {
 } catch (PDOException $e) {
     error_log("Database connection failed: " . $e->getMessage());
     http_response_code(500);
-    $isDev = (getenv('APP_ENV') ?: 'development') === 'development';
     echo json_encode([
         'error' => 'Database connection failed',
-        'message' => $isDev ? $e->getMessage() : 'Unable to connect to database. Please check server configuration.'
+        'message' => $e->getMessage(),
+        'config' => [
+            'host' => $host,
+            'port' => $port,
+            'dbname' => $dbname,
+            'user' => $user,
+            'sslmode' => $sslmode,
+            'has_password' => (!empty($password) && $password !== '123'),
+        ]
     ]);
     exit;
 }
