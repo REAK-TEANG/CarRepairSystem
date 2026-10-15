@@ -31,7 +31,7 @@ import { useServicesCatalog } from '../../hooks/useServicesCatalog'
 import { useDebounce } from '../../hooks/useDebounce'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
-import { Modal, ImageUpload, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Button, StatusBadge, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, SearchableSelect } from '../../components/ui'
+import { Modal, ImageUpload, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Button, StatusBadge, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, SearchableSelect, Input, Textarea } from '../../components/ui'
 
 const fuelOptions = ['All', 'Petrol', 'Diesel', 'Hybrid', 'Electric']
 
@@ -365,7 +365,7 @@ export default function VehiclesPage() {
 
         <div className="relative w-full sm:w-60">
           <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted" />
-          <input
+          <Input
             type="text"
             placeholder={t('common.quickSearch')}
             value={searchQuery}
@@ -373,7 +373,7 @@ export default function VehiclesPage() {
               setSearchQuery(e.target.value)
               setPage(1)
             }}
-            className="w-full pl-8 pr-3 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+            className="pl-8"
           />
         </div>
       </div>
@@ -505,23 +505,23 @@ export default function VehiclesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('vehicles.plateNumber')} *</label>
-              <input
+              <Input
                 type="text"
                 required
                 value={formData.number}
                 onChange={(e) => setFormData({ ...formData, number: e.target.value.toUpperCase() })}
                 placeholder="e.g. 2AB-9988"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-mono uppercase"
+                className="font-mono uppercase"
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('vehicles.vin')}</label>
-              <input
+              <Input
                 type="text"
                 value={formData.vin}
                 onChange={(e) => setFormData({ ...formData, vin: e.target.value.toUpperCase() })}
                 placeholder="17-character VIN"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-mono uppercase"
+                className="font-mono uppercase"
               />
             </div>
           </div>
@@ -529,33 +529,30 @@ export default function VehiclesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('vehicles.brand')} *</label>
-              <input
+              <Input
                 type="text"
                 required
                 value={formData.brand}
                 onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
                 placeholder="Toyota, Lexus..."
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('vehicles.model')} *</label>
-              <input
+              <Input
                 type="text"
                 required
                 value={formData.model}
                 onChange={(e) => setFormData({ ...formData, model: e.target.value })}
                 placeholder="Camry, RX350..."
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('vehicles.year')}</label>
-              <input
+              <Input
                 type="number"
                 value={formData.year}
                 onChange={(e) => setFormData({ ...formData, year: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
@@ -563,22 +560,20 @@ export default function VehiclesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('vehicles.color')}</label>
-              <input
+              <Input
                 type="text"
                 value={formData.color}
                 onChange={(e) => setFormData({ ...formData, color: e.target.value })}
                 placeholder="Black, Pearl White..."
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('vehicles.mileage')}</label>
-              <input
+              <Input
                 type="number"
                 value={formData.mileage}
                 onChange={(e) => setFormData({ ...formData, mileage: e.target.value })}
                 placeholder="45000"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -630,21 +625,21 @@ export default function VehiclesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('vehicles.plateNumber')} *</label>
-              <input
+              <Input
                 type="text"
                 required
                 value={formData.number}
                 onChange={(e) => setFormData({ ...formData, number: e.target.value.toUpperCase() })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-mono uppercase"
+                className="font-mono uppercase"
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('vehicles.vin')}</label>
-              <input
+              <Input
                 type="text"
                 value={formData.vin}
                 onChange={(e) => setFormData({ ...formData, vin: e.target.value.toUpperCase() })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-mono uppercase"
+                className="font-mono uppercase"
               />
             </div>
           </div>
@@ -652,31 +647,28 @@ export default function VehiclesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('vehicles.brand')} *</label>
-              <input
+              <Input
                 type="text"
                 required
                 value={formData.brand}
                 onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('vehicles.model')} *</label>
-              <input
+              <Input
                 type="text"
                 required
                 value={formData.model}
                 onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('vehicles.year')}</label>
-              <input
+              <Input
                 type="number"
                 value={formData.year}
                 onChange={(e) => setFormData({ ...formData, year: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
@@ -684,20 +676,18 @@ export default function VehiclesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('vehicles.color')}</label>
-              <input
+              <Input
                 type="text"
                 value={formData.color}
                 onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('vehicles.mileage')}</label>
-              <input
+              <Input
                 type="number"
                 value={formData.mileage}
                 onChange={(e) => setFormData({ ...formData, mileage: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
@@ -966,12 +956,12 @@ export default function VehiclesPage() {
               {selectedVehicleJobs.length > 0 && (
                 <div className="relative">
                   <MagnifyingGlass size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted" />
-                  <input
+                  <Input
                     type="text"
                     placeholder="Search past repairs, problems, diagnoses, mechanics, or parts..."
                     value={historySearch}
                     onChange={(e) => setHistorySearch(e.target.value)}
-                    className="w-full pl-8 pr-3 py-1.5 bg-app-input border border-app-border rounded-sm text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+                    className="pl-8"
                   />
                 </div>
               )}
@@ -1229,12 +1219,12 @@ export default function VehiclesPage() {
               <label className="block text-app-muted font-medium mb-1 flex items-center gap-1">
                 <Gauge size={12} /> Odometer (km)
               </label>
-              <input
+              <Input
                 type="number"
                 value={jobFormData.odometer}
                 onChange={(e) => setJobFormData({ ...jobFormData, odometer: e.target.value })}
                 placeholder="e.g. 52300"
-                className="w-full px-3 py-1.5 bg-app-input border border-app-border rounded-sm text-app-text font-mono focus:outline-none focus:border-app-accent"
+                className="font-mono"
               />
             </div>
             <div>
@@ -1257,35 +1247,33 @@ export default function VehiclesPage() {
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">Estimated Cost</label>
-              <input
+              <Input
                 type="text"
                 value={jobFormData.estimatedCost}
                 onChange={(e) => setJobFormData({ ...jobFormData, estimatedCost: e.target.value })}
-                className="w-full px-3 py-1.5 bg-app-input border border-app-border rounded-sm text-app-text font-semibold focus:outline-none focus:border-app-accent"
+                className="font-semibold"
               />
             </div>
           </div>
 
           <div>
             <label className="block text-app-muted font-medium mb-1">{t('common.description')} / Problem *</label>
-            <textarea
+            <Textarea
               rows={2}
               required
               value={jobFormData.problem}
               onChange={(e) => setJobFormData({ ...jobFormData, problem: e.target.value })}
               placeholder="e.g. Brake pad wear squeal, oil renewal service"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
 
           <div>
             <label className="block text-app-muted font-medium mb-1">{t('repairJobs.diagnosticReport')}</label>
-            <textarea
+            <Textarea
               rows={2}
               value={jobFormData.diagnosis}
               onChange={(e) => setJobFormData({ ...jobFormData, diagnosis: e.target.value })}
               placeholder="e.g. Replace brake pads, inspect rotor thickness"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
 

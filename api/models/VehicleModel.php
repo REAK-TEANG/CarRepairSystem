@@ -92,6 +92,15 @@ class VehicleModel
             [trim($input['number'] ?? '')]
         );
         $customer = Database::get('SELECT full_name FROM customers WHERE id = ?', [$inserted['customer_id']]);
+
+        EventBus::publish('vehicles', 'created', [
+            'id' => $inserted['id'],
+            'vehicleNumber' => $inserted['vehicle_number'],
+            'brand' => $inserted['brand'],
+            'model' => $inserted['model'],
+            'customerId' => $inserted['customer_id'],
+        ]);
+
         return self::format(array_merge($inserted, ['customer_name' => $customer['full_name'] ?? '']));
     }
 
@@ -137,16 +146,25 @@ class VehicleModel
             return null;
         }
         $customer = Database::get('SELECT full_name FROM customers WHERE id = ?', [$updated['customer_id']]);
+
+        EventBus::publish('vehicles', 'updated', [
+            'id' => $id,
+            'vehicleNumber' => $updated['vehicle_number'],
+            'brand' => $updated['brand'],
+            'model' => $updated['model'],
+        ]);
+
         return self::format(array_merge($updated, ['customer_name' => $customer['full_name'] ?? '']));
     }
 
     public static function delete(int $id): bool
     {
-        $exists = Database::get('SELECT id FROM vehicles WHERE id = ?', [$id]);
+        $exists = Database::get('SELECT id, vehicle_number FROM vehicles WHERE id = ?', [$id]);
         if (!$exists) {
             return false;
         }
         Database::run('DELETE FROM vehicles WHERE id = ?', [$id]);
+        EventBus::publish('vehicles', 'deleted', ['id' => $id, 'vehicleNumber' => $exists['vehicle_number']]);
         return true;
     }
 

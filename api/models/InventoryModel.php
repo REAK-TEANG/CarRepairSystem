@@ -123,6 +123,13 @@ class InventoryModel
             ? Database::get('SELECT name FROM suppliers WHERE id = ?', [$inserted['supplier_id']])
             : null;
 
+        EventBus::publish('inventory', 'created', [
+            'id' => $inserted['id'],
+            'partCode' => $finalCode,
+            'name' => $inserted['name'],
+            'stockQuantity' => (int)$inserted['stock_quantity'],
+        ]);
+
         return self::format(array_merge($inserted, ['supplier_name' => $sup['name'] ?? '']));
     }
 
@@ -168,6 +175,12 @@ class InventoryModel
             ? Database::get('SELECT name FROM suppliers WHERE id = ?', [$updated['supplier_id']])
             : null;
 
+        EventBus::publish('inventory', 'updated', [
+            'id' => $id,
+            'partCode' => $updated['part_code'],
+            'stockQuantity' => (int)$updated['stock_quantity'],
+        ]);
+
         return self::format(array_merge($updated, ['supplier_name' => $sup['name'] ?? '']));
     }
 
@@ -197,16 +210,25 @@ class InventoryModel
             ? Database::get('SELECT name FROM suppliers WHERE id = ?', [$updated['supplier_id']])
             : null;
 
+        EventBus::publish('inventory', 'stock_adjusted', [
+            'id' => $id,
+            'partCode' => $updated['part_code'],
+            'newQuantity' => $newQty,
+            'change' => $qtyChange,
+            'type' => $type,
+        ]);
+
         return self::format(array_merge($updated, ['supplier_name' => $sup['name'] ?? '']));
     }
 
     public static function delete(int $id): bool
     {
-        $exists = Database::get('SELECT id FROM spare_parts WHERE id = ?', [$id]);
+        $exists = Database::get('SELECT id, part_code FROM spare_parts WHERE id = ?', [$id]);
         if (!$exists) {
             return false;
         }
         Database::run('DELETE FROM spare_parts WHERE id = ?', [$id]);
+        EventBus::publish('inventory', 'deleted', ['id' => $id, 'partCode' => $exists['part_code']]);
         return true;
     }
 

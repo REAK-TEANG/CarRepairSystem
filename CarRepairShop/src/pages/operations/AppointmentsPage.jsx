@@ -23,7 +23,7 @@ import { useServicesCatalog } from '../../hooks/useServicesCatalog'
 import { useDebounce } from '../../hooks/useDebounce'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
-import { Modal, StatusBadge, EmptyState, TableSkeleton, LoadingButton, Button, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, SearchableSelect } from '../../components/ui'
+import { Modal, StatusBadge, EmptyState, TableSkeleton, LoadingButton, Button, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, SearchableSelect, Input, Textarea } from '../../components/ui'
 
 const statusFilters = ['All', 'Scheduled', 'Confirmed', 'In Progress', 'Completed', 'Cancelled']
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -418,8 +418,8 @@ export default function AppointmentsPage() {
 
               {/* Inline Search */}
               <div className="relative w-full sm:w-60">
-                <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted" />
-                <input
+                <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted z-10 pointer-events-none" />
+                <Input
                   type="text"
                   placeholder={t('common.quickSearch')}
                   value={searchQuery}
@@ -672,34 +672,32 @@ export default function AppointmentsPage() {
 
           <div>
             <label className="block text-app-muted font-medium mb-1">Maintenance Service Type *</label>
-            <input
+            <Input
               type="text"
               required
               value={reminderForm.serviceType}
               onChange={(e) => setReminderForm({ ...reminderForm, serviceType: e.target.value })}
               placeholder="e.g. 5,000 km Oil & Filter Service or Brake Pad Inspection"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">Due Date</label>
-              <input
+              <Input
                 type="date"
                 value={reminderForm.dueDate}
                 onChange={(e) => setReminderForm({ ...reminderForm, dueDate: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">Due Mileage (km)</label>
-              <input
+              <Input
                 type="number"
                 value={reminderForm.dueOdometer}
                 onChange={(e) => setReminderForm({ ...reminderForm, dueOdometer: e.target.value })}
                 placeholder="e.g. 60000"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text font-mono focus:outline-none focus:border-app-accent"
+                className="font-mono"
               />
             </div>
           </div>
@@ -801,34 +799,31 @@ export default function AppointmentsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('common.date')} *</label>
-              <input
+              <Input
                 type="date"
                 required
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('common.time')} *</label>
-              <input
+              <Input
                 type="time"
                 required
                 value={formData.time}
                 onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
 
           <div>
             <label className="block text-app-muted font-medium mb-1">{t('appointments.notes')}</label>
-            <textarea
+            <Textarea
               rows={2}
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               placeholder="e.g. Engine rattling at high speed"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
 
@@ -889,20 +884,18 @@ export default function AppointmentsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('common.date')}</label>
-              <input
+              <Input
                 type="date"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('common.time')}</label>
-              <input
+              <Input
                 type="time"
                 value={formData.time}
                 onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>

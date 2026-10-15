@@ -26,7 +26,7 @@ import { useCreateInvoice } from '../../hooks/useInvoices'
 import { useDebounce } from '../../hooks/useDebounce'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
-import { Modal, StatusBadge, EmptyState, ConfirmDialog, TableSkeleton, LoadingButton, Button, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, SearchableSelect } from '../../components/ui'
+import { Modal, StatusBadge, EmptyState, ConfirmDialog, TableSkeleton, LoadingButton, Button, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, SearchableSelect, Input, Textarea } from '../../components/ui'
 
 const statusFilters = ['All', 'Pending', 'Diagnosing', 'Repairing', 'Waiting for Parts', 'Ready for Pickup', 'Completed']
 
@@ -265,8 +265,8 @@ export default function RepairJobsPage() {
         </div>
 
         <div className="relative w-full sm:w-60">
-          <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted" />
-          <input
+          <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted z-10 pointer-events-none" />
+          <Input
             type="text"
             placeholder={t('common.quickSearch')}
             value={searchQuery}
@@ -529,12 +529,12 @@ export default function RepairJobsPage() {
                 <label className="text-app-muted font-medium mb-1 flex items-center gap-1">
                   <Gauge size={12} /> Odometer (km)
                 </label>
-                <input
+                <Input
                   type="number"
                   value={formData.odometer}
                   onChange={(e) => setFormData({ ...formData, odometer: e.target.value })}
                   placeholder="e.g. 52300"
-                  className="w-full px-3 py-1.5 bg-app-input border border-app-border rounded-sm text-app-text font-mono focus:outline-none focus:border-app-accent"
+                  className="font-mono"
                 />
               </div>
               <div>
@@ -572,12 +572,12 @@ export default function RepairJobsPage() {
 
             <div>
               <label className="block text-app-muted font-medium mb-1">Pre-Existing Damage / Exterior Inspection Notes</label>
-              <input
+              <Input
                 type="text"
                 value={formData.intakeNotes}
                 onChange={(e) => setFormData({ ...formData, intakeNotes: e.target.value })}
                 placeholder="e.g. Minor scratch on rear right bumper, clean windshield"
-                className="w-full px-3 py-1.5 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent text-xs"
+                className="text-xs"
               />
             </div>
           </div>
@@ -602,36 +602,34 @@ export default function RepairJobsPage() {
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('repairJobs.totalCost')}</label>
-              <input
+              <Input
                 type="text"
                 value={formData.estimatedCost}
                 onChange={(e) => setFormData({ ...formData, estimatedCost: e.target.value })}
                 placeholder="$450"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
+                className="font-semibold"
               />
             </div>
           </div>
 
           <div>
             <label className="block text-app-muted font-medium mb-1">{t('common.description')} *</label>
-            <textarea
+            <Textarea
               rows={2}
               required
               value={formData.problem}
               onChange={(e) => setFormData({ ...formData, problem: e.target.value })}
               placeholder="e.g. Engine shaking while idle, check engine light on"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
 
           <div>
             <label className="block text-app-muted font-medium mb-1">{t('repairJobs.diagnosticReport')}</label>
-            <textarea
+            <Textarea
               rows={2}
               value={formData.diagnosis}
               onChange={(e) => setFormData({ ...formData, diagnosis: e.target.value })}
               placeholder="e.g. Routine 50k miles inspection and filter replacement"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
 
@@ -692,11 +690,10 @@ export default function RepairJobsPage() {
 
           <div>
             <label className="block text-app-muted font-medium mb-1">{t('repairJobs.diagnosticReport')}</label>
-            <textarea
+            <Textarea
               rows={3}
               value={formData.diagnosis || ''}
               onChange={(e) => setFormData({ ...formData, diagnosis: e.target.value })}
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
 

@@ -7,11 +7,19 @@ class CustomerModel
     {
         $sql = "
           SELECT c.*,
-                 COUNT(DISTINCT v.id)         AS vehicles_count,
-                 COALESCE(SUM(i.amount_paid), 0) AS total_spent
+                 COALESCE(v.vehicles_count, 0) AS vehicles_count,
+                 COALESCE(i.total_spent, 0) AS total_spent
           FROM customers c
-          LEFT JOIN vehicles v ON v.customer_id = c.id
-          LEFT JOIN invoices i ON i.customer_id = c.id
+          LEFT JOIN (
+              SELECT customer_id, COUNT(*) AS vehicles_count
+              FROM vehicles
+              GROUP BY customer_id
+          ) v ON v.customer_id = c.id
+          LEFT JOIN (
+              SELECT customer_id, SUM(amount_paid) AS total_spent
+              FROM invoices
+              GROUP BY customer_id
+          ) i ON i.customer_id = c.id
         ";
         $params = [];
 
@@ -20,7 +28,7 @@ class CustomerModel
             $params = ["%$search%", "%$search%", "%$search%"];
         }
 
-        $sql .= " GROUP BY c.id ORDER BY c.id DESC";
+        $sql .= " ORDER BY c.id DESC";
 
         return array_map([self::class, 'format'], Database::all($sql, $params));
     }
@@ -39,18 +47,26 @@ class CustomerModel
         $offset = max(0, ($page - 1) * $limit);
         $sql = "
           SELECT c.*,
-                 COUNT(DISTINCT v.id)         AS vehicles_count,
-                 COALESCE(SUM(i.amount_paid), 0) AS total_spent
+                 COALESCE(v.vehicles_count, 0) AS vehicles_count,
+                 COALESCE(i.total_spent, 0) AS total_spent
           FROM customers c
-          LEFT JOIN vehicles v ON v.customer_id = c.id
-          LEFT JOIN invoices i ON i.customer_id = c.id
+          LEFT JOIN (
+              SELECT customer_id, COUNT(*) AS vehicles_count
+              FROM vehicles
+              GROUP BY customer_id
+          ) v ON v.customer_id = c.id
+          LEFT JOIN (
+              SELECT customer_id, SUM(amount_paid) AS total_spent
+              FROM invoices
+              GROUP BY customer_id
+          ) i ON i.customer_id = c.id
         ";
         $params = [];
         if ($search) {
             $sql .= " WHERE c.full_name ILIKE ? OR c.phone ILIKE ? OR c.customer_code ILIKE ?";
             $params = ["%$search%", "%$search%", "%$search%"];
         }
-        $sql .= " GROUP BY c.id ORDER BY c.id DESC LIMIT $limit OFFSET $offset";
+        $sql .= " ORDER BY c.id DESC LIMIT $limit OFFSET $offset";
 
         $rows = array_map([self::class, 'format'], Database::all($sql, $params));
         return ['data' => $rows, 'total' => $total];
@@ -81,6 +97,9 @@ class CustomerModel
         );
 
         $inserted = Database::get('SELECT * FROM customers WHERE customer_code = ? ORDER BY id DESC LIMIT 1', [$code]);
+        if ($inserted) {
+            EventBus::publish('customers', 'created', ['id' => $inserted['id'], 'customerCode' => $code, 'name' => $inserted['full_name']]);
+        }
         return self::format($inserted);
     }
 
@@ -106,6 +125,9 @@ class CustomerModel
         );
 
         $updated = Database::get('SELECT * FROM customers WHERE id = ?', [$id]);
+        if ($updated) {
+            EventBus::publish('customers', 'updated', ['id' => $id, 'name' => $updated['full_name']]);
+        }
         return $updated ? self::format($updated) : null;
     }
 
@@ -117,6 +139,7 @@ class CustomerModel
         }
 
         Database::run('DELETE FROM customers WHERE id = ?', [$id]);
+        EventBus::publish('customers', 'deleted', ['id' => $id]);
         return true;
     }
 

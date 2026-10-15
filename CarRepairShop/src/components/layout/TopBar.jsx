@@ -23,6 +23,7 @@ import { useVehicles } from '../../hooks/useVehicles'
 import { useRepairJobs } from '../../hooks/useRepairJobs'
 import { useInventory } from '../../hooks/useInventory'
 import LanguageSwitcher from '../ui/LanguageSwitcher'
+import { Input } from '../ui'
 
 const routeTitleKeys = {
   '/admin/dashboard': 'titles.adminOverview',
@@ -181,8 +182,8 @@ export default function TopBar({ onToggleSidebar }) {
 
         {/* Desktop Global Search Bar with Live Popover */}
         <div ref={searchRef} className="relative hidden sm:block">
-          <MagnifyingGlass size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted" />
-          <input
+          <MagnifyingGlass size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted z-10 pointer-events-none" />
+          <Input
             type="text"
             placeholder={t('common.quickSearch')}
             value={searchQuery}
@@ -191,7 +192,7 @@ export default function TopBar({ onToggleSidebar }) {
               setSearchQuery(e.target.value)
               setIsSearchOpen(true)
             }}
-            className="w-44 md:w-56 lg:w-72 pl-8 pr-10 py-1.5 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent focus:ring-1 focus:ring-app-accent transition-all"
+            className="w-44 md:w-56 lg:w-72 pl-8 pr-10 py-1.5"
           />
           <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
             {searchQuery ? (
@@ -503,14 +504,14 @@ export default function TopBar({ onToggleSidebar }) {
           <div ref={mobileSearchRef} className="bg-app-card border border-app-border rounded-sm p-4 shadow-card space-y-3">
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
-                <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
-                <input
+                <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted z-10 pointer-events-none" />
+                <Input
                   type="text"
                   autoFocus
                   placeholder={t('common.quickSearch')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-9 py-2.5 bg-app-input border border-app-border rounded-sm text-xs text-app-text focus:outline-none focus:border-app-accent"
+                  className="w-full pl-9 pr-9 py-2"
                 />
                 {searchQuery && (
                   <button

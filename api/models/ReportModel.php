@@ -64,14 +64,45 @@ class ReportModel
 
     public static function getRevenueData(string $period = 'monthly'): array
     {
-        // Static chart data — real DB queries would replace this
+        try {
+            $sql = "
+                WITH months AS (
+                    SELECT generate_series(
+                        date_trunc('month', NOW() - INTERVAL '5 months'),
+                        date_trunc('month', NOW()),
+                        INTERVAL '1 month'
+                    ) AS m
+                )
+                SELECT 
+                    TO_CHAR(m.m, 'Mon') AS month,
+                    COALESCE(SUM(i.total_amount), 0)::float AS revenue
+                FROM months m
+                LEFT JOIN invoices i 
+                    ON date_trunc('month', i.created_at) = m.m
+                GROUP BY m.m
+                ORDER BY m.m ASC
+            ";
+            $rows = Database::all($sql);
+            if (!empty($rows)) {
+                return array_map(function ($r) {
+                    return [
+                        'month' => $r['month'],
+                        'revenue' => (float)$r['revenue'],
+                    ];
+                }, $rows);
+            }
+        } catch (\Throwable $e) {
+            error_log("Failed to aggregate dynamic revenue: " . $e->getMessage());
+        }
+
+        // Fallback default structure if query unavailable
         return [
-            ['month' => 'Jan', 'revenue' => 12000],
-            ['month' => 'Feb', 'revenue' => 15000],
-            ['month' => 'Mar', 'revenue' => 14000],
-            ['month' => 'Apr', 'revenue' => 18000],
-            ['month' => 'May', 'revenue' => 22000],
-            ['month' => 'Jun', 'revenue' => 25000],
+            ['month' => date('M', strtotime('-5 months')), 'revenue' => 0.0],
+            ['month' => date('M', strtotime('-4 months')), 'revenue' => 0.0],
+            ['month' => date('M', strtotime('-3 months')), 'revenue' => 0.0],
+            ['month' => date('M', strtotime('-2 months')), 'revenue' => 0.0],
+            ['month' => date('M', strtotime('-1 months')), 'revenue' => 0.0],
+            ['month' => date('M'), 'revenue' => 0.0],
         ];
     }
 }

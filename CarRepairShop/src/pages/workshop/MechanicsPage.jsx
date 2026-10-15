@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useMechanics, useCreateMechanic, useUpdateMechanic, useDeleteMechanic } from '../../hooks/useMechanics'
 import { useDebounce } from '../../hooks/useDebounce'
 import { useAuth } from '../../context/AuthContext'
-import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, SearchableSelect } from '../../components/ui'
+import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, SearchableSelect, Input } from '../../components/ui'
 import RepairPipelineTracker from '../../components/workshop/RepairPipelineTracker'
 
 const statusFilters = ['All', 'Active', 'On Leave', 'Terminated']
@@ -192,7 +192,7 @@ export default function MechanicsPage() {
 
             <div className="relative w-full sm:w-60">
               <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted" />
-              <input
+              <Input
                 type="text"
                 placeholder={t('common.quickSearch')}
                 value={searchQuery}
@@ -200,7 +200,7 @@ export default function MechanicsPage() {
                   setSearchQuery(e.target.value)
                   setCurrentPage(1)
                 }}
-                className="w-full pl-8 pr-3 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+                className="pl-8"
               />
             </div>
           </div>
@@ -288,65 +288,60 @@ export default function MechanicsPage() {
         <form onSubmit={handleCreate} className="space-y-4 text-xs">
           <div>
             <label className="block text-app-muted font-medium mb-1">{t('mechanics.name')} *</label>
-            <input
+            <Input
               type="text"
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="e.g. Mike Johnson"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('mechanics.phone')} *</label>
-              <input
+              <Input
                 type="text"
                 required
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 placeholder="012 999 888"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('common.email')}</label>
-              <input
+              <Input
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="mechanic@workshop.com"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('mechanics.specialization')}</label>
-              <input
+              <Input
                 type="text"
                 value={formData.specialization}
                 onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
                 placeholder="Engine Diagnostics"
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('mechanics.experience')} (Years)</label>
-              <input
+              <Input
                 type="number"
                 value={formData.experienceYears}
                 onChange={(e) => setFormData({ ...formData, experienceYears: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('mechanics.hourlyRate')} ($)</label>
-              <input
+              <Input
                 type="number"
                 value={formData.hourlyRate}
                 onChange={(e) => setFormData({ ...formData, hourlyRate: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
+                className="font-semibold"
               />
             </div>
           </div>
@@ -371,31 +366,29 @@ export default function MechanicsPage() {
         <form onSubmit={handleUpdate} className="space-y-4 text-xs">
           <div>
             <label className="block text-app-muted font-medium mb-1">{t('mechanics.name')} *</label>
-            <input
+            <Input
               type="text"
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('mechanics.specialization')}</label>
-              <input
+              <Input
                 type="text"
                 value={formData.specialization}
                 onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('mechanics.hourlyRate')} ($)</label>
-              <input
+              <Input
                 type="number"
                 value={formData.hourlyRate}
                 onChange={(e) => setFormData({ ...formData, hourlyRate: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
+                className="font-semibold"
               />
             </div>
             <div>

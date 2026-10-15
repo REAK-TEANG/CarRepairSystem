@@ -36,7 +36,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { settingsService } from '../../services/settingsService'
 import { useAuth, DEFAULT_PERMISSIONS_MATRIX } from '../../context/AuthContext'
-import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell, SearchableSelect } from '../../components/ui'
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell, SearchableSelect, Input } from '../../components/ui'
 
 const MODULE_DEFINITIONS = [
   // Operations Category
@@ -600,8 +600,8 @@ export default function SettingsPage() {
           <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden">
             <div className="p-4 border-b border-app-border flex items-center justify-between gap-3">
               <div className="relative flex-1 max-w-md">
-                <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
-                <input
+                <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted z-10 pointer-events-none" />
+                <Input
                   type="text"
                   placeholder={t('common.quickSearch')}
                   value={searchQuery}
@@ -765,12 +765,12 @@ export default function SettingsPage() {
                   <div className="md:col-span-2">
                     <label className="block text-app-muted font-semibold mb-1.5">{t('settings.workshopName')}</label>
                     <div className="relative">
-                      <Buildings size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
-                      <input
+                      <Buildings size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted z-10 pointer-events-none" />
+                      <Input
                         type="text"
                         value={settings.shopName}
                         onChange={(e) => setSettings({ ...settings, shopName: e.target.value })}
-                        className="w-full pl-9 pr-3.5 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
+                        className="pl-9"
                         placeholder="e.g. Precision Auto Works"
                       />
                     </div>
@@ -779,12 +779,12 @@ export default function SettingsPage() {
                   <div>
                     <label className="block text-app-muted font-semibold mb-1.5">{t('settings.phone')}</label>
                     <div className="relative">
-                      <Phone size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
-                      <input
+                      <Phone size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted z-10 pointer-events-none" />
+                      <Input
                         type="text"
                         value={settings.contactPhone}
                         onChange={(e) => setSettings({ ...settings, contactPhone: e.target.value })}
-                        className="w-full pl-9 pr-3.5 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-mono"
+                        className="pl-9 font-mono"
                         placeholder="+855 12 345 678"
                       />
                     </div>
@@ -793,12 +793,12 @@ export default function SettingsPage() {
                   <div>
                     <label className="block text-app-muted font-semibold mb-1.5">{t('settings.email')}</label>
                     <div className="relative">
-                      <EnvelopeSimple size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
-                      <input
+                      <EnvelopeSimple size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted z-10 pointer-events-none" />
+                      <Input
                         type="email"
                         value={settings.contactEmail}
                         onChange={(e) => setSettings({ ...settings, contactEmail: e.target.value })}
-                        className="w-full pl-9 pr-3.5 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
+                        className="pl-9"
                         placeholder="service@autoworkshop.com"
                       />
                     </div>
@@ -807,12 +807,12 @@ export default function SettingsPage() {
                   <div>
                     <label className="block text-app-muted font-semibold mb-1.5">{t('settings.hours')}</label>
                     <div className="relative">
-                      <Clock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
-                      <input
+                      <Clock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted z-10 pointer-events-none" />
+                      <Input
                         type="text"
                         value={settings.businessHours}
                         onChange={(e) => setSettings({ ...settings, businessHours: e.target.value })}
-                        className="w-full pl-9 pr-3.5 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
+                        className="pl-9"
                         placeholder="Mon - Sat: 08:00 AM - 06:00 PM"
                       />
                     </div>
@@ -821,12 +821,12 @@ export default function SettingsPage() {
                   <div>
                     <label className="block text-app-muted font-semibold mb-1.5">{t('settings.address')}</label>
                     <div className="relative">
-                      <MapPin size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted" />
-                      <input
+                      <MapPin size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted z-10 pointer-events-none" />
+                      <Input
                         type="text"
                         value={settings.address}
                         onChange={(e) => setSettings({ ...settings, address: e.target.value })}
-                        className="w-full pl-9 pr-3.5 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
+                        className="pl-9"
                         placeholder="Phnom Penh, Cambodia"
                       />
                     </div>
@@ -962,14 +962,14 @@ export default function SettingsPage() {
                 <div>
                   <label className="block text-app-muted font-semibold mb-1.5">{t('settings.taxRate')} (%)</label>
                   <div className="relative">
-                    <input
+                    <Input
                       type="number"
                       step="0.1"
                       min="0"
                       max="100"
                       value={settings.taxRate}
                       onChange={(e) => setSettings({ ...settings, taxRate: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-3.5 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent tabular-nums font-semibold"
+                      className="tabular-nums font-semibold"
                     />
                   </div>
                   <p className="text-[11px] text-app-muted mt-1">{t('settings.taxDesc')}</p>

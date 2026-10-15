@@ -5,7 +5,7 @@ import { useServicesCatalog, useCreateService, useUpdateService, useDeleteServic
 import { useInventory } from '../../hooks/useInventory'
 import { useDebounce } from '../../hooks/useDebounce'
 import { useAuth } from '../../context/AuthContext'
-import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, SearchableSelect } from '../../components/ui'
+import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, SearchableSelect, Input, Textarea } from '../../components/ui'
 
 const statusOptions = ['All Status', 'Active Only', 'Inactive Only']
 
@@ -210,7 +210,7 @@ export default function ServicesPage() {
 
         <div className="relative w-full sm:w-60">
           <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted" />
-          <input
+          <Input
             type="text"
             placeholder={t('common.quickSearch')}
             value={searchQuery}
@@ -218,7 +218,7 @@ export default function ServicesPage() {
               setSearchQuery(e.target.value)
               setCurrentPage(1)
             }}
-            className="w-full pl-8 pr-3 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+            className="pl-8"
           />
         </div>
       </div>
@@ -324,13 +324,12 @@ export default function ServicesPage() {
         <form onSubmit={handleCreate} className="space-y-4 text-xs">
           <div>
             <label className="block text-app-muted font-medium mb-1">{t('services.serviceName')} *</label>
-            <input
+            <Input
               type="text"
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="e.g. Synthetic Engine Oil & Filter Change"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -353,33 +352,31 @@ export default function ServicesPage() {
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('services.estimatedHours')}</label>
-              <input
+              <Input
                 type="number"
                 step="0.5"
                 value={formData.laborHours}
                 onChange={(e) => setFormData({ ...formData, laborHours: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('services.standardPrice')} ($)</label>
-              <input
+              <Input
                 type="number"
                 step="1"
                 value={formData.estimatedCost}
                 onChange={(e) => setFormData({ ...formData, estimatedCost: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
+                className="font-semibold"
               />
             </div>
           </div>
           <div>
             <label className="block text-app-muted font-medium mb-1">{t('services.description')}</label>
-            <textarea
+            <Textarea
               rows={2}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Detailed maintenance checklist items..."
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
 
@@ -407,12 +404,12 @@ export default function ServicesPage() {
                   searchPlaceholder="Search part by name or code..."
                 />
               </div>
-              <input
+              <Input
                 type="number"
                 min="1"
                 value={selectedPartQty}
                 onChange={(e) => setSelectedPartQty(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                className="w-16 px-2 py-1.5 bg-app-input border border-app-border rounded-sm text-app-text text-center text-xs"
+                className="w-16 text-center"
                 placeholder="Qty"
               />
               <button
@@ -474,12 +471,11 @@ export default function ServicesPage() {
         <form onSubmit={handleUpdate} className="space-y-4 text-xs">
           <div>
             <label className="block text-app-muted font-medium mb-1">{t('services.serviceName')} *</label>
-            <input
+            <Input
               type="text"
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -502,32 +498,30 @@ export default function ServicesPage() {
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('services.estimatedHours')}</label>
-              <input
+              <Input
                 type="number"
                 step="0.5"
                 value={formData.laborHours}
                 onChange={(e) => setFormData({ ...formData, laborHours: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('services.standardPrice')} ($)</label>
-              <input
+              <Input
                 type="number"
                 step="1"
                 value={formData.estimatedCost}
                 onChange={(e) => setFormData({ ...formData, estimatedCost: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
+                className="font-semibold"
               />
             </div>
           </div>
           <div>
             <label className="block text-app-muted font-medium mb-1">{t('services.description')}</label>
-            <textarea
+            <Textarea
               rows={2}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
 
@@ -555,12 +549,12 @@ export default function ServicesPage() {
                   searchPlaceholder="Search part by name or code..."
                 />
               </div>
-              <input
+              <Input
                 type="number"
                 min="1"
                 value={selectedPartQty}
                 onChange={(e) => setSelectedPartQty(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                className="w-16 px-2 py-1.5 bg-app-input border border-app-border rounded-sm text-app-text text-center text-xs"
+                className="w-16 text-center"
                 placeholder="Qty"
               />
               <button

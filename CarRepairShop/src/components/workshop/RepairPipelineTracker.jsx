@@ -27,7 +27,7 @@ import { useMechanics } from '../../hooks/useMechanics'
 import { useInventory } from '../../hooks/useInventory'
 import { useCreateInvoice } from '../../hooks/useInvoices'
 import { useToast } from '../../context/ToastContext'
-import { StatusBadge, Modal, LoadingButton, SearchableSelect } from '../ui'
+import { StatusBadge, Modal, LoadingButton, SearchableSelect, Input, Checkbox } from '../ui'
 
 const PIPELINE_STEPS = [
   {
@@ -280,13 +280,13 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
           <div className="flex flex-wrap items-center gap-2.5">
             {/* Search Input */}
             <div className="relative flex-1 sm:w-56">
-              <MagnifyingGlass size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted" />
-              <input
+              <MagnifyingGlass size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted z-10 pointer-events-none" />
+              <Input
                 type="text"
                 placeholder="Search plate, vehicle, order..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 bg-app-input border border-app-border rounded-sm text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+                className="w-full pl-8 pr-3 py-1.5"
               />
             </div>
 
@@ -755,41 +755,33 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
 
             <div className="space-y-2 p-3 bg-app-input rounded-sm border border-app-border">
               <label className="flex items-center gap-2.5 p-2 rounded-sm bg-app-card border border-app-border cursor-pointer hover:bg-app-hover active:scale-[0.98]">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={qaChecks.roadTest}
-                  onChange={(e) => setQaChecks({ ...qaChecks, roadTest: e.target.checked })}
-                  className="rounded text-emerald-600 focus:ring-emerald-500"
+                  onCheckedChange={(val) => setQaChecks({ ...qaChecks, roadTest: !!val })}
                 />
                 <span className="font-medium">1. Road test completed & initial customer symptoms resolved</span>
               </label>
 
               <label className="flex items-center gap-2.5 p-2 rounded-sm bg-app-card border border-app-border cursor-pointer hover:bg-app-hover active:scale-[0.98]">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={qaChecks.dtcCleared}
-                  onChange={(e) => setQaChecks({ ...qaChecks, dtcCleared: e.target.checked })}
-                  className="rounded text-emerald-600 focus:ring-emerald-500"
+                  onCheckedChange={(val) => setQaChecks({ ...qaChecks, dtcCleared: !!val })}
                 />
                 <span className="font-medium">2. Diagnostic Trouble Codes (DTC / OBD-II) scanned & cleared</span>
               </label>
 
               <label className="flex items-center gap-2.5 p-2 rounded-sm bg-app-card border border-app-border cursor-pointer hover:bg-app-hover active:scale-[0.98]">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={qaChecks.fluidsTorque}
-                  onChange={(e) => setQaChecks({ ...qaChecks, fluidsTorque: e.target.checked })}
-                  className="rounded text-emerald-600 focus:ring-emerald-500"
+                  onCheckedChange={(val) => setQaChecks({ ...qaChecks, fluidsTorque: !!val })}
                 />
                 <span className="font-medium">3. Fluid levels topped up & wheel lug nut torque verified</span>
               </label>
 
               <label className="flex items-center gap-2.5 p-2 rounded-sm bg-app-card border border-app-border cursor-pointer hover:bg-app-hover active:scale-[0.98]">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={qaChecks.cleaned}
-                  onChange={(e) => setQaChecks({ ...qaChecks, cleaned: e.target.checked })}
-                  className="rounded text-emerald-600 focus:ring-emerald-500"
+                  onCheckedChange={(val) => setQaChecks({ ...qaChecks, cleaned: !!val })}
                 />
                 <span className="font-medium">4. Vehicle exterior washed & interior protection removed</span>
               </label>
@@ -848,13 +840,13 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
 
             <div>
               <label className="block text-app-muted font-medium mb-1">Quantity to Deduct *</label>
-              <input
+              <Input
                 type="number"
                 min="1"
                 required
                 value={partSelection.quantity}
                 onChange={(e) => setPartSelection({ ...partSelection, quantity: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text font-bold focus:outline-none focus:border-app-accent"
+                className="font-bold"
               />
             </div>
 

@@ -22,4 +22,6 @@ export {
 export { Button, buttonVariants } from '@/components/ui/button'
 export { Input } from '@/components/ui/input'
 export { Label } from '@/components/ui/label'
+export { Textarea } from '@/components/ui/textarea'
+export { Checkbox } from '@/components/ui/checkbox'
 export { default as SearchableSelect } from '@/components/ui/SearchableSelect'

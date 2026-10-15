@@ -40,11 +40,12 @@ class EventBus {
 
         try {
             $jsonPayload = json_encode($payload);
-            run(
-                "INSERT INTO system_events (topic, event_type, payload, created_at) VALUES (?, ?, ?::jsonb, NOW())",
+            $stmt = query(
+                "INSERT INTO system_events (topic, event_type, payload, created_at) VALUES (?, ?, ?::jsonb, NOW()) RETURNING id",
                 [$topic, $eventType, $jsonPayload]
             );
-            $eventId = $pdo->lastInsertId();
+            $row = $stmt->fetch();
+            $eventId = (int)($row['id'] ?? 0);
 
             // Notify PostgreSQL LISTEN listeners if any
             try {

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Eye, EyeSlash, SignIn, Key, ArrowLeft, CheckCircle } from '@phosphor-icons/react'
 import Logo from '../../components/ui/Logo'
 import LanguageSwitcher from '../../components/ui/LanguageSwitcher'
-import { Modal, LoadingButton } from '../../components/ui'
+import { Modal, LoadingButton, Input } from '../../components/ui'
 import { useAuth, ROLE_PROFILES } from '../../context/AuthContext'
 import { authService } from '../../services/authService'
 import { useToast } from '../../context/ToastContext'
@@ -188,14 +188,13 @@ export default function LoginPage() {
             <label htmlFor="username" className="block text-[11px] font-medium text-app-muted mb-1">
               {t('auth.emailLabel')} / Username
             </label>
-            <input
+            <Input
               id="username"
               type="text"
               required
               value={form.username}
               onChange={(e) => setForm({ ...form, username: e.target.value })}
               placeholder="Username"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
             />
           </div>
 
@@ -214,14 +213,14 @@ export default function LoginPage() {
               </button>
             </div>
             <div className="relative">
-              <input
+              <Input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
                 required
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 placeholder="Password"
-                className="w-full px-3 py-2 pr-9 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+                className="pr-9"
               />
               <button
                 type="button"
@@ -320,13 +319,12 @@ export default function LoginPage() {
                 <label className="block text-app-muted font-medium mb-1.5">
                   {t('auth.emailLabel')} / Username *
                 </label>
-                <input
+                <Input
                   type="text"
                   required
                   value={forgotIdentifier}
                   onChange={(e) => setForgotIdentifier(e.target.value)}
                   placeholder="e.g. admin or admin@carrepair.com"
-                  className="w-full px-3.5 py-2.5 bg-app-input border border-app-border rounded-sm text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-emerald-500 transition-colors"
                 />
               </div>
 
@@ -364,14 +362,14 @@ export default function LoginPage() {
                 <label className="block text-app-muted font-medium mb-1.5">
                   {t('auth.resetCodeLabel')} *
                 </label>
-                <input
+                <Input
                   type="text"
                   required
                   maxLength={6}
                   value={resetCode}
                   onChange={(e) => setResetCode(e.target.value)}
                   placeholder={t('auth.resetCodePlaceholder')}
-                  className="w-full px-3.5 py-2.5 bg-app-input border border-app-border rounded-sm text-sm text-app-text font-mono tracking-widest text-center focus:outline-none focus:border-emerald-500"
+                  className="text-sm font-mono tracking-widest text-center"
                 />
               </div>
 
@@ -380,13 +378,13 @@ export default function LoginPage() {
                   {t('auth.newPasswordLabel')} *
                 </label>
                 <div className="relative">
-                  <input
+                  <Input
                     type={showNewPassword ? 'text' : 'password'}
                     required
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder={t('auth.newPasswordPlaceholder')}
-                    className="w-full px-3.5 py-2.5 pr-10 bg-app-input border border-app-border rounded-sm text-xs text-app-text focus:outline-none focus:border-emerald-500"
+                    className="pr-10"
                   />
                   <button
                     type="button"
@@ -402,13 +400,12 @@ export default function LoginPage() {
                 <label className="block text-app-muted font-medium mb-1.5">
                   {t('auth.confirmPasswordLabel')} *
                 </label>
-                <input
+                <Input
                   type={showNewPassword ? 'text' : 'password'}
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder={t('auth.confirmPasswordPlaceholder')}
-                  className="w-full px-3.5 py-2.5 bg-app-input border border-app-border rounded-sm text-xs text-app-text focus:outline-none focus:border-emerald-500"
                 />
               </div>
 

@@ -101,6 +101,14 @@ class AppointmentModel
         $customer = Database::get('SELECT full_name FROM customers WHERE id = ?', [$inserted['customer_id']]);
         $vehicle  = Database::get('SELECT vehicle_number, brand, model FROM vehicles WHERE id = ?', [$inserted['vehicle_id']]);
 
+        EventBus::publish('appointments', 'created', [
+            'id' => $inserted['id'],
+            'code' => $code,
+            'status' => $inserted['status'],
+            'scheduledDate' => $inserted['scheduled_date'],
+            'customerName' => $customer['full_name'] ?? '',
+        ]);
+
         return self::format(array_merge($inserted, [
             'customer_name'  => $customer['full_name'] ?? '',
             'vehicle_number' => $vehicle['vehicle_number'] ?? '',
@@ -131,13 +139,28 @@ class AppointmentModel
             ]
         );
 
-        return self::findById($id);
+        $res = self::findById($id);
+        if ($res) {
+            EventBus::publish('appointments', 'updated', [
+                'id' => $id,
+                'status' => $res['status'],
+                'scheduledDate' => $res['date'],
+            ]);
+        }
+        return $res;
     }
 
     public static function updateStatus(int $id, string $status): ?array
     {
         Database::run("UPDATE appointments SET status = ?, updated_at = NOW() WHERE id = ?", [$status, $id]);
-        return self::findById($id);
+        $res = self::findById($id);
+        if ($res) {
+            EventBus::publish('appointments', 'status_changed', [
+                'id' => $id,
+                'status' => $status,
+            ]);
+        }
+        return $res;
     }
 
     public static function cancel(int $id): bool
@@ -148,6 +171,7 @@ class AppointmentModel
         }
 
         Database::run("UPDATE appointments SET status = 'Cancelled', updated_at = NOW() WHERE id = ?", [$id]);
+        EventBus::publish('appointments', 'cancelled', ['id' => $id]);
         return true;
     }
 

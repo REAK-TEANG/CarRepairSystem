@@ -5,7 +5,7 @@ import { useInventory, useInventoryTransactions, useCreatePart, useUpdatePart, u
 import { useSuppliers } from '../../hooks/useSuppliers'
 import { useDebounce } from '../../hooks/useDebounce'
 import { useAuth } from '../../context/AuthContext'
-import { Modal, StatusBadge, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Button, Input, ImageUpload, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, SearchableSelect } from '../../components/ui'
+import { Modal, StatusBadge, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Button, Input, Textarea, ImageUpload, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, SearchableSelect } from '../../components/ui'
 
 
 export default function InventoryPage() {
@@ -241,7 +241,7 @@ export default function InventoryPage() {
 
             <div className="relative w-full sm:w-60">
               <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted" />
-              <input
+              <Input
                 type="text"
                 placeholder={t('common.quickSearch')}
                 value={searchQuery}
@@ -249,7 +249,7 @@ export default function InventoryPage() {
                   setSearchQuery(e.target.value)
                   setPage(1)
                 }}
-                className="w-full pl-8 pr-3 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+                className="pl-8"
               />
             </div>
           </div>
@@ -713,24 +713,23 @@ export default function InventoryPage() {
 
           <div>
             <label className="block text-app-muted font-medium mb-1">{t('common.qty')} *</label>
-            <input
+            <Input
               type="number"
               min="1"
               required
               value={adjustQty}
               onChange={(e) => setAdjustQty(e.target.value)}
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent font-semibold"
+              className="font-semibold"
             />
           </div>
 
           <div>
             <label className="block text-app-muted font-medium mb-1">{t('common.notes')}</label>
-            <textarea
+            <Textarea
               rows={2}
               value={adjustNotes}
               onChange={(e) => setAdjustNotes(e.target.value)}
               placeholder="e.g. Delivery order #PO-9918 received"
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-sm text-app-text focus:outline-none focus:border-app-accent"
             />
           </div>
 

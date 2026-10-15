@@ -16,7 +16,7 @@ import { useCustomers } from '../../hooks/useCustomers'
 import { useRepairJobs } from '../../hooks/useRepairJobs'
 import { useDebounce } from '../../hooks/useDebounce'
 import { useAuth } from '../../context/AuthContext'
-import { Modal, StatusBadge, EmptyState, ConfirmDialog, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, SearchableSelect } from '../../components/ui'
+import { Modal, StatusBadge, EmptyState, ConfirmDialog, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, SearchableSelect, Input } from '../../components/ui'
 import InvoiceDocument from '../../components/invoices/InvoiceDocument'
 
 export default function InvoicesPage() {
@@ -236,8 +236,8 @@ export default function InvoicesPage() {
         </div>
 
         <div className="relative w-full sm:w-60">
-          <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted" />
-          <input
+          <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted z-10 pointer-events-none" />
+          <Input
             type="text"
             placeholder={t('common.quickSearch')}
             value={searchQuery}
@@ -415,22 +415,21 @@ export default function InvoicesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('invoices.amount')} ($) *</label>
-              <input
+              <Input
                 type="number"
                 step="0.01"
                 required
                 value={formData.amount}
                 onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-lg text-app-text focus:outline-none focus:ring-1 focus:ring-app-accent focus:border-app-accent font-bold font-mono"
+                className="font-bold font-mono"
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('invoices.dueDate')}</label>
-              <input
+              <Input
                 type="date"
                 value={formData.dueDate}
                 onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                className="w-full px-3 py-2 bg-app-input border border-app-border rounded-lg text-app-text focus:outline-none focus:ring-1 focus:ring-app-accent focus:border-app-accent"
               />
             </div>
           </div>
@@ -488,14 +487,14 @@ export default function InvoicesPage() {
 
           <div>
             <label className="block text-app-muted font-medium mb-1">Payment Amount ($) *</label>
-            <input
+            <Input
               type="number"
               step="0.01"
               min="0.01"
               required
               value={paymentAmount}
               onChange={(e) => setPaymentAmount(parseFloat(e.target.value) || 0)}
-              className="w-full px-3 py-2 bg-app-input border border-app-border rounded-lg text-app-text font-bold font-mono text-base focus:outline-none focus:ring-1 focus:ring-app-accent focus:border-app-accent"
+              className="font-bold font-mono text-base"
             />
           </div>
 

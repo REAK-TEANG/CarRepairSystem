@@ -116,117 +116,142 @@ class RepairJobModel
 
     public static function create(array $input, int $performedBy): array
     {
-        $countRow   = Database::get('SELECT COUNT(*) AS cnt FROM repair_orders');
-        $cnt        = (int) ($countRow['cnt'] ?? 0) + 41;
-        $orderNumber = 'RO-2026-' . str_pad($cnt, 4, '0', STR_PAD_LEFT);
-        $costNum    = (float) preg_replace('/[^0-9.]/', '', $input['estimatedCost'] ?? '350') ?: 350.00;
-        $approvedAmt = isset($input['approvedAmount']) ? (float) $input['approvedAmount'] : $costNum;
+        return Database::transaction(function () use ($input, $performedBy) {
+            $countRow   = Database::get('SELECT COUNT(*) AS cnt FROM repair_orders');
+            $cnt        = (int) ($countRow['cnt'] ?? 0) + 41;
+            $orderNumber = 'RO-2026-' . str_pad($cnt, 4, '0', STR_PAD_LEFT);
+            $costNum    = (float) preg_replace('/[^0-9.]/', '', $input['estimatedCost'] ?? '350') ?: 350.00;
+            $approvedAmt = isset($input['approvedAmount']) ? (float) $input['approvedAmount'] : $costNum;
 
-        Database::run(
-            "INSERT INTO repair_orders (
-                order_number, customer_id, vehicle_id, mechanic_id, problem_description, diagnosis,
-                estimated_cost, status, odometer, fuel_level, intake_inspection, customer_approval, approved_amount
-             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            [
-                $orderNumber,
-                $input['customerId']      ?? 1,
-                $input['vehicleId']       ?? 1,
-                $input['mechanicId']      ?? null,
-                $input['problem']         ?? null,
-                $input['diagnosis']       ?? null,
-                $costNum,
-                $input['status']          ?? 'Pending',
-                (int) ($input['odometer'] ?? 0),
-                $input['fuelLevel']       ?? '1/2',
-                json_encode($input['intakeInspection'] ?? new \stdClass()),
-                $input['customerApproval'] ?? 'Approved',
-                $approvedAmt,
-            ]
-        );
+            Database::run(
+                "INSERT INTO repair_orders (
+                    order_number, customer_id, vehicle_id, mechanic_id, problem_description, diagnosis,
+                    estimated_cost, status, odometer, fuel_level, intake_inspection, customer_approval, approved_amount
+                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                [
+                    $orderNumber,
+                    $input['customerId']      ?? 1,
+                    $input['vehicleId']       ?? 1,
+                    $input['mechanicId']      ?? null,
+                    $input['problem']         ?? null,
+                    $input['diagnosis']       ?? null,
+                    $costNum,
+                    $input['status']          ?? 'Pending',
+                    (int) ($input['odometer'] ?? 0),
+                    $input['fuelLevel']       ?? '1/2',
+                    json_encode($input['intakeInspection'] ?? new \stdClass()),
+                    $input['customerApproval'] ?? 'Approved',
+                    $approvedAmt,
+                ]
+            );
 
-        $inserted      = Database::get('SELECT * FROM repair_orders WHERE order_number = ? ORDER BY id DESC LIMIT 1', [$orderNumber]);
-        $deductedParts = self::autoStockOut($inserted['id'], $orderNumber, $input['serviceId'] ?? null, $input['usedParts'] ?? null, $performedBy);
+            $inserted      = Database::get('SELECT * FROM repair_orders WHERE order_number = ? ORDER BY id DESC LIMIT 1', [$orderNumber]);
+            $deductedParts = self::autoStockOut($inserted['id'], $orderNumber, $input['serviceId'] ?? null, $input['usedParts'] ?? null, $performedBy);
 
-        $customer = Database::get('SELECT full_name FROM customers WHERE id = ?', [$inserted['customer_id']]);
-        $vehicle  = Database::get('SELECT vehicle_number, brand, model FROM vehicles WHERE id = ?', [$inserted['vehicle_id']]);
+            $customer = Database::get('SELECT full_name FROM customers WHERE id = ?', [$inserted['customer_id']]);
+            $vehicle  = Database::get('SELECT vehicle_number, brand, model FROM vehicles WHERE id = ?', [$inserted['vehicle_id']]);
 
-        $formatted                = self::format(array_merge($inserted, [
-            'customer_name'  => $customer['full_name']      ?? '',
-            'vehicle_number' => $vehicle['vehicle_number'] ?? '',
-            'brand'          => $vehicle['brand']          ?? '',
-            'model'          => $vehicle['model']          ?? '',
-            'mechanic_name'  => null,
-            'parts_used'     => json_encode($deductedParts),
-        ]));
-        $formatted['partsUsed'] = $deductedParts;
-        return $formatted;
+            $formatted = self::format(array_merge($inserted, [
+                'customer_name'  => $customer['full_name']      ?? '',
+                'vehicle_number' => $vehicle['vehicle_number'] ?? '',
+                'brand'          => $vehicle['brand']          ?? '',
+                'model'          => $vehicle['model']          ?? '',
+                'mechanic_name'  => null,
+                'parts_used'     => json_encode($deductedParts),
+            ]));
+            $formatted['partsUsed'] = $deductedParts;
+
+            EventBus::publish('repair_jobs', 'created', [
+                'id' => $inserted['id'],
+                'orderNumber' => $orderNumber,
+                'status' => $inserted['status'],
+                'customerId' => $inserted['customer_id'],
+                'mechanicId' => $inserted['mechanic_id'],
+            ]);
+
+            return $formatted;
+        });
     }
 
     public static function update(int $id, array $input, int $performedBy): ?array
     {
-        $actualNum = ($input['actualCost'] ?? null)
-            ? (float) preg_replace('/[^0-9.]/', '', $input['actualCost'])
-            : null;
-        $estNum    = ($input['estimatedCost'] ?? null)
-            ? (float) preg_replace('/[^0-9.]/', '', $input['estimatedCost'])
-            : null;
-        $qaJson    = isset($input['qaChecklist']) ? json_encode($input['qaChecklist']) : null;
+        return Database::transaction(function () use ($id, $input, $performedBy) {
+            $actualNum = ($input['actualCost'] ?? null)
+                ? (float) preg_replace('/[^0-9.]/', '', $input['actualCost'])
+                : null;
+            $estNum    = ($input['estimatedCost'] ?? null)
+                ? (float) preg_replace('/[^0-9.]/', '', $input['estimatedCost'])
+                : null;
+            $qaJson    = isset($input['qaChecklist']) ? json_encode($input['qaChecklist']) : null;
 
-        Database::run(
-            "UPDATE repair_orders
-             SET status               = COALESCE(?, status),
-                 diagnosis            = COALESCE(?, diagnosis),
-                 actual_cost          = COALESCE(?, actual_cost),
-                 estimated_cost       = COALESCE(?, estimated_cost),
-                 mechanic_id          = COALESCE(?, mechanic_id),
-                 notes                = COALESCE(?, notes),
-                 qa_checklist         = COALESCE(?::jsonb, qa_checklist),
-                 labor_minutes        = COALESCE(?, labor_minutes),
-                 labor_rate           = COALESCE(?, labor_rate),
-                 customer_approval    = COALESCE(?, customer_approval),
-                 approved_amount      = COALESCE(?, approved_amount),
-                 next_service_due_date = COALESCE(?, next_service_due_date),
-                 next_service_due_km  = COALESCE(?, next_service_due_km),
-                 updated_at           = NOW()
-             WHERE id = ?",
-            [
-                $input['status']          ?? null,
-                $input['diagnosis']       ?? null,
-                $actualNum,
-                $estNum,
-                $input['mechanicId']      ?? null,
-                $input['notes']           ?? null,
-                $qaJson,
-                isset($input['laborMinutes'])   ? (int)   $input['laborMinutes']   : null,
-                isset($input['laborRate'])      ? (float) $input['laborRate']      : null,
-                $input['customerApproval']      ?? null,
-                isset($input['approvedAmount']) ? (float) $input['approvedAmount'] : null,
-                $input['nextServiceDueDate']    ?? null,
-                isset($input['nextServiceDueKm']) ? (int) $input['nextServiceDueKm'] : null,
-                $id,
-            ]
-        );
+            Database::run(
+                "UPDATE repair_orders
+                 SET status               = COALESCE(?, status),
+                     diagnosis            = COALESCE(?, diagnosis),
+                     actual_cost          = COALESCE(?, actual_cost),
+                     estimated_cost       = COALESCE(?, estimated_cost),
+                     mechanic_id          = COALESCE(?, mechanic_id),
+                     notes                = COALESCE(?, notes),
+                     qa_checklist         = COALESCE(?::jsonb, qa_checklist),
+                     labor_minutes        = COALESCE(?, labor_minutes),
+                     labor_rate           = COALESCE(?, labor_rate),
+                     customer_approval    = COALESCE(?, customer_approval),
+                     approved_amount      = COALESCE(?, approved_amount),
+                     next_service_due_date = COALESCE(?, next_service_due_date),
+                     next_service_due_km  = COALESCE(?, next_service_due_km),
+                     updated_at           = NOW()
+                 WHERE id = ?",
+                [
+                    $input['status']          ?? null,
+                    $input['diagnosis']       ?? null,
+                    $actualNum,
+                    $estNum,
+                    $input['mechanicId']      ?? null,
+                    $input['notes']           ?? null,
+                    $qaJson,
+                    isset($input['laborMinutes'])   ? (int)   $input['laborMinutes']   : null,
+                    isset($input['laborRate'])      ? (float) $input['laborRate']      : null,
+                    $input['customerApproval']      ?? null,
+                    isset($input['approvedAmount']) ? (float) $input['approvedAmount'] : null,
+                    $input['nextServiceDueDate']    ?? null,
+                    isset($input['nextServiceDueKm']) ? (int) $input['nextServiceDueKm'] : null,
+                    $id,
+                ]
+            );
 
-        $updated = Database::get('SELECT * FROM repair_orders WHERE id = ?', [$id]);
-        if (!$updated) {
-            return null;
-        }
+            $updated = Database::get('SELECT * FROM repair_orders WHERE id = ?', [$id]);
+            if (!$updated) {
+                return null;
+            }
 
-        if (($input['serviceId'] ?? null) || (is_array($input['usedParts'] ?? null) && count($input['usedParts']) > 0)) {
-            self::autoStockOut($updated['id'], $updated['order_number'], $input['serviceId'] ?? null, $input['usedParts'] ?? null, $performedBy);
-        }
+            if (($input['serviceId'] ?? null) || (is_array($input['usedParts'] ?? null) && count($input['usedParts']) > 0)) {
+                self::autoStockOut($updated['id'], $updated['order_number'], $input['serviceId'] ?? null, $input['usedParts'] ?? null, $performedBy);
+            }
 
-        return self::findById($id);
+            $result = self::findById($id);
+
+            EventBus::publish('repair_jobs', 'updated', [
+                'id' => $id,
+                'orderNumber' => $updated['order_number'],
+                'status' => $updated['status'],
+                'mechanicId' => $updated['mechanic_id'],
+            ]);
+
+            return $result;
+        });
     }
 
     public static function delete(int $id): bool
     {
-        $exists = Database::get('SELECT id FROM repair_orders WHERE id = ?', [$id]);
-        if (!$exists) {
-            return false;
-        }
-        Database::run('DELETE FROM repair_orders WHERE id = ?', [$id]);
-        return true;
+        return Database::transaction(function () use ($id) {
+            $exists = Database::get('SELECT id, order_number FROM repair_orders WHERE id = ?', [$id]);
+            if (!$exists) {
+                return false;
+            }
+            Database::run('DELETE FROM repair_orders WHERE id = ?', [$id]);
+            EventBus::publish('repair_jobs', 'deleted', ['id' => $id, 'orderNumber' => $exists['order_number']]);
+            return true;
+        });
     }
 
     /**

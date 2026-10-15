@@ -98,8 +98,8 @@ export default function CustomersPage() {
 
         <div className="flex items-center gap-2">
           <div className="relative w-full sm:w-60">
-            <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted" />
-            <input
+            <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted z-10 pointer-events-none" />
+            <Input
               type="text"
               placeholder={t('common.quickSearch')}
               value={searchQuery}

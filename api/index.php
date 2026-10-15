@@ -59,6 +59,7 @@ require_once __DIR__ . '/utils/headers.php';
 require_once __DIR__ . '/utils/jwt.php';
 require_once __DIR__ . '/utils/cache.php';
 require_once __DIR__ . '/utils/pagination.php';
+require_once __DIR__ . '/utils/eventBus.php';
 require_once __DIR__ . '/middleware/AuthMiddleware.php';
 
 // Helper: Safely resolve JWT secret
