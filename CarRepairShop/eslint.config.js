@@ -18,6 +18,7 @@ export default defineConfig([
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
     rules: {
+      'no-unused-vars': ['warn', { vars: 'all', args: 'none', ignoreRestSiblings: true }],
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true, allowExportNames: ['buttonVariants'] },

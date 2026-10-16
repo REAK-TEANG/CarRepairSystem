@@ -93,9 +93,27 @@ class InventoryModel
 
     public static function create(array $input): array
     {
-        $countRow  = Database::get('SELECT COUNT(*) AS cnt FROM spare_parts');
-        $cnt       = (int) ($countRow['cnt'] ?? 0) + 100;
-        $finalCode = $input['partCode'] ?? 'PT-' . str_pad($cnt, 4, '0', STR_PAD_LEFT);
+        $requestedCode = trim($input['partCode'] ?? '');
+        if (!$requestedCode) {
+            $countRow  = Database::get('SELECT COUNT(*) AS cnt FROM spare_parts');
+            $cnt       = (int) ($countRow['cnt'] ?? 0) + 100;
+            $finalCode = 'PT-' . str_pad($cnt, 4, '0', STR_PAD_LEFT);
+        } else {
+            $finalCode = $requestedCode;
+        }
+
+        // Guarantee uniqueness to avoid duplicate key exceptions
+        $check = Database::get('SELECT id FROM spare_parts WHERE part_code = ?', [$finalCode]);
+        if ($check) {
+            $baseCode = preg_replace('/-\d+$/', '', $finalCode);
+            $suffix = 1;
+            do {
+                $candidate = sprintf('%s-%03d', $baseCode, $suffix++);
+                $exists = Database::get('SELECT id FROM spare_parts WHERE part_code = ?', [$candidate]);
+            } while ($exists);
+            $finalCode = $candidate;
+        }
+
         $qty       = !empty($input['stockQty'])    ? (int)   $input['stockQty']    : 0;
         $min       = !empty($input['minThreshold']) ? (int)   $input['minThreshold'] : 5;
         $finalPhoto = $input['image'] ?? $input['photoUrl'] ?? null;

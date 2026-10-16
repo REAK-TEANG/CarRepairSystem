@@ -10,6 +10,7 @@ import {
   Receipt,
   ArrowUpRight,
 } from '@phosphor-icons/react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { CardSkeleton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '../../components/ui'
@@ -39,13 +40,32 @@ export default function AdminDashboard() {
 
   const isInitialLoading = (loadingInvoices || loadingJobs || loadingCustomers || loadingInventory) && invoices.length === 0
 
+  const [hoveredSegment, setHoveredSegment] = useState(null)
+  const [centerMode, setCenterMode] = useState('collected') // 'collected' | 'active' | 'revenue'
+
   const totalRevenue = invoices.reduce((sum, i) => sum + (Number(i.amount) || 0), 0)
   const totalPaid = invoices.reduce((sum, i) => sum + (Number(i.paidAmount) || 0), 0)
+  const balanceDue = Math.max(0, totalRevenue - totalPaid)
+  const paidPercent = totalRevenue > 0 ? Math.round((totalPaid / totalRevenue) * 100) : 0
+  const duePercent = totalRevenue > 0 ? Math.round((balanceDue / totalRevenue) * 100) : 0
   const activeOrders = repairJobs.filter((j) => j.status !== 'Completed').length
   const completedOrders = repairJobs.filter((j) => j.status === 'Completed').length
   const totalParts = inventory.reduce((sum, p) => sum + (Number(p.stockQty) || 0), 0)
+  const inventoryTotalVal = inventory.reduce((sum, p) => sum + (Number(p.unitPrice) || 0) * (Number(p.stockQty) || 0), 0)
   const lowStockItems = inventory.filter((p) => p.stockQty <= (p.minThreshold || 5))
   const scheduledApts = appointments.filter((a) => a.status === 'Scheduled' || a.status === 'Confirmed').length
+
+  // SVG Donut geometry & dynamic arc lengths
+  const CIRCUMFERENCE = 2 * Math.PI * 38 // 238.761
+  const paidRatio = totalRevenue > 0 ? Math.min(1, Math.max(0, totalPaid / totalRevenue)) : 0
+  const dueRatio = totalRevenue > 0 ? Math.min(1 - paidRatio, Math.max(0, balanceDue / totalRevenue)) : 0
+  const hasBothSegments = paidRatio > 0 && dueRatio > 0
+  const donutGap = hasBothSegments ? Math.min(6, CIRCUMFERENCE * Math.min(paidRatio, dueRatio) * 0.4) : 0
+
+  const paidArcLength = paidRatio > 0 ? Math.max(2, CIRCUMFERENCE * paidRatio - donutGap) : 0
+  const dueArcLength = dueRatio > 0 ? Math.max(2, CIRCUMFERENCE * dueRatio - donutGap) : 0
+  const paidArcOffset = hasBothSegments ? -donutGap / 2 : 0
+  const dueArcOffset = hasBothSegments ? -(CIRCUMFERENCE * paidRatio + donutGap / 2) : 0
 
   // Dynamic activities feed from latest repair jobs
   const activitiesFeed = repairJobs.slice(0, 4).map((job) => ({
@@ -255,67 +275,192 @@ export default function AdminDashboard() {
 
             <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8">
               {/* SVG Donut Graphic */}
-              <div className="relative w-36 h-36 sm:w-40 sm:h-40 flex items-center justify-center flex-shrink-0">
-                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                  <circle cx="50" cy="50" r="38" stroke="var(--bg-hover, #27272a)" strokeWidth="12" fill="transparent" />
+              <div className="relative w-36 h-36 sm:w-40 sm:h-40 flex items-center justify-center flex-shrink-0 group">
+                <svg className="w-full h-full transform -rotate-90 overflow-visible" viewBox="0 0 100 100">
+                  {/* Background Track */}
                   <circle
                     cx="50"
                     cy="50"
                     r="38"
-                    stroke="var(--accent-primary, #3b82f6)"
-                    strokeWidth="12"
-                    strokeDasharray="238"
-                    strokeDashoffset="70"
-                    strokeLinecap="round"
+                    stroke="var(--bg-hover, #27272a)"
+                    strokeWidth="11"
                     fill="transparent"
                   />
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="38"
-                    stroke="var(--accent-secondary, #13F287)"
-                    strokeWidth="12"
-                    strokeDasharray="238"
-                    strokeDashoffset="180"
-                    strokeLinecap="round"
-                    fill="transparent"
-                  />
+
+                  {/* Paid Segment (Emerald / app-accent) */}
+                  {paidArcLength > 0 && (
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="38"
+                      stroke="var(--accent-primary, #10b981)"
+                      strokeWidth={hoveredSegment === 'paid' ? 14 : 11}
+                      strokeDasharray={`${paidArcLength} ${CIRCUMFERENCE - paidArcLength}`}
+                      strokeDashoffset={paidArcOffset}
+                      strokeLinecap="round"
+                      fill="transparent"
+                      className="cursor-pointer transition-all duration-300"
+                      style={{
+                        opacity: hoveredSegment && hoveredSegment !== 'paid' ? 0.35 : 1,
+                        filter: hoveredSegment === 'paid' ? 'drop-shadow(0 0 6px rgba(16, 185, 129, 0.45))' : 'none',
+                      }}
+                      onMouseEnter={() => setHoveredSegment('paid')}
+                      onMouseLeave={() => setHoveredSegment(null)}
+                    />
+                  )}
+
+                  {/* Balance Due Segment (Amber #f59e0b) */}
+                  {dueArcLength > 0 && (
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="38"
+                      stroke="#f59e0b"
+                      strokeWidth={hoveredSegment === 'due' ? 14 : 11}
+                      strokeDasharray={`${dueArcLength} ${CIRCUMFERENCE - dueArcLength}`}
+                      strokeDashoffset={dueArcOffset}
+                      strokeLinecap="round"
+                      fill="transparent"
+                      className="cursor-pointer transition-all duration-300"
+                      style={{
+                        opacity: hoveredSegment && hoveredSegment !== 'due' ? 0.35 : 1,
+                        filter: hoveredSegment === 'due' ? 'drop-shadow(0 0 6px rgba(245, 158, 11, 0.45))' : 'none',
+                      }}
+                      onMouseEnter={() => setHoveredSegment('due')}
+                      onMouseLeave={() => setHoveredSegment(null)}
+                    />
+                  )}
                 </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                  <span className="text-xl font-bold text-app-text">{repairJobs.length}</span>
-                  <span className="text-[10px] text-app-muted font-medium uppercase tracking-wider">
-                    {t('status.Active')}
-                  </span>
-                </div>
+
+                {/* Donut Center Display */}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCenterMode((m) =>
+                      m === 'collected' ? 'active' : m === 'active' ? 'revenue' : 'collected'
+                    )
+                  }
+                  title="Click to cycle metric readout"
+                  className="absolute inset-0 flex flex-col items-center justify-center text-center p-2 rounded-full cursor-pointer focus:outline-none transition-transform active:scale-95 select-none"
+                >
+                  {hoveredSegment === 'paid' ? (
+                    <>
+                      <span className="text-sm sm:text-base font-bold text-emerald-600 dark:text-[#13F287] tabular-nums transition-colors">
+                        ${totalPaid.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      </span>
+                      <span className="text-[10px] text-app-muted font-semibold uppercase tracking-wider">
+                        {t('common.paid')} ({paidPercent}%)
+                      </span>
+                    </>
+                  ) : hoveredSegment === 'due' ? (
+                    <>
+                      <span className="text-sm sm:text-base font-bold text-amber-500 tabular-nums transition-colors">
+                        ${balanceDue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      </span>
+                      <span className="text-[10px] text-app-muted font-semibold uppercase tracking-wider">
+                        {t('invoices.balanceDue')} ({duePercent}%)
+                      </span>
+                    </>
+                  ) : hoveredSegment === 'inventory' ? (
+                    <>
+                      <span className="text-sm sm:text-base font-bold text-sky-500 tabular-nums transition-colors">
+                        ${inventoryTotalVal.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      </span>
+                      <span className="text-[10px] text-app-muted font-semibold uppercase tracking-wider">
+                        {totalParts} {t('common.total')}
+                      </span>
+                    </>
+                  ) : centerMode === 'active' ? (
+                    <>
+                      <span className="text-xl font-bold text-app-text tabular-nums">{activeOrders}</span>
+                      <span className="text-[10px] text-app-muted font-medium uppercase tracking-wider">
+                        {t('status.Active')}
+                      </span>
+                      <span className="text-[9px] font-mono text-app-muted/70">
+                        {paidPercent}% {t('common.paid').toLowerCase()}
+                      </span>
+                    </>
+                  ) : centerMode === 'revenue' ? (
+                    <>
+                      <span className="text-sm sm:text-base font-bold text-app-text tabular-nums">
+                        ${totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      </span>
+                      <span className="text-[10px] text-app-muted font-medium uppercase tracking-wider">
+                        {t('dashboard.totalRevenue')}
+                      </span>
+                      <span className="text-[9px] font-mono text-app-accent">
+                        {paidPercent}% {t('common.paid').toLowerCase()}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-xl font-bold text-app-text tabular-nums">{paidPercent}%</span>
+                      <span className="text-[10px] text-app-muted font-medium uppercase tracking-wider">
+                        {t('common.paid')}
+                      </span>
+                      <span className="text-[9px] font-mono text-app-muted/70">
+                        {activeOrders} {t('status.Active').toLowerCase()}
+                      </span>
+                    </>
+                  )}
+                </button>
               </div>
 
               {/* Breakdown Legend List */}
               <div className="flex-1 space-y-2 w-full">
-                <div className="flex items-center justify-between p-2.5 bg-app-hover rounded-sm border border-app-border/40">
+                <div
+                  onMouseEnter={() => setHoveredSegment('paid')}
+                  onMouseLeave={() => setHoveredSegment(null)}
+                  className={`flex items-center justify-between p-2.5 rounded-sm border cursor-pointer transition-all duration-150 ${
+                    hoveredSegment === 'paid'
+                      ? 'bg-app-hover border-app-accent/60 shadow-sm ring-1 ring-app-accent/20'
+                      : 'bg-app-hover border-app-border/40 hover:border-app-border'
+                  }`}
+                >
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-app-accent" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-app-accent flex-shrink-0" />
                     <span className="text-xs font-medium text-app-text">
-                      {t('common.paid')} ({totalRevenue > 0 ? Math.round((totalPaid / totalRevenue) * 100) : 0}%)
+                      {t('common.paid')} ({paidPercent}%)
                     </span>
                   </div>
                   <span className="text-xs font-bold text-app-accent tabular-nums">${totalPaid.toFixed(2)}</span>
                 </div>
-                <div className="flex items-center justify-between p-2.5 bg-app-hover rounded-sm border border-app-border/40">
+
+                <div
+                  onMouseEnter={() => setHoveredSegment('due')}
+                  onMouseLeave={() => setHoveredSegment(null)}
+                  className={`flex items-center justify-between p-2.5 rounded-sm border cursor-pointer transition-all duration-150 ${
+                    hoveredSegment === 'due'
+                      ? 'bg-app-hover border-amber-500/60 shadow-sm ring-1 ring-amber-500/20'
+                      : 'bg-app-hover border-app-border/40 hover:border-app-border'
+                  }`}
+                >
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 flex-shrink-0" />
                     <span className="text-xs font-medium text-app-text">
-                      {t('invoices.balanceDue')} ({totalRevenue > 0 ? Math.round((Math.max(0, totalRevenue - totalPaid) / totalRevenue) * 100) : 0}%)
+                      {t('invoices.balanceDue')} ({duePercent}%)
                     </span>
                   </div>
-                  <span className="text-xs font-bold text-amber-500 tabular-nums">${Math.max(0, totalRevenue - totalPaid).toFixed(2)}</span>
+                  <span className="text-xs font-bold text-amber-500 tabular-nums">${balanceDue.toFixed(2)}</span>
                 </div>
-                <div className="flex items-center justify-between p-2.5 bg-app-hover rounded-sm border border-app-border/40">
+
+                <div
+                  onMouseEnter={() => setHoveredSegment('inventory')}
+                  onMouseLeave={() => setHoveredSegment(null)}
+                  className={`flex items-center justify-between p-2.5 rounded-sm border cursor-pointer transition-all duration-150 ${
+                    hoveredSegment === 'inventory'
+                      ? 'bg-app-hover border-sky-500/60 shadow-sm ring-1 ring-sky-500/20'
+                      : 'bg-app-hover border-app-border/40 hover:border-app-border'
+                  }`}
+                >
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-sky-500" />
-                    <span className="text-xs font-medium text-app-text">{t('nav.inventory')} ({totalParts} {t('common.total')})</span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-sky-500 flex-shrink-0" />
+                    <span className="text-xs font-medium text-app-text">
+                      {t('nav.inventory')} ({totalParts} {t('common.total')})
+                    </span>
                   </div>
                   <span className="text-xs font-bold text-app-text tabular-nums">
-                    ${inventory.reduce((sum, p) => sum + (Number(p.unitPrice) || 0) * (Number(p.stockQty) || 0), 0).toFixed(2)}
+                    ${inventoryTotalVal.toFixed(2)}
                   </span>
                 </div>
               </div>

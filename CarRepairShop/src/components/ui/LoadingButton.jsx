@@ -18,7 +18,7 @@ export default function LoadingButton({
 
   const variants = {
     primary:
-      'bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText shadow-subtle active:scale-[0.98]',
+      'bg-app-accent hover:bg-app-accentHover text-app-accentText shadow-subtle active:scale-[0.98]',
     secondary:
       'bg-app-card hover:bg-app-hover active:scale-[0.98] border border-app-border text-app-text hover:border-app-border/80',
     danger:

@@ -408,7 +408,7 @@ export default function RepairJobsPage() {
       )}
 
       {/* Create Repair Order Modal with Digital Vehicle Intake (DVI) */}
-      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('repairJobs.createWorkOrder')}>
+      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('repairJobs.createWorkOrder')} maxWidth="max-w-2xl">
         <form onSubmit={handleCreate} className="space-y-4 text-xs">
           {/* Service Package Quick Selector */}
           <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-sm space-y-2">
@@ -649,7 +649,7 @@ export default function RepairJobsPage() {
       </Modal>
 
       {/* Edit / Update Status Modal */}
-      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title={`${t('repairJobs.updateProgress')}: ${selectedJob?.orderNumber}`}>
+      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title={`${t('repairJobs.updateProgress')}: ${selectedJob?.orderNumber}`} maxWidth="max-w-2xl">
         <form onSubmit={handleUpdate} className="space-y-4 text-xs">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -713,7 +713,7 @@ export default function RepairJobsPage() {
       </Modal>
 
       {/* View Job Modal with Full DVI & Parts Details */}
-      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('common.details')}>
+      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('common.details')} maxWidth="max-w-2xl">
         {selectedJob && (
           <div className="space-y-4 text-xs">
             <div className="flex items-center justify-between p-3.5 bg-app-hover/50 rounded-sm border border-app-border">

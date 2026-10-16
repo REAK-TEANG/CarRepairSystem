@@ -209,7 +209,7 @@ export default function SuppliersPage() {
       )}
 
       {/* Add Supplier Modal */}
-      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('suppliers.createSupplier')}>
+      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('suppliers.createSupplier')} maxWidth="max-w-xl">
         <form onSubmit={handleCreate} className="space-y-4 text-xs">
           <div>
             <label className="block text-app-muted font-medium mb-1">{t('suppliers.companyName')} *</label>
@@ -279,7 +279,7 @@ export default function SuppliersPage() {
       </Modal>
 
       {/* Edit Supplier Modal */}
-      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title={`${t('suppliers.editSupplier')}: ${selectedSupplier?.name}`}>
+      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title={`${t('suppliers.editSupplier')}: ${selectedSupplier?.name}`} maxWidth="max-w-xl">
         <form onSubmit={handleUpdate} className="space-y-4 text-xs">
           <div>
             <label className="block text-app-muted font-medium mb-1">{t('suppliers.companyName')} *</label>
@@ -326,7 +326,7 @@ export default function SuppliersPage() {
       </Modal>
 
       {/* View Supplier Modal */}
-      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('suppliers.title')}>
+      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('suppliers.title')} maxWidth="max-w-xl">
         {selectedSupplier && (
           <div className="space-y-4 text-xs">
             <div className="flex items-center gap-3 p-3 bg-app-hover/50 rounded-sm border border-app-border">

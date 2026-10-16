@@ -242,7 +242,7 @@ export default function EmployeesPage() {
       )}
 
       {/* Add Employee Modal */}
-      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('employees.createEmployee')}>
+      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('employees.createEmployee')} maxWidth="max-w-xl">
         <form onSubmit={handleCreate} className="space-y-4 text-xs">
           <div>
             <label className="block text-app-muted font-medium mb-1">{t('employees.name')} *</label>
@@ -314,7 +314,7 @@ export default function EmployeesPage() {
       </Modal>
 
       {/* Edit Employee Modal */}
-      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title={`${t('employees.editEmployee')}: ${selectedEmp?.name}`}>
+      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title={`${t('employees.editEmployee')}: ${selectedEmp?.name}`} maxWidth="max-w-xl">
         <form onSubmit={handleUpdate} className="space-y-4 text-xs">
           <div>
             <label className="block text-app-muted font-medium mb-1">{t('employees.name')} *</label>

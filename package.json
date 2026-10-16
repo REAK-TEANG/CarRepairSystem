@@ -8,9 +8,6 @@
     "dev:frontend": "cd CarRepairShop && npm run dev",
     "build": "cd CarRepairShop && npm run build"
   },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.112.3"
-  },
   "devDependencies": {
     "concurrently": "^10.0.5"
   }

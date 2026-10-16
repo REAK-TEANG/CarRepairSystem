@@ -500,7 +500,7 @@ export default function VehiclesPage() {
       )}
 
       {/* Register Vehicle Modal */}
-      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('vehicles.createVehicle')}>
+      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('vehicles.createVehicle')} maxWidth="max-w-2xl">
         <form onSubmit={handleCreateVehicle} className="space-y-4 text-xs">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -620,6 +620,7 @@ export default function VehiclesPage() {
         isOpen={isEditOpen}
         onClose={() => setIsEditOpen(false)}
         title={`${t('vehicles.editVehicle')}: ${selectedVehicle?.number}`}
+        maxWidth="max-w-2xl"
       >
         <form onSubmit={handleUpdateVehicle} className="space-y-4 text-xs">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

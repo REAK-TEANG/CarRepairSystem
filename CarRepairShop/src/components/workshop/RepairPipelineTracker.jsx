@@ -144,6 +144,9 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
         id: job.id,
         data: { status: newStatus },
       })
+      addToast(`Vehicle ${job.plate || job.orderNumber} advanced to ${newStatus}`, 'success')
+    } catch (err) {
+      addToast(err?.message || 'Failed to advance status. Please try again.', 'warning')
     } finally {
       setUpdatingJobId(null)
     }
@@ -738,7 +741,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
       )}
 
       {/* QA Pre-Delivery Inspection Gate Modal */}
-      <Modal isOpen={isQAGateOpen} onClose={() => setIsQAGateOpen(false)} title="Quality Assurance Pre-Delivery Gate">
+      <Modal isOpen={isQAGateOpen} onClose={() => setIsQAGateOpen(false)} title="Quality Assurance Pre-Delivery Gate" maxWidth="max-w-xl">
         {selectedJob && (
           <div className="space-y-4 text-xs">
             <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/20 rounded-sm flex items-center gap-3">
@@ -917,7 +920,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
       </Modal>
 
       {/* Vehicle Order Details Modal */}
-      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title="Vehicle Repair Pipeline Details">
+      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title="Vehicle Repair Pipeline Details" maxWidth="max-w-2xl">
         {selectedJob && (
           <div className="space-y-4 text-xs">
             <div className="flex items-center justify-between p-3.5 bg-app-hover/50 rounded-sm border border-app-border">

@@ -9,18 +9,23 @@ class EventBus {
      */
     public static function init() {
         if (self::$initialized) return;
+        global $pdo;
         try {
-            query("
-                CREATE TABLE IF NOT EXISTS system_events (
-                    id BIGSERIAL PRIMARY KEY,
-                    topic VARCHAR(50) NOT NULL,
-                    event_type VARCHAR(50) NOT NULL,
-                    payload JSONB NOT NULL,
-                    created_at TIMESTAMPTZ DEFAULT NOW()
-                );
-                CREATE INDEX IF NOT EXISTS idx_system_events_lookup 
-                ON system_events (id DESC, topic);
-            ");
+            if ($pdo) {
+                $pdo->exec("
+                    CREATE TABLE IF NOT EXISTS system_events (
+                        id BIGSERIAL PRIMARY KEY,
+                        topic VARCHAR(50) NOT NULL,
+                        event_type VARCHAR(50) NOT NULL,
+                        payload JSONB NOT NULL,
+                        created_at TIMESTAMPTZ DEFAULT NOW()
+                    )
+                ");
+                $pdo->exec("
+                    CREATE INDEX IF NOT EXISTS idx_system_events_lookup 
+                    ON system_events (id DESC, topic)
+                ");
+            }
             self::$initialized = true;
         } catch (Throwable $e) {
             error_log("EventBus init warning: " . $e->getMessage());

@@ -71,8 +71,13 @@ export default function InventoryPage() {
 
   const handleOpenAdd = () => {
     const defaultSup = suppliers[0]
+    const highestNum = items.reduce((max, item) => {
+      const match = item.partCode?.match(/(\d+)$/)
+      return match ? Math.max(max, parseInt(match[1], 10)) : max
+    }, 0)
+    const nextNum = Math.max(highestNum + 1, totalCount + 1, 25)
     setFormData({
-      partCode: `PRT-2026-${String(items.length + 1).padStart(3, '0')}`,
+      partCode: `PRT-2026-${String(nextNum).padStart(3, '0')}`,
       name: '',
       brand: '',
       category: 'Engine',
@@ -431,7 +436,7 @@ export default function InventoryPage() {
 
       {/* Add Part Modal */}
       {/* Add New Part Modal */}
-      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('inventory.createPart')}>
+      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('inventory.createPart')} maxWidth="max-w-2xl">
         <form onSubmit={handleCreate} className="space-y-4 text-xs">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -575,7 +580,7 @@ export default function InventoryPage() {
       </Modal>
 
       {/* Edit Part Modal */}
-      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title={`${t('inventory.editPart')}: ${selectedPart?.partCode}`}>
+      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title={`${t('inventory.editPart')}: ${selectedPart?.partCode}`} maxWidth="max-w-2xl">
         <form onSubmit={handleUpdate} className="space-y-4 text-xs">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -749,7 +754,7 @@ export default function InventoryPage() {
       </Modal>
 
       {/* View Part Modal */}
-      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('inventory.title')}>
+      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('inventory.title')} maxWidth="max-w-2xl">
         {selectedPart && (
           <div className="space-y-4 text-xs">
             {selectedPart.image && (

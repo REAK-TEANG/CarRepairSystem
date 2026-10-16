@@ -637,7 +637,7 @@ export default function AppointmentsPage() {
       )}
 
       {/* Schedule Custom Reminder Modal */}
-      <Modal isOpen={isAddReminderOpen} onClose={() => setIsAddReminderOpen(false)} title="Schedule Maintenance Reminder">
+      <Modal isOpen={isAddReminderOpen} onClose={() => setIsAddReminderOpen(false)} title="Schedule Maintenance Reminder" maxWidth="max-w-2xl">
         <form onSubmit={handleCreateReminder} className="space-y-4 text-xs">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -718,7 +718,7 @@ export default function AppointmentsPage() {
       </Modal>
 
       {/* Create Appointment Modal */}
-      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('appointments.createAppointment')}>
+      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('appointments.createAppointment')} maxWidth="max-w-2xl">
         <form onSubmit={handleCreate} className="space-y-4 text-xs">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -843,7 +843,7 @@ export default function AppointmentsPage() {
       </Modal>
 
       {/* Edit Appointment Modal */}
-      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title={`${t('appointments.editAppointment')}: ${selectedApt?.code}`}>
+      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title={`${t('appointments.editAppointment')}: ${selectedApt?.code}`} maxWidth="max-w-2xl">
         <form onSubmit={handleUpdate} className="space-y-4 text-xs">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -916,7 +916,7 @@ export default function AppointmentsPage() {
       </Modal>
 
       {/* View Appointment Modal */}
-      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('common.details')}>
+      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('common.details')} maxWidth="max-w-2xl">
         {selectedApt && (
           <div className="space-y-4 text-xs">
             <div className="flex items-center justify-between p-3 bg-app-hover/50 rounded-sm border border-app-border">

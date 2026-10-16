@@ -7,7 +7,9 @@ export default function Modal({
   isOpen,
   onClose,
   title,
+  subtitle,
   children,
+  footer,
   maxWidth = 'max-w-lg',
   className = '',
 }) {
@@ -58,8 +60,8 @@ export default function Modal({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '1.25rem',
-        overflowY: 'auto',
+        padding: '0.75rem sm:1.25rem',
+        overflow: 'hidden',
       }}
       role="presentation"
     >
@@ -93,18 +95,23 @@ export default function Modal({
           zIndex: 2,
         }}
         className={clsx(
-          'w-full',
+          'w-full max-w-[calc(100vw-1.5rem)]',
           maxWidth,
-          'bg-app-card border border-app-border rounded-xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[calc(100vh-2.5rem)] animate-modal-content',
+          'bg-app-card border border-app-border rounded-xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[92vh] animate-modal-content',
           className
         )}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3.5 sm:px-6 sm:py-4 border-b border-app-border bg-app-card flex-shrink-0">
-          <h2 className="text-sm font-semibold text-app-text tracking-tight truncate mr-3">
-            {title}
-          </h2>
+          <div className="min-w-0 mr-3">
+            <h2 className="text-sm font-semibold text-app-text tracking-tight truncate">
+              {title}
+            </h2>
+            {subtitle && (
+              <p className="text-[11px] text-app-muted truncate mt-0.5">{subtitle}</p>
+            )}
+          </div>
           <button
             type="button"
             onClick={onClose}
@@ -117,7 +124,16 @@ export default function Modal({
         </div>
 
         {/* Content Body */}
-        <div className="p-5 sm:p-6 overflow-y-auto flex-1">{children}</div>
+        <div className="p-5 sm:p-6 overflow-y-auto flex-1 min-h-0 overscroll-contain">
+          {children}
+        </div>
+
+        {/* Optional Sticky Footer */}
+        {footer && (
+          <div className="flex items-center justify-end gap-2.5 px-5 py-3 sm:px-6 sm:py-3.5 border-t border-app-border bg-app-card/95 backdrop-blur-xs flex-shrink-0">
+            {footer}
+          </div>
+        )}
       </div>
     </div>,
     document.body

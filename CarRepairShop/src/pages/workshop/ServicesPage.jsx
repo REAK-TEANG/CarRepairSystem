@@ -320,7 +320,7 @@ export default function ServicesPage() {
       )}
 
       {/* Add Service Modal */}
-      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('services.createService')}>
+      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title={t('services.createService')} maxWidth="max-w-2xl">
         <form onSubmit={handleCreate} className="space-y-4 text-xs">
           <div>
             <label className="block text-app-muted font-medium mb-1">{t('services.serviceName')} *</label>
@@ -467,7 +467,7 @@ export default function ServicesPage() {
       </Modal>
 
       {/* Edit Service Modal */}
-      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title={`${t('services.editService')}: ${selectedService?.name}`}>
+      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title={`${t('services.editService')}: ${selectedService?.name}`} maxWidth="max-w-2xl">
         <form onSubmit={handleUpdate} className="space-y-4 text-xs">
           <div>
             <label className="block text-app-muted font-medium mb-1">{t('services.serviceName')} *</label>
@@ -612,7 +612,7 @@ export default function ServicesPage() {
       </Modal>
 
       {/* View Service Modal */}
-      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('services.title')}>
+      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('services.title')} maxWidth="max-w-2xl">
         {selectedService && (
           <div className="space-y-4 text-xs">
             <div className="flex items-center justify-between p-3 bg-app-hover/50 rounded-sm border border-app-border">

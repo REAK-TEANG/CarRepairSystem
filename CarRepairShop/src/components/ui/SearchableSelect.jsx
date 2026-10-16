@@ -28,6 +28,7 @@ export default function SearchableSelect({
   id,
 }) {
   const [isOpen, setIsOpen] = useState(false)
+  const [placement, setPlacement] = useState('bottom') // 'bottom' | 'top'
   const [search, setSearch] = useState('')
   const [highlightedIndex, setHighlightedIndex] = useState(0)
   const containerRef = useRef(null)
@@ -35,6 +36,21 @@ export default function SearchableSelect({
   const listRef = useRef(null)
   const generatedId = useId()
   const selectId = id || generatedId
+
+  // Auto-flip upward if too close to bottom of viewport or modal
+  useEffect(() => {
+    if (!isOpen || !containerRef.current) return
+    const rect = containerRef.current.getBoundingClientRect()
+    const spaceBelow = window.innerHeight - rect.bottom
+    const spaceAbove = rect.top
+    const estimatedHeight = 230
+
+    if (spaceBelow < estimatedHeight && spaceAbove > spaceBelow) {
+      setPlacement('top')
+    } else {
+      setPlacement('bottom')
+    }
+  }, [isOpen])
 
   // Normalize options to uniform { value, label, sublabel, icon }
   const normalizedOptions = options.map((opt) => {
@@ -212,7 +228,8 @@ export default function SearchableSelect({
       {isOpen && (
         <div
           className={cn(
-            'absolute left-0 top-full mt-1.5 w-full z-50 rounded-lg border border-app-border bg-app-card text-app-text shadow-xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-100'
+            'absolute left-0 w-full z-50 rounded-lg border border-app-border bg-app-card text-app-text shadow-xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-100',
+            placement === 'top' ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
           )}
           style={{ minWidth: '100%' }}
         >
@@ -254,7 +271,7 @@ export default function SearchableSelect({
           <div
             ref={listRef}
             role="listbox"
-            className="max-h-56 overflow-y-auto p-1 divide-y divide-app-border/30 scrollbar-thin"
+            className="max-h-48 sm:max-h-52 overflow-y-auto p-1 divide-y divide-app-border/30 scrollbar-thin"
           >
             {filteredOptions.length === 0 ? (
               <div className="py-6 px-3 text-center text-app-muted text-xs">

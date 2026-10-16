@@ -56,20 +56,32 @@ export function useUpdateRepairJob() {
     mutationFn: ({ id, data }) => repairJobService.update(id, data),
     onMutate: async ({ id, data }) => {
       await queryClient.cancelQueries({ queryKey: ['repair_jobs'] })
-      const previous = queryClient.getQueryData(['repair_jobs', {}]) || []
+      const previousEntries = queryClient.getQueriesData({ queryKey: ['repair_jobs'] })
 
-      queryClient.setQueryData(
-        ['repair_jobs', {}],
-        previous.map((item) => (item.id === id ? { ...item, ...data } : item))
-      )
+      queryClient.setQueriesData({ queryKey: ['repair_jobs'] }, (old) => {
+        if (!old) return old
+        if (Array.isArray(old)) {
+          return old.map((item) => (item.id === id ? { ...item, ...data } : item))
+        }
+        if (Array.isArray(old.data)) {
+          return {
+            ...old,
+            data: old.data.map((item) => (item.id === id ? { ...item, ...data } : item)),
+          }
+        }
+        return old
+      })
+
       addToast('Work order progress saved', 'success')
-      return { previous }
+      return { previousEntries }
     },
     onError: (err, variables, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(['repair_jobs', {}], context.previous)
+      if (context?.previousEntries) {
+        context.previousEntries.forEach(([queryKey, oldData]) => {
+          queryClient.setQueryData(queryKey, oldData)
+        })
       }
-      addToast('Failed to update work order', 'warning')
+      addToast(err?.message || 'Failed to update work order', 'warning')
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['repair_jobs'] })

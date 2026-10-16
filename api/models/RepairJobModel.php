@@ -146,7 +146,8 @@ class RepairJobModel
             );
 
             $inserted      = Database::get('SELECT * FROM repair_orders WHERE order_number = ? ORDER BY id DESC LIMIT 1', [$orderNumber]);
-            $deductedParts = self::autoStockOut($inserted['id'], $orderNumber, $input['serviceId'] ?? null, $input['usedParts'] ?? null, $performedBy);
+            $serviceId     = !empty($input['serviceId']) ? (int) $input['serviceId'] : null;
+            $deductedParts = self::autoStockOut($inserted['id'], $orderNumber, $serviceId, $input['usedParts'] ?? null, $performedBy);
 
             $customer = Database::get('SELECT full_name FROM customers WHERE id = ?', [$inserted['customer_id']]);
             $vehicle  = Database::get('SELECT vehicle_number, brand, model FROM vehicles WHERE id = ?', [$inserted['vehicle_id']]);
@@ -224,8 +225,9 @@ class RepairJobModel
                 return null;
             }
 
-            if (($input['serviceId'] ?? null) || (is_array($input['usedParts'] ?? null) && count($input['usedParts']) > 0)) {
-                self::autoStockOut($updated['id'], $updated['order_number'], $input['serviceId'] ?? null, $input['usedParts'] ?? null, $performedBy);
+            $serviceId = !empty($input['serviceId']) ? (int) $input['serviceId'] : null;
+            if ($serviceId || (is_array($input['usedParts'] ?? null) && count($input['usedParts']) > 0)) {
+                self::autoStockOut($updated['id'], $updated['order_number'], $serviceId, $input['usedParts'] ?? null, $performedBy);
             }
 
             $result = self::findById($id);
@@ -303,6 +305,7 @@ class RepairJobModel
             }
         }
 
+        $perfBy = ($performedBy > 0) ? $performedBy : null;
         foreach ($partsToDeduct as $part) {
             Database::run(
                 "UPDATE spare_parts SET stock_quantity = GREATEST(0, stock_quantity - ?), updated_at = NOW() WHERE id = ?",
@@ -314,7 +317,7 @@ class RepairJobModel
             Database::run(
                 "INSERT INTO inventory_transactions (spare_part_id, type, quantity, reference_id, reference_type, notes, performed_by)
                  VALUES (?, 'Stock Out', ?, ?, 'repair_order', ?, ?)",
-                [$part['sparePartId'], $part['quantity'], $repairOrderId, $notes, $performedBy]
+                [$part['sparePartId'], $part['quantity'], $repairOrderId, $notes, $perfBy]
             );
             Database::run(
                 "INSERT INTO repair_parts (repair_order_id, spare_part_id, quantity, unit_price, total_price)

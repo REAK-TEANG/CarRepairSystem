@@ -9,17 +9,22 @@ class RateLimiter {
      */
     private static function initTable() {
         if (self::$tableInitialized) return;
+        global $pdo;
         try {
-            query("
-                CREATE TABLE IF NOT EXISTS login_attempts (
-                    id SERIAL PRIMARY KEY,
-                    ip_address VARCHAR(45) NOT NULL,
-                    identifier VARCHAR(100) NOT NULL,
-                    attempted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-                );
-                CREATE INDEX IF NOT EXISTS idx_login_attempts_lookup 
-                ON login_attempts (ip_address, identifier, attempted_at);
-            ");
+            if ($pdo) {
+                $pdo->exec("
+                    CREATE TABLE IF NOT EXISTS login_attempts (
+                        id SERIAL PRIMARY KEY,
+                        ip_address VARCHAR(45) NOT NULL,
+                        identifier VARCHAR(100) NOT NULL,
+                        attempted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+                    )
+                ");
+                $pdo->exec("
+                    CREATE INDEX IF NOT EXISTS idx_login_attempts_lookup 
+                    ON login_attempts (ip_address, identifier, attempted_at)
+                ");
+            }
             self::$tableInitialized = true;
         } catch (Throwable $e) {
             error_log("RateLimiter table init warning: " . $e->getMessage());
