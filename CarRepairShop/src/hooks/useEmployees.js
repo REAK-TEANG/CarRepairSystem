@@ -1,83 +1,34 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { employeeService } from '@/services/employeeService'
+import { createEntityHooks } from '@/hooks/createEntityHooks'
 import { useToast } from '@/context/ToastContext'
 
 const QUERY_KEY = ['employees']
 
-export function useEmployees(params = {}, options = {}) {
-  return useQuery({
-    queryKey: ['employees', params],
-    queryFn: () => employeeService.getAll(params),
-    placeholderData: (previousData) => previousData,
-    staleTime: 1000 * 60 * 2,
-    ...options,
-  })
-}
+const hooks = createEntityHooks({
+  queryKey: 'employees',
+  service: employeeService,
+  entityName: 'Employee',
+  createOptimistic: (newEmp, previous) => ({
+    id: Date.now(),
+    employeeCode: `EMP-${String(previous.length + 1).padStart(3, '0')}`,
+    attendanceStatus: 'Present',
+    status: 'Active',
+    salary: Number(newEmp.salary) || 3500,
+    hireDate: newEmp.hireDate || new Date().toISOString().split('T')[0],
+    ...newEmp,
+  }),
+  messages: {
+    createSuccess: (data) => `Employee "${data.name}" added`,
+    updateSuccess: 'Employee profile updated',
+    deleteSuccess: 'Employee removed from staff roster',
+  },
+})
 
-export function useCreateEmployee() {
-  const queryClient = useQueryClient()
-  const { addToast } = useToast()
-
-  return useMutation({
-    mutationFn: (newEmp) => employeeService.create(newEmp),
-    onMutate: async (newEmp) => {
-      await queryClient.cancelQueries({ queryKey: QUERY_KEY })
-      const previous = queryClient.getQueryData(QUERY_KEY) || []
-
-      const optimisticItem = {
-        id: Date.now(),
-        employeeCode: `EMP-${String(previous.length + 1).padStart(3, '0')}`,
-        attendanceStatus: 'Present',
-        status: 'Active',
-        salary: Number(newEmp.salary) || 3500,
-        hireDate: newEmp.hireDate || new Date().toISOString().split('T')[0],
-        ...newEmp,
-      }
-
-      queryClient.setQueryData(QUERY_KEY, [optimisticItem, ...previous])
-      addToast(`Employee "${newEmp.name}" added`, 'success')
-      return { previous }
-    },
-    onError: (err, newEmp, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(QUERY_KEY, context.previous)
-      }
-      addToast('Failed to add employee', 'warning')
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEY })
-    },
-  })
-}
-
-export function useUpdateEmployee() {
-  const queryClient = useQueryClient()
-  const { addToast } = useToast()
-
-  return useMutation({
-    mutationFn: ({ id, data }) => employeeService.update(id, data),
-    onMutate: async ({ id, data }) => {
-      await queryClient.cancelQueries({ queryKey: QUERY_KEY })
-      const previous = queryClient.getQueryData(QUERY_KEY) || []
-
-      queryClient.setQueryData(
-        QUERY_KEY,
-        previous.map((item) => (item.id === id ? { ...item, ...data } : item))
-      )
-      addToast('Employee profile updated', 'success')
-      return { previous }
-    },
-    onError: (err, variables, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(QUERY_KEY, context.previous)
-      }
-      addToast('Failed to update employee', 'warning')
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEY })
-    },
-  })
-}
+export const useEmployees = hooks.useList
+export const useCreateEmployee = hooks.useCreate
+export const useUpdateEmployee = hooks.useUpdate
+export const useDeleteEmployee = hooks.useDelete
 
 export function useToggleAttendance() {
   const queryClient = useQueryClient()
@@ -115,31 +66,3 @@ export function useToggleAttendance() {
   })
 }
 
-export function useDeleteEmployee() {
-  const queryClient = useQueryClient()
-  const { addToast } = useToast()
-
-  return useMutation({
-    mutationFn: (id) => employeeService.delete(id),
-    onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: QUERY_KEY })
-      const previous = queryClient.getQueryData(QUERY_KEY) || []
-
-      queryClient.setQueryData(
-        QUERY_KEY,
-        previous.filter((item) => item.id !== id)
-      )
-      addToast('Employee removed from staff roster', 'info')
-      return { previous }
-    },
-    onError: (err, id, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(QUERY_KEY, context.previous)
-      }
-      addToast('Failed to delete employee', 'warning')
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEY })
-    },
-  })
-}

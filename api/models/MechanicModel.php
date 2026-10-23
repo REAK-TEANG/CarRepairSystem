@@ -93,7 +93,8 @@ class MechanicModel
         $code     = 'EMP-' . str_pad($cnt, 3, '0', STR_PAD_LEFT);
 
         $username = 'mech_' . time();
-        $hash     = password_hash('password123', PASSWORD_BCRYPT);
+        $rawPass  = !empty($input['password']) ? $input['password'] : bin2hex(random_bytes(6));
+        $hash     = password_hash($rawPass, PASSWORD_BCRYPT);
         $email    = $input['email'] ?? "$username@carrepair.com";
         $phone    = $input['phone'] ?? null;
 

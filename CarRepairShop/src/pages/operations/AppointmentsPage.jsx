@@ -21,6 +21,7 @@ import { useVehicles } from '../../hooks/useVehicles'
 import { useMechanics } from '../../hooks/useMechanics'
 import { useServicesCatalog } from '../../hooks/useServicesCatalog'
 import { useDebounce } from '../../hooks/useDebounce'
+import { usePaginationData } from '../../hooks/usePaginationData'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { Modal, StatusBadge, EmptyState, TableSkeleton, LoadingButton, Button, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, SearchableSelect, Input, Textarea } from '../../components/ui'
@@ -50,10 +51,8 @@ export default function AppointmentsPage() {
   const [page, setPage] = useState(1)
 
   const { data: response, isLoading } = useAppointments({ page, limit: 10, search: debouncedSearch, status: activeFilter })
-  const appointments = Array.isArray(response) ? response : (response?.data || [])
-  const pagination = response?.pagination || null
-  const totalCount = pagination ? pagination.total : appointments.length
-  const totalPages = pagination ? pagination.totalPages : 1
+  const { items: appointments, totalCount, totalPages } = usePaginationData(response, { page, limit: 10 })
+
 
   const { data: rawReminders = [], isLoading: remLoading } = useServiceReminders()
   const { data: rawCustomers = [] } = useCustomers({ all: true })
@@ -531,13 +530,10 @@ export default function AppointmentsPage() {
         <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden space-y-3">
           <div className="p-4 border-b border-app-border flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-bold text-app-text flex items-center gap-2">
+              <h2 className="text-sm font-semibold text-app-text flex items-center gap-2">
                 <Bell size={16} className="text-amber-500" />
-                Customer Maintenance Reminders & Recurring Service CRM
+                Maintenance Reminders
               </h2>
-              <p className="text-[11px] text-app-muted mt-0.5">
-                Automatically tracks when regular maintenance (oil, brakes, fluid flushes) is due to retain customers.
-              </p>
             </div>
           </div>
 

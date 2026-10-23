@@ -1,27 +1,12 @@
+import { createCrudService } from '@/services/crudService'
 import { apiClient } from '@/services/apiClient'
 
+const crud = createCrudService('/invoices')
+
 export const invoiceService = {
-  async getAll(params = {}) {
-    return apiClient.get('/invoices', { params })
-  },
-
-  async getById(id) {
-    return apiClient.get(`/invoices/${id}`)
-  },
-
-  async create(payload) {
-    return apiClient.post('/invoices', payload)
-  },
-
-  async update(id, payload) {
-    return apiClient.put(`/invoices/${id}`, payload)
-  },
-
+  ...crud,
   async recordPayment(id, { paidAmount, paymentMethod }) {
     return apiClient.post(`/invoices/${id}/payments`, { paidAmount, paymentMethod })
   },
-
-  async delete(id) {
-    return apiClient.delete(`/invoices/${id}`)
-  },
 }
+

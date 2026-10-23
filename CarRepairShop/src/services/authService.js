@@ -13,14 +13,23 @@ export const authService = {
   },
 
   /**
-   * Fast role login for testing / quick role switching
+   * Fast role or user login using real database account
    */
-  async quickLogin(role) {
-    const res = await apiClient.post('/auth/quick-login', { role })
+  async quickLogin(roleOrUsername) {
+    const payload = typeof roleOrUsername === 'object' ? roleOrUsername : { role: roleOrUsername }
+    const res = await apiClient.post('/auth/quick-login', payload)
     if (res?.token) {
       apiClient.setToken(res.token)
     }
     return res
+  },
+
+  /**
+   * Fetch real registered accounts directly from database
+   */
+  async getAccounts() {
+    const res = await apiClient.get('/auth/accounts')
+    return res?.accounts || []
   },
 
   /**

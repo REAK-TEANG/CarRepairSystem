@@ -1,11 +1,15 @@
-import { useState, useRef, useEffect, useId } from 'react'
+import { useState, useRef, useEffect, useId, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { MagnifyingGlass, CaretDown, Check, X } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
 
 /**
- * 21st.dev Premium Searchable Select (Combobox)
+ * 21st.dev Premium Searchable Select (Combobox) with Portal Dropdown
  * 
  * Features:
+ * - Direct portal rendering to document.body, eliminating all modal and container overflow clipping!
+ * - Automatic collision detection (opens upward when close to bottom of screen)
+ * - Dynamic repositioning on window resize and scroll
  * - Real-time client-side search filtering across label and sublabel
  * - Obsidian & Electric Lime design tokens
  * - Micro-interactions (smooth chevron rotation, active item checkmark, hover glow)
@@ -28,29 +32,86 @@ export default function SearchableSelect({
   id,
 }) {
   const [isOpen, setIsOpen] = useState(false)
-  const [placement, setPlacement] = useState('bottom') // 'bottom' | 'top'
+  const [, setPlacement] = useState('bottom') // 'bottom' | 'top'
+  const [dropdownStyle, setDropdownStyle] = useState({})
   const [search, setSearch] = useState('')
   const [highlightedIndex, setHighlightedIndex] = useState(0)
   const containerRef = useRef(null)
+  const dropdownRef = useRef(null)
   const searchInputRef = useRef(null)
   const listRef = useRef(null)
   const generatedId = useId()
   const selectId = id || generatedId
 
-  // Auto-flip upward if too close to bottom of viewport or modal
-  useEffect(() => {
-    if (!isOpen || !containerRef.current) return
+  // Calculate coordinates and portal placement
+  const updateCoords = useCallback(() => {
+    if (!containerRef.current) return
     const rect = containerRef.current.getBoundingClientRect()
-    const spaceBelow = window.innerHeight - rect.bottom
-    const spaceAbove = rect.top
-    const estimatedHeight = 230
+    const viewportHeight = window.innerHeight
+    const viewportWidth = window.innerWidth
 
-    if (spaceBelow < estimatedHeight && spaceAbove > spaceBelow) {
-      setPlacement('top')
-    } else {
-      setPlacement('bottom')
+    const spaceBelow = viewportHeight - rect.bottom
+    const spaceAbove = rect.top
+    const estimatedHeight = 240
+
+    // Auto-flip upward if too close to bottom of viewport
+    const isTop = spaceBelow < estimatedHeight && spaceAbove > spaceBelow
+    const maxAvailableHeight = isTop ? spaceAbove - 16 : spaceBelow - 16
+    const clampedHeight = Math.min(280, Math.max(120, maxAvailableHeight))
+
+    let left = rect.left
+    let width = rect.width
+
+    if (left + width > viewportWidth - 8) {
+      left = Math.max(8, viewportWidth - width - 8)
     }
-  }, [isOpen])
+    if (left < 8) {
+      left = 8
+      width = Math.min(width, viewportWidth - 16)
+    }
+
+    setPlacement(isTop ? 'top' : 'bottom')
+    setDropdownStyle({
+      position: 'fixed',
+      left: `${left}px`,
+      width: `${width}px`,
+      ...(isTop
+        ? { bottom: `${viewportHeight - rect.top + 6}px` }
+        : { top: `${rect.bottom + 6}px` }),
+      maxHeight: `${clampedHeight}px`,
+      zIndex: 99999999, // Above modal overlay (999999)
+    })
+  }, [])
+
+  // Reposition on scroll and resize
+  useEffect(() => {
+    if (!isOpen) return
+    updateCoords()
+
+    const handleScrollOrResize = (e) => {
+      // If scroll is inside the dropdown list itself, do not reposition
+      if (dropdownRef.current && dropdownRef.current.contains(e.target)) {
+        return
+      }
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect()
+        // If trigger is scrolled completely out of view, close
+        if (rect.bottom < 0 || rect.top > window.innerHeight) {
+          setIsOpen(false)
+          return
+        }
+      }
+      updateCoords()
+    }
+
+    window.addEventListener('resize', handleScrollOrResize)
+    window.addEventListener('scroll', handleScrollOrResize, true)
+
+    return () => {
+      window.removeEventListener('resize', handleScrollOrResize)
+      window.removeEventListener('scroll', handleScrollOrResize, true)
+    }
+  }, [isOpen, updateCoords])
 
   // Normalize options to uniform { value, label, sublabel, icon }
   const normalizedOptions = options.map((opt) => {
@@ -92,15 +153,19 @@ export default function SearchableSelect({
 
   // Close when clicking outside
   useEffect(() => {
+    if (!isOpen) return
     const handleClickOutside = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target)
+      ) {
         setIsOpen(false)
       }
     }
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-      return () => document.removeEventListener('mousedown', handleClickOutside)
-    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [isOpen])
 
   const handleToggle = () => {
@@ -210,7 +275,7 @@ export default function SearchableSelect({
               role="button"
               tabIndex={0}
               onClick={handleClear}
-              className="p-0.5 rounded hover:text-app-text hover:bg-app-hover transition-colors"
+              className="p-0.5 rounded hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
               title="Clear selection"
             >
               <X size={12} weight="bold" />
@@ -224,17 +289,17 @@ export default function SearchableSelect({
         </div>
       </button>
 
-      {/* Floating Popover Dropdown */}
-      {isOpen && (
+      {/* Floating Popover Dropdown (Rendered via portal to document.body to prevent clipping) */}
+      {isOpen && typeof document !== 'undefined' && createPortal(
         <div
-          className={cn(
-            'absolute left-0 w-full z-50 rounded-lg border border-app-border bg-app-card text-app-text shadow-xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-100',
-            placement === 'top' ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
-          )}
-          style={{ minWidth: '100%' }}
+          ref={dropdownRef}
+          onKeyDown={handleKeyDown}
+          className="rounded-lg border border-app-border bg-app-card text-app-text shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-100 flex flex-col"
+          style={dropdownStyle}
+          onClick={(e) => e.stopPropagation()}
         >
           {/* Sticky Search Header */}
-          <div className="p-2 border-b border-app-border bg-app-card/95 backdrop-blur-xs">
+          <div className="p-2 border-b border-app-border bg-app-card/95 backdrop-blur-xs flex-shrink-0">
             <div className="relative">
               <MagnifyingGlass
                 size={14}
@@ -259,7 +324,7 @@ export default function SearchableSelect({
                     setSearch('')
                     searchInputRef.current?.focus()
                   }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-app-muted hover:text-app-text p-0.5"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-app-muted hover:text-app-text p-0.5 cursor-pointer"
                 >
                   <X size={12} weight="bold" />
                 </button>
@@ -271,7 +336,7 @@ export default function SearchableSelect({
           <div
             ref={listRef}
             role="listbox"
-            className="max-h-48 sm:max-h-52 overflow-y-auto p-1 divide-y divide-app-border/30 scrollbar-thin"
+            className="flex-1 overflow-y-auto p-1 divide-y divide-app-border/30 scrollbar-thin min-h-0"
           >
             {filteredOptions.length === 0 ? (
               <div className="py-6 px-3 text-center text-app-muted text-xs">
@@ -326,8 +391,10 @@ export default function SearchableSelect({
               })
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
 }
+

@@ -54,15 +54,18 @@ class AuthModel
         Database::run('UPDATE users SET password_hash = ? WHERE id = ?', [$hash, $id]);
     }
 
-    /** Create a default demo user for quick-login. */
-    public static function createDefault(array $roleDef): ?array
+    /** Get all active accounts directly from the database */
+    public static function getAvailableAccounts(): array
     {
-        $hash = password_hash('password123', PASSWORD_BCRYPT);
-        Database::run(
-            "INSERT INTO users (username, email, password_hash, full_name, role_id) VALUES (?, ?, ?, ?, ?)",
-            [$roleDef['username'], $roleDef['email'], $hash, $roleDef['name'], $roleDef['roleId']]
+        return Database::all(
+            "SELECT u.id, u.username, u.full_name as name, u.email, u.phone, u.avatar_url,
+                    u.is_active, u.last_login,
+                    r.id as role_id, r.name as role_name, r.description as role_description
+             FROM users u
+             LEFT JOIN roles r ON u.role_id = r.id
+             WHERE u.is_active = true
+             ORDER BY r.id ASC, u.id ASC"
         );
-        return self::findFirstByRoleOrUsername($roleDef['username'], $roleDef['roleId']);
     }
 
     /** Build the normalised role string from the DB role_name. */

@@ -29,6 +29,7 @@ import { useRepairJobs, useCreateRepairJob } from '../../hooks/useRepairJobs'
 import { useMechanics } from '../../hooks/useMechanics'
 import { useServicesCatalog } from '../../hooks/useServicesCatalog'
 import { useDebounce } from '../../hooks/useDebounce'
+import { usePaginationData } from '../../hooks/usePaginationData'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { Modal, ImageUpload, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Button, StatusBadge, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, SearchableSelect, Input, Textarea } from '../../components/ui'
@@ -45,12 +46,9 @@ export default function VehiclesPage() {
   const [fuelFilter, setFuelFilter] = useState('All')
   const [page, setPage] = useState(1)
 
-
   const { data: response, isLoading } = useVehicles({ page, limit: 10, search: debouncedSearch })
-  const vehicles = Array.isArray(response) ? response : (response?.data || [])
-  const pagination = response?.pagination || null
-  const totalCount = pagination ? pagination.total : vehicles.length
-  const totalPages = pagination ? pagination.totalPages : 1
+  const { items: vehicles, totalCount, totalPages } = usePaginationData(response, { page, limit: 10 })
+
 
   const { data: rawCustomers = [] } = useCustomers({ all: true })
   const { data: rawRepairJobs = [] } = useRepairJobs({ all: true })
@@ -475,9 +473,6 @@ export default function VehiclesPage() {
                           <span>
                             {vJobs.length} {vJobs.length === 1 ? 'Order' : 'Orders'}
                           </span>
-                          {hasActive && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-sky-500" title="Active in workshop" />
-                          )}
                         </span>
                       ) : (
                         <span className="text-[11px] text-app-muted italic">No service history</span>
@@ -818,7 +813,7 @@ export default function VehiclesPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {/* Owner Information */}
               <div className="p-3.5 bg-app-card rounded-sm border border-app-border space-y-1.5">
-                <p className="text-[10px] text-app-muted uppercase font-bold tracking-wider flex items-center gap-1">
+                <p className="text-xs font-medium text-app-muted flex items-center gap-1">
                   <User size={13} className="text-app-accent" /> Registered Owner
                 </p>
                 <p className="font-bold text-sm text-app-text">{selectedVehicle.owner}</p>
@@ -841,7 +836,7 @@ export default function VehiclesPage() {
 
               {/* Odometer & Mileage Status */}
               <div className="p-3.5 bg-app-card rounded-sm border border-app-border space-y-1.5">
-                <p className="text-[10px] text-app-muted uppercase font-bold tracking-wider flex items-center gap-1">
+                <p className="text-xs font-medium text-app-muted flex items-center gap-1">
                   <Gauge size={13} className="text-emerald-500" /> Recorded Odometer
                 </p>
                 <p className="font-mono font-bold text-lg text-app-text">
@@ -858,13 +853,12 @@ export default function VehiclesPage() {
 
               {/* Current Workshop Status */}
               <div className="p-3.5 bg-app-card rounded-sm border border-app-border space-y-1.5">
-                <p className="text-[10px] text-app-muted uppercase font-bold tracking-wider flex items-center gap-1">
+                <p className="text-xs font-medium text-app-muted flex items-center gap-1">
                   <Wrench size={13} className="text-amber-500" /> Workshop Status
                 </p>
                 {activeJob ? (
                   <div className="space-y-1">
                     <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-sky-500 animate-ping" />
                       <span className="font-bold text-sky-600 dark:text-sky-400">In Workshop</span>
                     </div>
                     <p className="text-[11px] text-app-muted font-mono">{activeJob.orderNumber} - {activeJob.status}</p>
@@ -885,32 +879,28 @@ export default function VehiclesPage() {
             {/* Lifetime Service History Metrics Bar */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               <div className="p-3 rounded-sm bg-app-input/60 border border-app-border text-center">
-                <span className="text-[10px] text-app-muted uppercase font-bold block">Total Services</span>
+                <span className="text-xs font-medium text-app-muted block">Total Services</span>
                 <span className="font-bold text-base text-app-text font-mono mt-0.5 block">
                   {selectedVehicleJobs.length}
                 </span>
-                <span className="text-[10px] text-app-muted">Work Orders Logged</span>
               </div>
               <div className="p-3 rounded-sm bg-app-input/60 border border-app-border text-center">
-                <span className="text-[10px] text-app-muted uppercase font-bold block">Completed Services</span>
+                <span className="text-xs font-medium text-app-muted block">Completed Services</span>
                 <span className="font-bold text-base text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 block">
                   {completedCount}
                 </span>
-                <span className="text-[10px] text-app-muted">Finished Repairs</span>
               </div>
               <div className="p-3 rounded-sm bg-app-input/60 border border-app-border text-center">
-                <span className="text-[10px] text-app-muted uppercase font-bold block">Active / Pending</span>
+                <span className="text-xs font-medium text-app-muted block">Active / Pending</span>
                 <span className="font-bold text-base text-amber-600 dark:text-amber-400 font-mono mt-0.5 block">
                   {activeCount}
                 </span>
-                <span className="text-[10px] text-app-muted">In Progress</span>
               </div>
               <div className="p-3 rounded-sm bg-app-input/60 border border-app-border text-center">
-                <span className="text-[10px] text-app-muted uppercase font-bold block">Lifetime Cost</span>
+                <span className="text-xs font-medium text-app-muted block">Lifetime Cost</span>
                 <span className="font-bold text-base text-app-accent font-mono mt-0.5 block">
                   ${totalVehicleLifetimeSpent.toFixed(2)}
                 </span>
-                <span className="text-[10px] text-app-muted">Total Garage Spend</span>
               </div>
             </div>
 
@@ -918,13 +908,10 @@ export default function VehiclesPage() {
             <div className="p-4 bg-app-card rounded-sm border border-app-border space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-app-border pb-3">
                 <div>
-                  <h4 className="text-sm font-bold text-app-text flex items-center gap-2">
+                  <h4 className="text-sm font-semibold text-app-text flex items-center gap-2">
                     <ClockCounterClockwise size={18} className="text-emerald-500" weight="bold" />
-                    Complete Service History & Digital Passport
+                    Service History
                   </h4>
-                  <p className="text-[11px] text-app-muted mt-0.5">
-                    Chronological record of all diagnostic reports, maintenance jobs, and spare parts.
-                  </p>
                 </div>
 
                 {/* Filter Tabs */}

@@ -1,80 +1,29 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { appointmentService } from '@/services/appointmentService'
+import { createEntityHooks } from '@/hooks/createEntityHooks'
 import { useToast } from '@/context/ToastContext'
 
 const QUERY_KEY = ['appointments']
 
-export function useAppointments(params = {}, options = {}) {
-  return useQuery({
-    queryKey: ['appointments', params],
-    queryFn: () => appointmentService.getAll(params),
-    placeholderData: (previousData) => previousData,
-    staleTime: 1000 * 60 * 2,
-    ...options,
-  })
-}
+const hooks = createEntityHooks({
+  queryKey: 'appointments',
+  service: appointmentService,
+  entityName: 'Appointment',
+  createOptimistic: (newApt, previous) => ({
+    id: Date.now(),
+    code: `APT-${String(previous.length + 1).padStart(3, '0')}`,
+    status: 'Scheduled',
+    ...newApt,
+  }),
+  messages: {
+    createSuccess: (data) => `Appointment scheduled for ${data.customer}`,
+    updateSuccess: 'Appointment updated',
+  },
+})
 
-export function useCreateAppointment() {
-  const queryClient = useQueryClient()
-  const { addToast } = useToast()
-
-  return useMutation({
-    mutationFn: (newApt) => appointmentService.create(newApt),
-    onMutate: async (newApt) => {
-      await queryClient.cancelQueries({ queryKey: QUERY_KEY })
-      const previous = queryClient.getQueryData(QUERY_KEY) || []
-
-      const optimisticItem = {
-        id: Date.now(),
-        code: `APT-${String(previous.length + 1).padStart(3, '0')}`,
-        status: 'Scheduled',
-        ...newApt,
-      }
-
-      queryClient.setQueryData(QUERY_KEY, [optimisticItem, ...previous])
-      addToast(`Appointment scheduled for ${newApt.customer}`, 'success')
-      return { previous }
-    },
-    onError: (err, newApt, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(QUERY_KEY, context.previous)
-      }
-      addToast('Failed to schedule appointment', 'warning')
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEY })
-    },
-  })
-}
-
-export function useUpdateAppointment() {
-  const queryClient = useQueryClient()
-  const { addToast } = useToast()
-
-  return useMutation({
-    mutationFn: ({ id, data }) => appointmentService.update(id, data),
-    onMutate: async ({ id, data }) => {
-      await queryClient.cancelQueries({ queryKey: QUERY_KEY })
-      const previous = queryClient.getQueryData(QUERY_KEY) || []
-
-      queryClient.setQueryData(
-        QUERY_KEY,
-        previous.map((item) => (item.id === id ? { ...item, ...data } : item))
-      )
-      addToast('Appointment updated', 'success')
-      return { previous }
-    },
-    onError: (err, variables, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(QUERY_KEY, context.previous)
-      }
-      addToast('Failed to update appointment', 'warning')
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEY })
-    },
-  })
-}
+export const useAppointments = hooks.useList
+export const useCreateAppointment = hooks.useCreate
+export const useUpdateAppointment = hooks.useUpdate
 
 export function useCancelAppointment() {
   const queryClient = useQueryClient()
@@ -104,3 +53,4 @@ export function useCancelAppointment() {
     },
   })
 }
+

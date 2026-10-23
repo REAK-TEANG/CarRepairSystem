@@ -6,22 +6,6 @@ $authPayload = authenticate();
 
 $method = $_SERVER['REQUEST_METHOD'];
 
-$DEFAULT_PERMISSIONS_MATRIX = [
-    'dashboard' => ['admin' => ['read'], 'manager' => ['read'], 'mechanic' => ['read'], 'service_advisor' => ['read']],
-    'customers' => ['admin' => ['create', 'read', 'update', 'delete', 'export'], 'manager' => ['create', 'read', 'update', 'export'], 'mechanic' => ['read'], 'service_advisor' => ['create', 'read', 'update']],
-    'vehicles' => ['admin' => ['create', 'read', 'update', 'delete', 'export'], 'manager' => ['create', 'read', 'update', 'export'], 'mechanic' => ['read', 'update'], 'service_advisor' => ['create', 'read', 'update']],
-    'appointments' => ['admin' => ['create', 'read', 'update', 'delete', 'export'], 'manager' => ['create', 'read', 'update', 'export'], 'mechanic' => ['read'], 'service_advisor' => ['create', 'read', 'update']],
-    'repair_jobs' => ['admin' => ['create', 'read', 'update', 'delete', 'export'], 'manager' => ['create', 'read', 'update', 'export'], 'mechanic' => ['read', 'update'], 'service_advisor' => ['create', 'read', 'update']],
-    'invoices' => ['admin' => ['create', 'read', 'update', 'delete', 'export'], 'manager' => ['create', 'read', 'update', 'export'], 'mechanic' => [], 'service_advisor' => ['create', 'read', 'update']],
-    'inventory' => ['admin' => ['create', 'read', 'update', 'delete', 'export'], 'manager' => ['create', 'read', 'update', 'export'], 'mechanic' => ['read'], 'service_advisor' => ['read']],
-    'suppliers' => ['admin' => ['create', 'read', 'update', 'delete', 'export'], 'manager' => ['create', 'read', 'update', 'export'], 'mechanic' => [], 'service_advisor' => []],
-    'employees' => ['admin' => ['create', 'read', 'update', 'delete', 'export'], 'manager' => ['read'], 'mechanic' => [], 'service_advisor' => []],
-    'mechanics' => ['admin' => ['create', 'read', 'update', 'delete', 'export'], 'manager' => ['create', 'read', 'update', 'export'], 'mechanic' => [], 'service_advisor' => []],
-    'services' => ['admin' => ['create', 'read', 'update', 'delete', 'export'], 'manager' => ['create', 'read', 'update', 'export'], 'mechanic' => ['read'], 'service_advisor' => ['read']],
-    'reports' => ['admin' => ['create', 'read', 'update', 'delete', 'export'], 'manager' => ['read', 'export'], 'mechanic' => [], 'service_advisor' => []],
-    'settings' => ['admin' => ['create', 'read', 'update', 'delete', 'export'], 'manager' => [], 'mechanic' => [], 'service_advisor' => []]
-];
-
 if ($path === '/settings/permissions') {
     if ($method === 'GET') {
         $row = get("SELECT setting_value FROM settings WHERE setting_key = 'roles_permissions_matrix'");
@@ -32,7 +16,7 @@ if ($path === '/settings/permissions') {
                 exit;
             }
         }
-        echo json_encode(['data' => $DEFAULT_PERMISSIONS_MATRIX]);
+        echo json_encode(['data' => new stdClass()]);
         exit;
     } else if ($method === 'PUT') {
         // Strict admin check
@@ -49,7 +33,9 @@ if ($path === '/settings/permissions') {
             exit;
         }
 
-        $matrix = array_merge($DEFAULT_PERMISSIONS_MATRIX, $rawMatrix);
+        $existingRow = get("SELECT setting_value FROM settings WHERE setting_key = 'roles_permissions_matrix'");
+        $existingMatrix = ($existingRow && !empty($existingRow['setting_value'])) ? json_decode($existingRow['setting_value'], true) : [];
+        $matrix = is_array($existingMatrix) ? array_merge($existingMatrix, $rawMatrix) : $rawMatrix;
         foreach (array_keys($matrix) as $mod) {
             if (!isset($matrix[$mod]) || !is_array($matrix[$mod])) $matrix[$mod] = [];
             $matrix[$mod]['admin'] = ['create', 'read', 'update', 'delete', 'export'];
@@ -78,7 +64,7 @@ if ($path === '/settings/permissions') {
             'contactEmail' => 'service@protech-autorepair.com',
             'address' => '4582 Industrial Parkway, Suite 100, Motor City, MI',
             'autoBackupDaily' => true,
-            'permissionsMatrix' => $DEFAULT_PERMISSIONS_MATRIX
+            'permissionsMatrix' => []
         ];
 
         foreach ($rows as $r) {

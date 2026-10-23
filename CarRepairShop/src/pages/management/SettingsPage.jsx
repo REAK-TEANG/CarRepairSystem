@@ -35,7 +35,7 @@ import {
 } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { settingsService } from '../../services/settingsService'
-import { useAuth, DEFAULT_PERMISSIONS_MATRIX } from '../../context/AuthContext'
+import { useAuth } from '../../context/AuthContext'
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell, SearchableSelect, Input } from '../../components/ui'
 
 const MODULE_DEFINITIONS = [
@@ -358,9 +358,11 @@ export default function SettingsPage() {
   }
 
   const handleResetDefaults = async () => {
-    if (window.confirm('Reset all role permissions to the factory default matrix?')) {
-      await resetPermissionsToDefault()
-      setLocalMatrix(DEFAULT_PERMISSIONS_MATRIX)
+    if (window.confirm('Reload role permissions from database settings?')) {
+      const refreshed = await resetPermissionsToDefault()
+      if (refreshed && typeof refreshed === 'object') {
+        setLocalMatrix(refreshed)
+      }
       setPermSaved(true)
       setTimeout(() => setPermSaved(false), 3500)
     }

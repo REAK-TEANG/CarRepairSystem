@@ -48,39 +48,12 @@ export default function Modal({
   return createPortal(
     <div
       id="portal-modal-root"
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        width: '100vw',
-        height: '100vh',
-        zIndex: 999999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '0.75rem sm:1.25rem',
-        overflow: 'hidden',
-      }}
+      className="fixed inset-0 w-screen h-screen z-[999999] flex items-center justify-center p-3 sm:p-5 overflow-hidden"
       role="presentation"
     >
       {/* Backdrop strictly covers entire viewport */}
       <div
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          width: '100vw',
-          height: '100vh',
-          backgroundColor: 'rgba(0, 0, 0, 0.65)',
-          backdropFilter: 'blur(4px)',
-          WebkitBackdropFilter: 'blur(4px)',
-          zIndex: 1,
-        }}
-        className="animate-modal-backdrop cursor-pointer"
+        className="fixed inset-0 w-screen h-screen bg-black/65 backdrop-blur-xs z-[1] animate-modal-backdrop cursor-pointer"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -90,12 +63,8 @@ export default function Modal({
         role="dialog"
         aria-modal="true"
         aria-label={typeof title === 'string' ? title : 'Dialog'}
-        style={{
-          position: 'relative',
-          zIndex: 2,
-        }}
         className={clsx(
-          'w-full max-w-[calc(100vw-1.5rem)]',
+          'relative z-[2] w-full',
           maxWidth,
           'bg-app-card border border-app-border rounded-xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[92vh] animate-modal-content',
           className

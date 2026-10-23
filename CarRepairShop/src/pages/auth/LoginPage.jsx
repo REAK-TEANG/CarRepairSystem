@@ -5,19 +5,19 @@ import { Eye, EyeSlash, SignIn, Key, ArrowLeft, CheckCircle } from '@phosphor-ic
 import Logo from '../../components/ui/Logo'
 import LanguageSwitcher from '../../components/ui/LanguageSwitcher'
 import { Modal, LoadingButton, Input } from '../../components/ui'
-import { useAuth, ROLE_PROFILES } from '../../context/AuthContext'
+import { useAuth } from '../../context/AuthContext'
 import { authService } from '../../services/authService'
 import { useToast } from '../../context/ToastContext'
 
 export default function LoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { login, switchRole } = useAuth()
+  const { login, switchRole, availableAccounts } = useAuth()
   const { addToast } = useToast()
 
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [form, setForm] = useState({ username: 'admin', password: 'password123' })
+  const [form, setForm] = useState({ username: '', password: '' })
   const [error, setError] = useState('')
 
   // Forgot / Reset Password Modal State
@@ -32,7 +32,7 @@ export default function LoginPage() {
   const [forgotError, setForgotError] = useState('')
   const [codePreview, setCodePreview] = useState('')
 
-  const getTargetRoute = (userProfile, fallbackKey) => {
+  const getTargetRoute = (userProfile) => {
     const roleRoutes = {
       admin: '/admin/dashboard',
       manager: '/admin/dashboard',
@@ -41,24 +41,18 @@ export default function LoginPage() {
       cashier: '/invoices',
       storekeeper: '/inventory',
     }
-    const defaultRoute =
-      userProfile?.defaultRoute ||
-      (userProfile?.role && roleRoutes[userProfile.role]) ||
-      (fallbackKey && ROLE_PROFILES[fallbackKey]?.defaultRoute) ||
-      '/admin/dashboard'
-
-    return defaultRoute
+    return userProfile?.defaultRoute || (userProfile?.role && roleRoutes[userProfile.role]) || '/admin/dashboard'
   }
 
-  const handleRoleQuickSelect = async (roleKey) => {
+  const handleAccountSelect = async (account) => {
     setError('')
     setLoading(true)
     try {
-      const user = await switchRole(roleKey)
-      const target = getTargetRoute(user, roleKey)
+      const user = await switchRole({ username: account.username })
+      const target = getTargetRoute(user)
       navigate(target, { replace: true })
     } catch (err) {
-      setError(err.message || 'Quick login failed')
+      setError(err.message || 'Login failed for selected account')
     } finally {
       setLoading(false)
     }
@@ -249,34 +243,37 @@ export default function LoginPage() {
             )}
           </button>
 
-          {/* Divider */}
-          <div className="relative flex py-1.5 items-center">
-            <div className="flex-grow border-t border-app-border"></div>
-            <span className="flex-shrink mx-3 text-[10px] font-semibold text-app-muted uppercase tracking-wider">
-              {t('auth.demoQuickLogin')}
-            </span>
-            <div className="flex-grow border-t border-app-border"></div>
-          </div>
+          {/* Database Accounts Selector */}
+          {availableAccounts && availableAccounts.length > 0 && (
+            <>
+              <div className="relative flex py-1.5 items-center">
+                <div className="flex-grow border-t border-app-border"></div>
+                <span className="flex-shrink mx-3 text-[10px] font-semibold text-app-muted">
+                  Database Accounts
+                </span>
+                <div className="flex-grow border-t border-app-border"></div>
+              </div>
 
-          {/* Demo Role Quick Switcher */}
-          <div className="grid grid-cols-2 gap-1.5">
-            {Object.entries(ROLE_PROFILES).map(([key, prof]) => (
-              <button
-                key={key}
-                type="button"
-                disabled={loading}
-                onClick={() => handleRoleQuickSelect(key)}
-                className="flex flex-col items-start px-2.5 py-1.5 rounded-md bg-app-hover/50 hover:bg-app-hover border border-app-border hover:border-app-accent/40 text-left transition-colors group disabled:opacity-50 cursor-pointer"
-              >
-                <span className="text-[11px] font-semibold text-app-text group-hover:text-app-accent transition-colors">
-                  {prof.name}
-                </span>
-                <span className="text-[10px] text-app-muted truncate w-full">
-                  {t(`roles.${key}`, prof.roleTitle)}
-                </span>
-              </button>
-            ))}
-          </div>
+              <div className="grid grid-cols-2 gap-1.5 max-h-48 overflow-y-auto pr-0.5 custom-scrollbar">
+                {availableAccounts.map((acc) => (
+                  <button
+                    key={acc.id}
+                    type="button"
+                    disabled={loading}
+                    onClick={() => handleAccountSelect(acc)}
+                    className="flex flex-col items-start px-2.5 py-1.5 rounded-md bg-app-hover/50 hover:bg-app-hover border border-app-border hover:border-app-accent/40 text-left transition-colors group disabled:opacity-50 cursor-pointer"
+                  >
+                    <span className="text-[11px] font-semibold text-app-text group-hover:text-app-accent transition-colors truncate w-full">
+                      {acc.name || acc.username}
+                    </span>
+                    <span className="text-[10px] text-app-muted truncate w-full">
+                      {acc.roleTitle} (@{acc.username})
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
 
           {/* Card Footer */}
           <div className="text-center pt-2 text-[11px] text-app-muted">

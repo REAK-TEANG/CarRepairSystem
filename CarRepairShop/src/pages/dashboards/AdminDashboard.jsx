@@ -9,8 +9,9 @@ import {
   CalendarBlank,
   Receipt,
   ArrowUpRight,
+  CaretDown,
 } from '@phosphor-icons/react'
-import { useState } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { CardSkeleton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '../../components/ui'
@@ -21,6 +22,13 @@ import { useInventory } from '../../hooks/useInventory'
 import { useEmployees } from '../../hooks/useEmployees'
 import { useAppointments } from '../../hooks/useAppointments'
 import { StaggerGroup } from '../../components/animation/AnimeWrapper'
+
+function parseItemDate(item) {
+  const raw = item?.issueDate || item?.issued_date || item?.date || item?.createdAt || item?.created_at
+  if (!raw) return null
+  const d = new Date(raw)
+  return isNaN(d.getTime()) ? null : d
+}
 
 export default function AdminDashboard() {
   const { t } = useTranslation()
@@ -40,46 +48,130 @@ export default function AdminDashboard() {
 
   const isInitialLoading = (loadingInvoices || loadingJobs || loadingCustomers || loadingInventory) && invoices.length === 0
 
+  const [dateFilter, setDateFilter] = useState('all') // 'all' | 'this_week' | 'this_month' | 'custom'
+  const [customStart, setCustomStart] = useState(() => {
+    const d = new Date()
+    d.setDate(d.getDate() - 7)
+    return d.toISOString().split('T')[0]
+  })
+  const [customEnd, setCustomEnd] = useState(() => new Date().toISOString().split('T')[0])
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false)
+  const filterDropdownRef = useRef(null)
+
+  useEffect(() => {
+    if (!isFilterDropdownOpen) return
+    const handleClickOutside = (e) => {
+      if (filterDropdownRef.current && !filterDropdownRef.current.contains(e.target)) {
+        setIsFilterDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isFilterDropdownOpen])
+
+  const activeRange = useMemo(() => {
+    if (dateFilter === 'all') {
+      return null // Unrestricted: includes all records
+    }
+    const now = new Date()
+    if (dateFilter === 'this_week') {
+      const day = now.getDay()
+      const distanceToMonday = (day + 6) % 7
+      const start = new Date(now)
+      start.setDate(now.getDate() - distanceToMonday)
+      start.setHours(0, 0, 0, 0)
+      const end = new Date(start)
+      end.setDate(start.getDate() + 6)
+      end.setHours(23, 59, 59, 999)
+      return { start, end }
+    }
+    if (dateFilter === 'this_month') {
+      const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0)
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
+      return { start, end }
+    }
+    if (dateFilter === 'custom' && customStart && customEnd) {
+      const start = new Date(`${customStart}T00:00:00`)
+      const end = new Date(`${customEnd}T23:59:59.999`)
+      return { start, end }
+    }
+    return null
+  }, [dateFilter, customStart, customEnd])
+
+  const filteredInvoices = useMemo(() => {
+    if (!activeRange) return invoices
+    return invoices.filter((i) => {
+      const d = parseItemDate(i)
+      return d ? d >= activeRange.start && d <= activeRange.end : true
+    })
+  }, [invoices, activeRange])
+
+  const filteredRepairJobs = useMemo(() => {
+    if (!activeRange) return repairJobs
+    return repairJobs.filter((j) => {
+      const d = parseItemDate(j)
+      return d ? d >= activeRange.start && d <= activeRange.end : true
+    })
+  }, [repairJobs, activeRange])
+
+  const filteredAppointments = useMemo(() => {
+    if (!activeRange) return appointments
+    return appointments.filter((a) => {
+      const d = parseItemDate(a)
+      return d ? d >= activeRange.start && d <= activeRange.end : true
+    })
+  }, [appointments, activeRange])
+
   const [hoveredSegment, setHoveredSegment] = useState(null)
   const [centerMode, setCenterMode] = useState('collected') // 'collected' | 'active' | 'revenue'
 
-  const totalRevenue = invoices.reduce((sum, i) => sum + (Number(i.amount) || 0), 0)
-  const totalPaid = invoices.reduce((sum, i) => sum + (Number(i.paidAmount) || 0), 0)
+  const totalRevenue = filteredInvoices.reduce((sum, i) => sum + (Number(i.amount) || 0), 0)
+  const totalPaid = filteredInvoices.reduce((sum, i) => sum + (Number(i.paidAmount) || 0), 0)
   const balanceDue = Math.max(0, totalRevenue - totalPaid)
-  const paidPercent = totalRevenue > 0 ? Math.round((totalPaid / totalRevenue) * 100) : 0
-  const duePercent = totalRevenue > 0 ? Math.round((balanceDue / totalRevenue) * 100) : 0
-  const activeOrders = repairJobs.filter((j) => j.status !== 'Completed').length
-  const completedOrders = repairJobs.filter((j) => j.status === 'Completed').length
   const totalParts = inventory.reduce((sum, p) => sum + (Number(p.stockQty) || 0), 0)
   const inventoryTotalVal = inventory.reduce((sum, p) => sum + (Number(p.unitPrice) || 0) * (Number(p.stockQty) || 0), 0)
-  const lowStockItems = inventory.filter((p) => p.stockQty <= (p.minThreshold || 5))
-  const scheduledApts = appointments.filter((a) => a.status === 'Scheduled' || a.status === 'Confirmed').length
 
-  // SVG Donut geometry & dynamic arc lengths
+  // 3-Part Financial & Asset Distribution
+  const combinedTotal = totalPaid + balanceDue + inventoryTotalVal
+  const paidPercent = combinedTotal > 0 ? Math.round((totalPaid / combinedTotal) * 100) : 0
+  const duePercent = combinedTotal > 0 ? Math.round((balanceDue / combinedTotal) * 100) : 0
+  const inventoryPercent = Math.max(0, 100 - paidPercent - duePercent)
+
+  const activeOrders = filteredRepairJobs.filter((j) => j.status !== 'Completed').length
+  const completedOrders = filteredRepairJobs.filter((j) => j.status === 'Completed').length
+  const lowStockItems = inventory.filter((p) => p.stockQty <= (p.minThreshold || 5))
+  const scheduledApts = filteredAppointments.filter((a) => a.status === 'Scheduled' || a.status === 'Confirmed').length
+
+  // SVG Donut geometry & dynamic arc lengths (3 parts: Paid, Balance Due, Inventory Assets)
   const CIRCUMFERENCE = 2 * Math.PI * 38 // 238.761
-  const paidRatio = totalRevenue > 0 ? Math.min(1, Math.max(0, totalPaid / totalRevenue)) : 0
-  const dueRatio = totalRevenue > 0 ? Math.min(1 - paidRatio, Math.max(0, balanceDue / totalRevenue)) : 0
-  const hasBothSegments = paidRatio > 0 && dueRatio > 0
-  const donutGap = hasBothSegments ? Math.min(6, CIRCUMFERENCE * Math.min(paidRatio, dueRatio) * 0.4) : 0
+  const paidRatio = combinedTotal > 0 ? totalPaid / combinedTotal : 0
+  const dueRatio = combinedTotal > 0 ? balanceDue / combinedTotal : 0
+  const inventoryRatio = combinedTotal > 0 ? Math.max(0, 1 - paidRatio - dueRatio) : 0
+
+  const activeSegmentsCount = [paidRatio, dueRatio, inventoryRatio].filter((r) => r > 0.01).length
+  const donutGap = activeSegmentsCount > 1 ? 3.5 : 0
 
   const paidArcLength = paidRatio > 0 ? Math.max(2, CIRCUMFERENCE * paidRatio - donutGap) : 0
   const dueArcLength = dueRatio > 0 ? Math.max(2, CIRCUMFERENCE * dueRatio - donutGap) : 0
-  const paidArcOffset = hasBothSegments ? -donutGap / 2 : 0
-  const dueArcOffset = hasBothSegments ? -(CIRCUMFERENCE * paidRatio + donutGap / 2) : 0
+  const inventoryArcLength = inventoryRatio > 0 ? Math.max(2, CIRCUMFERENCE * inventoryRatio - donutGap) : 0
+
+  const paidArcOffset = -donutGap / 2
+  const dueArcOffset = -(CIRCUMFERENCE * paidRatio + donutGap / 2)
+  const inventoryArcOffset = -(CIRCUMFERENCE * (paidRatio + dueRatio) + donutGap / 2)
 
   // Dynamic activities feed from latest repair jobs
-  const activitiesFeed = repairJobs.slice(0, 4).map((job) => ({
+  const activitiesFeed = filteredRepairJobs.slice(0, 4).map((job) => ({
     id: job.id,
     title: `${job.orderNumber} (${job.customer}) → ${t(`status.${job.status}`, job.status)}`,
-    time: job.date || 'Live',
+    time: job.date || '',
   }))
 
   const notificationsFeed = [
-    { id: 'n1', title: `${activeOrders} ${t('dashboard.activeJobsSubtitle')}`, time: 'Live', type: 'info' },
+    { id: 'n1', title: `${activeOrders} ${t('dashboard.activeJobsSubtitle')}`, time: '', type: 'info' },
     ...(lowStockItems.length > 0
       ? [{ id: 'n2', title: `${lowStockItems.length} ${t('dashboard.partsUnderThreshold')}`, time: t('common.warning'), type: 'warning' }]
       : []),
-    { id: 'n3', title: `${scheduledApts} ${t('dashboard.pendingAppointmentsSubtitle')}`, time: 'Calendar', type: 'success' },
+    { id: 'n3', title: `${scheduledApts} ${t('dashboard.pendingAppointmentsSubtitle')}`, time: '', type: 'success' },
   ]
 
   const staffList = employees.slice(0, 5)
@@ -87,16 +179,122 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-4 sm:space-y-5 text-app-text font-sans transition-colors duration-200">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <h1 className="text-lg font-semibold tracking-tight text-app-text">{t('titles.adminOverview')}</h1>
-          <span className="text-[11px] font-mono text-app-muted px-2 py-0.5 bg-app-card border border-app-border rounded-md">Live</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-app-card border border-app-border text-app-muted rounded-md text-xs font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            {t('reports.thisMonth')}
-          </span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h1 className="text-lg font-semibold tracking-tight text-app-text">{t('titles.adminOverview')}</h1>
+        <div ref={filterDropdownRef} className="relative">
+          <button
+            type="button"
+            onClick={() => setIsFilterDropdownOpen((prev) => !prev)}
+            className="inline-flex items-center gap-2 px-3 py-1.5 bg-app-card border border-app-border hover:border-app-accent/50 text-app-text rounded-md text-xs font-medium shadow-xs transition-colors cursor-pointer select-none"
+          >
+            <CalendarBlank size={14} className="text-app-muted" weight="bold" />
+            <span>
+              {dateFilter === 'all'
+                ? t('common.all', 'All')
+                : dateFilter === 'this_week'
+                ? t('reports.thisWeek')
+                : dateFilter === 'this_month'
+                ? t('reports.thisMonth')
+                : `${customStart} → ${customEnd}`}
+            </span>
+            <CaretDown size={12} className={`text-app-muted transition-transform duration-200 ${isFilterDropdownOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {isFilterDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-80 bg-app-card border border-app-border rounded-lg shadow-xl p-3 z-50 animate-modal-content space-y-3">
+              <div className="grid grid-cols-4 gap-1 p-1 bg-app-hover/60 rounded-md">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDateFilter('all')
+                    setIsFilterDropdownOpen(false)
+                  }}
+                  className={`py-1 px-1.5 text-xs font-semibold rounded transition-colors text-center cursor-pointer ${
+                    dateFilter === 'all'
+                      ? 'bg-app-accent text-app-accentText shadow-xs'
+                      : 'text-app-muted hover:text-app-text'
+                  }`}
+                >
+                  {t('common.all', 'All')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDateFilter('this_week')
+                    setIsFilterDropdownOpen(false)
+                  }}
+                  className={`py-1 px-1.5 text-xs font-semibold rounded transition-colors text-center cursor-pointer ${
+                    dateFilter === 'this_week'
+                      ? 'bg-app-accent text-app-accentText shadow-xs'
+                      : 'text-app-muted hover:text-app-text'
+                  }`}
+                >
+                  {t('reports.thisWeek')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDateFilter('this_month')
+                    setIsFilterDropdownOpen(false)
+                  }}
+                  className={`py-1 px-1.5 text-xs font-semibold rounded transition-colors text-center cursor-pointer ${
+                    dateFilter === 'this_month'
+                      ? 'bg-app-accent text-app-accentText shadow-xs'
+                      : 'text-app-muted hover:text-app-text'
+                  }`}
+                >
+                  {t('reports.thisMonth')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDateFilter('custom')}
+                  className={`py-1 px-1.5 text-xs font-semibold rounded transition-colors text-center cursor-pointer ${
+                    dateFilter === 'custom'
+                      ? 'bg-app-accent text-app-accentText shadow-xs'
+                      : 'text-app-muted hover:text-app-text'
+                  }`}
+                >
+                  {t('reports.customDate', 'Custom')}
+                </button>
+              </div>
+
+              {dateFilter === 'custom' && (
+                <div className="space-y-2 pt-1 border-t border-app-border">
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <label className="block text-[11px] text-app-muted font-medium mb-1">
+                        {t('reports.startDate', 'Start Date')}
+                      </label>
+                      <input
+                        type="date"
+                        value={customStart}
+                        onChange={(e) => setCustomStart(e.target.value)}
+                        className="w-full px-2 py-1 bg-app-input border border-app-border rounded text-xs text-app-text focus:outline-none focus:border-app-accent font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-app-muted font-medium mb-1">
+                        {t('reports.endDate', 'End Date')}
+                      </label>
+                      <input
+                        type="date"
+                        value={customEnd}
+                        onChange={(e) => setCustomEnd(e.target.value)}
+                        className="w-full px-2 py-1 bg-app-input border border-app-border rounded text-xs text-app-text focus:outline-none focus:border-app-accent font-mono"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsFilterDropdownOpen(false)}
+                    className="w-full py-1.5 px-3 bg-app-accent text-app-accentText font-semibold rounded-md text-xs hover:bg-app-accentHover transition-colors cursor-pointer text-center"
+                  >
+                    {t('reports.apply', 'Apply Filter')}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -267,14 +465,14 @@ export default function AdminDashboard() {
           <div className="bg-app-card rounded-sm border border-app-border p-4 shadow-card transition-colors duration-200">
             <div className="flex items-center justify-between mb-4 sm:mb-6">
               <div>
-                <h2 className="text-sm font-bold text-app-text">{t('reports.partsVsLabor')}</h2>
-                <p className="text-[11px] text-app-muted">{t('dashboard.totalRevenue')} Distribution</p>
+                <h2 className="text-sm font-semibold text-app-text">{t('reports.partsVsLabor')}</h2>
+                <p className="text-[11px] text-app-muted">Total Revenue & Inventory Distribution</p>
               </div>
               <span className="text-xs font-mono font-bold text-app-accent">${totalRevenue.toFixed(2)}</span>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8">
-              {/* SVG Donut Graphic */}
+              {/* SVG Donut Graphic (3 Parts: Paid, Balance Due, Inventory & Parts) */}
               <div className="relative w-36 h-36 sm:w-40 sm:h-40 flex items-center justify-center flex-shrink-0 group">
                 <svg className="w-full h-full transform -rotate-90 overflow-visible" viewBox="0 0 100 100">
                   {/* Background Track */}
@@ -287,7 +485,7 @@ export default function AdminDashboard() {
                     fill="transparent"
                   />
 
-                  {/* Paid Segment (Emerald / app-accent) */}
+                  {/* Part 1: Paid Segment (Emerald / app-accent) */}
                   {paidArcLength > 0 && (
                     <circle
                       cx="50"
@@ -309,7 +507,7 @@ export default function AdminDashboard() {
                     />
                   )}
 
-                  {/* Balance Due Segment (Amber #f59e0b) */}
+                  {/* Part 2: Balance Due Segment (Amber #f59e0b) */}
                   {dueArcLength > 0 && (
                     <circle
                       cx="50"
@@ -327,6 +525,28 @@ export default function AdminDashboard() {
                         filter: hoveredSegment === 'due' ? 'drop-shadow(0 0 6px rgba(245, 158, 11, 0.45))' : 'none',
                       }}
                       onMouseEnter={() => setHoveredSegment('due')}
+                      onMouseLeave={() => setHoveredSegment(null)}
+                    />
+                  )}
+
+                  {/* Part 3: Inventory & Parts Segment (Sky Blue #0ea5e9) */}
+                  {inventoryArcLength > 0 && (
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="38"
+                      stroke="#0ea5e9"
+                      strokeWidth={hoveredSegment === 'inventory' ? 14 : 11}
+                      strokeDasharray={`${inventoryArcLength} ${CIRCUMFERENCE - inventoryArcLength}`}
+                      strokeDashoffset={inventoryArcOffset}
+                      strokeLinecap="round"
+                      fill="transparent"
+                      className="cursor-pointer transition-all duration-300"
+                      style={{
+                        opacity: hoveredSegment && hoveredSegment !== 'inventory' ? 0.35 : 1,
+                        filter: hoveredSegment === 'inventory' ? 'drop-shadow(0 0 6px rgba(14, 165, 233, 0.45))' : 'none',
+                      }}
+                      onMouseEnter={() => setHoveredSegment('inventory')}
                       onMouseLeave={() => setHoveredSegment(null)}
                     />
                   )}
@@ -348,7 +568,7 @@ export default function AdminDashboard() {
                       <span className="text-sm sm:text-base font-bold text-emerald-600 dark:text-[#13F287] tabular-nums transition-colors">
                         ${totalPaid.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                       </span>
-                      <span className="text-[10px] text-app-muted font-semibold uppercase tracking-wider">
+                      <span className="text-[10px] text-app-muted font-medium">
                         {t('common.paid')} ({paidPercent}%)
                       </span>
                     </>
@@ -357,7 +577,7 @@ export default function AdminDashboard() {
                       <span className="text-sm sm:text-base font-bold text-amber-500 tabular-nums transition-colors">
                         ${balanceDue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                       </span>
-                      <span className="text-[10px] text-app-muted font-semibold uppercase tracking-wider">
+                      <span className="text-[10px] text-app-muted font-medium">
                         {t('invoices.balanceDue')} ({duePercent}%)
                       </span>
                     </>
@@ -366,14 +586,14 @@ export default function AdminDashboard() {
                       <span className="text-sm sm:text-base font-bold text-sky-500 tabular-nums transition-colors">
                         ${inventoryTotalVal.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                       </span>
-                      <span className="text-[10px] text-app-muted font-semibold uppercase tracking-wider">
-                        {totalParts} {t('common.total')}
+                      <span className="text-[10px] text-app-muted font-medium">
+                        {t('nav.inventory')} ({inventoryPercent}%)
                       </span>
                     </>
                   ) : centerMode === 'active' ? (
                     <>
                       <span className="text-xl font-bold text-app-text tabular-nums">{activeOrders}</span>
-                      <span className="text-[10px] text-app-muted font-medium uppercase tracking-wider">
+                      <span className="text-[10px] text-app-muted font-medium">
                         {t('status.Active')}
                       </span>
                       <span className="text-[9px] font-mono text-app-muted/70">
@@ -383,19 +603,19 @@ export default function AdminDashboard() {
                   ) : centerMode === 'revenue' ? (
                     <>
                       <span className="text-sm sm:text-base font-bold text-app-text tabular-nums">
-                        ${totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                        ${combinedTotal.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                       </span>
-                      <span className="text-[10px] text-app-muted font-medium uppercase tracking-wider">
-                        {t('dashboard.totalRevenue')}
+                      <span className="text-[10px] text-app-muted font-medium">
+                        {t('common.total')} Assets
                       </span>
-                      <span className="text-[9px] font-mono text-app-accent">
-                        {paidPercent}% {t('common.paid').toLowerCase()}
+                      <span className="text-[9px] font-mono text-app-muted/70">
+                        {totalParts} {t('common.total').toLowerCase()} parts
                       </span>
                     </>
                   ) : (
                     <>
                       <span className="text-xl font-bold text-app-text tabular-nums">{paidPercent}%</span>
-                      <span className="text-[10px] text-app-muted font-medium uppercase tracking-wider">
+                      <span className="text-[10px] text-app-muted font-medium">
                         {t('common.paid')}
                       </span>
                       <span className="text-[9px] font-mono text-app-muted/70">
@@ -406,7 +626,7 @@ export default function AdminDashboard() {
                 </button>
               </div>
 
-              {/* Breakdown Legend List */}
+              {/* Breakdown Legend List (3 Parts) */}
               <div className="flex-1 space-y-2 w-full">
                 <div
                   onMouseEnter={() => setHoveredSegment('paid')}
@@ -456,10 +676,10 @@ export default function AdminDashboard() {
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-sky-500 flex-shrink-0" />
                     <span className="text-xs font-medium text-app-text">
-                      {t('nav.inventory')} ({totalParts} {t('common.total')})
+                      {t('nav.inventory')} & Parts ({inventoryPercent}%)
                     </span>
                   </div>
-                  <span className="text-xs font-bold text-app-text tabular-nums">
+                  <span className="text-xs font-bold text-sky-500 tabular-nums">
                     ${inventoryTotalVal.toFixed(2)}
                   </span>
                 </div>
@@ -470,10 +690,7 @@ export default function AdminDashboard() {
           {/* Customer Directory Mini Bento Table */}
           <div className="bg-app-card rounded-sm border border-app-border p-4 shadow-card transition-colors duration-200">
             <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-sm font-bold text-app-text">{t('customers.title')}</h2>
-                <p className="text-[11px] text-app-muted">{customers.length} registered accounts</p>
-              </div>
+              <h2 className="text-sm font-semibold text-app-text">{t('customers.title')}</h2>
               <Link to="/customers" className="text-xs text-app-accent hover:underline font-semibold flex items-center gap-1">
                 {t('common.view')} {t('common.all')} <ArrowUpRight size={13} weight="bold" />
               </Link>
@@ -519,9 +736,9 @@ export default function AdminDashboard() {
           {/* Live Alerts Bento Card */}
           <div className="bg-app-card rounded-sm border border-app-border p-3 shadow-card transition-colors duration-200">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-xs font-bold text-app-text uppercase tracking-wider">{t('common.liveAlerts')}</h3>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-semibold font-mono">
-                {notificationsFeed.length} {t('common.active')}
+              <h3 className="text-xs font-semibold text-app-text">{t('common.liveAlerts')}</h3>
+              <span className="text-xs font-mono text-app-muted">
+                {notificationsFeed.length}
               </span>
             </div>
             <div className="space-y-2.5">
@@ -544,7 +761,7 @@ export default function AdminDashboard() {
           {/* Recent Repair Orders Activity */}
           <div className="bg-app-card rounded-sm border border-app-border p-3 shadow-card transition-colors duration-200">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-xs font-bold text-app-text uppercase tracking-wider">{t('dashboard.recentJobs')}</h3>
+              <h3 className="text-xs font-semibold text-app-text">{t('dashboard.recentJobs')}</h3>
               <Link to="/repair-jobs" className="text-[11px] text-app-accent hover:underline">
                 {t('common.view')} ▾
               </Link>
@@ -567,7 +784,7 @@ export default function AdminDashboard() {
           {/* Workshop Staff Roster */}
           <div className="bg-app-card rounded-sm border border-app-border p-3 shadow-card transition-colors duration-200">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-xs font-bold text-app-text uppercase tracking-wider">{t('employees.title')}</h3>
+              <h3 className="text-xs font-semibold text-app-text">{t('employees.title')}</h3>
               <Link to="/employees" className="text-[11px] text-app-accent hover:underline">
                 {staffList.length} staff
               </Link>

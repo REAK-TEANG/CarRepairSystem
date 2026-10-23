@@ -8,16 +8,55 @@ $method = $_SERVER['REQUEST_METHOD'];
 $path = $segments[1] ?? '';
 $secret = function_exists('getJwtSecret') ? getJwtSecret() : (getenv('JWT_SECRET') ?: 'carrepair_super_secret_jwt_key_2026_x89!@#%^&_workshop_pro');
 
-$DEFAULT_ROLE_ACCOUNTS = [
-    'admin' => ['username' => 'admin', 'name' => 'Jane Doe', 'email' => 'admin@carrepair.com', 'roleName' => 'Admin', 'roleId' => 1, 'roleTitle' => 'System Administrator'],
-    'manager' => ['username' => 'manager', 'name' => 'Marcus Vance', 'email' => 'manager@workshop.com', 'roleName' => 'Manager', 'roleId' => 2, 'roleTitle' => 'Workshop Manager'],
-    'service_advisor' => ['username' => 'advisor', 'name' => 'Sarah Jenkins', 'email' => 'advisor@workshop.com', 'roleName' => 'Service Advisor', 'roleId' => 3, 'roleTitle' => 'Service Advisor'],
-    'mechanic' => ['username' => 'mechanic', 'name' => 'Mike Johnson', 'email' => 'mike@workshop.com', 'roleName' => 'Mechanic', 'roleId' => 4, 'roleTitle' => 'Master Technician'],
-    'cashier' => ['username' => 'cashier', 'name' => 'Emily Watson', 'email' => 'cashier@workshop.com', 'roleName' => 'Cashier', 'roleId' => 5, 'roleTitle' => 'Chief Cashier'],
-    'storekeeper' => ['username' => 'storekeeper', 'name' => 'David Miller', 'email' => 'store@workshop.com', 'roleName' => 'Storekeeper', 'roleId' => 6, 'roleTitle' => 'Inventory Storekeeper'],
-];
+if ($method === 'GET' && ($path === 'accounts' || $path === 'roles-accounts')) {
+    // Return authentic active accounts directly from the database
+    $accounts = all(
+        "SELECT u.id, u.username, u.full_name as name, u.email, u.phone, u.avatar_url,
+                u.is_active, u.last_login,
+                r.id as role_id, r.name as role_name, r.description as role_description
+         FROM users u
+         LEFT JOIN roles r ON u.role_id = r.id
+         WHERE u.is_active = true
+         ORDER BY r.id ASC, u.id ASC"
+    );
 
-if ($method === 'POST' && $path === 'login') {
+    $formatted = array_map(function($u) {
+        $roleName = $u['role_name'] ?: 'Staff';
+        $normalizedRole = strtolower(preg_replace('/\s+/', '_', $roleName));
+        return [
+            'id' => $u['id'],
+            'username' => $u['username'],
+            'name' => $u['name'],
+            'email' => $u['email'],
+            'phone' => $u['phone'] ?? '',
+            'avatar' => $u['avatar_url'] ?: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+            'role' => $normalizedRole,
+            'roleTitle' => $roleName,
+            'roleId' => $u['role_id'],
+            'roleDescription' => $u['role_description'] ?? '',
+            'lastLogin' => $u['last_login'],
+        ];
+    }, $accounts);
+
+    echo json_encode(['success' => true, 'accounts' => $formatted]);
+    exit;
+
+} else if ($method === 'GET' && $path === 'permissions') {
+    // Return role permissions matrix directly from the database (settings table)
+    $row = get("SELECT setting_value FROM settings WHERE setting_key = 'roles_permissions_matrix'");
+    $matrix = null;
+    if ($row && !empty($row['setting_value'])) {
+        $matrix = json_decode($row['setting_value'], true);
+    }
+    if (!$matrix) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Permission matrix not found in database settings']);
+        exit;
+    }
+    echo json_encode(['success' => true, 'data' => $matrix]);
+    exit;
+
+} else if ($method === 'POST' && $path === 'login') {
     $input = json_decode(file_get_contents('php://input'), true);
     $username = $input['username'] ?? '';
     $password = $input['password'] ?? '';
@@ -42,6 +81,7 @@ if ($method === 'POST' && $path === 'login') {
         exit;
     }
     
+    // Query authenticated user directly from the database
     $user = get(
         "SELECT u.*, r.name as role_name 
          FROM users u 
@@ -90,6 +130,11 @@ if ($method === 'POST' && $path === 'login') {
     $normalizedRole = strtolower(preg_replace('/\s+/', '_', $roleName));
     $roleTitle = $roleName ?: 'Administrator';
 
+    // Set PostgreSQL Row Level Security (RLS) context
+    if (function_exists('setDatabaseUserContext')) {
+        setDatabaseUserContext($normalizedRole, $user['id']);
+    }
+
     $payload = [
         'id' => $user['id'],
         'username' => $user['username'],
@@ -120,32 +165,45 @@ if ($method === 'POST' && $path === 'login') {
 
 } else if ($method === 'POST' && $path === 'quick-login') {
     $input = json_decode(file_get_contents('php://input'), true);
-    $role = $input['role'] ?? 'admin';
-    $cleanRole = strtolower(preg_replace('/\s+/', '_', $role));
-    $roleDef = $DEFAULT_ROLE_ACCOUNTS[$cleanRole] ?? $DEFAULT_ROLE_ACCOUNTS['admin'];
+    $role = trim($input['role'] ?? '');
+    $username = trim($input['username'] ?? '');
 
-    $user = get(
-        "SELECT u.*, r.name as role_name 
-         FROM users u 
-         LEFT JOIN roles r ON u.role_id = r.id 
-         WHERE LOWER(u.username) = ? OR u.role_id = ?
-         ORDER BY u.id ASC LIMIT 1",
-        [$roleDef['username'], $roleDef['roleId']]
-    );
-
-    if (!$user) {
-        $defaultHash = password_hash('password123', PASSWORD_BCRYPT);
-        run(
-            "INSERT INTO users (username, email, password_hash, full_name, role_id)
-             VALUES (?, ?, ?, ?, ?)",
-            [$roleDef['username'], $roleDef['email'], $defaultHash, $roleDef['name'], $roleDef['roleId']]
+    $user = null;
+    if (!empty($username)) {
+        $user = get(
+            "SELECT u.*, r.name as role_name 
+             FROM users u 
+             LEFT JOIN roles r ON u.role_id = r.id 
+             WHERE (LOWER(u.username) = LOWER(?) OR LOWER(u.email) = LOWER(?)) AND u.is_active = true 
+             LIMIT 1",
+            [$username, $username]
         );
-        $user = get("SELECT u.*, r.name as role_name FROM users u LEFT JOIN roles r ON u.role_id = r.id WHERE u.username = ?", [$roleDef['username']]);
+    } else if (!empty($role)) {
+        $cleanRole = strtolower(preg_replace('/\s+/', '_', $role));
+        $user = get(
+            "SELECT u.*, r.name as role_name 
+             FROM users u 
+             LEFT JOIN roles r ON u.role_id = r.id 
+             WHERE (LOWER(r.name) = LOWER(?) OR LOWER(REPLACE(r.name, ' ', '_')) = ? OR LOWER(u.username) = ?) AND u.is_active = true 
+             ORDER BY u.id ASC LIMIT 1",
+            [$role, $cleanRole, $cleanRole]
+        );
     }
 
-    $roleName = $user['role_name'] ?: $roleDef['roleName'];
+    if (!$user) {
+        http_response_code(404);
+        echo json_encode(['error' => 'No active database account found for the selected role or user.']);
+        exit;
+    }
+
+    $roleName = $user['role_name'] ?: 'Staff';
     $normalizedRole = strtolower(preg_replace('/\s+/', '_', $roleName));
-    $roleTitle = $roleName ?: $roleDef['roleTitle'];
+    $roleTitle = $roleName ?: 'Staff Member';
+
+    // Set PostgreSQL Row Level Security (RLS) context
+    if (function_exists('setDatabaseUserContext')) {
+        setDatabaseUserContext($normalizedRole, $user['id']);
+    }
 
     $payload = [
         'id' => $user['id'],

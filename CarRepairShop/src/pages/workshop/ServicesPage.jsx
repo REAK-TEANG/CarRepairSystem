@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useServicesCatalog, useCreateService, useUpdateService, useDeleteService } from '../../hooks/useServicesCatalog'
 import { useInventory } from '../../hooks/useInventory'
 import { useDebounce } from '../../hooks/useDebounce'
+import { usePaginationData } from '../../hooks/usePaginationData'
 import { useAuth } from '../../context/AuthContext'
 import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, SearchableSelect, Input, Textarea } from '../../components/ui'
 
@@ -18,7 +19,6 @@ export default function ServicesPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [statusFilter, setStatusFilter] = useState('All Status')
 
-
   const { data: servicesResponse, isLoading } = useServicesCatalog({
     search: debouncedSearch,
     status: statusFilter,
@@ -29,15 +29,12 @@ export default function ServicesPage() {
   const { data: invData } = useInventory({ all: true })
   const inventory = Array.isArray(invData) ? invData : (invData?.data || [])
 
-  const services = servicesResponse?.data || (Array.isArray(servicesResponse) ? servicesResponse : [])
-  const pagination = servicesResponse?.pagination || {
+  const { items: services, pagination } = usePaginationData(servicesResponse, {
     page: currentPage,
     limit: 10,
-    total: services.length,
-    totalPages: Math.ceil(services.length / 10) || 1,
-    hasNextPage: false,
-    hasPrevPage: false,
-  }
+  })
+
+
 
   const createServiceMutation = useCreateService()
   const updateServiceMutation = useUpdateService()

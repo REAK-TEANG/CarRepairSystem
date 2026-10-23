@@ -27,7 +27,48 @@ if ($path === '/reports' || $path === '/reports/') {
         $currentYear = date('Y');
         $currentMonthName = date('F Y');
 
-        $reportsList = [];
+        $reportsList = [
+            [
+                'id' => 1,
+                'title' => 'Monthly Revenue & Invoices Audit',
+                'summary' => 'Comprehensive billing audit, receivables, paid invoices, and payment methods.',
+                'category' => 'Financial',
+                'date' => $currentMonthName,
+                'format' => 'PDF · Excel · Print'
+            ],
+            [
+                'id' => 2,
+                'title' => 'Mechanic Workload & Labor Efficiency',
+                'summary' => 'Breakdown of assigned work orders, completion rates, and active workshop pipeline.',
+                'category' => 'Operations',
+                'date' => $currentMonthName,
+                'format' => 'PDF · Excel · Print'
+            ],
+            [
+                'id' => 3,
+                'title' => 'Spare Parts Valuation & Stock Audit',
+                'summary' => 'Current inventory levels, valuation assets, reorder thresholds, and low-stock alerts.',
+                'category' => 'Inventory',
+                'date' => "Q3 $currentYear",
+                'format' => 'PDF · Excel · Print'
+            ],
+            [
+                'id' => 4,
+                'title' => 'Customer Accounts & Lifetime Value',
+                'summary' => 'Client directory spending history, registered vehicles, and appointment retention.',
+                'category' => 'Customers',
+                'date' => "$currentYear YTD",
+                'format' => 'PDF · Excel · Print'
+            ],
+            [
+                'id' => 5,
+                'title' => 'Workshop Work Orders & Service History',
+                'summary' => 'Operational logs of diagnostic inspections, repair orders, and status turnaround.',
+                'category' => 'Operations',
+                'date' => 'Past 12 Months',
+                'format' => 'PDF · Excel · Print'
+            ]
+        ];
 
         $responseData = [
             'reports' => $reportsList,

@@ -12,6 +12,17 @@ export default defineConfig({
     },
     dedupe: ['react', 'react-dom'],
   },
+  server: {
+    host: true,
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
   build: {
     rollupOptions: {
       output: {
@@ -25,10 +36,16 @@ export default defineConfig({
           if (id.includes('node_modules/@phosphor-icons/react')) {
             return 'vendor-icons'
           }
+          if (id.includes('node_modules/xlsx')) {
+            return 'vendor-xlsx'
+          }
+          if (id.includes('node_modules/jspdf') || id.includes('node_modules/jspdf-autotable') || id.includes('node_modules/html2canvas')) {
+            return 'vendor-pdf'
+          }
         },
       },
     },
-    chunkSizeWarningLimit: 600,
+    chunkSizeWarningLimit: 1200,
   },
 })
 

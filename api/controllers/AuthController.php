@@ -6,14 +6,28 @@ require_once __DIR__ . '/../utils/jwt.php';
 
 class AuthController
 {
-    private const DEFAULT_ROLE_ACCOUNTS = [
-        'admin'           => ['username' => 'admin',       'name' => 'Jane Doe',      'email' => 'admin@carrepair.com',   'roleName' => 'Admin',           'roleId' => 1, 'roleTitle' => 'System Administrator'],
-        'manager'         => ['username' => 'manager',     'name' => 'Marcus Vance',  'email' => 'manager@workshop.com',  'roleName' => 'Manager',         'roleId' => 2, 'roleTitle' => 'Workshop Manager'],
-        'service_advisor' => ['username' => 'advisor',     'name' => 'Sarah Jenkins', 'email' => 'advisor@workshop.com',  'roleName' => 'Service Advisor', 'roleId' => 3, 'roleTitle' => 'Service Advisor'],
-        'mechanic'        => ['username' => 'mechanic',    'name' => 'Mike Johnson',  'email' => 'mike@workshop.com',     'roleName' => 'Mechanic',        'roleId' => 4, 'roleTitle' => 'Master Technician'],
-        'cashier'         => ['username' => 'cashier',     'name' => 'Emily Watson',  'email' => 'cashier@workshop.com',  'roleName' => 'Cashier',         'roleId' => 5, 'roleTitle' => 'Chief Cashier'],
-        'storekeeper'     => ['username' => 'storekeeper', 'name' => 'David Miller',  'email' => 'store@workshop.com',    'roleName' => 'Storekeeper',     'roleId' => 6, 'roleTitle' => 'Inventory Storekeeper'],
-    ];
+    public function accounts(): void
+    {
+        $accounts = AuthModel::getAvailableAccounts();
+        $formatted = array_map(function($u) {
+            $roleName = $u['role_name'] ?: 'Staff';
+            return [
+                'id' => $u['id'],
+                'username' => $u['username'],
+                'name' => $u['name'],
+                'email' => $u['email'],
+                'phone' => $u['phone'] ?? '',
+                'avatar' => $u['avatar_url'] ?: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+                'role' => AuthModel::normalizeRole($roleName),
+                'roleTitle' => $roleName,
+                'roleId' => $u['role_id'],
+                'roleDescription' => $u['role_description'] ?? '',
+                'lastLogin' => $u['last_login'],
+            ];
+        }, $accounts);
+
+        echo json_encode(['success' => true, 'accounts' => $formatted]);
+    }
 
     public function login(): void
     {
@@ -61,19 +75,52 @@ class AuthController
 
         AuthModel::updateLastLogin($user['id']);
 
+        $roleKey = AuthModel::normalizeRole($user['role_name'] ?: 'admin');
+        if (function_exists('setDatabaseUserContext')) {
+            setDatabaseUserContext($roleKey, $user['id']);
+        }
+
         $token = $this->issueToken($user);
         echo json_encode(['success' => true, 'token' => $token, 'user' => AuthModel::formatUser($user)]);
     }
 
     public function quickLogin(): void
     {
-        $input     = json_decode(file_get_contents('php://input'), true) ?? [];
-        $role      = strtolower(preg_replace('/\s+/', '_', $input['role'] ?? 'admin'));
-        $roleDef   = self::DEFAULT_ROLE_ACCOUNTS[$role] ?? self::DEFAULT_ROLE_ACCOUNTS['admin'];
+        $input    = json_decode(file_get_contents('php://input'), true) ?? [];
+        $role     = trim($input['role'] ?? '');
+        $username = trim($input['username'] ?? '');
 
-        $user = AuthModel::findFirstByRoleOrUsername($roleDef['username'], $roleDef['roleId']);
+        $user = null;
+        if (!empty($username)) {
+            $user = Database::get(
+                "SELECT u.*, r.name as role_name 
+                 FROM users u 
+                 LEFT JOIN roles r ON u.role_id = r.id 
+                 WHERE (LOWER(u.username) = LOWER(?) OR LOWER(u.email) = LOWER(?)) AND u.is_active = true 
+                 LIMIT 1",
+                [$username, $username]
+            );
+        } else if (!empty($role)) {
+            $cleanRole = strtolower(preg_replace('/\s+/', '_', $role));
+            $user = Database::get(
+                "SELECT u.*, r.name as role_name 
+                 FROM users u 
+                 LEFT JOIN roles r ON u.role_id = r.id 
+                 WHERE (LOWER(r.name) = LOWER(?) OR LOWER(REPLACE(r.name, ' ', '_')) = ? OR LOWER(u.username) = ?) AND u.is_active = true 
+                 ORDER BY u.id ASC LIMIT 1",
+                [$role, $cleanRole, $cleanRole]
+            );
+        }
+
         if (!$user) {
-            $user = AuthModel::createDefault($roleDef);
+            http_response_code(404);
+            echo json_encode(['error' => 'No active database account found for the selected role or user.']);
+            return;
+        }
+
+        $roleKey = AuthModel::normalizeRole($user['role_name'] ?: 'staff');
+        if (function_exists('setDatabaseUserContext')) {
+            setDatabaseUserContext($roleKey, $user['id']);
         }
 
         $token = $this->issueToken($user);

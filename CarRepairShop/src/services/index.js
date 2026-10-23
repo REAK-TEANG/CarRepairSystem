@@ -1,3 +1,4 @@
+export * from '@/services/crudService'
 export * from '@/services/apiClient'
 export * from '@/services/customerService'
 export * from '@/services/vehicleService'

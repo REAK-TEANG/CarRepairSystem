@@ -93,10 +93,13 @@ function run($sql, $params = []) {
     global $pdo;
     $stmt = query($sql, $params);
     $lastId = null;
-    try {
-        $lastId = $pdo->lastInsertId();
-    } catch (Throwable $e) {
-        $lastId = null;
+    $trimmed = ltrim($sql);
+    if (stripos($trimmed, 'INSERT') === 0) {
+        try {
+            $lastId = $pdo->lastInsertId();
+        } catch (Throwable $e) {
+            $lastId = null;
+        }
     }
     return ['rowCount' => $stmt->rowCount(), 'lastInsertId' => $lastId];
 }
@@ -121,6 +124,26 @@ function transaction(callable $callback) {
     }
 }
 
+/**
+ * Set the PostgreSQL Row Level Security (RLS) session context
+ */
+function setDatabaseUserContext($role = null, $userId = null) {
+    global $pdo;
+    if (!$pdo) return;
+    try {
+        if ($role !== null && $role !== '') {
+            $stmt = $pdo->prepare("SET app.current_user_role = ?");
+            $stmt->execute([(string) $role]);
+        }
+        if ($userId !== null && $userId !== '') {
+            $stmt = $pdo->prepare("SET app.current_user_id = ?");
+            $stmt->execute([(string) $userId]);
+        }
+    } catch (Throwable $e) {
+        // Silently continue if session variables cannot be set
+    }
+}
+
 class Database {
     public static function query($sql, $params = []) { return query($sql, $params); }
     public static function get($sql, $params = []) { return get($sql, $params); }
@@ -128,4 +151,5 @@ class Database {
     public static function getAll($sql, $params = []) { return all($sql, $params); }
     public static function run($sql, $params = []) { return run($sql, $params); }
     public static function transaction(callable $callback) { return transaction($callback); }
+    public static function setUserContext($role = null, $userId = null) { return setDatabaseUserContext($role, $userId); }
 }

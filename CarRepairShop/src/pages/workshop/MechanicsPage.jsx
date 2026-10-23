@@ -7,6 +7,8 @@ import { useAuth } from '../../context/AuthContext'
 import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, SearchableSelect, Input } from '../../components/ui'
 import RepairPipelineTracker from '../../components/workshop/RepairPipelineTracker'
 
+import { usePaginationData } from '../../hooks/usePaginationData'
+
 const statusFilters = ['All', 'Active', 'On Leave', 'Terminated']
 
 export default function MechanicsPage() {
@@ -19,7 +21,6 @@ export default function MechanicsPage() {
   const [activeFilter, setActiveFilter] = useState('All')
   const [currentPage, setCurrentPage] = useState(1)
 
-
   const { data: mechanicsResponse, isLoading } = useMechanics({
     search: debouncedSearch,
     status: activeFilter,
@@ -27,15 +28,12 @@ export default function MechanicsPage() {
     limit: 10,
   })
 
-  const mechanics = mechanicsResponse?.data || (Array.isArray(mechanicsResponse) ? mechanicsResponse : [])
-  const pagination = mechanicsResponse?.pagination || {
+  const { items: mechanics, pagination } = usePaginationData(mechanicsResponse, {
     page: currentPage,
     limit: 10,
-    total: mechanics.length,
-    totalPages: Math.ceil(mechanics.length / 10) || 1,
-    hasNextPage: false,
-    hasPrevPage: false,
-  }
+  })
+
+
 
   const createMechanicMutation = useCreateMechanic()
   const updateMechanicMutation = useUpdateMechanic()

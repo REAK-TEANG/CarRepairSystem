@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { MagnifyingGlass, Plus, PencilSimple, Trash, Buildings, Star } from '@phosphor-icons/react'
+import { Plus, PencilSimple, Trash, Buildings } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from '../../hooks/useSuppliers'
 import { useDebounce } from '../../hooks/useDebounce'
+import { usePaginationData } from '../../hooks/usePaginationData'
 import { useAuth } from '../../context/AuthContext'
-import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, Input } from '../../components/ui'
+import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, Input, PageHeader } from '../../components/ui'
 
 export default function SuppliersPage() {
   const { t } = useTranslation()
@@ -14,22 +15,17 @@ export default function SuppliersPage() {
   const debouncedSearch = useDebounce(searchQuery, 300)
   const [currentPage, setCurrentPage] = useState(1)
 
-
   const { data: suppliersResponse, isLoading } = useSuppliers({
     search: debouncedSearch,
     page: currentPage,
     limit: 10,
   })
 
-  const suppliers = suppliersResponse?.data || (Array.isArray(suppliersResponse) ? suppliersResponse : [])
-  const pagination = suppliersResponse?.pagination || {
+  const { items: suppliers, pagination, totalCount } = usePaginationData(suppliersResponse, {
     page: currentPage,
     limit: 10,
-    total: suppliers.length,
-    totalPages: Math.ceil(suppliers.length / 10) || 1,
-    hasNextPage: false,
-    hasPrevPage: false,
-  }
+  })
+
 
   const createSupplierMutation = useCreateSupplier()
   const updateSupplierMutation = useUpdateSupplier()
@@ -50,7 +46,6 @@ export default function SuppliersPage() {
     email: '',
     address: '',
     categories: 'Engine Parts',
-    rating: 4.8,
   })
 
   const handleOpenAdd = () => {
@@ -61,7 +56,6 @@ export default function SuppliersPage() {
       email: '',
       address: '',
       categories: 'Engine Parts',
-      rating: 4.8,
     })
     setIsAddOpen(true)
   }
@@ -104,31 +98,17 @@ export default function SuppliersPage() {
 
   return (
     <div className="space-y-3 sm:space-y-4 text-app-text font-sans">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-        <div className="flex items-center gap-2.5">
-          <h1 className="text-lg font-semibold tracking-tight text-app-text">{t('titles.suppliersProcurement')}</h1>
-          <span className="text-[11px] font-mono text-app-muted px-2 py-0.5 bg-app-card border border-app-border rounded-md">
-            {pagination.total}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className="relative w-full sm:w-60">
-            <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted" />
-            <Input
-              type="text"
-              placeholder={t('common.quickSearch')}
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value)
-                setCurrentPage(1)
-              }}
-              className="pl-8"
-            />
-          </div>
-
-          {can('suppliers', 'create') && (
+      <PageHeader
+        title={t('titles.suppliersProcurement')}
+        count={totalCount}
+        searchQuery={searchQuery}
+        onSearch={(e) => {
+          setSearchQuery(e.target.value)
+          setCurrentPage(1)
+        }}
+        searchPlaceholder={t('common.quickSearch')}
+        actions={
+          can('suppliers', 'create') && (
             <Button
               onClick={handleOpenAdd}
               size="sm"
@@ -137,13 +117,13 @@ export default function SuppliersPage() {
               <Plus size={14} weight="bold" />
               <span>{t('suppliers.addSupplier')}</span>
             </Button>
-          )}
-        </div>
-      </div>
+          )
+        }
+      />
 
       {/* Main Table */}
       {isLoading && suppliers.length === 0 ? (
-        <TableSkeleton rows={6} columns={5} />
+        <TableSkeleton rows={6} columns={4} />
       ) : suppliers.length === 0 ? (
         <div className="bg-app-card rounded-lg border border-app-border shadow-xs overflow-hidden">
           <EmptyState
@@ -168,7 +148,6 @@ export default function SuppliersPage() {
               <TableHead>{t('suppliers.contactPerson')}</TableHead>
               <TableHead className="hidden md:table-cell">{t('suppliers.categories')}</TableHead>
               <TableHead className="hidden lg:table-cell">{t('suppliers.paymentTerms')}</TableHead>
-              <TableHead>Rating</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -195,12 +174,6 @@ export default function SuppliersPage() {
                 </TableCell>
                 <TableCell className="text-app-muted hidden md:table-cell">{s.categories}</TableCell>
                 <TableCell className="text-app-muted hidden lg:table-cell">{s.address || 'Net 30 Days'}</TableCell>
-                <TableCell>
-                  <span className="inline-flex items-center gap-1 text-amber-500 font-semibold">
-                    <Star size={12} weight="fill" />
-                    {s.rating || 4.8}
-                  </span>
-                </TableCell>
               </TableRow>
             ))}
           </TableBody>

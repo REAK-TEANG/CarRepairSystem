@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { ShieldWarning, ArrowLeft, SignOut } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
-import { useAuth, ROLE_PROFILES } from '../../context/AuthContext'
+import { useAuth } from '../../context/AuthContext'
 
 export default function UnauthorizedPage() {
   const { t } = useTranslation()
@@ -17,7 +17,7 @@ export default function UnauthorizedPage() {
       cashier: '/invoices',
       storekeeper: '/inventory',
     }
-    const target = user?.defaultRoute || (user?.role && (roleRoutes[user.role] || ROLE_PROFILES[user.role]?.defaultRoute)) || '/login'
+    const target = user?.defaultRoute || (user?.role && roleRoutes[user.role]) || '/login'
     navigate(target, { replace: true })
   }
 

@@ -13,169 +13,51 @@ export const ROLES = {
   STOREKEEPER: 'storekeeper',
 }
 
-export const ROLE_PROFILES = {
+// UI styling and default navigation targets for each system role
+export const ROLE_METADATA = {
   admin: {
-    id: 1,
-    name: 'Jane Doe',
-    role: 'admin',
     roleTitle: 'System Administrator',
-    email: 'admin@carrepair.com',
     defaultRoute: '/admin/dashboard',
     badgeColor: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
   },
   manager: {
-    id: 2,
-    name: 'Marcus Vance',
-    role: 'manager',
     roleTitle: 'Workshop Manager',
-    email: 'manager@workshop.com',
     defaultRoute: '/admin/dashboard',
     badgeColor: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20',
   },
   service_advisor: {
-    id: 3,
-    name: 'Sarah Jenkins',
-    role: 'service_advisor',
     roleTitle: 'Service Advisor',
-    email: 'advisor@workshop.com',
     defaultRoute: '/appointments',
     badgeColor: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
   },
   mechanic: {
-    id: 4,
-    name: 'Mike Johnson',
-    role: 'mechanic',
     roleTitle: 'Master Technician',
-    email: 'mike@workshop.com',
     defaultRoute: '/mechanic/dashboard',
     badgeColor: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
   },
   cashier: {
-    id: 5,
-    name: 'Emily Watson',
-    role: 'cashier',
     roleTitle: 'Chief Cashier',
-    email: 'cashier@workshop.com',
     defaultRoute: '/invoices',
     badgeColor: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20',
   },
   storekeeper: {
-    id: 6,
-    name: 'David Miller',
-    role: 'storekeeper',
     roleTitle: 'Inventory Storekeeper',
-    email: 'store@workshop.com',
     defaultRoute: '/inventory',
     badgeColor: 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20',
   },
 }
 
-// Default Global Permission Matrix
-export const DEFAULT_PERMISSIONS_MATRIX = {
-  customers: {
-    admin: ['create', 'read', 'update', 'delete'],
-    manager: ['create', 'read', 'update'],
-    service_advisor: ['create', 'read', 'update', 'delete'],
-    mechanic: ['read'],
-    cashier: ['read'],
-    storekeeper: [],
-  },
-  vehicles: {
-    admin: ['create', 'read', 'update', 'delete'],
-    manager: ['create', 'read', 'update'],
-    service_advisor: ['create', 'read', 'update', 'delete'],
-    mechanic: ['read'],
-    cashier: ['read'],
-    storekeeper: [],
-  },
-  appointments: {
-    admin: ['create', 'read', 'update', 'delete'],
-    manager: ['create', 'read', 'update', 'delete'],
-    service_advisor: ['create', 'read', 'update', 'delete'],
-    mechanic: ['read'],
-    cashier: ['read'],
-    storekeeper: [],
-  },
-  repair_jobs: {
-    admin: ['create', 'read', 'update', 'delete'],
-    manager: ['create', 'read', 'update', 'delete'],
-    service_advisor: ['create', 'read', 'update'],
-    mechanic: ['read', 'update'],
-    cashier: ['read'],
-    storekeeper: ['read'],
-  },
-  services: {
-    admin: ['create', 'read', 'update', 'delete'],
-    manager: ['create', 'read', 'update'],
-    service_advisor: ['read'],
-    mechanic: ['read'],
-    cashier: ['read'],
-    storekeeper: [],
-  },
-  mechanics: {
-    admin: ['create', 'read', 'update', 'delete'],
-    manager: ['create', 'read', 'update'],
-    service_advisor: ['read'],
-    mechanic: ['read'],
-    cashier: [],
-    storekeeper: [],
-  },
-  inventory: {
-    admin: ['create', 'read', 'update', 'delete'],
-    manager: ['create', 'read', 'update'],
-    service_advisor: ['read'],
-    mechanic: ['read'],
-    cashier: [],
-    storekeeper: ['create', 'read', 'update', 'delete'],
-  },
-  suppliers: {
-    admin: ['create', 'read', 'update', 'delete'],
-    manager: ['create', 'read', 'update'],
-    service_advisor: [],
-    mechanic: [],
-    cashier: [],
-    storekeeper: ['create', 'read', 'update', 'delete'],
-  },
-  invoices: {
-    admin: ['create', 'read', 'update', 'delete'],
-    manager: ['create', 'read', 'update', 'delete'],
-    service_advisor: ['create', 'read'],
-    mechanic: [],
-    cashier: ['create', 'read', 'update'],
-    storekeeper: [],
-  },
-  employees: {
-    admin: ['create', 'read', 'update', 'delete'],
-    manager: ['create', 'read', 'update', 'delete'],
-    service_advisor: ['read'],
-    mechanic: ['read'],
-    cashier: ['read'],
-    storekeeper: ['read'],
-  },
-  reports: {
-    admin: ['read', 'export'],
-    manager: ['read', 'export'],
-    service_advisor: ['read'],
-    mechanic: ['read'],
-    cashier: ['read'],
-    storekeeper: ['read'],
-  },
-  settings: {
-    admin: ['create', 'read', 'update', 'delete'],
-    manager: ['read'],
-    service_advisor: [],
-    mechanic: [],
-    cashier: [],
-    storekeeper: [],
-  },
-}
+// Export for backward compatibility with existing route lookups
+export const ROLE_PROFILES = ROLE_METADATA
 
+// Export empty default for fallback
+export const DEFAULT_PERMISSIONS_MATRIX = {}
 export const PERMISSIONS_MATRIX = DEFAULT_PERMISSIONS_MATRIX
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  // Current user state
+  // Current user state (strictly loaded from database)
   const [currentUser, setCurrentUser] = useState(() => {
     const token = localStorage.getItem('auth_token')
     const savedUser = localStorage.getItem('auth_user')
@@ -189,7 +71,7 @@ export function AuthProvider({ children }) {
     return null
   })
 
-  // Dynamic permission matrix state
+  // Dynamic permission matrix state loaded directly from PostgreSQL database
   const [permissionsMatrix, setPermissionsMatrix] = useState(() => {
     const saved = localStorage.getItem('workshop_permissions_matrix')
     if (saved) {
@@ -199,10 +81,24 @@ export function AuthProvider({ children }) {
         // fallback
       }
     }
-    return DEFAULT_PERMISSIONS_MATRIX
+    return {}
   })
 
+  // Available real database accounts
+  const [availableAccounts, setAvailableAccounts] = useState([])
   const [loading, setLoading] = useState(false)
+
+  // Fetch all registered active database accounts
+  const refreshAccounts = useCallback(async () => {
+    try {
+      const accounts = await authService.getAccounts()
+      if (Array.isArray(accounts)) {
+        setAvailableAccounts(accounts)
+      }
+    } catch {
+      // Non-blocking
+    }
+  }, [])
 
   // Validate or initialize session on mount
   useEffect(() => {
@@ -211,19 +107,18 @@ export function AuthProvider({ children }) {
       authService
         .getMe()
         .then((userData) => {
-          if (userData) {
+          if (userData && userData.id) {
             const roleKey = (userData.role || 'admin').toLowerCase().replace(/\s+/g, '_')
-            const profileFallback = ROLE_PROFILES[roleKey] || ROLE_PROFILES.admin
+            const meta = ROLE_METADATA[roleKey] || ROLE_METADATA.admin
             const mergedUser = {
-              ...profileFallback,
               ...userData,
               role: roleKey,
-              badgeColor: profileFallback.badgeColor,
-              defaultRoute: profileFallback.defaultRoute,
+              roleTitle: userData.roleTitle || meta.roleTitle,
+              badgeColor: meta.badgeColor,
+              defaultRoute: meta.defaultRoute,
             }
             setCurrentUser(mergedUser)
             localStorage.setItem('auth_user', JSON.stringify(mergedUser))
-            localStorage.setItem('demo_role', roleKey)
           } else {
             authService.logout()
             setCurrentUser(null)
@@ -236,18 +131,29 @@ export function AuthProvider({ children }) {
         })
     }
 
-    // Sync permissions matrix from backend database on initial mount
+    // Sync active permissions matrix from PostgreSQL database settings
     settingsService
       .getPermissionsMatrix()
       .then((matrix) => {
         if (matrix && typeof matrix === 'object') {
-          setPermissionsMatrix((prev) => ({ ...prev, ...matrix }))
+          setPermissionsMatrix(matrix)
           localStorage.setItem('workshop_permissions_matrix', JSON.stringify(matrix))
         }
       })
       .catch(() => {
         // ignore network errors on startup
       })
+
+    // Load registered database accounts asynchronously
+    authService
+      .getAccounts()
+      .then((accounts) => {
+        if (Array.isArray(accounts)) {
+          setAvailableAccounts(accounts)
+        }
+      })
+      .catch(() => {})
+
 
     // Listen for session expiration events
     const handleAuthExpired = () => {
@@ -259,12 +165,11 @@ export function AuthProvider({ children }) {
     return () => {
       window.removeEventListener('auth:expired', handleAuthExpired)
     }
-  }, [])
+  }, [refreshAccounts])
 
-  // Login handler
+  // Login handler using database credentials
   const login = async (username, password) => {
     setLoading(true)
-    // Clear any previous session first
     authService.logout()
     setCurrentUser(null)
 
@@ -272,17 +177,16 @@ export function AuthProvider({ children }) {
       const res = await authService.login(username, password)
       if (res?.user) {
         const roleKey = (res.user.role || 'admin').toLowerCase().replace(/\s+/g, '_')
-        const profileFallback = ROLE_PROFILES[roleKey] || ROLE_PROFILES.admin
+        const meta = ROLE_METADATA[roleKey] || ROLE_METADATA.admin
         const mergedUser = {
-          ...profileFallback,
           ...res.user,
           role: roleKey,
-          badgeColor: profileFallback.badgeColor,
-          defaultRoute: profileFallback.defaultRoute,
+          roleTitle: res.user.roleTitle || meta.roleTitle,
+          badgeColor: meta.badgeColor,
+          defaultRoute: meta.defaultRoute,
         }
         setCurrentUser(mergedUser)
         localStorage.setItem('auth_user', JSON.stringify(mergedUser))
-        localStorage.setItem('demo_role', roleKey)
         return { success: true, user: mergedUser }
       }
       return { success: false, error: 'Login failed' }
@@ -293,41 +197,35 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // Role Switching: Always logs out the previous session first, then logs in as the new role
-  const switchRole = useCallback(async (newRole) => {
+  // Role Switching: Authenticates strictly against database users
+  const switchRole = useCallback(async (roleOrIdentifier) => {
     setLoading(true)
-    // 1. Explicitly log out the active session first
     authService.logout()
     setCurrentUser(null)
 
-    // 2. Log in as the requested role
-    const cleanRole = (newRole || 'admin').toLowerCase().replace(/\s+/g, '_')
     try {
-      const res = await authService.quickLogin(cleanRole)
+      const payload = typeof roleOrIdentifier === 'object'
+        ? roleOrIdentifier
+        : { role: roleOrIdentifier }
+      const res = await authService.quickLogin(payload)
       if (res?.user) {
-        const profileFallback = ROLE_PROFILES[cleanRole] || ROLE_PROFILES.admin
+        const roleKey = (res.user.role || 'admin').toLowerCase().replace(/\s+/g, '_')
+        const meta = ROLE_METADATA[roleKey] || ROLE_METADATA.admin
         const mergedUser = {
-          ...profileFallback,
           ...res.user,
-          role: cleanRole,
-          badgeColor: profileFallback.badgeColor,
-          defaultRoute: profileFallback.defaultRoute,
+          role: roleKey,
+          roleTitle: res.user.roleTitle || meta.roleTitle,
+          badgeColor: meta.badgeColor,
+          defaultRoute: meta.defaultRoute,
         }
         setCurrentUser(mergedUser)
         localStorage.setItem('auth_user', JSON.stringify(mergedUser))
-        localStorage.setItem('demo_role', cleanRole)
         return mergedUser
       }
+      throw new Error('Account not found in database')
     } catch (err) {
-      console.error('Role login failed for:', cleanRole, err)
-      // Client-side fallback if server is unreachable
-      if (ROLE_PROFILES[cleanRole]) {
-        const fallbackUser = ROLE_PROFILES[cleanRole]
-        setCurrentUser(fallbackUser)
-        localStorage.setItem('auth_user', JSON.stringify(fallbackUser))
-        localStorage.setItem('demo_role', cleanRole)
-        return fallbackUser
-      }
+      console.error('Role login failed:', roleOrIdentifier, err)
+      throw err
     } finally {
       setLoading(false)
     }
@@ -339,7 +237,7 @@ export function AuthProvider({ children }) {
     setCurrentUser(null)
   }, [])
 
-  // Save new full matrix
+  // Save new full matrix to database
   const savePermissionsMatrix = async (newMatrix) => {
     const sanitizedMatrix = { ...newMatrix }
     Object.keys(sanitizedMatrix).forEach((mod) => {
@@ -356,7 +254,7 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // Toggle or set a specific permission for a role
+  // Toggle or set a specific permission for a role and persist to database
   const updateRolePermission = (role, moduleName, action, enabled) => {
     if (role === 'admin') return // Admin permissions are permanently locked on
 
@@ -384,21 +282,25 @@ export function AuthProvider({ children }) {
     })
   }
 
-  // Reset to default permission matrix
+  // Reload permission matrix directly from the PostgreSQL database
   const resetPermissionsToDefault = async () => {
-    setPermissionsMatrix(DEFAULT_PERMISSIONS_MATRIX)
-    localStorage.setItem('workshop_permissions_matrix', JSON.stringify(DEFAULT_PERMISSIONS_MATRIX))
     try {
-      await settingsService.updatePermissionsMatrix(DEFAULT_PERMISSIONS_MATRIX)
+      const dbMatrix = await settingsService.getPermissionsMatrix()
+      if (dbMatrix && typeof dbMatrix === 'object') {
+        setPermissionsMatrix(dbMatrix)
+        localStorage.setItem('workshop_permissions_matrix', JSON.stringify(dbMatrix))
+        return dbMatrix
+      }
     } catch {
       // ignore
     }
+    return permissionsMatrix
   }
 
   // Dynamic Permission evaluation helper
   const can = (moduleName, action = 'read') => {
     if (!currentUser) return false
-    // Admin always has 100% full system control
+    // Admin always has full access
     if (currentUser.role === 'admin') return true
 
     const modulePerms = permissionsMatrix[moduleName]
@@ -422,7 +324,9 @@ export function AuthProvider({ children }) {
         updateRolePermission,
         savePermissionsMatrix,
         resetPermissionsToDefault,
-        allRoles: Object.values(ROLE_PROFILES),
+        availableAccounts,
+        refreshAccounts,
+        allRoles: Object.keys(ROLE_METADATA).map(k => ({ role: k, ...ROLE_METADATA[k] })),
       }}
     >
       {children}

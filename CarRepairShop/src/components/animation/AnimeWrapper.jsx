@@ -3,19 +3,23 @@ import { animate, stagger } from 'animejs';
 
 export function FadeIn({ children, delay = 0, duration = 400, className = "", style = {} }) {
   const el = useRef(null);
+  const hasAnimatedRef = useRef(false);
   
   useEffect(() => {
-    animate(el.current, {
-      opacity: [0, 1],
-      y: [10, 0],
-      duration: duration,
-      delay: delay,
-      ease: 'outExpo'
-    });
+    if (!hasAnimatedRef.current && el.current) {
+      hasAnimatedRef.current = true;
+      animate(el.current, {
+        opacity: [0, 1],
+        y: [10, 0],
+        duration: duration,
+        delay: delay,
+        ease: 'outExpo'
+      });
+    }
   }, [delay, duration]);
   
   return (
-    <div ref={el} className={className} style={{ opacity: 0, ...style }}>
+    <div ref={el} className={className} style={style}>
       {children}
     </div>
   );
@@ -23,9 +27,11 @@ export function FadeIn({ children, delay = 0, duration = 400, className = "", st
 
 export function StaggerGroup({ children, staggerDelay = 50, duration = 400, className = "", elementType = "div", delay = 0 }) {
   const containerRef = useRef(null);
+  const hasAnimatedRef = useRef(false);
 
   useEffect(() => {
-    if (containerRef.current && containerRef.current.children.length > 0) {
+    if (!hasAnimatedRef.current && containerRef.current && containerRef.current.children.length > 0) {
+      hasAnimatedRef.current = true;
       animate(containerRef.current.children, {
         opacity: [0, 1],
         y: [15, 0],
@@ -34,7 +40,7 @@ export function StaggerGroup({ children, staggerDelay = 50, duration = 400, clas
         ease: 'outExpo'
       });
     }
-  }, [staggerDelay, duration, delay, children]);
+  });
 
   const Tag = elementType;
 
@@ -49,13 +55,16 @@ export function Pulse({ children, duration = 1200, className = "" }) {
   const el = useRef(null);
   
   useEffect(() => {
-    animate(el.current, {
+    const anim = animate(el.current, {
       opacity: [0.3, 1],
       duration: duration,
       alternate: true,
       loop: true,
       ease: 'inOutQuad'
     });
+    return () => {
+      if (anim && typeof anim.pause === 'function') anim.pause();
+    };
   }, [duration]);
   
   return (
@@ -69,12 +78,15 @@ export function Spin({ children, duration = 1000, className = "" }) {
   const el = useRef(null);
   
   useEffect(() => {
-    animate(el.current, {
+    const anim = animate(el.current, {
       rotate: [0, 360],
       duration: duration,
       loop: true,
       ease: 'linear'
     });
+    return () => {
+      if (anim && typeof anim.pause === 'function') anim.pause();
+    };
   }, [duration]);
   
   return (
@@ -86,19 +98,23 @@ export function Spin({ children, duration = 1000, className = "" }) {
 
 export function ScaleIn({ children, delay = 0, duration = 400, className = "" }) {
   const el = useRef(null);
+  const hasAnimatedRef = useRef(false);
   
   useEffect(() => {
-    animate(el.current, {
-      opacity: [0, 1],
-      scale: [0.95, 1],
-      duration: duration,
-      delay: delay,
-      ease: 'outBack'
-    });
+    if (!hasAnimatedRef.current && el.current) {
+      hasAnimatedRef.current = true;
+      animate(el.current, {
+        opacity: [0, 1],
+        scale: [0.95, 1],
+        duration: duration,
+        delay: delay,
+        ease: 'outBack'
+      });
+    }
   }, [delay, duration]);
   
   return (
-    <div ref={el} className={className} style={{ opacity: 0 }}>
+    <div ref={el} className={className}>
       {children}
     </div>
   );

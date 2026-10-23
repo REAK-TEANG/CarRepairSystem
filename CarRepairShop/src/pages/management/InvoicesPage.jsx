@@ -15,6 +15,7 @@ import { useInvoices, useCreateInvoice, useRecordPayment, useDeleteInvoice } fro
 import { useCustomers } from '../../hooks/useCustomers'
 import { useRepairJobs } from '../../hooks/useRepairJobs'
 import { useDebounce } from '../../hooks/useDebounce'
+import { usePaginationData } from '../../hooks/usePaginationData'
 import { useAuth } from '../../context/AuthContext'
 import { Modal, StatusBadge, EmptyState, ConfirmDialog, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, SearchableSelect, Input } from '../../components/ui'
 import InvoiceDocument from '../../components/invoices/InvoiceDocument'
@@ -33,6 +34,7 @@ export default function InvoicesPage() {
   const allInvoices = Array.isArray(allInvoicesRaw) ? allInvoicesRaw : (allInvoicesRaw?.data || [])
 
   // Paginated invoices for table
+
   const { data: invoicesResponse, isLoading } = useInvoices({
     search: debouncedSearch,
     status: statusFilter,
@@ -40,15 +42,12 @@ export default function InvoicesPage() {
     limit: 10,
   })
 
-  const invoices = invoicesResponse?.data || (Array.isArray(invoicesResponse) ? invoicesResponse : [])
-  const pagination = invoicesResponse?.pagination || {
+  const { items: invoices, pagination } = usePaginationData(invoicesResponse, {
     page: currentPage,
     limit: 10,
-    total: invoices.length,
-    totalPages: Math.ceil(invoices.length / 10) || 1,
-    hasNextPage: false,
-    hasPrevPage: false,
-  }
+  })
+
+
 
   // Modal lookup data (all items)
   const { data: custData = [] } = useCustomers({ all: true })

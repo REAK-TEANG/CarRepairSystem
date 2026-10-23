@@ -1,5 +1,6 @@
 export { default as Logo } from '@/components/ui/Logo'
 export { default as Modal } from '@/components/ui/Modal'
+export { default as Drawer } from '@/components/ui/Drawer'
 export { default as StatusBadge } from '@/components/ui/StatusBadge'
 export { default as ImageUpload } from '@/components/ui/ImageUpload'
 export { default as ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -25,3 +26,6 @@ export { Label } from '@/components/ui/label'
 export { Textarea } from '@/components/ui/textarea'
 export { Checkbox } from '@/components/ui/checkbox'
 export { default as SearchableSelect } from '@/components/ui/SearchableSelect'
+export { PageHeader } from '@/components/ui/PageHeader'
+
+

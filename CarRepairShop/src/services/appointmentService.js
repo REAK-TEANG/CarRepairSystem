@@ -1,27 +1,12 @@
+import { createCrudService } from '@/services/crudService'
 import { apiClient } from '@/services/apiClient'
 
+const crud = createCrudService('/appointments')
+
 export const appointmentService = {
-  async getAll(params = {}) {
-    return apiClient.get('/appointments', { params })
-  },
-
-  async getById(id) {
-    return apiClient.get(`/appointments/${id}`)
-  },
-
-  async create(payload) {
-    return apiClient.post('/appointments', payload)
-  },
-
-  async update(id, payload) {
-    return apiClient.put(`/appointments/${id}`, payload)
-  },
-
+  ...crud,
   async updateStatus(id, status) {
     return apiClient.patch(`/appointments/${id}/status`, { status })
   },
-
-  async delete(id) {
-    return apiClient.delete(`/appointments/${id}`)
-  },
 }
+

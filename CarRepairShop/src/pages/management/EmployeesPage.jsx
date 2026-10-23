@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { MagnifyingGlass, Plus, PencilSimple, Trash, CheckCircle } from '@phosphor-icons/react'
+import { Plus, PencilSimple, Trash, CheckCircle } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useEmployees, useCreateEmployee, useUpdateEmployee, useToggleAttendance, useDeleteEmployee } from '../../hooks/useEmployees'
 import { useDebounce } from '../../hooks/useDebounce'
+import { usePaginationData } from '../../hooks/usePaginationData'
 import { useAuth } from '../../context/AuthContext'
-import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, SearchableSelect, Input } from '../../components/ui'
+import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, SearchableSelect, Input, PageHeader } from '../../components/ui'
 
 export default function EmployeesPage() {
   const { t } = useTranslation()
@@ -20,15 +21,11 @@ export default function EmployeesPage() {
     limit: 10,
   })
 
-  const employees = employeesResponse?.data || (Array.isArray(employeesResponse) ? employeesResponse : [])
-  const pagination = employeesResponse?.pagination || {
+  const { items: employees, pagination, totalCount } = usePaginationData(employeesResponse, {
     page: currentPage,
     limit: 10,
-    total: employees.length,
-    totalPages: Math.ceil(employees.length / 10) || 1,
-    hasNextPage: false,
-    hasPrevPage: false,
-  }
+  })
+
 
   const createEmpMutation = useCreateEmployee()
   const updateEmpMutation = useUpdateEmployee()
@@ -122,42 +119,29 @@ export default function EmployeesPage() {
 
   return (
     <div className="space-y-3 sm:space-y-4 text-app-text font-sans">
-      {/* Page Header */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <h1 className="text-lg font-semibold tracking-tight text-app-text">{t('titles.staffAttendance')}</h1>
-          <span className="text-[11px] font-mono text-app-muted px-2 py-0.5 bg-app-card border border-app-border rounded-md">
-            {pagination.total}
-          </span>
-        </div>
-        {can('employees', 'create') && (
-          <Button
-            onClick={handleOpenAdd}
-            size="sm"
-            className="gap-1.5"
-          >
-            <Plus size={14} weight="bold" />
-            <span>{t('employees.addEmployee')}</span>
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        title={t('titles.staffAttendance')}
+        count={totalCount}
+        searchQuery={searchQuery}
+        onSearch={(e) => {
+          setSearchQuery(e.target.value)
+          setCurrentPage(1)
+        }}
+        searchPlaceholder={t('common.quickSearch')}
+        actions={
+          can('employees', 'create') && (
+            <Button
+              onClick={handleOpenAdd}
+              size="sm"
+              className="gap-1.5 flex-shrink-0"
+            >
+              <Plus size={14} weight="bold" />
+              <span>{t('employees.addEmployee')}</span>
+            </Button>
+          )
+        }
+      />
 
-      {/* Integrated Filter Bar & Search */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div className="relative w-full sm:w-60">
-          <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted z-10 pointer-events-none" />
-          <Input
-            type="text"
-            placeholder={t('common.quickSearch')}
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value)
-              setCurrentPage(1)
-            }}
-            className="w-full pl-8 pr-3 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
-          />
-        </div>
-      </div>
 
       {/* Main Table */}
       {isLoading && employees.length === 0 ? (

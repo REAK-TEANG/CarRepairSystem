@@ -24,6 +24,7 @@ import { useMechanics } from '../../hooks/useMechanics'
 import { useServicesCatalog } from '../../hooks/useServicesCatalog'
 import { useCreateInvoice } from '../../hooks/useInvoices'
 import { useDebounce } from '../../hooks/useDebounce'
+import { usePaginationData } from '../../hooks/usePaginationData'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { Modal, StatusBadge, EmptyState, ConfirmDialog, TableSkeleton, LoadingButton, Button, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, SearchableSelect, Input, Textarea } from '../../components/ui'
@@ -41,6 +42,7 @@ export default function RepairJobsPage() {
   const [page, setPage] = useState(1)
 
   const queryParams = {
+
     page,
     limit: 10,
     search: debouncedSearch,
@@ -48,10 +50,8 @@ export default function RepairJobsPage() {
     ...(user?.role === 'mechanic' ? { mechanicId: user?.id } : {}),
   }
   const { data: response, isLoading } = useRepairJobs(queryParams)
-  const jobs = Array.isArray(response) ? response : (response?.data || [])
-  const pagination = response?.pagination || null
-  const totalCount = pagination ? pagination.total : jobs.length
-  const totalPages = pagination ? pagination.totalPages : 1
+  const { items: jobs, totalCount, totalPages } = usePaginationData(response, { page, limit: 10 })
+
 
   const { data: rawCustomers = [] } = useCustomers({ all: true })
   const { data: rawVehicles = [] } = useVehicles({ all: true })
@@ -323,8 +323,7 @@ export default function RepairJobsPage() {
                 </TableCell>
                 <TableCell className="text-app-muted hidden md:table-cell">{job.customer}</TableCell>
                 <TableCell className="hidden lg:table-cell">
-                  <span className="inline-flex items-center gap-1.5 text-app-muted">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <span className="text-app-muted">
                     {job.mechanic}
                   </span>
                 </TableCell>

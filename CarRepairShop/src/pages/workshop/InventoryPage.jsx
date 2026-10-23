@@ -1,9 +1,23 @@
-import { useState } from 'react'
-import { MagnifyingGlass, Plus, PencilSimple, Trash, ArrowUp, ArrowDown, Package, ClockCounterClockwise } from '@phosphor-icons/react'
+import { useState, useMemo, useRef, useEffect } from 'react'
+import {
+  MagnifyingGlass,
+  Plus,
+  PencilSimple,
+  Trash,
+  ArrowUp,
+  ArrowDown,
+  Package,
+  ClockCounterClockwise,
+  CalendarBlank,
+  CaretDown,
+  ArrowsDownUp,
+  X,
+} from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useInventory, useInventoryTransactions, useCreatePart, useUpdatePart, useAdjustStock, useDeletePart } from '../../hooks/useInventory'
 import { useSuppliers } from '../../hooks/useSuppliers'
 import { useDebounce } from '../../hooks/useDebounce'
+import { usePaginationData } from '../../hooks/usePaginationData'
 import { useAuth } from '../../context/AuthContext'
 import { Modal, StatusBadge, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Button, Input, Textarea, ImageUpload, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, SearchableSelect } from '../../components/ui'
 
@@ -19,6 +33,35 @@ export default function InventoryPage() {
   const [stockFilter, setStockFilter] = useState('All Stock')
   const [page, setPage] = useState(1)
 
+  // Stock Logs (Transactions) Tab States: Search, Filter, Date Range, Sort, Pagination
+  const [txSearch, setTxSearch] = useState('')
+  const [txTypeFilter, setTxTypeFilter] = useState('All') // 'All' | 'Stock Out' | 'Stock In' | 'Adjustment'
+  const [txDateRange, setTxDateRange] = useState('all') // 'all' | 'today' | 'this_week' | 'this_month' | 'custom'
+  const [txCustomStart, setTxCustomStart] = useState(() => {
+    const d = new Date()
+    d.setDate(d.getDate() - 30)
+    return d.toISOString().split('T')[0]
+  })
+  const [txCustomEnd, setTxCustomEnd] = useState(() => new Date().toISOString().split('T')[0])
+  const [isTxDateDropdownOpen, setIsTxDateDropdownOpen] = useState(false)
+  const txDateDropdownRef = useRef(null)
+
+  const [txSortField, setTxSortField] = useState('createdAt') // 'createdAt' | 'quantity' | 'partName'
+  const [txSortOrder, setTxSortOrder] = useState('desc') // 'desc' | 'asc'
+  const [txPage, setTxPage] = useState(1)
+  const txPageSize = 10
+
+  useEffect(() => {
+    if (!isTxDateDropdownOpen) return
+    const handleClickOutside = (e) => {
+      if (txDateDropdownRef.current && !txDateDropdownRef.current.contains(e.target)) {
+        setIsTxDateDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isTxDateDropdownOpen])
+
 
   const { data: response, isLoading } = useInventory({
     page,
@@ -26,14 +69,112 @@ export default function InventoryPage() {
     search: debouncedSearch,
     category: categoryFilter,
   })
-  const items = Array.isArray(response) ? response : (response?.data || [])
-  const pagination = response?.pagination || null
-  const totalCount = pagination ? pagination.total : items.length
-  const totalPages = pagination ? pagination.totalPages : 1
+  const { items, totalCount, totalPages } = usePaginationData(response, { page, limit: 10 })
 
   const { data: rawSuppliers = [] } = useSuppliers({ all: true })
   const suppliers = Array.isArray(rawSuppliers) ? rawSuppliers : (rawSuppliers?.data || [])
   const { data: transactions = [], isLoading: txLoading } = useInventoryTransactions()
+
+  // Stock Logs active date bounds
+  const txActiveBounds = useMemo(() => {
+    const now = new Date()
+    if (txDateRange === 'today') {
+      const start = new Date(now)
+      start.setHours(0, 0, 0, 0)
+      const end = new Date(now)
+      end.setHours(23, 59, 59, 999)
+      return { start, end, label: t('common.today', 'Today') }
+    }
+    if (txDateRange === 'this_week') {
+      const day = now.getDay()
+      const diff = (day + 6) % 7 // Monday
+      const start = new Date(now)
+      start.setDate(now.getDate() - diff)
+      start.setHours(0, 0, 0, 0)
+      const end = new Date(start)
+      end.setDate(start.getDate() + 6)
+      end.setHours(23, 59, 59, 999)
+      return { start, end, label: t('reports.thisWeek', 'This Week') }
+    }
+    if (txDateRange === 'this_month') {
+      const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0)
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
+      return { start, end, label: t('reports.thisMonth', 'This Month') }
+    }
+    if (txDateRange === 'custom' && txCustomStart && txCustomEnd) {
+      const start = new Date(`${txCustomStart}T00:00:00`)
+      const end = new Date(`${txCustomEnd}T23:59:59.999`)
+      return { start, end, label: `${txCustomStart} → ${txCustomEnd}` }
+    }
+    return { start: null, end: null, label: t('reports.allTime', 'All Time') }
+  }, [txDateRange, txCustomStart, txCustomEnd, t])
+
+  // Filtered and Sorted Stock Logs (Transactions)
+  const filteredTransactions = useMemo(() => {
+    let result = [...transactions]
+
+    // 1. Type Filter
+    if (txTypeFilter !== 'All') {
+      result = result.filter((tx) => tx.type === txTypeFilter)
+    }
+
+    // 2. Search Query
+    if (txSearch.trim()) {
+      const q = txSearch.trim().toLowerCase()
+      result = result.filter(
+        (tx) =>
+          tx.partName?.toLowerCase().includes(q) ||
+          tx.partCode?.toLowerCase().includes(q) ||
+          tx.performedBy?.toLowerCase().includes(q) ||
+          tx.notes?.toLowerCase().includes(q) ||
+          tx.type?.toLowerCase().includes(q) ||
+          String(tx.referenceId || '').includes(q)
+      )
+    }
+
+    // 3. Custom Date Range Filter
+    if (txActiveBounds.start && txActiveBounds.end) {
+      result = result.filter((tx) => {
+        if (!tx.createdAt) return true
+        const d = new Date(tx.createdAt)
+        return !isNaN(d.getTime()) && d >= txActiveBounds.start && d <= txActiveBounds.end
+      })
+    }
+
+    // 4. Custom Sort
+    result.sort((a, b) => {
+      let comparison = 0
+      if (txSortField === 'createdAt') {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+        comparison = dateA - dateB
+      } else if (txSortField === 'quantity') {
+        comparison = (Number(a.quantity) || 0) - (Number(b.quantity) || 0)
+      } else if (txSortField === 'partName') {
+        comparison = String(a.partName || '').localeCompare(String(b.partName || ''))
+      }
+      return txSortOrder === 'desc' ? -comparison : comparison
+    })
+
+    return result
+  }, [transactions, txTypeFilter, txSearch, txActiveBounds, txSortField, txSortOrder])
+
+  // Pagination for Stock Logs
+  const txTotalPages = Math.max(1, Math.ceil(filteredTransactions.length / txPageSize))
+  const paginatedTransactions = useMemo(() => {
+    const start = (txPage - 1) * txPageSize
+    return filteredTransactions.slice(start, start + txPageSize)
+  }, [filteredTransactions, txPage, txPageSize])
+
+  const handleToggleTxSort = (field) => {
+    if (txSortField === field) {
+      setTxSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setTxSortField(field)
+      setTxSortOrder(field === 'createdAt' ? 'desc' : 'asc')
+    }
+    setTxPage(1)
+  }
 
   const createPartMutation = useCreatePart()
   const updatePartMutation = useUpdatePart()
@@ -358,81 +499,320 @@ export default function InventoryPage() {
   ) : (
     /* Stock Movement & Auto Stock-Out Transactions View */
     <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden">
-      <div className="p-4 border-b border-app-border flex items-center justify-between">
-        <div>
-          <h2 className="text-sm font-bold text-app-text flex items-center gap-2">
-            <ClockCounterClockwise size={16} className="text-app-accent" />
-            Stock Movement & Auto Stock-Out History
-          </h2>
-          <p className="text-[11px] text-app-muted mt-0.5">Real-time audit trail of parts consumed by services, jobs, and manual adjustments</p>
+      <div className="p-3.5 sm:p-4 border-b border-app-border flex flex-col gap-3">
+        {/* Header Title */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 className="text-sm font-bold text-app-text flex items-center gap-2">
+              <ClockCounterClockwise size={16} className="text-app-accent" />
+              Stock Movement & Auto Stock-Out History
+            </h2>
+            <p className="text-[11px] text-app-muted mt-0.5">
+              Real-time audit trail of parts consumed by services, jobs, and manual adjustments
+            </p>
+          </div>
+          <span className="text-[11px] font-mono text-app-muted px-2 py-0.5 bg-app-hover border border-app-border rounded self-start sm:self-auto">
+            {filteredTransactions.length} logs
+          </span>
+        </div>
+
+        {/* Toolbar: Search + Type Filter + Custom Date Sort */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-app-border/50">
+          {/* Type Filter Pills */}
+          <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
+            {[
+              { key: 'All', label: t('common.all', 'All') },
+              { key: 'Stock Out', label: 'Stock Out', icon: ArrowDown, color: 'text-rose-500' },
+              { key: 'Stock In', label: 'Stock In', icon: ArrowUp, color: 'text-emerald-500' },
+              { key: 'Adjustment', label: 'Adjustments' },
+            ].map((typeItem) => (
+              <button
+                key={typeItem.key}
+                type="button"
+                onClick={() => {
+                  setTxTypeFilter(typeItem.key)
+                  setTxPage(1)
+                }}
+                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                  txTypeFilter === typeItem.key
+                    ? 'bg-app-accent text-app-accentText font-semibold'
+                    : 'text-app-muted hover:text-app-text hover:bg-app-hover'
+                }`}
+              >
+                {typeItem.icon && <typeItem.icon size={11} weight="bold" className={typeItem.color} />}
+                <span>{typeItem.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Search + Custom Date Range Controls */}
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+            {/* Search Input */}
+            <div className="relative w-full sm:w-56">
+              <MagnifyingGlass size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted" />
+              <input
+                type="text"
+                placeholder="Search part, reason, user..."
+                value={txSearch}
+                onChange={(e) => {
+                  setTxSearch(e.target.value)
+                  setTxPage(1)
+                }}
+                className="w-full pl-8 pr-7 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted/70 focus:outline-none focus:border-app-accent"
+              />
+              {txSearch && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTxSearch('')
+                    setTxPage(1)
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-app-muted hover:text-app-text cursor-pointer"
+                >
+                  <X size={11} weight="bold" />
+                </button>
+              )}
+            </div>
+
+            {/* Custom Date Range Filter Dropdown */}
+            <div ref={txDateDropdownRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setIsTxDateDropdownOpen((prev) => !prev)}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-app-card border border-app-border hover:border-app-accent/50 text-app-text rounded-md text-xs font-medium shadow-xs transition-colors cursor-pointer select-none whitespace-nowrap"
+              >
+                <CalendarBlank size={13} className="text-app-muted" weight="bold" />
+                <span>{txActiveBounds.label}</span>
+                <CaretDown size={11} className={`text-app-muted transition-transform duration-200 ${isTxDateDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isTxDateDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-72 bg-app-card border border-app-border rounded-lg shadow-xl p-3 z-50 animate-modal-content space-y-3">
+                  <div className="grid grid-cols-2 gap-1 p-1 bg-app-hover/60 rounded-md">
+                    {[
+                      { key: 'all', label: t('reports.allTime', 'All Time') },
+                      { key: 'today', label: t('common.today', 'Today') },
+                      { key: 'this_week', label: t('reports.thisWeek', 'This Week') },
+                      { key: 'this_month', label: t('reports.thisMonth', 'This Month') },
+                      { key: 'custom', label: t('reports.customDate', 'Custom Range') },
+                    ].map((item) => (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => {
+                          setTxDateRange(item.key)
+                          setTxPage(1)
+                          if (item.key !== 'custom') setIsTxDateDropdownOpen(false)
+                        }}
+                        className={`py-1 px-2 text-xs font-semibold rounded transition-colors text-center cursor-pointer ${
+                          txDateRange === item.key
+                            ? 'bg-app-accent text-app-accentText shadow-xs'
+                            : 'text-app-muted hover:text-app-text'
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {txDateRange === 'custom' && (
+                    <div className="space-y-2 pt-1 border-t border-app-border">
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <label className="block text-[11px] text-app-muted font-medium mb-1">
+                            {t('reports.startDate', 'Start Date')}
+                          </label>
+                          <input
+                            type="date"
+                            value={txCustomStart}
+                            onChange={(e) => {
+                              setTxCustomStart(e.target.value)
+                              setTxPage(1)
+                            }}
+                            className="w-full px-2 py-1 bg-app-input border border-app-border rounded text-xs text-app-text focus:outline-none focus:border-app-accent font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] text-app-muted font-medium mb-1">
+                            {t('reports.endDate', 'End Date')}
+                          </label>
+                          <input
+                            type="date"
+                            value={txCustomEnd}
+                            onChange={(e) => {
+                              setTxCustomEnd(e.target.value)
+                              setTxPage(1)
+                            }}
+                            className="w-full px-2 py-1 bg-app-input border border-app-border rounded text-xs text-app-text focus:outline-none focus:border-app-accent font-mono"
+                          />
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsTxDateDropdownOpen(false)}
+                        className="w-full py-1 px-3 bg-app-accent text-app-accentText font-semibold rounded-md text-xs hover:bg-app-accentHover transition-colors cursor-pointer text-center"
+                      >
+                        {t('reports.apply', 'Apply Range')}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Sort Toggle Button */}
+            <button
+              type="button"
+              onClick={() => handleToggleTxSort('createdAt')}
+              title={`Sort by Date: currently ${txSortOrder === 'desc' ? 'Newest first' : 'Oldest first'}`}
+              className="inline-flex items-center gap-1 px-2.5 py-1 bg-app-card border border-app-border hover:border-app-accent/50 text-app-text rounded-md text-xs font-medium transition-colors cursor-pointer select-none"
+            >
+              <ArrowsDownUp size={13} className="text-app-accent" />
+              <span className="hidden sm:inline">
+                {txSortField === 'createdAt'
+                  ? txSortOrder === 'desc'
+                    ? 'Newest'
+                    : 'Oldest'
+                  : txSortField === 'quantity'
+                  ? txSortOrder === 'desc'
+                    ? 'Qty: High-Low'
+                    : 'Qty: Low-High'
+                  : txSortOrder === 'desc'
+                  ? 'Z-A'
+                  : 'A-Z'}
+              </span>
+            </button>
+          </div>
         </div>
       </div>
 
-        {txLoading && transactions.length === 0 ? (
-          <TableSkeleton rows={6} columns={6} />
-        ) : transactions.length === 0 ? (
-          <EmptyState
-            title="No inventory transactions recorded"
-            description="Stock movements and auto stock-outs for services will automatically appear here."
-          />
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Part Code / Item</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Quantity</TableHead>
-                <TableHead>Reason / Reference</TableHead>
-                <TableHead className="hidden sm:table-cell">Performed By</TableHead>
-                <TableHead className="text-right">Date & Time</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {transactions.map((tx) => (
-                <TableRow key={tx.id}>
-                  <TableCell>
-                    <p className="font-semibold text-app-text">{tx.partName}</p>
-                    <p className="font-mono text-[10px] text-app-accent">{tx.partCode}</p>
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[11px] font-semibold border ${
-                        tx.type === 'Stock Out'
-                          ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
-                          : tx.type === 'Stock In'
-                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
-                          : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20'
-                      }`}
-                    >
-                      {tx.type === 'Stock Out' ? <ArrowDown size={12} weight="bold" /> : <ArrowUp size={12} weight="bold" />}
-                      {tx.type}
+      {txLoading && transactions.length === 0 ? (
+        <TableSkeleton rows={6} columns={6} />
+      ) : filteredTransactions.length === 0 ? (
+        <EmptyState
+          title="No inventory transactions found"
+          description={
+            txSearch || txTypeFilter !== 'All' || txDateRange !== 'all'
+              ? 'No stock logs matched your search or date filter criteria.'
+              : 'Stock movements and auto stock-outs for services will automatically appear here.'
+          }
+          actionText={txSearch || txTypeFilter !== 'All' || txDateRange !== 'all' ? 'Reset Filters' : undefined}
+          onAction={
+            txSearch || txTypeFilter !== 'All' || txDateRange !== 'all'
+              ? () => {
+                  setTxSearch('')
+                  setTxTypeFilter('All')
+                  setTxDateRange('all')
+                  setTxPage(1)
+                }
+              : undefined
+          }
+        />
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead
+                onClick={() => handleToggleTxSort('partName')}
+                className="cursor-pointer hover:text-app-text select-none"
+              >
+                <div className="flex items-center gap-1">
+                  <span>Part Code / Item</span>
+                  {txSortField === 'partName' && (
+                    <span className="text-app-accent font-mono text-[10px]">
+                      {txSortOrder === 'desc' ? '▼' : '▲'}
                     </span>
-                  </TableCell>
-                  <TableCell className="font-bold tabular-nums text-app-text">
-                    {tx.type === 'Stock Out' ? `-${tx.quantity}` : `+${tx.quantity}`} units
-                  </TableCell>
-                  <TableCell>
-                    <p className="text-app-text font-medium max-w-sm">{tx.notes || 'Routine stock operation'}</p>
-                    {tx.referenceType && (
-                      <span className="text-[10px] text-app-muted uppercase font-mono">
-                        Ref: {tx.referenceType} #{tx.referenceId}
-                      </span>
+                  )}
+                </div>
+              </TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead
+                onClick={() => handleToggleTxSort('quantity')}
+                className="cursor-pointer hover:text-app-text select-none"
+              >
+                <div className="flex items-center gap-1">
+                  <span>Quantity</span>
+                  {txSortField === 'quantity' && (
+                    <span className="text-app-accent font-mono text-[10px]">
+                      {txSortOrder === 'desc' ? '▼' : '▲'}
+                    </span>
+                  )}
+                </div>
+              </TableHead>
+              <TableHead>Reason / Reference</TableHead>
+              <TableHead className="hidden sm:table-cell">Performed By</TableHead>
+              <TableHead
+                onClick={() => handleToggleTxSort('createdAt')}
+                className="text-right cursor-pointer hover:text-app-text select-none"
+              >
+                <div className="flex items-center justify-end gap-1">
+                  <span>Date & Time</span>
+                  {txSortField === 'createdAt' && (
+                    <span className="text-app-accent font-mono text-[10px]">
+                      {txSortOrder === 'desc' ? '▼' : '▲'}
+                    </span>
+                  )}
+                </div>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {paginatedTransactions.map((tx) => (
+              <TableRow key={tx.id}>
+                <TableCell>
+                  <p className="font-semibold text-app-text">{tx.partName}</p>
+                  <p className="font-mono text-[10px] text-app-accent">{tx.partCode}</p>
+                </TableCell>
+                <TableCell>
+                  <span
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[11px] font-semibold border ${
+                      tx.type === 'Stock Out'
+                        ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
+                        : tx.type === 'Stock In'
+                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                        : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20'
+                    }`}
+                  >
+                    {tx.type === 'Stock Out' ? (
+                      <ArrowDown size={12} weight="bold" />
+                    ) : (
+                      <ArrowUp size={12} weight="bold" />
                     )}
-                  </TableCell>
-                  <TableCell className="text-app-muted hidden sm:table-cell">
-                    {tx.performedBy}
-                  </TableCell>
-                  <TableCell className="text-right font-mono text-[11px] text-app-muted">
-                    {tx.createdAt ? new Date(tx.createdAt).toLocaleString() : 'Recent'}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-            <TableFooterBar totalCount={transactions.length} currentCount={transactions.length} />
-          </Table>
-        )}
-      </div>
-    )}
+                    {tx.type}
+                  </span>
+                </TableCell>
+                <TableCell className="font-bold tabular-nums text-app-text">
+                  {tx.type === 'Stock Out' ? `-${tx.quantity}` : `+${tx.quantity}`} units
+                </TableCell>
+                <TableCell>
+                  <p className="text-app-text font-medium max-w-sm">{tx.notes || 'Routine stock operation'}</p>
+                  {tx.referenceType && (
+                    <span className="text-[10px] text-app-muted uppercase font-mono">
+                      Ref: {tx.referenceType} #{tx.referenceId}
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell className="text-app-muted hidden sm:table-cell">
+                  {tx.performedBy}
+                </TableCell>
+                <TableCell className="text-right font-mono text-[11px] text-app-muted">
+                  {tx.createdAt ? new Date(tx.createdAt).toLocaleString() : 'Recent'}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+          <TableFooterBar
+            totalCount={filteredTransactions.length}
+            page={txPage}
+            totalPages={txTotalPages}
+            pageSize={txPageSize}
+            onPrev={() => setTxPage((p) => Math.max(1, p - 1))}
+            onNext={() => setTxPage((p) => Math.min(txTotalPages, p + 1))}
+          />
+        </Table>
+      )}
+    </div>
+  )}
 
       {/* Add Part Modal */}
       {/* Add New Part Modal */}

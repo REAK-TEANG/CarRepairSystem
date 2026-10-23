@@ -7,19 +7,17 @@
 
 export function getApiBaseUrl() {
   const envUrl = import.meta.env.VITE_API_URL
-  const isBrowser = typeof window !== 'undefined'
-  const isLocal = isBrowser && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  if (envUrl) return envUrl.replace(/\/+$/, '')
 
-  // In production (Vercel or custom domain), always ensure we use the live Render API
-  if (isBrowser && !isLocal) {
-    if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
-      return envUrl.replace(/\/+$/, '')
-    }
-    return 'https://carrepair-backend.onrender.com/api'
+  const isBrowser = typeof window !== 'undefined'
+  if (isBrowser) {
+    // In browser, route via relative /api so all mobile/desktop devices send requests
+    // through the current origin (e.g. port 5173). The Vite dev server proxies /api
+    // to http://127.0.0.1:8000, preventing Windows Firewall from blocking port 8000 on mobile.
+    return `${window.location.origin}/api`
   }
 
-  // In local development, use localhost
-  return (envUrl || 'http://localhost:8000/api').replace(/\/+$/, '')
+  return 'http://127.0.0.1:8000/api'
 }
 
 export const API_CONFIG = {

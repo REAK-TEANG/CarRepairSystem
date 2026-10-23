@@ -3,22 +3,6 @@
 
 class SettingsModel
 {
-    public const DEFAULT_PERMISSIONS_MATRIX = [
-        'dashboard'   => ['admin' => ['read'], 'manager' => ['read'], 'mechanic' => ['read'], 'service_advisor' => ['read']],
-        'customers'   => ['admin' => ['create','read','update','delete','export'], 'manager' => ['create','read','update','export'], 'mechanic' => ['read'], 'service_advisor' => ['create','read','update']],
-        'vehicles'    => ['admin' => ['create','read','update','delete','export'], 'manager' => ['create','read','update','export'], 'mechanic' => ['read','update'], 'service_advisor' => ['create','read','update']],
-        'appointments'=> ['admin' => ['create','read','update','delete','export'], 'manager' => ['create','read','update','export'], 'mechanic' => ['read'], 'service_advisor' => ['create','read','update']],
-        'repair_jobs' => ['admin' => ['create','read','update','delete','export'], 'manager' => ['create','read','update','export'], 'mechanic' => ['read','update'], 'service_advisor' => ['create','read','update']],
-        'invoices'    => ['admin' => ['create','read','update','delete','export'], 'manager' => ['create','read','update','export'], 'mechanic' => [], 'service_advisor' => ['create','read','update']],
-        'inventory'   => ['admin' => ['create','read','update','delete','export'], 'manager' => ['create','read','update','export'], 'mechanic' => ['read'], 'service_advisor' => ['read']],
-        'suppliers'   => ['admin' => ['create','read','update','delete','export'], 'manager' => ['create','read','update','export'], 'mechanic' => [], 'service_advisor' => []],
-        'employees'   => ['admin' => ['create','read','update','delete','export'], 'manager' => ['read'], 'mechanic' => [], 'service_advisor' => []],
-        'mechanics'   => ['admin' => ['create','read','update','delete','export'], 'manager' => ['create','read','update','export'], 'mechanic' => [], 'service_advisor' => []],
-        'services'    => ['admin' => ['create','read','update','delete','export'], 'manager' => ['create','read','update','export'], 'mechanic' => ['read'], 'service_advisor' => ['read']],
-        'reports'     => ['admin' => ['create','read','update','delete','export'], 'manager' => ['read','export'], 'mechanic' => [], 'service_advisor' => []],
-        'settings'    => ['admin' => ['create','read','update','delete','export'], 'manager' => [], 'mechanic' => [], 'service_advisor' => []],
-    ];
-
     public static function get(): array
     {
         return self::getAll();
@@ -36,7 +20,7 @@ class SettingsModel
             'contactEmail'      => 'service@protech-autorepair.com',
             'address'           => '4582 Industrial Parkway, Suite 100, Motor City, MI',
             'autoBackupDaily'   => true,
-            'permissionsMatrix' => self::DEFAULT_PERMISSIONS_MATRIX,
+            'permissionsMatrix' => [],
         ];
 
         foreach ($rows as $r) {
@@ -61,18 +45,19 @@ class SettingsModel
     public static function getPermissions(): array
     {
         $row = Database::get("SELECT setting_value FROM settings WHERE setting_key = 'roles_permissions_matrix'");
-        if ($row && $row['setting_value']) {
+        if ($row && !empty($row['setting_value'])) {
             $matrix = json_decode($row['setting_value'], true);
-            if ($matrix) {
+            if (is_array($matrix)) {
                 return $matrix;
             }
         }
-        return self::DEFAULT_PERMISSIONS_MATRIX;
+        return [];
     }
 
     public static function updatePermissions(array $rawMatrix): array
     {
-        $matrix = array_merge(self::DEFAULT_PERMISSIONS_MATRIX, $rawMatrix);
+        $existing = self::getPermissions();
+        $matrix = array_merge($existing, $rawMatrix);
         foreach (array_keys($matrix) as $mod) {
             if (!isset($matrix[$mod]) || !is_array($matrix[$mod])) {
                 $matrix[$mod] = [];

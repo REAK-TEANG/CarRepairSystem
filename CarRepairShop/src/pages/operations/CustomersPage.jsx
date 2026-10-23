@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { MagnifyingGlass, Plus, PencilSimple, Trash, MapPin, User } from '@phosphor-icons/react'
+import { Plus, PencilSimple, Trash, MapPin, User } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useCustomers, useCreateCustomer, useUpdateCustomer, useDeleteCustomer } from '../../hooks/useCustomers'
 import { useDebounce } from '../../hooks/useDebounce'
+import { usePaginationData } from '../../hooks/usePaginationData'
 import { useAuth } from '../../context/AuthContext'
-import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Button, Input, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar } from '../../components/ui'
+import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Button, Input, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, PageHeader } from '../../components/ui'
 
 export default function CustomersPage() {
   const { t } = useTranslation()
@@ -15,10 +16,7 @@ export default function CustomersPage() {
   const [page, setPage] = useState(1)
 
   const { data: response, isLoading } = useCustomers({ page, limit: 10, search: debouncedSearch })
-  const customers = Array.isArray(response) ? response : (response?.data || [])
-  const pagination = response?.pagination || null
-  const totalCount = pagination ? pagination.total : customers.length
-  const totalPages = pagination ? pagination.totalPages : 1
+  const { items: customers, totalCount, totalPages } = usePaginationData(response, { page, limit: 10 })
 
   const createCustomerMutation = useCreateCustomer()
   const updateCustomerMutation = useUpdateCustomer()
@@ -87,31 +85,17 @@ export default function CustomersPage() {
 
   return (
     <div className="space-y-3 sm:space-y-4 text-app-text font-sans transition-colors duration-200">
-      {/* Page Header with Integrated Search and Action */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-        <div className="flex items-center gap-2.5">
-          <h1 className="text-lg font-semibold tracking-tight text-app-text">{t('titles.customerDirectory')}</h1>
-          <span className="text-[11px] font-mono text-app-muted px-2 py-0.5 bg-app-card border border-app-border rounded-md">
-            {totalCount}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className="relative w-full sm:w-60">
-            <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted z-10 pointer-events-none" />
-            <Input
-              type="text"
-              placeholder={t('common.quickSearch')}
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value)
-                setPage(1)
-              }}
-              className="w-full pl-8 pr-3 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
-            />
-          </div>
-
-          {can('customers', 'create') && (
+      <PageHeader
+        title={t('titles.customerDirectory')}
+        count={totalCount}
+        searchQuery={searchQuery}
+        onSearch={(e) => {
+          setSearchQuery(e.target.value)
+          setPage(1)
+        }}
+        searchPlaceholder={t('common.quickSearch')}
+        actions={
+          can('customers', 'create') && (
             <Button
               onClick={handleOpenAdd}
               size="sm"
@@ -120,9 +104,9 @@ export default function CustomersPage() {
               <Plus size={14} weight="bold" />
               <span>{t('customers.addCustomer')}</span>
             </Button>
-          )}
-        </div>
-      </div>
+          )
+        }
+      />
 
       {isLoading && customers.length === 0 ? (
         <TableSkeleton rows={6} columns={5} />

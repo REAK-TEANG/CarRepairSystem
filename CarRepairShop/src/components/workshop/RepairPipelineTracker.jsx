@@ -12,9 +12,7 @@ import {
   Kanban,
   ListNumbers,
   Eye,
-  CaretRight,
   CircleNotch,
-  ArrowCircleRight,
   Check,
   ShieldCheck,
   Receipt,
@@ -267,15 +265,12 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
               <Car size={22} weight="duotone" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-app-text flex items-center gap-2">
+              <h2 className="text-sm font-semibold text-app-text flex items-center gap-2">
                 Vehicle Repair Pipeline
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
-                  {filteredJobs.length} {filteredJobs.length === 1 ? 'Vehicle' : 'Vehicles'}
+                <span className="text-xs text-app-muted font-mono">
+                  {filteredJobs.length}
                 </span>
               </h2>
-              <p className="text-[11px] text-app-muted mt-0.5">
-                Standard 6-stage lifecycle tracking with 1-click step progression, QA gate, and auto stock deductions.
-              </p>
             </div>
           </div>
 
@@ -413,110 +408,88 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
             const currentStepIdx = getStepIndex(job.status)
             const nextStep = getNextStep(job.status)
             const isUpdating = updatingJobId === job.id
-            const progressPercent = Math.round(((currentStepIdx + 1) / PIPELINE_STEPS.length) * 100)
 
             return (
               <div
                 key={job.id}
-                className="bg-app-card rounded-sm border border-app-border shadow-card hover:shadow-lg transition-all duration-200 overflow-hidden"
+                className="bg-app-card rounded-md border border-app-border shadow-subtle hover:border-app-border/90 hover:shadow-card transition-all duration-200 overflow-hidden"
               >
-                {/* Top Section: Vehicle Card Header */}
-                <div className="p-3 bg-gradient-to-r from-app-card via-app-card to-app-hover/30 border-b border-app-border flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  {/* Vehicle Identity */}
-                  <div className="flex items-start sm:items-center gap-3.5">
-                    <div className="w-12 h-12 rounded-sm bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 flex-shrink-0 shadow-subtle">
-                      <Car size={26} weight="duotone" />
+                {/* Header: Identity, Metadata & Primary Actions */}
+                <div className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-app-border/60 bg-app-card">
+                  {/* Left: Vehicle, Customer & Issue */}
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-md bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5">
+                      <Car size={20} weight="duotone" />
                     </div>
 
-                    <div className="space-y-1">
+                    <div className="min-w-0 space-y-1">
+                      {/* Vehicle & Plate */}
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-bold text-sm sm:text-base text-app-text tracking-tight">
+                        <h3 className="font-semibold text-sm text-app-text tracking-tight truncate">
                           {job.vehicle || 'Vehicle Unit'}
                         </h3>
-                        <span className="px-2.5 py-0.5 rounded-sm bg-app-input border border-app-border font-mono text-xs font-bold text-app-text shadow-subtle">
-                          {job.plate}
-                        </span>
-                        <span className="font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                        {job.plate && (
+                          <span className="px-2 py-0.5 rounded bg-app-input border border-app-border font-mono text-[11px] font-bold text-app-text">
+                            {job.plate}
+                          </span>
+                        )}
+                        <span className="font-mono text-xs text-app-muted">
                           {job.orderNumber}
                         </span>
+                        <StatusBadge status={job.status} size="sm" />
                       </div>
 
-                      <div className="flex items-center gap-3 text-xs text-app-muted flex-wrap">
-                        <span className="flex items-center gap-1">
-                          <User size={13} className="text-app-muted" />
-                          <span className="text-app-text font-medium">{job.customer}</span>
-                        </span>
+                      {/* Customer, Mechanic & Problem */}
+                      <div className="flex items-center gap-2.5 text-xs text-app-muted flex-wrap">
+                        <span className="text-app-text font-medium">{job.customer}</span>
                         <span>•</span>
                         <span className="flex items-center gap-1">
-                          <Wrench size={13} className="text-emerald-500" />
-                          <span>Assigned:</span>
-                          <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                            {job.mechanic || 'Unassigned'}
-                          </span>
+                          <Wrench size={12} className="text-emerald-500" />
+                          <span>{job.mechanic || 'Unassigned'}</span>
                         </span>
-                        {job.estimatedCost && (
+                        {job.problem && (
                           <>
                             <span>•</span>
-                            <span className="font-mono font-bold text-app-text">{job.estimatedCost}</span>
+                            <span className="truncate max-w-xs text-app-text/90 italic" title={job.problem}>
+                              "{job.problem}"
+                            </span>
                           </>
                         )}
                       </div>
                     </div>
                   </div>
 
-                  {/* Right Actions: 1-Click Fast Advance & Practical Actions */}
-                  <div className="flex items-center gap-2 self-start md:self-center flex-wrap">
+                  {/* Right: Cost & Actions */}
+                  <div className="flex items-center gap-2 self-start md:self-center flex-shrink-0 flex-wrap">
+                    {job.estimatedCost && (
+                      <span className="font-mono font-bold text-sm text-app-text px-2.5 py-1 rounded bg-app-input border border-app-border">
+                        {job.estimatedCost}
+                      </span>
+                    )}
+
                     {/* Fast Advance Action */}
                     {nextStep ? (
                       <button
                         onClick={() => handleSetStatus(job, nextStep.id)}
                         disabled={isUpdating}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-sm bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-95 text-white text-xs font-bold shadow-md hover:shadow-lg transition-all duration-150 disabled:opacity-50 group cursor-pointer"
-                        title={`1-Click advance status directly to "${nextStep.label}"`}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-subtle transition-all disabled:opacity-50 cursor-pointer"
+                        title={`Advance status to ${nextStep.label}`}
                       >
                         {isUpdating ? (
-                          <CircleNotch size={15} className="" />
+                          <CircleNotch size={14} className="animate-spin" />
                         ) : (
-                          <ArrowCircleRight size={16} weight="fill" className="group-hover:translate-x-0.5 transition-transform" />
+                          <ArrowRight size={14} weight="bold" />
                         )}
-                        <span>Advance to {nextStep.shortLabel}</span>
-                        <CaretRight size={13} weight="bold" />
+                        <span>Next: {nextStep.shortLabel}</span>
                       </button>
                     ) : (
-                      <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-sm bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold">
-                        <CheckCircle size={16} weight="fill" />
-                        <span>Completed</span>
+                      <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
+                        <CheckCircle size={14} weight="fill" />
+                        <span>Done</span>
                       </div>
                     )}
 
-                    {/* Ready for Pickup: Send Customer Notification Button */}
-                    {(job.status === 'Ready for Pickup' || job.status === 'Completed') && (
-                      <button
-                        onClick={() => {
-                          setSelectedJob(job)
-                          setIsNotifyOpen(true)
-                        }}
-                        className="px-3 py-2 rounded-sm bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/20 transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
-                        title="Send Customer Pickup Notice"
-                      >
-                        <ChatCircleDots size={15} weight="bold" />
-                        <span className="hidden sm:inline">Notify Customer</span>
-                      </button>
-                    )}
-
-                    {/* 1-Click Generate Invoice Button */}
-                    {job.status === 'Completed' && (
-                      <button
-                        onClick={() => handleGenerateInvoice(job)}
-                        className="px-3 py-2 rounded-sm bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30 hover:bg-blue-500/20 transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
-                        title="Generate Official Invoice"
-                      >
-                        <Receipt size={15} weight="bold" />
-                        <span className="hidden sm:inline">Invoice</span>
-                      </button>
-                    )}
-
-                    {/* Add Extra Part Action (For Diagnosing & Repairing stages) */}
+                    {/* Add Part Button */}
                     {(job.status === 'Diagnosing' || job.status === 'Repairing' || job.status === 'Waiting for Parts') && (
                       <button
                         onClick={() => {
@@ -524,131 +497,94 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                           setPartSelection({ sparePartId: inventory[0]?.id || '', quantity: 1 })
                           setIsAddPartOpen(true)
                         }}
-                        className="px-3 py-2 rounded-sm text-amber-700 dark:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition-colors text-xs font-semibold flex items-center gap-1 cursor-pointer"
-                        title="Add extra part from stock (auto stock-out)"
+                        className="px-2.5 py-1.5 rounded text-amber-700 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 transition-colors text-xs font-medium flex items-center gap-1 cursor-pointer"
+                        title="Add extra spare part"
                       >
-                        <Plus size={14} weight="bold" />
-                        <span>+ Part</span>
+                        <Plus size={13} weight="bold" />
+                        <span>Part</span>
                       </button>
                     )}
 
-                    {/* View Details Button */}
+                    {/* Pickup Notification */}
+                    {(job.status === 'Ready for Pickup' || job.status === 'Completed') && (
+                      <button
+                        onClick={() => {
+                          setSelectedJob(job)
+                          setIsNotifyOpen(true)
+                        }}
+                        className="px-2.5 py-1.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 hover:bg-emerald-500/20 text-xs font-medium flex items-center gap-1 cursor-pointer"
+                        title="Notify Customer"
+                      >
+                        <ChatCircleDots size={14} weight="bold" />
+                        <span>Notify</span>
+                      </button>
+                    )}
+
+                    {/* Generate Invoice */}
+                    {job.status === 'Completed' && (
+                      <button
+                        onClick={() => handleGenerateInvoice(job)}
+                        className="px-2.5 py-1.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 text-xs font-medium flex items-center gap-1 cursor-pointer"
+                        title="Create Invoice"
+                      >
+                        <Receipt size={14} weight="bold" />
+                        <span>Invoice</span>
+                      </button>
+                    )}
+
+                    {/* View Details */}
                     <button
                       onClick={() => {
                         setSelectedJob(job)
                         setIsViewOpen(true)
                       }}
-                      className="px-3 py-2 rounded-sm text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98] border border-app-border transition-colors text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                      className="px-2.5 py-1.5 rounded text-app-muted hover:text-app-text bg-app-input hover:bg-app-hover border border-app-border text-xs font-medium flex items-center gap-1 cursor-pointer transition-colors"
                       title="View Details"
                     >
-                      <Eye size={15} />
-                      <span className="hidden sm:inline">Details</span>
+                      <Eye size={14} />
+                      <span>Details</span>
                     </button>
                   </div>
                 </div>
 
-                {/* Middle: Issue & Parts Summary Bar */}
-                <div className="px-4 sm:px-4 py-3 bg-app-hover/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs border-b border-app-border">
-                  <div className="flex items-center gap-2 flex-1">
-                    <span className="text-app-muted font-semibold flex-shrink-0">Problem / Work:</span>
-                    <span className="text-app-text font-medium truncate">{job.problem}</span>
-                  </div>
-
-                  <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
-                    {job.diagnosis && (
-                      <span className="text-[11px] text-app-muted italic truncate max-w-xs">
-                        Report: {job.diagnosis}
-                      </span>
-                    )}
-                    {job.partsUsed && job.partsUsed.length > 0 && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 text-[11px] font-semibold">
-                        <Package size={12} weight="bold" />
-                        <span>{job.partsUsed.length} parts deducted</span>
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Bottom: Modern Interactive Stepper Pipeline */}
-                <div className="p-3 space-y-3">
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-app-text">Current Stage:</span>
-                      <StatusBadge status={job.status} />
-                    </div>
-                    <div className="flex items-center gap-1 text-[11px] font-semibold text-app-muted">
-                      <span>Progress:</span>
-                      <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
-                        {currentStepIdx + 1} of {PIPELINE_STEPS.length} ({progressPercent}%)
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Connected Stage Ribbon Pipeline (Responsive grid of interconnected chevron blocks) */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                {/* Bottom: Minimal Connected Segmented Pipeline */}
+                <div className="px-4 py-2.5 bg-app-card/50">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5">
                     {PIPELINE_STEPS.map((step, idx) => {
                       const isCompleted = idx < currentStepIdx
                       const isCurrent = idx === currentStepIdx
-                      const StepIcon = step.icon
 
                       return (
                         <button
                           key={step.id}
                           onClick={() => handleSetStatus(job, step.id)}
                           disabled={isUpdating}
-                          className={`relative p-2.5 rounded-sm text-left transition-all duration-200 flex flex-col justify-between group cursor-pointer border ${
+                          className={`group relative h-8 px-2 rounded flex items-center gap-1.5 text-left transition-all duration-150 cursor-pointer border ${
                             isCurrent
-                              ? 'bg-gradient-to-b from-emerald-500/15 to-teal-500/10 border-emerald-500 ring-2 ring-emerald-500/30 shadow-md'
+                              ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm font-semibold'
                               : isCompleted
-                              ? 'bg-emerald-500/5 hover:bg-emerald-500/15 border-emerald-500/30 hover:border-emerald-500/60'
-                              : 'bg-app-input/50 hover:bg-app-hover active:scale-[0.98] border-app-border/80 hover:border-app-border'
+                              ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/25 hover:bg-emerald-500/20'
+                              : 'bg-app-input/60 text-app-muted hover:text-app-text hover:bg-app-hover border-app-border/70'
                           }`}
-                          title={`Click once to jump stage to "${step.label}"`}
+                          title={`Jump to ${step.label}`}
                         >
-                          {/* Top Row of Step Card */}
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span
-                              className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center font-mono ${
-                                isCompleted
-                                  ? 'bg-emerald-500 text-white'
-                                  : isCurrent
-                                  ? 'bg-emerald-600 text-white ring-2 ring-emerald-500/30 '
-                                  : 'bg-app-hover text-app-muted border border-app-border'
-                              }`}
-                            >
-                              {isCompleted ? <Check size={12} weight="bold" /> : step.stepNumber}
-                            </span>
+                          {/* Step indicator dot / check */}
+                          <span
+                            className={`w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center flex-shrink-0 ${
+                              isCurrent
+                                ? 'bg-white text-emerald-700'
+                                : isCompleted
+                                ? 'bg-emerald-600 text-white'
+                                : 'bg-app-hover text-app-muted border border-app-border'
+                            }`}
+                          >
+                            {isCompleted ? <Check size={10} weight="bold" /> : step.stepNumber}
+                          </span>
 
-                            <StepIcon
-                              size={15}
-                              weight={isCurrent ? 'fill' : 'regular'}
-                              className={
-                                isCurrent
-                                  ? 'text-emerald-600 dark:text-emerald-400'
-                                  : isCompleted
-                                  ? 'text-emerald-500'
-                                  : 'text-app-muted'
-                              }
-                            />
-                          </div>
-
-                          {/* Step Label & Status Indicator */}
-                          <div>
-                            <p
-                              className={`text-[11px] font-bold truncate leading-tight ${
-                                isCurrent
-                                  ? 'text-emerald-700 dark:text-emerald-300'
-                                  : isCompleted
-                                  ? 'text-app-text'
-                                  : 'text-app-muted group-hover:text-app-text'
-                              }`}
-                            >
-                              {step.shortLabel}
-                            </p>
-                            <p className="text-[9px] text-app-muted mt-0.5 truncate leading-none">
-                              {isCompleted ? '✓ Done' : isCurrent ? '⚡ Active' : 'Click to set'}
-                            </p>
-                          </div>
+                          {/* Label */}
+                          <span className="text-[11px] truncate tracking-tight">
+                            {step.shortLabel}
+                          </span>
                         </button>
                       )
                     })}

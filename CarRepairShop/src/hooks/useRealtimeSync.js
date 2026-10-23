@@ -1,27 +1,27 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/context/AuthContext'
+import { apiClient } from '@/services/apiClient'
 
 /**
  * Universal Real-Time Synchronization Hook
  * Provides seamless real-time cache synchronization across authorized browser clients.
- * Tier 1: WebSockets (Ratchet PHP daemon on port 8080 / WS proxy)
- * Tier 2: Server-Sent Events (SSE streaming at /api/events)
- * Tier 3: Resilient automatic reconnection with exponential backoff
+ * - Connects to WebSocket only when VITE_WS_URL is explicitly defined.
+ * - Otherwise uses lightweight, non-blocking REST event polling (/api/events/poll)
+ *   to avoid single-threaded PHP web server hangs and ERR_CONNECTION_REFUSED console noise.
  */
 export function useRealtimeSync() {
   const queryClient = useQueryClient()
   const { user } = useAuth()
   const [isConnected, setIsConnected] = useState(false)
-  const [transport, setTransport] = useState('disconnected') // 'websocket' | 'sse' | 'disconnected'
+  const [transport, setTransport] = useState('disconnected') // 'websocket' | 'poll' | 'disconnected'
   const [lastEvent, setLastEvent] = useState(null)
 
   const wsRef = useRef(null)
-  const sseRef = useRef(null)
-  const reconnectAttemptsRef = useRef(0)
-  const reconnectTimeoutRef = useRef(null)
+  const pollTimerRef = useRef(null)
+  const lastEventIdRef = useRef(0)
 
-  // Handle incoming event and invalidate relevant TanStack queries
+  // Invalidate relevant TanStack queries on events
   const handleIncomingEvent = useCallback((eventData) => {
     if (!eventData || !eventData.topic) return
     setLastEvent(eventData)
@@ -69,81 +69,55 @@ export function useRealtimeSync() {
   }, [queryClient])
 
   useEffect(() => {
-    const token = localStorage.getItem('token') || ''
-    if (!token) {
+    const token = apiClient.getToken()
+    if (!token || !user) {
       return
     }
 
     let isUnmounted = false
 
-    const connectSSE = () => {
+    // Fallback: Non-blocking REST polling
+    const startPolling = () => {
       if (isUnmounted) return
-      try {
-        const sseUrl = `${import.meta.env.VITE_API_BASE_URL || '/api'}/events?token=${encodeURIComponent(token)}`
-        const eventSource = new EventSource(sseUrl)
-        sseRef.current = eventSource
+      setTransport('poll')
+      setIsConnected(true)
 
-        eventSource.onopen = () => {
-          if (isUnmounted) return
-          setIsConnected(true)
-          setTransport('sse')
-          reconnectAttemptsRef.current = 0
-        }
-
-        eventSource.onmessage = (e) => {
-          try {
-            const data = JSON.parse(e.data)
-            handleIncomingEvent(data)
-          } catch {
-            // Heartbeats or comments
+      const poll = async () => {
+        if (isUnmounted) return
+        try {
+          const res = await apiClient.get('/events/poll', {
+            params: { afterId: lastEventIdRef.current }
+          })
+          if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
+            res.data.forEach((evt) => handleIncomingEvent(evt))
+          }
+          if (res?.latestId) {
+            lastEventIdRef.current = res.latestId
+          }
+        } catch {
+          // Non-blocking catch
+        } finally {
+          if (!isUnmounted) {
+            pollTimerRef.current = setTimeout(poll, 15000)
           }
         }
-
-        // Specific named event listeners
-        const topics = ['repair_jobs', 'inventory', 'appointments', 'invoices', 'customers', 'vehicles']
-        topics.forEach((t) => {
-          eventSource.addEventListener(t, (e) => {
-            try {
-              const data = JSON.parse(e.data)
-              handleIncomingEvent(data)
-            } catch {
-              // Ignore parse error
-            }
-          })
-        })
-
-        eventSource.onerror = () => {
-          eventSource.close()
-          if (isUnmounted) return
-          setIsConnected(false)
-          setTransport('disconnected')
-          // Retry SSE after 5 seconds
-          reconnectTimeoutRef.current = setTimeout(connectSSE, 5000)
-        }
-      } catch (err) {
-        console.warn('[Realtime] SSE fallback error:', err)
       }
+
+      poll()
     }
 
-    const connectWebSocket = () => {
-      if (isUnmounted) return
-
-      const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-      const wsHost = window.location.hostname || 'localhost'
-      const wsPort = import.meta.env.VITE_WS_PORT || 8080
-      const wsUrl = import.meta.env.VITE_WS_URL || `${wsProtocol}//${wsHost}:${wsPort}?token=${encodeURIComponent(token)}`
-
+    // Only attempt WebSocket if an explicit VITE_WS_URL is provided in environment
+    const explicitWsUrl = import.meta.env.VITE_WS_URL
+    if (explicitWsUrl) {
       try {
-        const ws = new WebSocket(wsUrl)
+        const ws = new WebSocket(`${explicitWsUrl}?token=${encodeURIComponent(token)}`)
         wsRef.current = ws
 
         ws.onopen = () => {
           if (isUnmounted) return
           setIsConnected(true)
           setTransport('websocket')
-          reconnectAttemptsRef.current = 0
 
-          // Send auth & subscribe
           ws.send(JSON.stringify({ type: 'auth', token }))
           ws.send(JSON.stringify({
             type: 'subscribe',
@@ -158,7 +132,7 @@ export function useRealtimeSync() {
               handleIncomingEvent(msg)
             }
           } catch {
-            // Ignore non-json messages
+            // ignore non-json
           }
         }
 
@@ -170,33 +144,22 @@ export function useRealtimeSync() {
           if (isUnmounted) return
           setIsConnected(false)
           setTransport('disconnected')
-
-          reconnectAttemptsRef.current += 1
-          if (reconnectAttemptsRef.current > 2) {
-            connectSSE()
-          } else {
-            const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 5000)
-            reconnectTimeoutRef.current = setTimeout(connectWebSocket, delay)
-          }
+          startPolling()
         }
       } catch {
-        connectSSE()
+        startPolling()
       }
+    } else {
+      // In local dev without standalone WebSocket daemon, use REST polling directly
+      startPolling()
     }
-
-    // Initiate primary WebSocket connection
-    connectWebSocket()
 
     return () => {
       isUnmounted = true
-      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
+      if (pollTimerRef.current) clearTimeout(pollTimerRef.current)
       if (wsRef.current) {
         wsRef.current.close()
         wsRef.current = null
-      }
-      if (sseRef.current) {
-        sseRef.current.close()
-        sseRef.current = null
       }
     }
   }, [user, handleIncomingEvent])

@@ -35,11 +35,6 @@ export default function MechanicDashboard() {
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <h1 className="text-lg font-semibold tracking-tight">{t('titles.mechanicWorkspace')}</h1>
-          {user?.name && (
-            <span className="text-[11px] font-mono text-app-muted px-2 py-0.5 bg-app-card border border-app-border rounded-md hidden sm:inline">
-              {user.name}
-            </span>
-          )}
         </div>
 
         {/* Admin / Manager Technician Filter */}

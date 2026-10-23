@@ -66,7 +66,7 @@ class EmployeeModel
         $name     = trim($input['name'] ?? '');
         $phone    = $input['phone'] ?? null;
         $email    = $input['email'] ?? null;
-        $password = $input['password'] ?? 'password123';
+        $password = !empty($input['password']) ? $input['password'] : bin2hex(random_bytes(6));
 
         $countRow = Database::get('SELECT COUNT(*) AS cnt FROM employees');
         $cnt      = (int) ($countRow['cnt'] ?? 0) + 1;

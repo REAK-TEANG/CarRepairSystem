@@ -212,11 +212,11 @@ export default function TopBar({ onToggleSidebar }) {
           {/* Quick Search Results Dropdown */}
           {isSearchOpen && query.length >= 2 && (
             <div className="absolute left-0 top-full mt-2 w-80 sm:w-96 bg-app-card border border-app-border rounded-sm shadow-card py-2 z-50 text-xs max-h-[75vh] overflow-y-auto max-w-[calc(100vw-2rem)]">
-              <div className="px-4 py-2 border-b border-app-border flex items-center justify-between text-[10px] text-app-muted font-bold uppercase tracking-wider">
+              <div className="px-4 py-2 border-b border-app-border flex items-center justify-between text-xs text-app-muted font-medium">
                 <span>
                   {t('common.searchResults')} ({totalResults})
                 </span>
-                <span className="font-mono">{t('common.escToClose')}</span>
+                <span className="font-mono text-[11px]">{t('common.escToClose')}</span>
               </div>
 
               {totalResults === 0 ? (
@@ -228,7 +228,7 @@ export default function TopBar({ onToggleSidebar }) {
                   {/* Repair Orders */}
                   {matchingJobs.length > 0 && (
                     <div className="py-1.5">
-                      <p className="px-4 py-1 text-[10px] font-bold text-app-muted uppercase tracking-wider">
+                      <p className="px-4 py-1 text-xs text-app-muted font-medium">
                         {t('nav.repairJobs')}
                       </p>
                       {matchingJobs.map((j) => (
@@ -251,7 +251,7 @@ export default function TopBar({ onToggleSidebar }) {
                   {/* Customers */}
                   {matchingCustomers.length > 0 && (
                     <div className="py-1.5">
-                      <p className="px-4 py-1 text-[10px] font-bold text-app-muted uppercase tracking-wider">
+                      <p className="px-4 py-1 text-xs text-app-muted font-medium">
                         {t('nav.customers')}
                       </p>
                       {matchingCustomers.map((c) => (
@@ -273,7 +273,7 @@ export default function TopBar({ onToggleSidebar }) {
                   {/* Vehicles */}
                   {matchingVehicles.length > 0 && (
                     <div className="py-1.5">
-                      <p className="px-4 py-1 text-[10px] font-bold text-app-muted uppercase tracking-wider">
+                      <p className="px-4 py-1 text-xs text-app-muted font-medium">
                         {t('nav.vehicles')}
                       </p>
                       {matchingVehicles.map((v) => (
@@ -298,7 +298,7 @@ export default function TopBar({ onToggleSidebar }) {
                   {/* Inventory Parts */}
                   {matchingParts.length > 0 && (
                     <div className="py-1.5">
-                      <p className="px-4 py-1 text-[10px] font-bold text-app-muted uppercase tracking-wider">
+                      <p className="px-4 py-1 text-xs text-app-muted font-medium">
                         {t('nav.inventory')}
                       </p>
                       {matchingParts.map((p) => (
@@ -403,9 +403,9 @@ export default function TopBar({ onToggleSidebar }) {
                   {notifOpen && (
                     <div className="absolute right-0 mt-3 w-72 sm:w-80 bg-app-card border border-app-border rounded-sm shadow-card py-2 z-50 max-w-[calc(100vw-1.5rem)]">
                       <div className="px-4 py-2.5 border-b border-app-border flex items-center justify-between">
-                        <h3 className="text-xs font-bold text-app-text uppercase tracking-wider">{t('common.liveAlerts')}</h3>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-semibold font-mono">
-                          {liveAlerts.length} {t('common.active')}
+                        <h3 className="text-xs font-semibold text-app-text">{t('common.liveAlerts')}</h3>
+                        <span className="text-xs font-mono text-app-muted">
+                          {liveAlerts.length}
                         </span>
                       </div>
                       <div className="divide-y divide-app-border text-xs max-h-72 overflow-y-auto">
