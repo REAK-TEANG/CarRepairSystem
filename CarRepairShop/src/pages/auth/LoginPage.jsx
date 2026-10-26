@@ -158,13 +158,13 @@ export default function LoginPage() {
       <div className="w-full max-w-[420px] bg-app-card border border-app-border rounded-lg p-6 sm:p-7 shadow-card transition-colors">
         {/* Brand Header */}
         <div className="flex flex-col items-center text-center mb-6">
-          <div className="w-10 h-10 rounded-md bg-app-accent/10 border border-app-accent/20 flex items-center justify-center text-app-accent mb-3">
-            <Logo size={22} className="text-app-accent" strokeWidth={2.4} />
+          <div className="w-12 h-12 rounded-xl bg-app-accent/15 border border-app-accent/30 flex items-center justify-center text-app-accent mb-3 shadow-xs">
+            <Logo size={28} className="text-app-accent" />
           </div>
-          <h1 className="text-lg font-bold tracking-tight text-app-text">
+          <h1 className="text-xl font-black tracking-[0.2em] uppercase text-app-text font-sans">
             {t('common.appName')}
           </h1>
-          <p className="text-xs text-app-muted mt-0.5">
+          <p className="text-xs text-app-muted mt-1">
             {t('auth.signInSubtitle')}
           </p>
         </div>

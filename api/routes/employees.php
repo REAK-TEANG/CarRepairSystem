@@ -18,6 +18,12 @@ if (preg_match('#^/employees/(\d+)$#', $path, $m)) {
     if ($method === 'DELETE') { $ctrl->destroy($id); exit; }
 }
 
+if ($path === '/employees/roles' && $method === 'GET') {
+    $roles = Database::all('SELECT id, name, description FROM roles ORDER BY id ASC');
+    echo json_encode(['data' => $roles]);
+    exit;
+}
+
 if ($method === 'GET')  { $ctrl->index(); exit; }
 if ($method === 'POST') { $ctrl->store(); exit; }
 

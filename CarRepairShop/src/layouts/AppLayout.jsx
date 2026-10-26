@@ -1,6 +1,7 @@
 import { Outlet, Navigate, useLocation } from 'react-router-dom'
 import Sidebar from '../components/layout/Sidebar'
 import TopBar from '../components/layout/TopBar'
+import CommandPalette from '../components/layout/CommandPalette'
 import { useAuth } from '../context/AuthContext'
 import { LoadingSpinner } from '../components/ui'
 import { useAppStore } from '../store/useAppStore'
@@ -51,6 +52,9 @@ export default function AppLayout() {
           </FadeIn>
         </main>
       </div>
+
+      {/* Global Universal Spotlight Command Palette */}
+      <CommandPalette />
     </div>
   )
 }

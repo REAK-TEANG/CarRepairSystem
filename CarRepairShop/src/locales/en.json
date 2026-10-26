@@ -1,7 +1,7 @@
 {
   "common": {
-    "appName": "Auto Repair",
-    "appSubtitle": "Workshop System",
+    "appName": "KAIRO",
+    "appSubtitle": "Workshop Management System",
     "search": "Search...",
     "quickSearch": "Search orders, plates, customers...",
     "save": "Save",

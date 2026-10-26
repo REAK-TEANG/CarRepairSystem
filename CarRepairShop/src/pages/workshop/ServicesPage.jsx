@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MagnifyingGlass, Plus, PencilSimple, Trash, CheckCircle, XCircle, Package } from '@phosphor-icons/react'
+import { MagnifyingGlass, Plus, Trash, CheckCircle, XCircle, Package } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useServicesCatalog, useCreateService, useUpdateService, useDeleteService } from '../../hooks/useServicesCatalog'
 import { useInventory } from '../../hooks/useInventory'
@@ -43,7 +43,6 @@ export default function ServicesPage() {
   // Modals
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
-  const [isViewOpen, setIsViewOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [selectedService, setSelectedService] = useState(null)
 
@@ -85,17 +84,12 @@ export default function ServicesPage() {
     })
     setSelectedPartId('')
     setSelectedPartQty(1)
-    setIsViewOpen(false); setIsEditOpen(true)
-  }
-
-  const handleOpenView = (s) => {
-    setSelectedService(s)
-    setIsViewOpen(true)
+    setIsEditOpen(true)
   }
 
   const handleOpenDelete = (s) => {
     setSelectedService(s)
-    setIsViewOpen(false); setIsDeleteOpen(true)
+    setIsDeleteOpen(true)
   }
 
   const handleToggleActive = (s) => {
@@ -256,7 +250,7 @@ export default function ServicesPage() {
             {services.map((s) => (
               <TableRow
                 key={s.id}
-                onClick={() => handleOpenView(s)}
+                onClick={() => handleOpenEdit(s)}
                 className="cursor-pointer"
               >
                 <TableCell>
@@ -593,90 +587,34 @@ export default function ServicesPage() {
             )}
           </div>
 
-          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-app-border">
-            <button
-              type="button"
-              onClick={() => setIsEditOpen(false)}
-              className="px-3.5 py-2 rounded-lg border border-app-border bg-app-card text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98] transition-all text-xs font-medium cursor-pointer shadow-xs"
-            >
-              {t('common.cancel')}
-            </button>
-            <LoadingButton type="submit" loading={updateServiceMutation.isPending}>
-              {t('common.saveChanges')}
-            </LoadingButton>
+          <div className="flex items-center justify-between pt-4 border-t border-app-border">
+            {can('services', 'delete') ? (
+              <button
+                type="button"
+                onClick={() => {
+                  handleOpenDelete(selectedService)
+                  setIsEditOpen(false)
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 rounded-sm text-xs font-semibold transition-colors cursor-pointer"
+              >
+                <Trash size={14} weight="bold" />
+                <span>{t('common.delete')}</span>
+              </button>
+            ) : <div />}
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => setIsEditOpen(false)}
+                className="px-3.5 py-2 rounded-lg border border-app-border bg-app-card text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98] transition-all text-xs font-medium cursor-pointer shadow-xs"
+              >
+                {t('common.cancel')}
+              </button>
+              <LoadingButton type="submit" loading={updateServiceMutation.isPending}>
+                {t('common.saveChanges')}
+              </LoadingButton>
+            </div>
           </div>
         </form>
-      </Modal>
-
-      {/* View Service Modal */}
-      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('services.title')} maxWidth="max-w-2xl">
-        {selectedService && (
-          <div className="space-y-4 text-xs">
-            <div className="flex items-center justify-between p-3 bg-app-hover/50 rounded-sm border border-app-border">
-              <div>
-                <h3 className="text-sm font-bold text-app-text">{selectedService.name}</h3>
-                <p className="text-app-muted">{selectedService.category}</p>
-              </div>
-              <span className="text-sm font-bold text-app-accent">${selectedService.estimatedCost}</span>
-            </div>
-
-            <div className="p-3 bg-app-input rounded-sm border border-app-border">
-              <p className="text-[10px] text-app-muted uppercase font-semibold">{t('services.description')}</p>
-              <p className="text-app-text mt-1">{selectedService.description || 'Standard workshop procedure.'}</p>
-            </div>
-
-            {/* Bill of Materials list */}
-            <div className="p-3 bg-app-card rounded-sm border border-app-border space-y-2">
-              <p className="text-[10px] text-app-muted uppercase font-semibold flex items-center gap-1">
-                <Package size={14} className="text-amber-500" />
-                Required Spare Parts (Auto Stock-Out)
-              </p>
-              {selectedService.requiredParts && selectedService.requiredParts.length > 0 ? (
-                <div className="space-y-1.5">
-                  {selectedService.requiredParts.map((p, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-2 rounded-sm bg-app-hover/50 border border-app-border">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold">
-                          {p.quantity}x
-                        </span>
-                        <span className="font-semibold text-app-text">{p.name}</span>
-                        <span className="text-app-muted text-[10px]">({p.partCode})</span>
-                      </div>
-                      <div className="text-right">
-                        <span className={`text-[11px] font-semibold ${p.stockQuantity > 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                          {p.stockQuantity > 0 ? `${p.stockQuantity} in stock` : 'Out of stock'}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-app-muted italic text-[11px]">No parts required for this service.</p>
-              )}
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-4">
-              {can('services', 'update') && (
-                <button
-                  onClick={() => handleOpenEdit(selectedService)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-app-card hover:bg-app-hover active:scale-[0.98] border border-app-border text-app-text font-semibold rounded-sm text-xs transition-colors cursor-pointer"
-                >
-                  <PencilSimple size={14} weight="bold" />
-                  Edit
-                </button>
-              )}
-              {can('services', 'delete') && (
-                <button
-                  onClick={() => handleOpenDelete(selectedService)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 font-semibold rounded-sm text-xs transition-colors cursor-pointer border border-rose-500/20"
-                >
-                  <Trash size={14} weight="bold" />
-                  Delete
-                </button>
-              )}
-            </div>
-          </div>
-        )}
       </Modal>
 
       {/* Delete Confirmation */}

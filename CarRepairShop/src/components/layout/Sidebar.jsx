@@ -90,12 +90,14 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
       {/* Brand Header */}
       <div className="flex items-center justify-between h-14 px-3.5 border-b border-[var(--sidebar-border)]">
         <div className="flex items-center gap-2.5 overflow-hidden">
-          <div className="flex-shrink-0 w-8 h-8 bg-app-accent rounded flex items-center justify-center">
-            <Logo size={18} className="text-white dark:text-gray-950" strokeWidth={2.4} />
+          <div className="flex-shrink-0 w-8 h-8 bg-app-accent rounded-md flex items-center justify-center shadow-xs">
+            <Logo size={18} className="text-white dark:text-gray-950" />
           </div>
           {!collapsed && (
             <div className="min-w-0">
-              <h1 className="text-xs font-bold text-app-text tracking-wide uppercase truncate">{t('common.appName')}</h1>
+              <h1 className="text-sm font-black text-app-text tracking-[0.18em] uppercase truncate font-sans">
+                {t('common.appName')}
+              </h1>
             </div>
           )}
         </div>

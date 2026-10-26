@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, PencilSimple, Trash, MapPin, User } from '@phosphor-icons/react'
+import { Plus, Trash } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useCustomers, useCreateCustomer, useUpdateCustomer, useDeleteCustomer } from '../../hooks/useCustomers'
 import { useDebounce } from '../../hooks/useDebounce'
@@ -25,7 +25,6 @@ export default function CustomersPage() {
   // Modal states
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
-  const [isViewOpen, setIsViewOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [selectedCustomer, setSelectedCustomer] = useState(null)
 
@@ -50,17 +49,12 @@ export default function CustomersPage() {
       email: customer.email,
       address: customer.address || '',
     })
-    setIsViewOpen(false); setIsEditOpen(true)
-  }
-
-  const handleOpenView = (customer) => {
-    setSelectedCustomer(customer)
-    setIsViewOpen(true)
+    setIsEditOpen(true)
   }
 
   const handleOpenDelete = (customer) => {
     setSelectedCustomer(customer)
-    setIsViewOpen(false); setIsDeleteOpen(true)
+    setIsDeleteOpen(true)
   }
 
   const handleCreate = async (e) => {
@@ -141,7 +135,7 @@ export default function CustomersPage() {
             {customers.map((customer) => (
               <TableRow
                 key={customer.id}
-                onClick={() => handleOpenView(customer)}
+                onClick={() => handleOpenEdit(customer)}
                 className="cursor-pointer"
               >
                 <TableCell className="font-mono font-semibold text-app-accent">{customer.code}</TableCell>
@@ -263,86 +257,37 @@ export default function CustomersPage() {
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
             />
           </div>
-          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-app-border">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsEditOpen(false)}
-            >
-              {t('common.cancel')}
-            </Button>
-            <LoadingButton type="submit" loading={updateCustomerMutation.isPending}>
-              {t('common.saveChanges')}
-            </LoadingButton>
+          <div className="flex items-center justify-between pt-4 border-t border-app-border">
+            {can('customers', 'delete') ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-rose-500 hover:text-rose-600 hover:bg-rose-500/10"
+                onClick={() => {
+                  handleOpenDelete(selectedCustomer)
+                  setIsEditOpen(false)
+                }}
+              >
+                <Trash size={14} className="mr-1.5" />
+                {t('common.delete')}
+              </Button>
+            ) : <div />}
+            <div className="flex items-center gap-2.5">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditOpen(false)}
+              >
+                {t('common.cancel')}
+              </Button>
+              <LoadingButton type="submit" loading={updateCustomerMutation.isPending}>
+                {t('common.saveChanges')}
+              </LoadingButton>
+            </div>
           </div>
         </form>
-      </Modal>
-
-      {/* View Customer Details Modal */}
-      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('customers.title')}>
-        {selectedCustomer && (
-          <div className="space-y-4 text-xs">
-            <div className="flex items-center gap-3 p-3 bg-app-hover/50 rounded-sm border border-app-border">
-              <div className="w-10 h-10 rounded-sm bg-app-accent/15 flex items-center justify-center text-app-accent flex-shrink-0">
-                <User size={22} weight="bold" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-app-text">{selectedCustomer.name}</h3>
-                <p className="font-mono text-app-accent font-semibold">{selectedCustomer.code}</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-app-input rounded-sm border border-app-border">
-                <p className="text-[10px] text-app-muted uppercase font-semibold">{t('customers.phone')}</p>
-                <p className="font-semibold text-app-text mt-0.5">{selectedCustomer.phone}</p>
-              </div>
-              <div className="p-3 bg-app-input rounded-sm border border-app-border">
-                <p className="text-[10px] text-app-muted uppercase font-semibold">{t('customers.email')}</p>
-                <p className="font-semibold text-app-text mt-0.5 truncate">{selectedCustomer.email || '—'}</p>
-              </div>
-              <div className="p-3 bg-app-input rounded-sm border border-app-border">
-                <p className="text-[10px] text-app-muted uppercase font-semibold">{t('customers.totalSpent')}</p>
-                <p className="font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{selectedCustomer.totalSpent || '$0.00'}</p>
-              </div>
-              <div className="p-3 bg-app-input rounded-sm border border-app-border">
-                <p className="text-[10px] text-app-muted uppercase font-semibold">{t('vehicles.lastService')}</p>
-                <p className="font-semibold text-app-text mt-0.5">{selectedCustomer.registrationDate || '2026-01-15'}</p>
-              </div>
-            </div>
-
-            {selectedCustomer.address && (
-              <div className="p-3 bg-app-input rounded-sm border border-app-border flex items-start gap-2">
-                <MapPin size={16} className="text-app-accent flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-[10px] text-app-muted uppercase font-semibold">{t('customers.address')}</p>
-                  <p className="text-app-text font-medium">{selectedCustomer.address}</p>
-                </div>
-              </div>
-            )}
-
-            <div className="flex items-center justify-end gap-2 pt-4">
-              {can('customers', 'update') && (
-                <Button
-                  variant="outline"
-                  onClick={() => handleOpenEdit(selectedCustomer)}
-                >
-                  <PencilSimple size={14} weight="bold" />
-                  Edit
-                </Button>
-              )}
-              {can('customers', 'delete') && (
-                <Button
-                  variant="destructive"
-                  onClick={() => handleOpenDelete(selectedCustomer)}
-                >
-                  <Trash size={14} weight="bold" />
-                  Delete
-                </Button>
-              )}
-            </div>
-          </div>
-        )}
       </Modal>
 
       {/* Delete Confirmation Modal */}

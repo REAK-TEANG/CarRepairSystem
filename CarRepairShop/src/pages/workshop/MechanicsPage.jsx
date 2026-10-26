@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MagnifyingGlass, Plus, PencilSimple, Trash, Wrench, Car, UsersThree } from '@phosphor-icons/react'
+import { MagnifyingGlass, Plus, Trash, Wrench, Car, UsersThree } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useMechanics, useCreateMechanic, useUpdateMechanic, useDeleteMechanic } from '../../hooks/useMechanics'
 import { useDebounce } from '../../hooks/useDebounce'
@@ -42,7 +42,6 @@ export default function MechanicsPage() {
   // Modals
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
-  const [isViewOpen, setIsViewOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [selectedMechanic, setSelectedMechanic] = useState(null)
 
@@ -75,17 +74,12 @@ export default function MechanicsPage() {
   const handleOpenEdit = (m) => {
     setSelectedMechanic(m)
     setFormData({ ...m })
-    setIsViewOpen(false); setIsEditOpen(true)
-  }
-
-  const handleOpenView = (m) => {
-    setSelectedMechanic(m)
-    setIsViewOpen(true)
+    setIsEditOpen(true)
   }
 
   const handleOpenDelete = (m) => {
     setSelectedMechanic(m)
-    setIsViewOpen(false); setIsDeleteOpen(true)
+    setIsDeleteOpen(true)
   }
 
   const handleCreate = async (e) => {
@@ -238,7 +232,7 @@ export default function MechanicsPage() {
                 {mechanics.map((m) => (
                   <TableRow
                     key={m.id}
-                    onClick={() => handleOpenView(m)}
+                    onClick={() => handleOpenEdit(m)}
                     className="cursor-pointer"
                   >
                     <TableCell>
@@ -404,69 +398,35 @@ export default function MechanicsPage() {
               />
             </div>
           </div>
-          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-app-border">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setIsEditOpen(false)}
-            >
-              {t('common.cancel')}
-            </Button>
-            <LoadingButton type="submit" loading={updateMechanicMutation.isPending}>
-              {t('common.saveChanges')}
-            </LoadingButton>
+          <div className="flex items-center justify-between pt-4 border-t border-app-border">
+            {can('mechanics', 'delete') ? (
+              <button
+                type="button"
+                onClick={() => {
+                  handleOpenDelete(selectedMechanic)
+                  setIsEditOpen(false)
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 rounded-sm text-xs font-semibold transition-colors cursor-pointer"
+              >
+                <Trash size={14} weight="bold" />
+                <span>{t('common.delete')}</span>
+              </button>
+            ) : <div />}
+            <div className="flex items-center gap-2.5">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditOpen(false)}
+              >
+                {t('common.cancel')}
+              </Button>
+              <LoadingButton type="submit" loading={updateMechanicMutation.isPending}>
+                {t('common.saveChanges')}
+              </LoadingButton>
+            </div>
           </div>
         </form>
-      </Modal>
-
-      {/* View Mechanic Modal */}
-      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('mechanics.title')}>
-        {selectedMechanic && (
-          <div className="space-y-4 text-xs">
-            <div className="flex items-center gap-3 p-3 bg-app-hover/50 rounded-sm border border-app-border">
-              <div className="w-10 h-10 rounded-sm bg-app-accent/15 flex items-center justify-center text-app-accent flex-shrink-0">
-                <Wrench size={22} weight="bold" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-app-text">{selectedMechanic.name}</h3>
-                <p className="text-app-muted">{selectedMechanic.specialization}</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-app-input rounded-sm border border-app-border">
-                <p className="text-[10px] text-app-muted uppercase font-semibold">{t('mechanics.phone')}</p>
-                <p className="font-semibold text-app-text mt-0.5">{selectedMechanic.phone}</p>
-              </div>
-              <div className="p-3 bg-app-input rounded-sm border border-app-border">
-                <p className="text-[10px] text-app-muted uppercase font-semibold">{t('mechanics.hourlyRate')}</p>
-                <p className="font-bold text-app-accent mt-0.5">${selectedMechanic.hourlyRate}/hr</p>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-4">
-              {can('mechanics', 'update') && (
-                <button
-                  onClick={() => handleOpenEdit(selectedMechanic)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-app-card hover:bg-app-hover active:scale-[0.98] border border-app-border text-app-text font-semibold rounded-sm text-xs transition-colors cursor-pointer"
-                >
-                  <PencilSimple size={14} weight="bold" />
-                  Edit
-                </button>
-              )}
-              {can('mechanics', 'delete') && (
-                <button
-                  onClick={() => handleOpenDelete(selectedMechanic)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 font-semibold rounded-sm text-xs transition-colors cursor-pointer border border-rose-500/20"
-                >
-                  <Trash size={14} weight="bold" />
-                  Delete
-                </button>
-              )}
-            </div>
-          </div>
-        )}
       </Modal>
 
       {/* Delete Confirmation */}

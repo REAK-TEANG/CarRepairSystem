@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, PencilSimple, Trash, Buildings } from '@phosphor-icons/react'
+import { Plus, Trash, Buildings } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from '../../hooks/useSuppliers'
 import { useDebounce } from '../../hooks/useDebounce'
@@ -34,7 +34,6 @@ export default function SuppliersPage() {
   // Modals
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
-  const [isViewOpen, setIsViewOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [selectedSupplier, setSelectedSupplier] = useState(null)
 
@@ -63,17 +62,12 @@ export default function SuppliersPage() {
   const handleOpenEdit = (s) => {
     setSelectedSupplier(s)
     setFormData({ ...s })
-    setIsViewOpen(false); setIsEditOpen(true)
-  }
-
-  const handleOpenView = (s) => {
-    setSelectedSupplier(s)
-    setIsViewOpen(true)
+    setIsEditOpen(true)
   }
 
   const handleOpenDelete = (s) => {
     setSelectedSupplier(s)
-    setIsViewOpen(false); setIsDeleteOpen(true)
+    setIsDeleteOpen(true)
   }
 
   const handleCreate = async (e) => {
@@ -154,7 +148,7 @@ export default function SuppliersPage() {
             {suppliers.map((s) => (
               <TableRow
                 key={s.id}
-                onClick={() => handleOpenView(s)}
+                onClick={() => handleOpenEdit(s)}
                 className="cursor-pointer"
               >
                 <TableCell>
@@ -282,77 +276,35 @@ export default function SuppliersPage() {
               />
             </div>
           </div>
-          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-app-border">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setIsEditOpen(false)}
-            >
-              {t('common.cancel')}
-            </Button>
-            <LoadingButton type="submit" loading={updateSupplierMutation.isPending}>
-              {t('common.saveChanges')}
-            </LoadingButton>
+          <div className="flex items-center justify-between pt-4 border-t border-app-border">
+            {can('suppliers', 'delete') ? (
+              <button
+                type="button"
+                onClick={() => {
+                  handleOpenDelete(selectedSupplier)
+                  setIsEditOpen(false)
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 rounded-sm text-xs font-semibold transition-colors cursor-pointer"
+              >
+                <Trash size={14} weight="bold" />
+                <span>{t('common.delete')}</span>
+              </button>
+            ) : <div />}
+            <div className="flex items-center gap-2.5">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditOpen(false)}
+              >
+                {t('common.cancel')}
+              </Button>
+              <LoadingButton type="submit" loading={updateSupplierMutation.isPending}>
+                {t('common.saveChanges')}
+              </LoadingButton>
+            </div>
           </div>
         </form>
-      </Modal>
-
-      {/* View Supplier Modal */}
-      <Modal isOpen={isViewOpen} onClose={() => setIsViewOpen(false)} title={t('suppliers.title')} maxWidth="max-w-xl">
-        {selectedSupplier && (
-          <div className="space-y-4 text-xs">
-            <div className="flex items-center gap-3 p-3 bg-app-hover/50 rounded-sm border border-app-border">
-              <div className="w-10 h-10 rounded-sm bg-app-accent/15 flex items-center justify-center text-app-accent flex-shrink-0">
-                <Buildings size={22} weight="bold" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-app-text">{selectedSupplier.name}</h3>
-                <p className="text-app-muted">{selectedSupplier.categories}</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-app-input rounded-sm border border-app-border">
-                <p className="text-[10px] text-app-muted uppercase font-semibold">{t('suppliers.contactPerson')}</p>
-                <p className="font-semibold text-app-text mt-0.5">{selectedSupplier.contactPerson}</p>
-              </div>
-              <div className="p-3 bg-app-input rounded-sm border border-app-border">
-                <p className="text-[10px] text-app-muted uppercase font-semibold">{t('suppliers.phone')}</p>
-                <p className="font-semibold text-app-text mt-0.5">{selectedSupplier.phone}</p>
-              </div>
-              <div className="p-3 bg-app-input rounded-sm border border-app-border">
-                <p className="text-[10px] text-app-muted uppercase font-semibold">{t('suppliers.email')}</p>
-                <p className="font-semibold text-app-text mt-0.5">{selectedSupplier.email || '—'}</p>
-              </div>
-              <div className="p-3 bg-app-input rounded-sm border border-app-border">
-                <p className="text-[10px] text-app-muted uppercase font-semibold">{t('suppliers.address')}</p>
-                <p className="font-semibold text-app-text mt-0.5">{selectedSupplier.address || 'Phnom Penh'}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-4">
-              {can('suppliers', 'update') && (
-                <button
-                  onClick={() => handleOpenEdit(selectedSupplier)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-app-card hover:bg-app-hover active:scale-[0.98] border border-app-border text-app-text font-semibold rounded-sm text-xs transition-colors cursor-pointer"
-                >
-                  <PencilSimple size={14} weight="bold" />
-                  Edit
-                </button>
-              )}
-              {can('suppliers', 'delete') && (
-                <button
-                  onClick={() => handleOpenDelete(selectedSupplier)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 font-semibold rounded-sm text-xs transition-colors cursor-pointer border border-rose-500/20"
-                >
-                  <Trash size={14} weight="bold" />
-                  Delete
-                </button>
-              )}
-            </div>
-          </div>
-        )}
       </Modal>
 
       {/* Delete Confirmation */}

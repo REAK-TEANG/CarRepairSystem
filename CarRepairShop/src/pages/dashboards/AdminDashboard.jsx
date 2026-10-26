@@ -39,12 +39,12 @@ export default function AdminDashboard() {
   const { data: rawEmployees = [] } = useEmployees({ all: true })
   const { data: rawAppointments = [] } = useAppointments({ all: true })
 
-  const invoices = Array.isArray(rawInvoices) ? rawInvoices : (rawInvoices?.data || [])
-  const customers = Array.isArray(rawCustomers) ? rawCustomers : (rawCustomers?.data || [])
-  const repairJobs = Array.isArray(rawRepairJobs) ? rawRepairJobs : (rawRepairJobs?.data || [])
-  const inventory = Array.isArray(rawInventory) ? rawInventory : (rawInventory?.data || [])
-  const employees = Array.isArray(rawEmployees) ? rawEmployees : (rawEmployees?.data || [])
-  const appointments = Array.isArray(rawAppointments) ? rawAppointments : (rawAppointments?.data || [])
+  const invoices = useMemo(() => (Array.isArray(rawInvoices) ? rawInvoices : (rawInvoices?.data || [])), [rawInvoices])
+  const customers = useMemo(() => (Array.isArray(rawCustomers) ? rawCustomers : (rawCustomers?.data || [])), [rawCustomers])
+  const repairJobs = useMemo(() => (Array.isArray(rawRepairJobs) ? rawRepairJobs : (rawRepairJobs?.data || [])), [rawRepairJobs])
+  const inventory = useMemo(() => (Array.isArray(rawInventory) ? rawInventory : (rawInventory?.data || [])), [rawInventory])
+  const employees = useMemo(() => (Array.isArray(rawEmployees) ? rawEmployees : (rawEmployees?.data || [])), [rawEmployees])
+  const appointments = useMemo(() => (Array.isArray(rawAppointments) ? rawAppointments : (rawAppointments?.data || [])), [rawAppointments])
 
   const isInitialLoading = (loadingInvoices || loadingJobs || loadingCustomers || loadingInventory) && invoices.length === 0
 

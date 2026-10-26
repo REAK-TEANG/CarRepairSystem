@@ -8,22 +8,15 @@ import {
   Moon,
   Sun,
   ArrowClockwise,
-  Wrench,
-  User,
-  Car,
-  Package,
-  X,
 } from '@phosphor-icons/react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
-import { useCustomers } from '../../hooks/useCustomers'
-import { useVehicles } from '../../hooks/useVehicles'
 import { useRepairJobs } from '../../hooks/useRepairJobs'
 import { useInventory } from '../../hooks/useInventory'
+import { useAppStore } from '../../store/useAppStore'
 import LanguageSwitcher from '../ui/LanguageSwitcher'
-import { Input } from '../ui'
 
 const routeTitleKeys = {
   '/admin/dashboard': 'titles.adminOverview',
@@ -46,112 +39,37 @@ export default function TopBar({ onToggleSidebar }) {
   const { t } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
-  const [searchQuery, setSearchQuery] = useState('')
-  const [isSearchOpen, setIsSearchOpen] = useState(false)
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
+  const setCommandPaletteOpen = useAppStore((state) => state.setCommandPaletteOpen)
+
   const [profileOpen, setProfileOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
-  const searchRef = useRef(null)
-  const mobileSearchRef = useRef(null)
+  const profileRef = useRef(null)
+  const notifRef = useRef(null)
 
   const { user, can, logout } = useAuth()
   const { isDark, toggleTheme } = useTheme()
 
-  const { data: rawCustomers } = useCustomers({ all: true }, { enabled: Boolean(user && can('customers', 'read')) })
-  const { data: rawVehicles } = useVehicles({ all: true }, { enabled: Boolean(user && can('vehicles', 'read')) })
   const { data: rawRepairJobs } = useRepairJobs({ all: true }, { enabled: Boolean(user && can('repair_jobs', 'read')) })
-  const { data: rawInventory } = useInventory({ all: true }, { enabled: Boolean(user && can('inventory', 'read')) })
-
-  const customers = Array.isArray(rawCustomers) ? rawCustomers : (rawCustomers?.data || [])
-  const vehicles = Array.isArray(rawVehicles) ? rawVehicles : (rawVehicles?.data || [])
   const repairJobs = Array.isArray(rawRepairJobs) ? rawRepairJobs : (rawRepairJobs?.data || [])
+
+  const { data: rawInventory } = useInventory({ all: true }, { enabled: Boolean(user && can('inventory', 'read')) })
   const inventory = Array.isArray(rawInventory) ? rawInventory : (rawInventory?.data || [])
 
   const currentTitle = routeTitleKeys[location.pathname] ? t(routeTitleKeys[location.pathname]) : t('nav.dashboards')
 
-  // Close search popover on outside click
+  // Close profile and notification popovers on outside click
   useEffect(() => {
     const handleOutsideClick = (e) => {
-      if (searchRef.current && !searchRef.current.contains(e.target)) {
-        setIsSearchOpen(false)
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setProfileOpen(false)
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setNotifOpen(false)
       }
     }
     document.addEventListener('mousedown', handleOutsideClick)
     return () => document.removeEventListener('mousedown', handleOutsideClick)
   }, [])
-
-  // Keyboard shortcut for Cmd/Ctrl + K
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault()
-        searchRef.current?.querySelector('input')?.focus()
-        setIsSearchOpen(true)
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
-
-  const query = searchQuery.trim().toLowerCase()
-
-  // Compute live multi-entity search results
-  const matchingJobs =
-    query.length >= 2
-      ? repairJobs
-          .filter(
-            (j) =>
-              (j?.orderNumber || '').toLowerCase().includes(query) ||
-              (j?.customer || '').toLowerCase().includes(query) ||
-              (j?.plate || '').toLowerCase().includes(query)
-          )
-          .slice(0, 3)
-      : []
-
-  const matchingCustomers =
-    query.length >= 2
-      ? customers
-          .filter(
-            (c) =>
-              (c?.name || '').toLowerCase().includes(query) ||
-              (c?.phone || '').includes(query) ||
-              (c?.code || '').toLowerCase().includes(query)
-          )
-          .slice(0, 3)
-      : []
-
-  const matchingVehicles =
-    query.length >= 2
-      ? vehicles
-          .filter(
-            (v) =>
-              (v?.number || '').toLowerCase().includes(query) ||
-              (v?.brand || '').toLowerCase().includes(query) ||
-              (v?.model || '').toLowerCase().includes(query)
-          )
-          .slice(0, 3)
-      : []
-
-  const matchingParts =
-    query.length >= 2
-      ? inventory
-          .filter(
-            (p) =>
-              (p?.name || '').toLowerCase().includes(query) ||
-              (p?.partCode || '').toLowerCase().includes(query) ||
-              (p?.brand || '').toLowerCase().includes(query)
-          )
-          .slice(0, 3)
-      : []
-
-  const totalResults = matchingJobs.length + matchingCustomers.length + matchingVehicles.length + matchingParts.length
-
-  const handleSelectResult = (path) => {
-    setIsSearchOpen(false)
-    setMobileSearchOpen(false)
-    setSearchQuery('')
-    navigate(path)
-  }
 
   const handleSignOut = () => {
     setProfileOpen(false)
@@ -180,156 +98,28 @@ export default function TopBar({ onToggleSidebar }) {
           </span>
         </div>
 
-        {/* Desktop Global Search Bar with Live Popover */}
-        <div ref={searchRef} className="relative hidden sm:block">
-          <MagnifyingGlass size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted z-10 pointer-events-none" />
-          <Input
-            type="text"
-            placeholder={t('common.quickSearch')}
-            value={searchQuery}
-            onFocus={() => setIsSearchOpen(true)}
-            onChange={(e) => {
-              setSearchQuery(e.target.value)
-              setIsSearchOpen(true)
-            }}
-            className="w-44 md:w-56 lg:w-72 pl-8 pr-10 py-1.5"
-          />
-          <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
-            {searchQuery ? (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="text-app-muted hover:text-app-text p-0.5 rounded"
-              >
-                <X size={13} weight="bold" />
-              </button>
-            ) : (
-              <span className="text-[10px] font-mono bg-app-hover border border-app-border px-1.5 py-0.5 rounded text-app-muted select-none hidden lg:inline">
-                ⌘K
-              </span>
-            )}
-          </div>
-
-          {/* Quick Search Results Dropdown */}
-          {isSearchOpen && query.length >= 2 && (
-            <div className="absolute left-0 top-full mt-2 w-80 sm:w-96 bg-app-card border border-app-border rounded-sm shadow-card py-2 z-50 text-xs max-h-[75vh] overflow-y-auto max-w-[calc(100vw-2rem)]">
-              <div className="px-4 py-2 border-b border-app-border flex items-center justify-between text-xs text-app-muted font-medium">
-                <span>
-                  {t('common.searchResults')} ({totalResults})
-                </span>
-                <span className="font-mono text-[11px]">{t('common.escToClose')}</span>
-              </div>
-
-              {totalResults === 0 ? (
-                <div className="p-3.5 text-center text-xs text-app-muted">
-                  {t('common.noResultsFound')} "{searchQuery}".
-                </div>
-              ) : (
-                <div className="py-1 divide-y divide-app-border/40">
-                  {/* Repair Orders */}
-                  {matchingJobs.length > 0 && (
-                    <div className="py-1.5">
-                      <p className="px-4 py-1 text-xs text-app-muted font-medium">
-                        {t('nav.repairJobs')}
-                      </p>
-                      {matchingJobs.map((j) => (
-                        <button
-                          key={j.id}
-                          onClick={() => handleSelectResult('/repair-jobs')}
-                          className="w-full px-4 py-2 hover:bg-app-hover active:scale-[0.98] flex items-center gap-2.5 text-left transition-colors"
-                        >
-                          <Wrench size={15} className="text-app-accent flex-shrink-0" />
-                          <div className="truncate flex-1">
-                            <span className="font-mono font-bold text-app-accent mr-2">{j.orderNumber}</span>
-                            <span className="text-app-text font-medium">{j.customer}</span>
-                            <span className="text-[10px] text-app-muted ml-1.5">({j.vehicle})</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Customers */}
-                  {matchingCustomers.length > 0 && (
-                    <div className="py-1.5">
-                      <p className="px-4 py-1 text-xs text-app-muted font-medium">
-                        {t('nav.customers')}
-                      </p>
-                      {matchingCustomers.map((c) => (
-                        <button
-                          key={c.id}
-                          onClick={() => handleSelectResult('/customers')}
-                          className="w-full px-4 py-2 hover:bg-app-hover active:scale-[0.98] flex items-center gap-2.5 text-left transition-colors"
-                        >
-                          <User size={15} className="text-emerald-500 flex-shrink-0" />
-                          <div className="truncate flex-1">
-                            <span className="font-semibold text-app-text">{c.name}</span>
-                            <span className="text-[10px] text-app-muted ml-2 font-mono">{c.phone}</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Vehicles */}
-                  {matchingVehicles.length > 0 && (
-                    <div className="py-1.5">
-                      <p className="px-4 py-1 text-xs text-app-muted font-medium">
-                        {t('nav.vehicles')}
-                      </p>
-                      {matchingVehicles.map((v) => (
-                        <button
-                          key={v.id}
-                          onClick={() => handleSelectResult('/vehicles')}
-                          className="w-full px-4 py-2 hover:bg-app-hover active:scale-[0.98] flex items-center gap-2.5 text-left transition-colors"
-                        >
-                          <Car size={15} className="text-sky-500 flex-shrink-0" />
-                          <div className="truncate flex-1">
-                            <span className="font-mono font-bold text-app-accent mr-2">{v.number}</span>
-                            <span className="text-app-text font-medium">
-                              {v.brand} {v.model}
-                            </span>
-                            <span className="text-[10px] text-app-muted ml-1.5">({v.owner})</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Inventory Parts */}
-                  {matchingParts.length > 0 && (
-                    <div className="py-1.5">
-                      <p className="px-4 py-1 text-xs text-app-muted font-medium">
-                        {t('nav.inventory')}
-                      </p>
-                      {matchingParts.map((p) => (
-                        <button
-                          key={p.id}
-                          onClick={() => handleSelectResult('/inventory')}
-                          className="w-full px-4 py-2 hover:bg-app-hover active:scale-[0.98] flex items-center gap-2.5 text-left transition-colors"
-                        >
-                          <Package size={15} className="text-amber-500 flex-shrink-0" />
-                          <div className="truncate flex-1">
-                            <span className="font-semibold text-app-text">{p.name}</span>
-                            <span className="text-[10px] text-app-muted ml-2">({p.stockQty} in stock)</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        {/* Desktop Global Search Bar - Triggers Universal Spotlight Command Palette */}
+        <button
+          type="button"
+          onClick={() => setCommandPaletteOpen(true)}
+          className="relative hidden sm:flex items-center gap-2 w-44 md:w-56 lg:w-72 px-3 py-1.5 rounded-lg border border-app-border bg-app-input text-app-muted hover:border-app-accent/50 hover:text-app-text transition-all text-xs cursor-pointer shadow-xs text-left"
+          title="Open Command Palette (Ctrl+K or ⌘K)"
+        >
+          <MagnifyingGlass size={14} className="text-app-muted flex-shrink-0" />
+          <span className="flex-1 truncate">{t('common.quickSearch')}</span>
+          <span className="text-[10px] font-mono bg-app-hover border border-app-border px-1.5 py-0.5 rounded text-app-muted select-none hidden lg:inline">
+            ⌘K
+          </span>
+        </button>
       </div>
 
       {/* Right Action Icons & User Profile */}
       <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
         {/* Mobile Search Icon Button */}
         <button
-          onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
-          className="p-2 rounded-sm text-app-muted hover:bg-app-hover active:scale-[0.98] hover:text-app-text transition-all sm:hidden"
-          title={t('common.quickSearch')}
+          onClick={() => setCommandPaletteOpen(true)}
+          className="p-2 rounded-sm text-app-muted hover:bg-app-hover active:scale-[0.98] hover:text-app-text transition-all sm:hidden cursor-pointer"
+          title="Search (⌘K)"
         >
           <MagnifyingGlass size={18} weight="bold" />
         </button>
@@ -497,92 +287,6 @@ export default function TopBar({ onToggleSidebar }) {
           )}
         </div>
       </div>
-
-      {/* Mobile Search Full Overlay */}
-      {mobileSearchOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm sm:hidden flex flex-col p-4">
-          <div ref={mobileSearchRef} className="bg-app-card border border-app-border rounded-sm p-4 shadow-card space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <MagnifyingGlass size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted z-10 pointer-events-none" />
-                <Input
-                  type="text"
-                  autoFocus
-                  placeholder={t('common.quickSearch')}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-9 py-2"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-app-muted p-0.5"
-                  >
-                    <X size={14} />
-                  </button>
-                )}
-              </div>
-              <button
-                onClick={() => setMobileSearchOpen(false)}
-                className="px-3 py-2 text-xs font-semibold text-app-muted hover:text-app-text"
-              >
-                {t('common.cancel')}
-              </button>
-            </div>
-
-            {/* Live Search Results */}
-            {query.length >= 2 && (
-              <div className="max-h-[60vh] overflow-y-auto divide-y divide-app-border pt-2 text-xs">
-                {totalResults === 0 ? (
-                  <p className="text-center py-4 text-app-muted">{t('common.noResultsFound')}</p>
-                ) : (
-                  <>
-                    {matchingJobs.map((j) => (
-                      <button
-                        key={j.id}
-                        onClick={() => handleSelectResult('/repair-jobs')}
-                        className="w-full py-2.5 flex items-center gap-2.5 text-left"
-                      >
-                        <Wrench size={16} className="text-app-accent flex-shrink-0" />
-                        <div className="truncate flex-1">
-                          <p className="font-semibold text-app-text">{j.orderNumber} · {j.customer}</p>
-                          <p className="text-[10px] text-app-muted">{j.vehicle}</p>
-                        </div>
-                      </button>
-                    ))}
-                    {matchingCustomers.map((c) => (
-                      <button
-                        key={c.id}
-                        onClick={() => handleSelectResult('/customers')}
-                        className="w-full py-2.5 flex items-center gap-2.5 text-left"
-                      >
-                        <User size={16} className="text-emerald-500 flex-shrink-0" />
-                        <div className="truncate flex-1">
-                          <p className="font-semibold text-app-text">{c.name}</p>
-                          <p className="text-[10px] text-app-muted font-mono">{c.phone}</p>
-                        </div>
-                      </button>
-                    ))}
-                    {matchingVehicles.map((v) => (
-                      <button
-                        key={v.id}
-                        onClick={() => handleSelectResult('/vehicles')}
-                        className="w-full py-2.5 flex items-center gap-2.5 text-left"
-                      >
-                        <Car size={16} className="text-sky-500 flex-shrink-0" />
-                        <div className="truncate flex-1">
-                          <p className="font-semibold text-app-text">{v.number} - {v.brand} {v.model}</p>
-                          <p className="text-[10px] text-app-muted">{v.owner}</p>
-                        </div>
-                      </button>
-                    ))}
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </header>
   )
 }

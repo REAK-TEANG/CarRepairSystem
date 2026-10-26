@@ -11,6 +11,10 @@ export const useAppStore = create(
       mobileSidebarOpen: false,
       setMobileSidebarOpen: (value) => set({ mobileSidebarOpen: value }),
       toggleMobileSidebar: () => set((state) => ({ mobileSidebarOpen: !state.mobileSidebarOpen })),
+
+      commandPaletteOpen: false,
+      setCommandPaletteOpen: (value) => set({ commandPaletteOpen: value }),
+      toggleCommandPalette: () => set((state) => ({ commandPaletteOpen: !state.commandPaletteOpen })),
     }),
     {
       name: 'app-ui-storage',

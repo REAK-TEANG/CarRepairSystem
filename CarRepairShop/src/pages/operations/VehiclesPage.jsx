@@ -2,37 +2,44 @@ import { useState } from 'react'
 import {
   MagnifyingGlass,
   Plus,
-  PencilSimple,
-  Trash,
   GasPump,
   Car,
   ClockCounterClockwise,
-  Wrench,
-  CheckCircle,
-  WarningCircle,
-  Sparkle,
-  ShieldCheck,
-  User,
-  Phone,
-  EnvelopeSimple,
-  MapPin,
-  Gauge,
-  Package,
-  Copy,
-  Check,
-  CalendarBlank,
+  PencilSimple,
+  Trash,
 } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useVehicles, useCreateVehicle, useUpdateVehicle, useDeleteVehicle } from '../../hooks/useVehicles'
 import { useCustomers } from '../../hooks/useCustomers'
-import { useRepairJobs, useCreateRepairJob } from '../../hooks/useRepairJobs'
+import { useRepairJobs } from '../../hooks/useRepairJobs'
 import { useMechanics } from '../../hooks/useMechanics'
 import { useServicesCatalog } from '../../hooks/useServicesCatalog'
+import { useInventory } from '../../hooks/useInventory'
 import { useDebounce } from '../../hooks/useDebounce'
 import { usePaginationData } from '../../hooks/usePaginationData'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
-import { Modal, ImageUpload, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Button, StatusBadge, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, SearchableSelect, Input, Textarea } from '../../components/ui'
+import {
+  Modal,
+  ImageUpload,
+  ConfirmDialog,
+  EmptyState,
+  TableSkeleton,
+  LoadingButton,
+  Button,
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableFooterBar,
+  SearchableSelect,
+  Input,
+} from '../../components/ui'
+import VehicleHistoryDrawer from '../../components/workshop/VehicleHistoryDrawer'
+import FastIntakeModal from '../../components/workshop/FastIntakeModal'
+import JobCardDrawer from '../../components/workshop/JobCardDrawer'
 
 const fuelOptions = ['All', 'Petrol', 'Diesel', 'Hybrid', 'Electric']
 
@@ -49,34 +56,34 @@ export default function VehiclesPage() {
   const { data: response, isLoading } = useVehicles({ page, limit: 10, search: debouncedSearch })
   const { items: vehicles, totalCount, totalPages } = usePaginationData(response, { page, limit: 10 })
 
-
   const { data: rawCustomers = [] } = useCustomers({ all: true })
   const { data: rawRepairJobs = [] } = useRepairJobs({ all: true })
   const { data: rawMechanics = [] } = useMechanics({ all: true })
-  const { data: rawServicesCatalog = [] } = useServicesCatalog({ all: true })
+  const { data: rawServices = [] } = useServicesCatalog({ all: true })
+  const { data: rawInventory = [] } = useInventory({ all: true })
 
   const customers = Array.isArray(rawCustomers) ? rawCustomers : (rawCustomers?.data || [])
   const repairJobs = Array.isArray(rawRepairJobs) ? rawRepairJobs : (rawRepairJobs?.data || [])
   const mechanics = Array.isArray(rawMechanics) ? rawMechanics : (rawMechanics?.data || [])
-  const servicesCatalog = Array.isArray(rawServicesCatalog) ? rawServicesCatalog : (rawServicesCatalog?.data || [])
+  const services = Array.isArray(rawServices) ? rawServices : (rawServices?.data || [])
+  const inventory = Array.isArray(rawInventory) ? rawInventory : (rawInventory?.data || [])
 
   const createVehicleMutation = useCreateVehicle()
   const updateVehicleMutation = useUpdateVehicle()
   const deleteVehicleMutation = useDeleteVehicle()
-  const createJobMutation = useCreateRepairJob()
 
-  // Modals
+  // Modal & Drawer State
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
-  const [isViewOpen, setIsViewOpen] = useState(false)
+  const [isHistoryDrawerOpen, setIsHistoryDrawerOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
-  const [isCreateJobOpen, setIsCreateJobOpen] = useState(false)
   const [selectedVehicle, setSelectedVehicle] = useState(null)
 
-  // Service History In-Modal Filter & Search
-  const [historySearch, setHistorySearch] = useState('')
-  const [historyFilter, setHistoryFilter] = useState('All')
-  const [copiedVin, setCopiedVin] = useState(false)
+  // Fast Intake & Job Card Drawer State
+  const [isIntakeOpen, setIsIntakeOpen] = useState(false)
+  const [intakeInitialData, setIntakeInitialData] = useState(null)
+  const [isJobDrawerOpen, setIsJobDrawerOpen] = useState(false)
+  const [activeJobForDrawer, setActiveJobForDrawer] = useState(null)
 
   // Form: Vehicle
   const [formData, setFormData] = useState({
@@ -93,28 +100,6 @@ export default function VehiclesPage() {
     ownerId: '',
     image: '',
   })
-
-  // Form: Quick Work Order for Vehicle
-  const [jobFormData, setJobFormData] = useState({
-    customer: '',
-    customerId: '',
-    vehicle: '',
-    vehicleId: '',
-    plate: '',
-    mechanic: '',
-    mechanicId: '',
-    serviceId: '',
-    problem: '',
-    diagnosis: '',
-    estimatedCost: '$250',
-    status: 'Pending',
-    odometer: '',
-    fuelLevel: '1/2',
-    intakeNotes: '',
-    customerApproval: 'Approved',
-  })
-
-  const activeCatalogService = servicesCatalog.find((s) => String(s.id) === String(jobFormData.serviceId))
 
   const handleOpenAdd = () => {
     const defaultCust = customers[0]
@@ -151,61 +136,40 @@ export default function VehiclesPage() {
       ownerId: v.ownerId,
       image: v.image || '',
     })
-    setIsViewOpen(false); setIsViewOpen(false); setIsEditOpen(true)
+    setIsEditOpen(true)
   }
 
-  const handleOpenView = (v) => {
+  const handleOpenHistory = (v) => {
     setSelectedVehicle(v)
-    setHistorySearch('')
-    setHistoryFilter('All')
-    setIsViewOpen(true)
+    setIsHistoryDrawerOpen(true)
   }
 
-  const handleOpenDelete = (v) => {
+  const handleOpenDelete = (v, e) => {
+    if (e) e.stopPropagation()
     setSelectedVehicle(v)
-    setIsViewOpen(false); setIsDeleteOpen(true)
+    setIsDeleteOpen(true)
   }
 
-  const handleOpenCreateJob = (v) => {
+  const handleStartRepairForVehicle = (v) => {
     const cust = customers.find(
       (c) => (v.ownerId && String(c.id) === String(v.ownerId)) || (v.owner && c.name === v.owner)
-    ) || customers[0]
-    const defaultMec = mechanics[0]
-
-    setJobFormData({
-      customer: cust ? cust.name : v.owner || '',
-      customerId: cust ? cust.id : v.ownerId || '',
+    )
+    setIntakeInitialData({
       vehicle: `${v.brand} ${v.model}`,
       vehicleId: v.id,
       plate: v.number,
-      mechanic: defaultMec ? defaultMec.name : '',
-      mechanicId: defaultMec ? defaultMec.id : '',
-      serviceId: '',
-      problem: '',
-      diagnosis: '',
-      estimatedCost: '$250.00',
-      status: 'Pending',
-      odometer: String(v.mileage || ''),
-      fuelLevel: '1/2',
-      intakeNotes: 'Standard intake check-in',
-      customerApproval: 'Approved',
+      customer: cust ? cust.name : v.owner || '',
+      customerId: cust ? cust.id : v.ownerId || '',
+      odometer: v.mileage ? String(v.mileage) : '',
+      problem: 'Routine Maintenance & Inspection',
     })
-    setIsCreateJobOpen(true)
+    setIsIntakeOpen(true)
   }
 
-  const handleCatalogServiceSelect = (serviceId) => {
-    const selected = servicesCatalog.find((s) => String(s.id) === String(serviceId))
-    if (selected) {
-      setJobFormData((prev) => ({
-        ...prev,
-        serviceId: selected.id,
-        problem: prev.problem || selected.name,
-        diagnosis: prev.diagnosis || selected.description || `Execute ${selected.name} standard procedure`,
-        estimatedCost: `$${Number(selected.estimatedCost || 250).toFixed(2)}`,
-      }))
-    } else {
-      setJobFormData((prev) => ({ ...prev, serviceId: '' }))
-    }
+  const handleIntakeSuccess = (createdJob) => {
+    addToast(`Repair Order ${createdJob.orderNumber || ''} created successfully!`, 'success')
+    setActiveJobForDrawer(createdJob)
+    setIsJobDrawerOpen(true)
   }
 
   const handleCreateVehicle = async (e) => {
@@ -228,33 +192,7 @@ export default function VehiclesPage() {
     setIsDeleteOpen(false)
   }
 
-  const handleCreateJobSubmit = async (e) => {
-    e.preventDefault()
-    if (!jobFormData.problem) return
-    try {
-      await createJobMutation.mutateAsync({
-        ...jobFormData,
-        intakeInspection: {
-          odometer: jobFormData.odometer,
-          fuelLevel: jobFormData.fuelLevel,
-          notes: jobFormData.intakeNotes,
-        },
-      })
-      setIsCreateJobOpen(false)
-    } catch {
-      // Handled by mutation
-    }
-  }
-
-  const handleCopyVin = (vin) => {
-    if (!vin) return
-    navigator.clipboard.writeText(vin)
-    setCopiedVin(true)
-    addToast('VIN copied to clipboard', 'info')
-    setTimeout(() => setCopiedVin(false), 2000)
-  }
-
-  // Filter repair jobs for a specific vehicle
+  // Filter repair jobs for a specific vehicle in table row
   const getVehicleJobs = (vehicle) => {
     if (!vehicle) return []
     return repairJobs.filter((j) => {
@@ -268,8 +206,7 @@ export default function VehiclesPage() {
   const vehicleList = Array.isArray(vehicles) ? vehicles : []
   const filteredVehicles = vehicleList.filter((v) => fuelFilter === 'All' || v.fuelType === fuelFilter)
 
-  // Selected Vehicle Analytics
-  const selectedVehicleJobs = selectedVehicle ? getVehicleJobs(selectedVehicle) : []
+  // Current selected vehicle owner details
   const selectedOwner = selectedVehicle
     ? customers.find(
         (c) =>
@@ -277,42 +214,6 @@ export default function VehiclesPage() {
           (selectedVehicle.owner && c.name?.toLowerCase() === selectedVehicle.owner?.toLowerCase())
       )
     : null
-
-  const totalVehicleLifetimeSpent = selectedVehicleJobs.reduce((sum, j) => {
-    const cost = parseFloat(String(j.actualCost || j.estimatedCost || '0').replace(/[^0-9.]/g, '')) || 0
-    return sum + cost
-  }, 0)
-
-  const activeJob = selectedVehicleJobs.find((j) =>
-    ['Repairing', 'Diagnosing', 'Waiting for Parts', 'Pending', 'In Progress', 'Ready for Pickup'].includes(j.status)
-  )
-
-  const completedCount = selectedVehicleJobs.filter((j) => j.status === 'Completed').length
-  const activeCount = selectedVehicleJobs.filter((j) =>
-    ['Repairing', 'Diagnosing', 'Waiting for Parts', 'In Progress', 'Ready for Pickup'].includes(j.status)
-  ).length
-
-  // Filtered Service History in View Modal
-  const filteredHistory = selectedVehicleJobs.filter((j) => {
-    const sq = historySearch.trim().toLowerCase()
-    const matchesSearch =
-      !sq ||
-      (j?.orderNumber || '').toLowerCase().includes(sq) ||
-      (j?.problem || '').toLowerCase().includes(sq) ||
-      (j?.diagnosis || '').toLowerCase().includes(sq) ||
-      (j?.mechanic || '').toLowerCase().includes(sq) ||
-      (j?.partsUsed || []).some(
-        (p) => (p?.name || '').toLowerCase().includes(sq) || (p?.partCode || '').toLowerCase().includes(sq)
-      )
-
-    let matchesStatus = true
-    if (historyFilter === 'Completed') matchesStatus = j.status === 'Completed'
-    else if (historyFilter === 'In Progress') {
-      matchesStatus = ['Repairing', 'Diagnosing', 'Waiting for Parts', 'In Progress', 'Ready for Pickup'].includes(j.status)
-    } else if (historyFilter === 'Pending') matchesStatus = j.status === 'Pending'
-
-    return matchesSearch && matchesStatus
-  })
 
   return (
     <div className="space-y-3 sm:space-y-4 text-app-text font-sans transition-colors duration-200">
@@ -325,10 +226,7 @@ export default function VehiclesPage() {
           </span>
         </div>
         {can('vehicles', 'create') && (
-          <Button
-            onClick={handleOpenAdd}
-            size="sm"
-          >
+          <Button onClick={handleOpenAdd} size="sm">
             <Plus size={14} weight="bold" />
             <span>{t('vehicles.addVehicle')}</span>
           </Button>
@@ -362,7 +260,7 @@ export default function VehiclesPage() {
         </div>
 
         <div className="relative w-full sm:w-60">
-          <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted" />
+          <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted pointer-events-none" />
           <Input
             type="text"
             placeholder={t('common.quickSearch')}
@@ -406,6 +304,7 @@ export default function VehiclesPage() {
               <TableHead className="hidden md:table-cell">{t('vehicles.mileage')}</TableHead>
               <TableHead>{t('vehicles.owner')}</TableHead>
               <TableHead>Service History</TableHead>
+              <TableHead className="text-right">{t('common.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -418,7 +317,7 @@ export default function VehiclesPage() {
               return (
                 <TableRow
                   key={v.id}
-                  onClick={() => handleOpenView(v)}
+                  onClick={() => handleOpenHistory(v)}
                   className="cursor-pointer"
                 >
                   <TableCell className="font-mono font-bold text-app-accent">
@@ -476,6 +375,30 @@ export default function VehiclesPage() {
                         </span>
                       ) : (
                         <span className="text-[11px] text-app-muted italic">No service history</span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                      {can('vehicles', 'update') && (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEdit(v)}
+                          className="p-1 rounded-sm text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
+                          title={t('common.edit')}
+                        >
+                          <PencilSimple size={14} />
+                        </button>
+                      )}
+                      {can('vehicles', 'delete') && (
+                        <button
+                          type="button"
+                          onClick={(e) => handleOpenDelete(v, e)}
+                          className="p-1 rounded-sm text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                          title={t('common.delete')}
+                        >
+                          <Trash size={14} />
+                        </button>
                       )}
                     </div>
                   </TableCell>
@@ -725,561 +648,6 @@ export default function VehiclesPage() {
         </form>
       </Modal>
 
-      {/* View Vehicle & Comprehensive Lifetime Service History Modal */}
-      <Modal
-        isOpen={isViewOpen}
-        onClose={() => setIsViewOpen(false)}
-        title="Vehicle Profile & Service History"
-        maxWidth="max-w-4xl"
-      >
-        {selectedVehicle && (
-          <div className="space-y-5 text-xs">
-            {/* Top Vehicle Overview Card */}
-            <div className="p-4 bg-app-hover/50 rounded-sm border border-app-border flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div className="flex items-center gap-3.5">
-                {selectedVehicle.image ? (
-                  <img
-                    src={selectedVehicle.image}
-                    alt={`${selectedVehicle.brand} ${selectedVehicle.model}`}
-                    className="w-16 h-16 rounded-sm object-cover ring-2 ring-app-border bg-app-hover flex-shrink-0"
-                  />
-                ) : (
-                  <div className="w-16 h-16 rounded-sm bg-app-accent/15 border border-app-accent/30 flex items-center justify-center text-app-accent flex-shrink-0">
-                    <Car size={32} weight="duotone" />
-                  </div>
-                )}
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-bold text-app-text">
-                      {selectedVehicle.brand} {selectedVehicle.model}
-                    </h3>
-                    <span className="text-[11px] px-2 py-0.5 rounded-md bg-app-card border border-app-border text-app-muted font-medium">
-                      {selectedVehicle.year}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 mt-1">
-                    <span className="font-mono font-bold text-xs text-app-accent px-2 py-0.5 rounded-md bg-app-accent/10 border border-app-accent/20">
-                      {selectedVehicle.number}
-                    </span>
-                    {selectedVehicle.vin && (
-                      <button
-                        onClick={() => handleCopyVin(selectedVehicle.vin)}
-                        className="inline-flex items-center gap-1 font-mono text-[10px] text-app-muted hover:text-app-text px-2 py-0.5 rounded-md bg-app-input border border-app-border transition-colors cursor-pointer"
-                        title="Click to copy VIN"
-                      >
-                        {copiedVin ? <Check size={11} className="text-emerald-500" /> : <Copy size={11} />}
-                        VIN: {selectedVehicle.vin}
-                      </button>
-                    )}
-                    <span className="text-[11px] text-app-muted">
-                      {selectedVehicle.color} · {selectedVehicle.fuelType}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 flex-wrap">
-                {can('vehicles', 'update') && (
-                  <button
-                    onClick={() => handleOpenEdit(selectedVehicle)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-app-card hover:bg-app-hover active:scale-[0.98] border border-app-border text-app-text font-semibold rounded-sm text-xs transition-colors cursor-pointer flex-shrink-0"
-                  >
-                    <PencilSimple size={14} weight="bold" />
-                    Edit
-                  </button>
-                )}
-                {can('vehicles', 'delete') && (
-                  <button
-                    onClick={() => handleOpenDelete(selectedVehicle)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 font-semibold rounded-sm text-xs transition-colors cursor-pointer flex-shrink-0 border border-rose-500/20"
-                  >
-                    <Trash size={14} weight="bold" />
-                    Delete
-                  </button>
-                )}
-                {can('repair_jobs', 'create') && (
-                  <button
-                    onClick={() => handleOpenCreateJob(selectedVehicle)}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText font-semibold rounded-sm text-xs transition-colors shadow-subtle cursor-pointer flex-shrink-0"
-                  >
-                    <Plus size={14} weight="bold" />
-                    Book New Work Order
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Owner Details & Vehicle Specs Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {/* Owner Information */}
-              <div className="p-3.5 bg-app-card rounded-sm border border-app-border space-y-1.5">
-                <p className="text-xs font-medium text-app-muted flex items-center gap-1">
-                  <User size={13} className="text-app-accent" /> Registered Owner
-                </p>
-                <p className="font-bold text-sm text-app-text">{selectedVehicle.owner}</p>
-                {selectedOwner?.phone && (
-                  <p className="text-[11px] text-app-muted flex items-center gap-1">
-                    <Phone size={12} /> {selectedOwner.phone}
-                  </p>
-                )}
-                {selectedOwner?.email && (
-                  <p className="text-[11px] text-app-muted flex items-center gap-1 truncate">
-                    <EnvelopeSimple size={12} /> {selectedOwner.email}
-                  </p>
-                )}
-                {selectedOwner?.address && (
-                  <p className="text-[11px] text-app-muted flex items-center gap-1 truncate">
-                    <MapPin size={12} /> {selectedOwner.address}
-                  </p>
-                )}
-              </div>
-
-              {/* Odometer & Mileage Status */}
-              <div className="p-3.5 bg-app-card rounded-sm border border-app-border space-y-1.5">
-                <p className="text-xs font-medium text-app-muted flex items-center gap-1">
-                  <Gauge size={13} className="text-emerald-500" /> Recorded Odometer
-                </p>
-                <p className="font-mono font-bold text-lg text-app-text">
-                  {Number(selectedVehicle.mileage || 0).toLocaleString()}{' '}
-                  <span className="text-xs font-normal text-app-muted">km</span>
-                </p>
-                <p className="text-[11px] text-app-muted">
-                  Fuel: <span className="font-medium text-app-text">{selectedVehicle.fuelType}</span>
-                </p>
-                <p className="text-[11px] text-app-muted">
-                  Transmission: <span className="font-medium text-app-text">{selectedVehicle.transmission || 'Automatic'}</span>
-                </p>
-              </div>
-
-              {/* Current Workshop Status */}
-              <div className="p-3.5 bg-app-card rounded-sm border border-app-border space-y-1.5">
-                <p className="text-xs font-medium text-app-muted flex items-center gap-1">
-                  <Wrench size={13} className="text-amber-500" /> Workshop Status
-                </p>
-                {activeJob ? (
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-bold text-sky-600 dark:text-sky-400">In Workshop</span>
-                    </div>
-                    <p className="text-[11px] text-app-muted font-mono">{activeJob.orderNumber} - {activeJob.status}</p>
-                    <p className="text-[11px] text-app-text font-medium truncate">{activeJob.problem}</p>
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
-                      <CheckCircle size={15} weight="fill" />
-                      <span>Ready / Roadworthy</span>
-                    </div>
-                    <p className="text-[11px] text-app-muted">No active repairs pending for this vehicle.</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Lifetime Service History Metrics Bar */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              <div className="p-3 rounded-sm bg-app-input/60 border border-app-border text-center">
-                <span className="text-xs font-medium text-app-muted block">Total Services</span>
-                <span className="font-bold text-base text-app-text font-mono mt-0.5 block">
-                  {selectedVehicleJobs.length}
-                </span>
-              </div>
-              <div className="p-3 rounded-sm bg-app-input/60 border border-app-border text-center">
-                <span className="text-xs font-medium text-app-muted block">Completed Services</span>
-                <span className="font-bold text-base text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 block">
-                  {completedCount}
-                </span>
-              </div>
-              <div className="p-3 rounded-sm bg-app-input/60 border border-app-border text-center">
-                <span className="text-xs font-medium text-app-muted block">Active / Pending</span>
-                <span className="font-bold text-base text-amber-600 dark:text-amber-400 font-mono mt-0.5 block">
-                  {activeCount}
-                </span>
-              </div>
-              <div className="p-3 rounded-sm bg-app-input/60 border border-app-border text-center">
-                <span className="text-xs font-medium text-app-muted block">Lifetime Cost</span>
-                <span className="font-bold text-base text-app-accent font-mono mt-0.5 block">
-                  ${totalVehicleLifetimeSpent.toFixed(2)}
-                </span>
-              </div>
-            </div>
-
-            {/* Digital Service History Passport & Job Orders Timeline */}
-            <div className="p-4 bg-app-card rounded-sm border border-app-border space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-app-border pb-3">
-                <div>
-                  <h4 className="text-sm font-semibold text-app-text flex items-center gap-2">
-                    <ClockCounterClockwise size={18} className="text-emerald-500" weight="bold" />
-                    Service History
-                  </h4>
-                </div>
-
-                {/* Filter Tabs */}
-                <div className="flex items-center gap-1.5 overflow-x-auto">
-                  {['All', 'Completed', 'In Progress', 'Pending'].map((f) => (
-                    <button
-                      key={f}
-                      onClick={() => setHistoryFilter(f)}
-                      className={`px-2.5 py-1 rounded-sm text-[11px] font-semibold transition-colors cursor-pointer whitespace-nowrap ${
-                        historyFilter === f
-                          ? 'bg-app-accent text-app-accentText'
-                          : 'bg-app-input text-app-muted hover:text-app-text'
-                      }`}
-                    >
-                      {f} (
-                      {f === 'All'
-                        ? selectedVehicleJobs.length
-                        : f === 'Completed'
-                        ? completedCount
-                        : f === 'In Progress'
-                        ? activeCount
-                        : selectedVehicleJobs.filter((j) => j.status === 'Pending').length}
-                      )
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Service History Search */}
-              {selectedVehicleJobs.length > 0 && (
-                <div className="relative">
-                  <MagnifyingGlass size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted" />
-                  <Input
-                    type="text"
-                    placeholder="Search past repairs, problems, diagnoses, mechanics, or parts..."
-                    value={historySearch}
-                    onChange={(e) => setHistorySearch(e.target.value)}
-                    className="pl-8"
-                  />
-                </div>
-              )}
-
-              {/* Service History Cards List */}
-              {filteredHistory.length > 0 ? (
-                <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
-                  {filteredHistory.map((job) => (
-                    <div
-                      key={job.id}
-                      className="p-3.5 rounded-sm bg-app-hover/40 border border-app-border space-y-2.5 transition-all hover:border-app-accent/40"
-                    >
-                      {/* Job Header */}
-                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-app-border/60 pb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-xs text-app-accent">{job.orderNumber}</span>
-                          <span className="text-[11px] text-app-muted flex items-center gap-1">
-                            <CalendarBlank size={12} /> {job.createdAt}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <StatusBadge status={job.status} />
-                          <span className="font-mono font-bold text-app-text text-xs">
-                            {job.actualCost || job.estimatedCost}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Problem & Diagnosis */}
-                      <div className="space-y-1">
-                        <p className="text-xs font-semibold text-app-text flex items-start gap-1.5">
-                          <Wrench size={14} className="text-app-accent flex-shrink-0 mt-0.5" />
-                          <span>{job.problem}</span>
-                        </p>
-                        {job.diagnosis && (
-                          <div className="p-2 rounded-sm bg-app-card border border-app-border/80 text-[11px] text-app-muted">
-                            <span className="font-semibold text-app-text">Technician Findings: </span>
-                            {job.diagnosis}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* DVI Intake Details */}
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[10px]">
-                        <div className="p-1.5 rounded-sm bg-app-card border border-app-border flex items-center justify-between">
-                          <span className="text-app-muted flex items-center gap-1">
-                            <Gauge size={11} /> Intake Odometer
-                          </span>
-                          <span className="font-mono font-bold text-app-text">{job.odometer || '—'} km</span>
-                        </div>
-                        <div className="p-1.5 rounded-sm bg-app-card border border-app-border flex items-center justify-between">
-                          <span className="text-app-muted flex items-center gap-1">
-                            <User size={11} /> Technician
-                          </span>
-                          <span className="font-semibold text-app-text truncate">{job.mechanic || 'Workshop Team'}</span>
-                        </div>
-                        <div className="p-1.5 rounded-sm bg-app-card border border-app-border flex items-center justify-between col-span-2 sm:col-span-1">
-                          <span className="text-app-muted flex items-center gap-1">
-                            <ShieldCheck size={11} /> Quote Approval
-                          </span>
-                          <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                            {job.customerApproval || 'Approved'}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Parts Used Breakdown */}
-                      {job.partsUsed && job.partsUsed.length > 0 && (
-                        <div className="p-2.5 rounded-sm bg-app-card border border-app-border space-y-1.5">
-                          <p className="text-[10px] text-app-muted uppercase font-bold flex items-center gap-1">
-                            <Package size={12} className="text-amber-500" /> Replaced Spare Parts ({job.partsUsed.length})
-                          </p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {job.partsUsed.map((p, pIdx) => (
-                              <span
-                                key={pIdx}
-                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300 text-[10px] font-medium border border-amber-500/20"
-                                title={`Part SKU: ${p.partCode || p.name}`}
-                              >
-                                <strong>{p.quantity}x</strong> {p.name}
-                                {p.unitPrice ? ` ($${Number(p.unitPrice).toFixed(2)})` : ''}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Next Service Due Recommendation */}
-                      {(job.nextServiceDueDate || job.nextServiceDueKm) && (
-                        <div className="p-2 rounded-sm bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">
-                          <span>Recommended Next Maintenance:</span>
-                          <span className="font-semibold">
-                            {job.nextServiceDueDate ? job.nextServiceDueDate : ''}{' '}
-                            {job.nextServiceDueKm ? `at ${Number(job.nextServiceDueKm).toLocaleString()} km` : ''}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : selectedVehicleJobs.length === 0 ? (
-                <div className="py-8 text-center space-y-3">
-                  <div className="w-12 h-12 rounded-sm bg-app-hover border border-app-border flex items-center justify-center text-app-muted mx-auto">
-                    <ClockCounterClockwise size={24} weight="duotone" />
-                  </div>
-                  <div>
-                    <h5 className="font-semibold text-app-text">No Service History Logged</h5>
-                    <p className="text-xs text-app-muted mt-0.5">
-                      This vehicle has not had any repair jobs or maintenance orders registered yet.
-                    </p>
-                  </div>
-                  {can('repair_jobs', 'create') && (
-                    <button
-                      onClick={() => handleOpenCreateJob(selectedVehicle)}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText font-semibold rounded-sm text-xs transition-colors cursor-pointer shadow-subtle"
-                    >
-                      <Plus size={14} weight="bold" />
-                      Create First Work Order
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <p className="text-xs text-app-muted text-center py-4 italic">
-                  No service records matching "{historySearch}".
-                </p>
-              )}
-            </div>
-
-            {/* Modal Footer Actions */}
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-app-border">
-              <button
-                type="button"
-                onClick={() => setIsViewOpen(false)}
-                className="px-4 py-2 rounded-sm bg-app-hover hover:bg-app-hover active:scale-[0.98]/80 text-app-text transition-colors text-xs font-semibold cursor-pointer"
-              >
-                {t('common.close')}
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
-
-      {/* Direct Work Order Creation Modal for this Vehicle */}
-      <Modal
-        isOpen={isCreateJobOpen}
-        onClose={() => setIsCreateJobOpen(false)}
-        title={`New Work Order: ${jobFormData.plate} (${jobFormData.vehicle})`}
-      >
-        <form onSubmit={handleCreateJobSubmit} className="space-y-4 text-xs">
-          {/* Service Package Selector */}
-          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-sm space-y-2">
-            <label className="block text-emerald-800 dark:text-emerald-300 font-semibold flex items-center gap-1.5">
-              <Sparkle size={15} weight="fill" className="text-emerald-500" />
-              Choose Service Package (Auto-configures cost & required parts)
-            </label>
-            <SearchableSelect
-              value={jobFormData.serviceId}
-              onChange={(val) => handleCatalogServiceSelect(val)}
-              options={servicesCatalog.map((s) => ({
-                value: s.id,
-                label: `${s.name} ($${Number(s.estimatedCost || 0).toFixed(2)})`,
-                sublabel: `${s.requiredParts?.length || 0} required parts`,
-              }))}
-              placeholder="-- Choose Service Package (e.g. Oil Change, Brake Service) --"
-              searchPlaceholder="Search service package..."
-            />
-
-            {/* Live Auto Stock-Out Preview */}
-            {activeCatalogService && (
-              <div className="mt-2 pt-2 border-t border-emerald-500/20 space-y-1.5">
-                <p className="text-[11px] font-semibold text-emerald-800 dark:text-emerald-300 flex items-center gap-1">
-                  <Package size={13} />
-                  Auto Stock-Out Preview for "{activeCatalogService.name}":
-                </p>
-                {activeCatalogService.requiredParts && activeCatalogService.requiredParts.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                    {activeCatalogService.requiredParts.map((p, idx) => {
-                      const isAvailable = (p.stockQuantity || 0) >= (p.quantity || 1)
-                      return (
-                        <div
-                          key={idx}
-                          className={`p-2 rounded-sm border flex items-center justify-between text-[11px] ${
-                            isAvailable
-                              ? 'bg-emerald-500/5 border-emerald-500/20 text-app-text'
-                              : 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400'
-                          }`}
-                        >
-                          <span className="font-medium">
-                            {p.quantity}x {p.name}
-                          </span>
-                          <span className="font-semibold text-[10px] flex items-center gap-1">
-                            {isAvailable ? (
-                              <>
-                                <CheckCircle size={12} className="text-emerald-500" weight="fill" />
-                                {p.stockQuantity} in stock
-                              </>
-                            ) : (
-                              <>
-                                <WarningCircle size={12} className="text-rose-500" weight="fill" />
-                                Out of stock
-                              </>
-                            )}
-                          </span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-[10px] text-app-muted italic">This service requires no spare parts inventory deduction.</p>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-app-muted font-medium mb-1">{t('appointments.customer')} *</label>
-              <SearchableSelect
-                value={jobFormData.customer}
-                onChange={(val) => {
-                  const c = customers.find((x) => x.name === val)
-                  setJobFormData({ ...jobFormData, customer: val, customerId: c ? c.id : '' })
-                }}
-                options={customers.map((c) => ({
-                  value: c.name,
-                  label: c.name,
-                  sublabel: c.phone ? `Phone: ${c.phone}` : undefined,
-                }))}
-                placeholder="Select customer..."
-                searchPlaceholder="Search customer by name or phone..."
-              />
-            </div>
-            <div>
-              <label className="block text-app-muted font-medium mb-1">{t('repairJobs.technician')} *</label>
-              <SearchableSelect
-                value={jobFormData.mechanic}
-                onChange={(val) => {
-                  const m = mechanics.find((x) => x.name === val)
-                  setJobFormData({ ...jobFormData, mechanic: val, mechanicId: m ? m.id : '' })
-                }}
-                options={mechanics.map((m) => ({
-                  value: m.name,
-                  label: m.name,
-                  sublabel: m.specialization ? `Specialization: ${m.specialization}` : undefined,
-                }))}
-                placeholder="Select technician..."
-                searchPlaceholder="Search technician..."
-              />
-            </div>
-          </div>
-
-          {/* DVI Intake info */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-app-hover/40 border border-app-border rounded-sm">
-            <div>
-              <label className="block text-app-muted font-medium mb-1 flex items-center gap-1">
-                <Gauge size={12} /> Odometer (km)
-              </label>
-              <Input
-                type="number"
-                value={jobFormData.odometer}
-                onChange={(e) => setJobFormData({ ...jobFormData, odometer: e.target.value })}
-                placeholder="e.g. 52300"
-                className="font-mono"
-              />
-            </div>
-            <div>
-              <label className="block text-app-muted font-medium mb-1 flex items-center gap-1">
-                <GasPump size={12} /> Fuel Level
-              </label>
-              <SearchableSelect
-                value={jobFormData.fuelLevel}
-                onChange={(val) => setJobFormData({ ...jobFormData, fuelLevel: val })}
-                options={[
-                  { value: 'Empty', label: 'Empty' },
-                  { value: '1/4', label: '1/4 Tank' },
-                  { value: '1/2', label: '1/2 Tank' },
-                  { value: '3/4', label: '3/4 Tank' },
-                  { value: 'Full', label: 'Full Tank' },
-                ]}
-                placeholder="Fuel level..."
-                searchPlaceholder="Search level..."
-              />
-            </div>
-            <div>
-              <label className="block text-app-muted font-medium mb-1">Estimated Cost</label>
-              <Input
-                type="text"
-                value={jobFormData.estimatedCost}
-                onChange={(e) => setJobFormData({ ...jobFormData, estimatedCost: e.target.value })}
-                className="font-semibold"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-app-muted font-medium mb-1">{t('common.description')} / Problem *</label>
-            <Textarea
-              rows={2}
-              required
-              value={jobFormData.problem}
-              onChange={(e) => setJobFormData({ ...jobFormData, problem: e.target.value })}
-              placeholder="e.g. Brake pad wear squeal, oil renewal service"
-            />
-          </div>
-
-          <div>
-            <label className="block text-app-muted font-medium mb-1">{t('repairJobs.diagnosticReport')}</label>
-            <Textarea
-              rows={2}
-              value={jobFormData.diagnosis}
-              onChange={(e) => setJobFormData({ ...jobFormData, diagnosis: e.target.value })}
-              placeholder="e.g. Replace brake pads, inspect rotor thickness"
-            />
-          </div>
-
-          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-app-border">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsCreateJobOpen(false)}
-            >
-              {t('common.cancel')}
-            </Button>
-            <LoadingButton type="submit" loading={createJobMutation.isPending}>
-              {t('repairJobs.createWorkOrder')}
-            </LoadingButton>
-          </div>
-        </form>
-      </Modal>
-
       {/* Delete Confirmation Modal */}
       <ConfirmDialog
         isOpen={isDeleteOpen}
@@ -1288,6 +656,44 @@ export default function VehiclesPage() {
         title={t('common.delete')}
         message={t('vehicles.confirmDelete')}
         confirmText={t('common.delete')}
+      />
+
+      {/* Vehicle 360° Passport & Service History Drawer */}
+      <VehicleHistoryDrawer
+        key={selectedVehicle?.id || 'none-veh'}
+        isOpen={isHistoryDrawerOpen}
+        onClose={() => setIsHistoryDrawerOpen(false)}
+        vehicle={selectedVehicle}
+        owner={selectedOwner}
+        repairJobs={repairJobs}
+        onStartRepair={(v) => handleStartRepairForVehicle(v)}
+        onEditVehicle={(v) => handleOpenEdit(v)}
+      />
+
+      {/* Fast Vehicle Intake Modal */}
+      <FastIntakeModal
+        key={intakeInitialData?.plate || 'new-intake'}
+        isOpen={isIntakeOpen}
+        onClose={() => {
+          setIsIntakeOpen(false)
+          setIntakeInitialData(null)
+        }}
+        initialData={intakeInitialData}
+        onSuccess={handleIntakeSuccess}
+      />
+
+      {/* Job Card Drawer */}
+      <JobCardDrawer
+        key={activeJobForDrawer?.id || 'none-job'}
+        isOpen={isJobDrawerOpen}
+        onClose={() => {
+          setIsJobDrawerOpen(false)
+          setActiveJobForDrawer(null)
+        }}
+        job={activeJobForDrawer}
+        mechanics={mechanics}
+        services={services}
+        inventory={inventory}
       />
     </div>
   )

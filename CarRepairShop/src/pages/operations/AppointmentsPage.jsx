@@ -12,6 +12,7 @@ import {
   ChatCircleDots,
   CalendarCheck,
   Trash,
+  Sparkle,
 } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useAppointments, useCreateAppointment, useUpdateAppointment, useCancelAppointment } from '../../hooks/useAppointments'
@@ -20,11 +21,14 @@ import { useCustomers } from '../../hooks/useCustomers'
 import { useVehicles } from '../../hooks/useVehicles'
 import { useMechanics } from '../../hooks/useMechanics'
 import { useServicesCatalog } from '../../hooks/useServicesCatalog'
+import { useInventory } from '../../hooks/useInventory'
 import { useDebounce } from '../../hooks/useDebounce'
 import { usePaginationData } from '../../hooks/usePaginationData'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { Modal, StatusBadge, EmptyState, TableSkeleton, LoadingButton, Button, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, SearchableSelect, Input, Textarea } from '../../components/ui'
+import FastIntakeModal from '../../components/workshop/FastIntakeModal'
+import JobCardDrawer from '../../components/workshop/JobCardDrawer'
 
 const statusFilters = ['All', 'Scheduled', 'Confirmed', 'In Progress', 'Completed', 'Cancelled']
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -59,12 +63,14 @@ export default function AppointmentsPage() {
   const { data: rawVehicles = [] } = useVehicles({ all: true })
   const { data: rawMechanics = [] } = useMechanics({ all: true })
   const { data: rawServices = [] } = useServicesCatalog({ all: true })
+  const { data: rawInventory = [] } = useInventory({ all: true })
 
   const reminders = Array.isArray(rawReminders) ? rawReminders : (rawReminders?.data || [])
   const customers = Array.isArray(rawCustomers) ? rawCustomers : (rawCustomers?.data || [])
   const vehicles = Array.isArray(rawVehicles) ? rawVehicles : (rawVehicles?.data || [])
   const mechanics = Array.isArray(rawMechanics) ? rawMechanics : (rawMechanics?.data || [])
   const services = Array.isArray(rawServices) ? rawServices : (rawServices?.data || [])
+  const inventory = Array.isArray(rawInventory) ? rawInventory : (rawInventory?.data || [])
 
   const createAptMutation = useCreateAppointment()
   const updateAptMutation = useUpdateAppointment()
@@ -78,12 +84,35 @@ export default function AppointmentsPage() {
   const [calYear, setCalYear] = useState(new Date().getFullYear())
   const [selectedDate, setSelectedDate] = useState(null)
 
-  // Modals
+  // Modals & Drawers
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isViewOpen, setIsViewOpen] = useState(false)
   const [isAddReminderOpen, setIsAddReminderOpen] = useState(false)
   const [selectedApt, setSelectedApt] = useState(null)
+
+  // 1-Click Fast Check-In & Job Card Drawer State
+  const [isIntakeOpen, setIsIntakeOpen] = useState(false)
+  const [intakeInitialData, setIntakeInitialData] = useState(null)
+  const [isJobDrawerOpen, setIsJobDrawerOpen] = useState(false)
+  const [activeJobForDrawer, setActiveJobForDrawer] = useState(null)
+
+  const handleCheckInAppointment = (apt) => {
+    setIntakeInitialData({
+      ...apt,
+      problem: apt.service || apt.notes || 'Scheduled Maintenance',
+    })
+    setIsIntakeOpen(true)
+  }
+
+  const handleIntakeSuccess = (createdJob) => {
+    if (intakeInitialData?.id) {
+      updateAptMutation.mutate({ id: intakeInitialData.id, data: { status: 'In Progress' } })
+    }
+    addToast(`Customer checked in! Repair Order ${createdJob.orderNumber || ''} created.`, 'success')
+    setActiveJobForDrawer(createdJob)
+    setIsJobDrawerOpen(true)
+  }
 
   // Appointment Form
   const [formData, setFormData] = useState(() => ({
@@ -483,6 +512,17 @@ export default function AppointmentsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
+                          {/* 1-Click Fast Check-In & Start Repair */}
+                          {(apt.status === 'Scheduled' || apt.status === 'Confirmed') && (
+                            <button
+                              type="button"
+                              onClick={() => handleCheckInAppointment(apt)}
+                              className="p-1 rounded-sm text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors cursor-pointer"
+                              title="Check-In Customer & Start Repair Order"
+                            >
+                              <Sparkle size={14} weight="bold" />
+                            </button>
+                          )}
                           <button
                             onClick={() => handleOpenView(apt)}
                             className="p-1 rounded-sm text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
@@ -939,9 +979,50 @@ export default function AppointmentsPage() {
               <p className="text-[10px] text-app-muted uppercase font-semibold">{t('common.date')} & {t('common.time')}</p>
               <p className="font-semibold text-app-text mt-0.5">{selectedApt.date} at {selectedApt.time}</p>
             </div>
+
+            {/* Check-In Customer Button */}
+            {(selectedApt.status === 'Scheduled' || selectedApt.status === 'Confirmed') && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsViewOpen(false)
+                  handleCheckInAppointment(selectedApt)
+                }}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-colors cursor-pointer shadow-sm shadow-emerald-500/20"
+              >
+                <Sparkle size={15} weight="bold" />
+                Check-In Customer & Start Repair Order
+              </button>
+            )}
           </div>
         )}
       </Modal>
+
+      {/* Fast Vehicle Intake & Check-In Modal */}
+      <FastIntakeModal
+        key={intakeInitialData?.id || 'new-intake'}
+        isOpen={isIntakeOpen}
+        onClose={() => {
+          setIsIntakeOpen(false)
+          setIntakeInitialData(null)
+        }}
+        initialData={intakeInitialData}
+        onSuccess={handleIntakeSuccess}
+      />
+
+      {/* Job Card Drawer */}
+      <JobCardDrawer
+        key={activeJobForDrawer?.id || 'none-job'}
+        isOpen={isJobDrawerOpen}
+        onClose={() => {
+          setIsJobDrawerOpen(false)
+          setActiveJobForDrawer(null)
+        }}
+        job={activeJobForDrawer}
+        mechanics={mechanics}
+        services={services}
+        inventory={inventory}
+      />
     </div>
   )
 }

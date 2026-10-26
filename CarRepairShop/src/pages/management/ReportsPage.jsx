@@ -98,12 +98,12 @@ export default function ReportsPage() {
   const { data: customersQuery } = useCustomers()
   const { data: vehiclesQuery } = useVehicles()
 
-  const rawInvoices = Array.isArray(invoicesQuery) ? invoicesQuery : (invoicesQuery?.data || [])
-  const rawRepairJobs = Array.isArray(jobsQuery) ? jobsQuery : (jobsQuery?.data || [])
-  const rawInventory = Array.isArray(inventoryQuery) ? inventoryQuery : (inventoryQuery?.data || [])
-  const rawMechanics = Array.isArray(mechanicsQuery) ? mechanicsQuery : (mechanicsQuery?.data || [])
-  const rawCustomers = Array.isArray(customersQuery) ? customersQuery : (customersQuery?.data || [])
-  const rawVehicles = Array.isArray(vehiclesQuery) ? vehiclesQuery : (vehiclesQuery?.data || [])
+  const rawInvoices = useMemo(() => (Array.isArray(invoicesQuery) ? invoicesQuery : (invoicesQuery?.data || [])), [invoicesQuery])
+  const rawRepairJobs = useMemo(() => (Array.isArray(jobsQuery) ? jobsQuery : (jobsQuery?.data || [])), [jobsQuery])
+  const rawInventory = useMemo(() => (Array.isArray(inventoryQuery) ? inventoryQuery : (inventoryQuery?.data || [])), [inventoryQuery])
+  const rawMechanics = useMemo(() => (Array.isArray(mechanicsQuery) ? mechanicsQuery : (mechanicsQuery?.data || [])), [mechanicsQuery])
+  const rawCustomers = useMemo(() => (Array.isArray(customersQuery) ? customersQuery : (customersQuery?.data || [])), [customersQuery])
+  const rawVehicles = useMemo(() => (Array.isArray(vehiclesQuery) ? vehiclesQuery : (vehiclesQuery?.data || [])), [vehiclesQuery])
 
   const isInitialLoading =
     reportsLoading || invoicesLoading || jobsLoading || inventoryLoading
@@ -165,9 +165,9 @@ export default function ReportsPage() {
     })
   }, [rawRepairJobs, activeBounds])
 
-  const inventory = Array.isArray(rawInventory) ? rawInventory : []
-  const mechanics = Array.isArray(rawMechanics) ? rawMechanics : []
-  const customers = Array.isArray(rawCustomers) ? rawCustomers : []
+  const inventory = useMemo(() => (Array.isArray(rawInventory) ? rawInventory : []), [rawInventory])
+  const mechanics = useMemo(() => (Array.isArray(rawMechanics) ? rawMechanics : []), [rawMechanics])
+  const customers = useMemo(() => (Array.isArray(rawCustomers) ? rawCustomers : []), [rawCustomers])
 
   // Comprehensive Top KPI Calculations
   const totalInvoiced = invoices.reduce((sum, i) => sum + (Number(i.amount) || 0), 0)
