@@ -2,6 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import Logo from '../ui/Logo'
+import MobileAppHub from './MobileAppHub'
 import {
   SquaresFour,
   Users,
@@ -199,20 +200,8 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
         {sidebarContent}
       </div>
 
-      {/* Mobile Drawer with Overlay */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden flex">
-          {/* Backdrop */}
-          <div
-            onClick={onCloseMobile}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
-          />
-          {/* Drawer content */}
-          <div className="relative z-10 w-72 h-full shadow-2xl">
-            {sidebarContent}
-          </div>
-        </div>
-      )}
+      {/* Mobile Native App Hub / Action Sheet */}
+      <MobileAppHub isOpen={mobileOpen} onClose={onCloseMobile} />
     </>
   )
 }

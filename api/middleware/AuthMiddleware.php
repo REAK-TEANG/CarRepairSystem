@@ -96,12 +96,12 @@ class AuthMiddleware
             'storekeeper'     => ['read'],
         ],
         'reports' => [
-            'admin'           => ['read', 'export'],
+            'admin'           => ['create', 'read', 'update', 'delete', 'export'],
             'manager'         => ['read', 'export'],
             'service_advisor' => ['read'],
-            'mechanic'        => ['read'],
-            'cashier'         => ['read'],
-            'storekeeper'     => ['read'],
+            'mechanic'        => [],
+            'cashier'         => ['read', 'export'],
+            'storekeeper'     => ['read', 'export'],
         ],
         'settings' => [
             'admin'           => ['create', 'read', 'update', 'delete', 'export'],
@@ -120,6 +120,11 @@ class AuthMiddleware
             'storekeeper'     => [],
         ],
     ];
+
+    public static function getDefaultPermissions(): array
+    {
+        return self::DEFAULT_PERMISSIONS;
+    }
 
     /**
      * Ensure the token blacklist table exists in PostgreSQL

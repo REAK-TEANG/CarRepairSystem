@@ -50,8 +50,106 @@ export const ROLE_METADATA = {
 // Export for backward compatibility with existing route lookups
 export const ROLE_PROFILES = ROLE_METADATA
 
-// Export empty default for fallback
-export const DEFAULT_PERMISSIONS_MATRIX = {}
+// Single source of truth default permissions matrix across all workshop modules
+export const DEFAULT_PERMISSIONS_MATRIX = {
+  customers: {
+    admin: ['create', 'read', 'update', 'delete', 'export'],
+    manager: ['create', 'read', 'update', 'export'],
+    service_advisor: ['create', 'read', 'update', 'delete', 'export'],
+    mechanic: ['read'],
+    cashier: ['read'],
+    storekeeper: [],
+  },
+  vehicles: {
+    admin: ['create', 'read', 'update', 'delete', 'export'],
+    manager: ['create', 'read', 'update', 'export'],
+    service_advisor: ['create', 'read', 'update', 'delete', 'export'],
+    mechanic: ['read'],
+    cashier: ['read'],
+    storekeeper: [],
+  },
+  appointments: {
+    admin: ['create', 'read', 'update', 'delete', 'export'],
+    manager: ['create', 'read', 'update', 'delete', 'export'],
+    service_advisor: ['create', 'read', 'update', 'delete', 'export'],
+    mechanic: ['read'],
+    cashier: ['read'],
+    storekeeper: [],
+  },
+  service_reminders: {
+    admin: ['create', 'read', 'update', 'delete', 'export'],
+    manager: ['create', 'read', 'update', 'export'],
+    service_advisor: ['create', 'read', 'update', 'delete', 'export'],
+    mechanic: ['read'],
+    cashier: ['read'],
+    storekeeper: [],
+  },
+  repair_jobs: {
+    admin: ['create', 'read', 'update', 'delete', 'export'],
+    manager: ['create', 'read', 'update', 'delete', 'export'],
+    service_advisor: ['create', 'read', 'update', 'export'],
+    mechanic: ['read', 'update'],
+    cashier: ['read'],
+    storekeeper: ['read'],
+  },
+  services: {
+    admin: ['create', 'read', 'update', 'delete', 'export'],
+    manager: ['create', 'read', 'update', 'export'],
+    service_advisor: ['read'],
+    mechanic: ['read'],
+    cashier: ['read'],
+    storekeeper: [],
+  },
+  inventory: {
+    admin: ['create', 'read', 'update', 'delete', 'export'],
+    manager: ['create', 'read', 'update', 'export'],
+    service_advisor: ['read'],
+    mechanic: ['read'],
+    cashier: [],
+    storekeeper: ['create', 'read', 'update', 'delete', 'export'],
+  },
+  suppliers: {
+    admin: ['create', 'read', 'update', 'delete', 'export'],
+    manager: ['create', 'read', 'update', 'export'],
+    service_advisor: [],
+    mechanic: [],
+    cashier: [],
+    storekeeper: ['create', 'read', 'update', 'delete', 'export'],
+  },
+  invoices: {
+    admin: ['create', 'read', 'update', 'delete', 'export'],
+    manager: ['create', 'read', 'update', 'delete', 'export'],
+    service_advisor: ['create', 'read', 'export'],
+    mechanic: [],
+    cashier: ['create', 'read', 'update', 'export'],
+    storekeeper: [],
+  },
+  employees: {
+    admin: ['create', 'read', 'update', 'delete', 'export'],
+    manager: ['create', 'read', 'update', 'delete', 'export'],
+    service_advisor: ['read'],
+    mechanic: ['read'],
+    cashier: ['read'],
+    storekeeper: ['read'],
+  },
+  reports: {
+    admin: ['create', 'read', 'update', 'delete', 'export'],
+    manager: ['read', 'export'],
+    service_advisor: ['read'],
+    mechanic: [],
+    cashier: ['read', 'export'],
+    storekeeper: ['read', 'export'],
+  },
+  settings: {
+    admin: ['create', 'read', 'update', 'delete', 'export'],
+    manager: ['read'],
+    service_advisor: [],
+    mechanic: [],
+    cashier: [],
+    storekeeper: [],
+  },
+}
+
 export const PERMISSIONS_MATRIX = DEFAULT_PERMISSIONS_MATRIX
 
 const AuthContext = createContext(null)
@@ -71,17 +169,20 @@ export function AuthProvider({ children }) {
     return null
   })
 
-  // Dynamic permission matrix state loaded directly from PostgreSQL database
+  // Dynamic permission matrix state loaded directly from PostgreSQL database (with single-source-of-truth default)
   const [permissionsMatrix, setPermissionsMatrix] = useState(() => {
     const saved = localStorage.getItem('workshop_permissions_matrix')
     if (saved) {
       try {
-        return JSON.parse(saved)
+        const parsed = JSON.parse(saved)
+        if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+          return { ...DEFAULT_PERMISSIONS_MATRIX, ...parsed }
+        }
       } catch {
         // fallback
       }
     }
-    return {}
+    return DEFAULT_PERMISSIONS_MATRIX
   })
 
   // Available real database accounts
@@ -282,19 +383,16 @@ export function AuthProvider({ children }) {
     })
   }
 
-  // Reload permission matrix directly from the PostgreSQL database
+  // Reset permission matrix directly to factory defaults and sync with backend
   const resetPermissionsToDefault = async () => {
     try {
-      const dbMatrix = await settingsService.getPermissionsMatrix()
-      if (dbMatrix && typeof dbMatrix === 'object') {
-        setPermissionsMatrix(dbMatrix)
-        localStorage.setItem('workshop_permissions_matrix', JSON.stringify(dbMatrix))
-        return dbMatrix
-      }
+      await settingsService.updatePermissionsMatrix(DEFAULT_PERMISSIONS_MATRIX)
     } catch {
-      // ignore
+      // ignore network errors
     }
-    return permissionsMatrix
+    setPermissionsMatrix(DEFAULT_PERMISSIONS_MATRIX)
+    localStorage.setItem('workshop_permissions_matrix', JSON.stringify(DEFAULT_PERMISSIONS_MATRIX))
+    return DEFAULT_PERMISSIONS_MATRIX
   }
 
   // Dynamic Permission evaluation helper

@@ -78,6 +78,19 @@ class RateLimiter {
     public static function isRateLimited($identifier, $maxAttempts = 5, $decayMinutes = 15) {
         $ip = self::getClientIp();
         $cleanId = strtolower(trim($identifier));
+        $isLocal = ($ip === '127.0.0.1' || $ip === '::1' || (getenv('APP_ENV') ?: 'development') === 'development');
+
+        // Never lock out local development by IP
+        if ($isLocal) {
+            // Only protect against extreme brute force per identifier in local dev (e.g. 50 attempts)
+            self::initTable();
+            try {
+                $row = get("SELECT COUNT(*) AS cnt FROM login_attempts WHERE identifier = ? AND attempted_at >= NOW() - INTERVAL '$decayMinutes minutes'", [$cleanId]);
+                return ((int)($row['cnt'] ?? 0)) >= 50;
+            } catch (Throwable $e) {
+                return false;
+            }
+        }
         
         $redis = Cache::getClient();
         if ($redis) {
@@ -87,7 +100,7 @@ class RateLimiter {
                 $ipAttempts = (int)$redis->get($ipKey);
                 $idAttempts = (int)$redis->get($idKey);
                 
-                if ($ipAttempts >= $maxAttempts || $idAttempts >= $maxAttempts) {
+                if ($ipAttempts >= 30 || $idAttempts >= $maxAttempts) {
                     return true;
                 }
                 return false;
@@ -99,14 +112,14 @@ class RateLimiter {
         self::initTable();
 
         try {
-            $sql = "
-                SELECT COUNT(*) AS cnt 
-                FROM login_attempts 
-                WHERE (ip_address = ? OR identifier = ?) 
-                  AND attempted_at >= NOW() - INTERVAL '$decayMinutes minutes'
-            ";
-            $row = get($sql, [$ip, $cleanId]);
-            return ((int)($row['cnt'] ?? 0)) >= $maxAttempts;
+            // Check account-level lockout (5 attempts) OR IP-level DDoS lockout (30 attempts)
+            $idRow = get("SELECT COUNT(*) AS cnt FROM login_attempts WHERE identifier = ? AND attempted_at >= NOW() - INTERVAL '$decayMinutes minutes'", [$cleanId]);
+            if (((int)($idRow['cnt'] ?? 0)) >= $maxAttempts) {
+                return true;
+            }
+
+            $ipRow = get("SELECT COUNT(*) AS cnt FROM login_attempts WHERE ip_address = ? AND attempted_at >= NOW() - INTERVAL '$decayMinutes minutes'", [$ip]);
+            return ((int)($ipRow['cnt'] ?? 0)) >= 30;
         } catch (Throwable $e) {
             error_log("RateLimiter PG check error: " . $e->getMessage());
             return false;

@@ -47,9 +47,12 @@ class SettingsModel
         $row = Database::get("SELECT setting_value FROM settings WHERE setting_key = 'roles_permissions_matrix'");
         if ($row && !empty($row['setting_value'])) {
             $matrix = json_decode($row['setting_value'], true);
-            if (is_array($matrix)) {
+            if (is_array($matrix) && !empty($matrix)) {
                 return $matrix;
             }
+        }
+        if (class_exists('AuthMiddleware')) {
+            return AuthMiddleware::getDefaultPermissions();
         }
         return [];
     }

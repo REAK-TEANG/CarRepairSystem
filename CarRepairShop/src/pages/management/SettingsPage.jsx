@@ -182,6 +182,11 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('permissions') // 'permissions' | 'profile' | 'billing' | 'language' | 'security'
   const [selectedRole, setSelectedRole] = useState('manager')
   const [localMatrix, setLocalMatrix] = useState(() => permissionsMatrix)
+  const [prevMatrix, setPrevMatrix] = useState(permissionsMatrix)
+  if (permissionsMatrix !== prevMatrix) {
+    setPrevMatrix(permissionsMatrix)
+    setLocalMatrix(permissionsMatrix)
+  }
   const [searchQuery, setSearchQuery] = useState('')
 
   const [settings, setSettings] = useState({

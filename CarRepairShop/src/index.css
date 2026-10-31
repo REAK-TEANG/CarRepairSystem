@@ -183,7 +183,8 @@ html.dark {
     animation: modalContentZoomIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
-  .animate-sheet-content {
+  .animate-sheet-content,
+  .animate-sheet-slide-up {
     animation: sheetSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
