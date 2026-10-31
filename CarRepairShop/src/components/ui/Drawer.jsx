@@ -74,7 +74,7 @@ export default function Drawer({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-app-border bg-app-card/95 backdrop-blur-xs flex-shrink-0">
+        <div className="flex items-center justify-between px-4 py-3 sm:px-5 sm:py-4 pt-[calc(0.75rem+var(--safe-area-top))] sm:pt-4 border-b border-app-border bg-app-card/95 backdrop-blur-xs flex-shrink-0">
           <div className="min-w-0 flex items-center gap-3">
             <div className="truncate">
               <div className="flex items-center gap-2">
@@ -92,7 +92,7 @@ export default function Drawer({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover active:scale-95 transition-all flex-shrink-0 cursor-pointer"
+            className="p-2 rounded-lg text-app-muted hover:text-app-text hover:bg-app-hover active:scale-95 transition-all flex-shrink-0 cursor-pointer touch-manipulation"
             title="Close Drawer"
             aria-label="Close"
           >
@@ -101,13 +101,13 @@ export default function Drawer({
         </div>
 
         {/* Scrollable Content Body */}
-        <div className="flex-1 overflow-y-auto min-h-0 p-5 sm:p-6 space-y-6 overscroll-contain">
+        <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 space-y-5 sm:space-y-6 overscroll-contain">
           {children}
         </div>
 
         {/* Optional Sticky Footer */}
         {footer && (
-          <div className="flex items-center justify-between gap-3 px-5 py-3.5 sm:px-6 border-t border-app-border bg-app-card/95 backdrop-blur-xs flex-shrink-0">
+          <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-3.5 pb-[calc(0.75rem+var(--safe-area-bottom))] sm:pb-3.5 border-t border-app-border bg-app-card/95 backdrop-blur-xs flex-shrink-0">
             {footer}
           </div>
         )}

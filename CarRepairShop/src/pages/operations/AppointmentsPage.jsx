@@ -26,7 +26,7 @@ import { useDebounce } from '../../hooks/useDebounce'
 import { usePaginationData } from '../../hooks/usePaginationData'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
-import { Modal, StatusBadge, EmptyState, TableSkeleton, LoadingButton, Button, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, SearchableSelect, Input, Textarea } from '../../components/ui'
+import { Modal, StatusBadge, EmptyState, TableSkeleton, LoadingButton, Button, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, SearchableSelect, Input, Textarea, DatePicker, TimePicker, MobileDataCard } from '../../components/ui'
 import FastIntakeModal from '../../components/workshop/FastIntakeModal'
 import JobCardDrawer from '../../components/workshop/JobCardDrawer'
 
@@ -481,7 +481,92 @@ export default function AppointmentsPage() {
                 />
               </div>
             ) : (
-              <Table>
+              <>
+                {/* Mobile Native Appointments View (< 768px) */}
+                <div className="space-y-2.5 md:hidden">
+                  {filtered.map((apt) => (
+                    <MobileDataCard
+                      key={apt.id}
+                      title={apt.customer}
+                      subtitle={`${apt.code} · ${apt.vehicle} (${apt.plate})`}
+                      badge={<StatusBadge status={apt.status} />}
+                      onClick={() => handleOpenView(apt)}
+                      metadata={[
+                        {
+                          label: 'Service',
+                          value: apt.service,
+                        },
+                        {
+                          label: 'Time',
+                          value: `${apt.date} ${apt.time}`,
+                          mono: true,
+                        },
+                        {
+                          label: 'Mechanic',
+                          value: apt.mechanic || 'Unassigned',
+                        },
+                      ]}
+                      actions={
+                        <div className="flex items-center justify-between w-full">
+                          {(apt.status === 'Scheduled' || apt.status === 'Confirmed') && (
+                            <Button
+                              size="xs"
+                              variant="default"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleCheckInAppointment(apt)
+                              }}
+                            >
+                              <Sparkle size={12} weight="bold" />
+                              <span>Check-In</span>
+                            </Button>
+                          )}
+                          <div className="flex items-center gap-1 ml-auto">
+                            <Button
+                              size="icon-xs"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleOpenView(apt)
+                              }}
+                            >
+                              <Eye size={13} />
+                            </Button>
+                            {can('appointments', 'update') && (
+                              <Button
+                                size="icon-xs"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleOpenEdit(apt)
+                                }}
+                              >
+                                <PencilSimple size={13} />
+                              </Button>
+                            )}
+                            {can('appointments', 'delete') && apt.status !== 'Cancelled' && (
+                              <Button
+                                size="icon-xs"
+                                variant="ghost"
+                                className="text-rose-500 hover:bg-rose-500/10"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleCancelApt(apt.id)
+                                }}
+                              >
+                                <XCircle size={13} />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      }
+                    />
+                  ))}
+                </div>
+
+                {/* Desktop High-Density Table (>= 768px) */}
+                <div className="hidden md:block">
+                  <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t('appointments.code')}</TableHead>
@@ -553,6 +638,10 @@ export default function AppointmentsPage() {
                     </TableRow>
                   ))}
                 </TableBody>
+                </Table>
+                </div>
+
+                {/* Universal Pagination */}
                 <TableFooterBar
                   page={page}
                   totalPages={totalPages}
@@ -561,7 +650,7 @@ export default function AppointmentsPage() {
                   onPrev={() => setPage((p) => Math.max(1, p - 1))}
                   onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
                 />
-              </Table>
+              </>
             )}
           </div>
         </div>
@@ -585,7 +674,73 @@ export default function AppointmentsPage() {
                 description="Click 'Schedule Service Reminder' to set an oil change or service recall alert for a customer."
               />
             ) : (
-              <Table>
+              <>
+                {/* Mobile Reminders List */}
+                <div className="space-y-2.5 md:hidden p-3">
+                  {reminders.map((rem) => (
+                    <MobileDataCard
+                      key={rem.id}
+                      title={rem.customer}
+                      subtitle={`${rem.vehicle} (${rem.plate})`}
+                      badge={rem.status}
+                      badgeColor={
+                        rem.status === 'Booked'
+                          ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                          : rem.status === 'Notified'
+                          ? 'bg-blue-500/10 text-blue-600 border-blue-500/20'
+                          : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                      }
+                      metadata={[
+                        {
+                          label: 'Service',
+                          value: rem.serviceType,
+                        },
+                        {
+                          label: 'Due',
+                          value: rem.dueDate || 'Upon mileage',
+                        },
+                        {
+                          label: 'Phone',
+                          value: rem.customerPhone || '—',
+                        },
+                        ...(rem.dueOdometer ? [{ label: 'Odometer', value: `${rem.dueOdometer} km`, mono: true }] : []),
+                      ]}
+                      actions={
+                        <div className="flex items-center justify-between w-full">
+                          {rem.status !== 'Booked' && (
+                            <Button
+                              size="xs"
+                              variant="secondary"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleBookFromReminder(rem)
+                              }}
+                            >
+                              <CalendarCheck size={12} weight="bold" />
+                              <span>Book Appointment</span>
+                            </Button>
+                          )}
+                          <div className="flex items-center gap-1 ml-auto">
+                            <Button
+                              size="icon-xs"
+                              variant="ghost"
+                              className="text-rose-500 hover:bg-rose-500/10"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                deleteReminderMutation.mutate(rem.id)
+                              }}
+                            >
+                              <Trash size={13} />
+                            </Button>
+                          </div>
+                        </div>
+                      }
+                    />
+                  ))}
+                </div>
+
+                <div className="hidden md:block">
+                  <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Customer & Contact</TableHead>
@@ -668,9 +823,11 @@ export default function AppointmentsPage() {
                 </TableBody>
                 <TableFooterBar totalCount={reminders.length} currentCount={reminders.length} />
               </Table>
-            )}
-        </div>
-      )}
+            </div>
+          </>
+        )}
+      </div>
+    )}
 
       {/* Schedule Custom Reminder Modal */}
       <Modal isOpen={isAddReminderOpen} onClose={() => setIsAddReminderOpen(false)} title="Schedule Maintenance Reminder" maxWidth="max-w-2xl">
@@ -720,8 +877,7 @@ export default function AppointmentsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">Due Date</label>
-              <Input
-                type="date"
+              <DatePicker
                 value={reminderForm.dueDate}
                 onChange={(e) => setReminderForm({ ...reminderForm, dueDate: e.target.value })}
               />
@@ -835,8 +991,7 @@ export default function AppointmentsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('common.date')} *</label>
-              <Input
-                type="date"
+              <DatePicker
                 required
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
@@ -844,8 +999,7 @@ export default function AppointmentsPage() {
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('common.time')} *</label>
-              <Input
-                type="time"
+              <TimePicker
                 required
                 value={formData.time}
                 onChange={(e) => setFormData({ ...formData, time: e.target.value })}
@@ -920,16 +1074,14 @@ export default function AppointmentsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('common.date')}</label>
-              <Input
-                type="date"
+              <DatePicker
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
               />
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('common.time')}</label>
-              <Input
-                type="time"
+              <TimePicker
                 value={formData.time}
                 onChange={(e) => setFormData({ ...formData, time: e.target.value })}
               />

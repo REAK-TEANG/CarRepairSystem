@@ -23,7 +23,7 @@ import { useInventory } from '@/hooks/useInventory'
 import { useMechanics } from '@/hooks/useMechanics'
 import { useCustomers } from '@/hooks/useCustomers'
 import { useVehicles } from '@/hooks/useVehicles'
-import { CardSkeleton, Button } from '@/components/ui'
+import { CardSkeleton, Button, DatePicker } from '@/components/ui'
 import {
   exportReportToPdf,
   exportReportToExcel,
@@ -666,22 +666,20 @@ export default function ReportsPage() {
                         <label className="block text-[11px] text-app-muted font-medium mb-1">
                           {t('reports.startDate', 'Start Date')}
                         </label>
-                        <input
-                          type="date"
+                        <DatePicker
                           value={customStart}
                           onChange={(e) => setCustomStart(e.target.value)}
-                          className="w-full px-2 py-1 bg-app-input border border-app-border rounded text-xs text-app-text focus:outline-none focus:border-app-accent font-mono"
+                          placeholder="Start Date"
                         />
                       </div>
                       <div>
                         <label className="block text-[11px] text-app-muted font-medium mb-1">
                           {t('reports.endDate', 'End Date')}
                         </label>
-                        <input
-                          type="date"
+                        <DatePicker
                           value={customEnd}
                           onChange={(e) => setCustomEnd(e.target.value)}
-                          className="w-full px-2 py-1 bg-app-input border border-app-border rounded text-xs text-app-text focus:outline-none focus:border-app-accent font-mono"
+                          placeholder="End Date"
                         />
                       </div>
                     </div>

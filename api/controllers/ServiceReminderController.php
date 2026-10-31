@@ -2,6 +2,7 @@
 // api/controllers/ServiceReminderController.php
 
 require_once __DIR__ . '/../models/ServiceReminderModel.php';
+require_once __DIR__ . '/../utils/sanitizer.php';
 
 class ServiceReminderController
 {
@@ -12,7 +13,7 @@ class ServiceReminderController
 
     public function store(): void
     {
-        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        $input = Sanitizer::getJsonInput();
 
         if (empty($input['customerId']) || empty($input['vehicleId']) || empty($input['serviceType'])) {
             http_response_code(400);
@@ -27,7 +28,7 @@ class ServiceReminderController
 
     public function update(int $id): void
     {
-        $input   = json_decode(file_get_contents('php://input'), true) ?? [];
+        $input   = Sanitizer::getJsonInput();
         $updated = ServiceReminderModel::update($id, $input);
         if (!$updated) {
             http_response_code(404);

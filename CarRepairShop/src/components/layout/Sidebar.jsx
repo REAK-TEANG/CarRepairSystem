@@ -106,9 +106,10 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
         {mobileOpen && (
           <button
             onClick={onCloseMobile}
-            className="p-1 rounded text-app-muted hover:bg-[var(--sidebar-hover)] hover:text-app-text lg:hidden"
+            className="p-2 rounded-lg text-app-muted hover:bg-[var(--sidebar-hover)] hover:text-app-text lg:hidden active:scale-95 transition-all touch-manipulation cursor-pointer"
+            aria-label="Close menu"
           >
-            <X size={16} weight="bold" />
+            <X size={18} weight="bold" />
           </button>
         )}
       </div>
@@ -164,7 +165,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
       </div>
 
       {/* Footer / Active User & Role Indicator */}
-      <div className="p-3 border-t border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] flex items-center justify-between">
+      <div className="p-3 pb-[calc(0.75rem+var(--safe-area-bottom))] border-t border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] flex items-center justify-between">
         {!collapsed && (
           <div className="flex items-center gap-2.5 overflow-hidden">
             <div className="relative flex-shrink-0">

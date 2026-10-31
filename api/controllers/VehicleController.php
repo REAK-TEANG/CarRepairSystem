@@ -2,6 +2,7 @@
 // api/controllers/VehicleController.php
 
 require_once __DIR__ . '/../models/VehicleModel.php';
+require_once __DIR__ . '/../utils/sanitizer.php';
 require_once __DIR__ . '/../utils/pagination.php';
 
 class VehicleController
@@ -33,7 +34,7 @@ class VehicleController
 
     public function store(): void
     {
-        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        $input = Sanitizer::getJsonInput();
         if (!trim($input['number'] ?? '')) {
             http_response_code(400);
             echo json_encode(['error' => 'Vehicle license plate number is required']);
@@ -45,7 +46,7 @@ class VehicleController
 
     public function update(int $id): void
     {
-        $input   = json_decode(file_get_contents('php://input'), true) ?? [];
+        $input   = Sanitizer::getJsonInput();
         $updated = VehicleModel::update($id, $input);
         if (!$updated) {
             http_response_code(404);

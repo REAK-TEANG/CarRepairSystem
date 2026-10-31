@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { MagnifyingGlass, Plus, Trash, CheckCircle, XCircle, Package } from '@phosphor-icons/react'
+import { MagnifyingGlass, Plus, Trash, CheckCircle, XCircle, Package, Wrench, Clock, CurrencyDollar } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useServicesCatalog, useCreateService, useUpdateService, useDeleteService } from '../../hooks/useServicesCatalog'
 import { useInventory } from '../../hooks/useInventory'
 import { useDebounce } from '../../hooks/useDebounce'
 import { usePaginationData } from '../../hooks/usePaginationData'
 import { useAuth } from '../../context/AuthContext'
-import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, SearchableSelect, Input, Textarea } from '../../components/ui'
+import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, SearchableSelect, Input, Textarea, MobileDataCard } from '../../components/ui'
 
 const statusOptions = ['All Status', 'Active Only', 'Inactive Only']
 
@@ -235,79 +235,135 @@ export default function ServicesPage() {
           />
         </div>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t('services.serviceName')}</TableHead>
-              <TableHead className="hidden md:table-cell">{t('services.category')}</TableHead>
-              <TableHead>Auto Stock-Out Parts</TableHead>
-              <TableHead className="hidden lg:table-cell">{t('services.estimatedHours')}</TableHead>
-              <TableHead>{t('services.standardPrice')}</TableHead>
-              <TableHead>{t('common.status')}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+        <>
+          {/* Mobile Cards View (< 768px) */}
+          <div className="space-y-2.5 md:hidden">
             {services.map((s) => (
-              <TableRow
+              <MobileDataCard
                 key={s.id}
                 onClick={() => handleOpenEdit(s)}
-                className="cursor-pointer"
-              >
-                <TableCell>
-                  <p className="font-semibold text-app-text">{s.name}</p>
-                  <p className="text-[10px] text-app-muted truncate max-w-xs">{s.description || 'Standard service procedure'}</p>
-                </TableCell>
-                <TableCell className="text-app-muted hidden md:table-cell">{s.category}</TableCell>
-                <TableCell>
-                  {s.requiredParts && s.requiredParts.length > 0 ? (
-                    <div className="flex flex-wrap gap-1 max-w-xs">
-                      {s.requiredParts.map((p, idx) => (
-                        <span
-                          key={idx}
-                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 text-[10px] font-medium"
-                          title={`${p.name} (${p.partCode}) - Qty: ${p.quantity}`}
-                        >
-                          <Package size={11} />
-                          <span>{p.quantity}x {p.partCode || p.name}</span>
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <span className="text-[11px] text-app-muted italic">Labor only (No parts)</span>
-                  )}
-                </TableCell>
-                <TableCell className="text-app-muted tabular-nums hidden lg:table-cell">{s.laborHours} hrs</TableCell>
-                <TableCell className="font-bold text-app-text tabular-nums">
-                  ${Number(s.estimatedCost || 0).toFixed(2)}
-                </TableCell>
-                <TableCell>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      can('services', 'update') && handleToggleActive(s)
-                    }}
-                    className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm text-[11px] font-semibold transition-colors cursor-pointer ${
-                      s.isActive
-                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                        : 'bg-app-hover text-app-muted border border-app-border'
-                    }`}
-                  >
-                    {s.isActive ? (
-                      <>
-                        <CheckCircle size={13} weight="fill" /> {t('status.Active')}
-                      </>
-                    ) : (
-                      <>
-                        <XCircle size={13} /> {t('status.Draft')}
-                      </>
-                    )}
-                  </button>
-                </TableCell>
-              </TableRow>
+                icon={<Wrench size={18} className="text-app-accent" />}
+                title={s.name}
+                subtitle={s.category}
+                status={{
+                  label: s.isActive ? t('status.Active') : t('status.Draft'),
+                  color: s.isActive ? 'green' : 'amber',
+                }}
+                chips={[
+                  {
+                    icon: <CurrencyDollar size={13} weight="bold" />,
+                    value: `$${Number(s.estimatedCost || 0).toFixed(2)}`,
+                  },
+                  {
+                    icon: <Clock size={13} weight="bold" />,
+                    value: `${s.laborHours || 0} hrs`,
+                  },
+                  ...(s.requiredParts && s.requiredParts.length > 0
+                    ? [
+                        {
+                          icon: <Package size={13} weight="bold" />,
+                          value: `${s.requiredParts.length} parts required`,
+                        },
+                      ]
+                    : [
+                        {
+                          value: 'Labor only',
+                        },
+                      ]),
+                ]}
+              />
             ))}
-          </TableBody>
+          </div>
+
+          {/* Desktop High-Density Table (>= 768px) */}
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('services.serviceName')}</TableHead>
+                  <TableHead className="hidden md:table-cell">{t('services.category')}</TableHead>
+                  <TableHead>Auto Stock-Out Parts</TableHead>
+                  <TableHead className="hidden lg:table-cell">{t('services.estimatedHours')}</TableHead>
+                  <TableHead>{t('services.standardPrice')}</TableHead>
+                  <TableHead>{t('common.status')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {services.map((s) => (
+                  <TableRow
+                    key={s.id}
+                    onClick={() => handleOpenEdit(s)}
+                    className="cursor-pointer"
+                  >
+                    <TableCell>
+                      <p className="font-semibold text-app-text">{s.name}</p>
+                      <p className="text-[10px] text-app-muted truncate max-w-xs">{s.description || 'Standard service procedure'}</p>
+                    </TableCell>
+                    <TableCell className="text-app-muted hidden md:table-cell">{s.category}</TableCell>
+                    <TableCell>
+                      {s.requiredParts && s.requiredParts.length > 0 ? (
+                        <div className="flex flex-wrap gap-1 max-w-xs">
+                          {s.requiredParts.map((p, idx) => (
+                            <span
+                              key={idx}
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 text-[10px] font-medium"
+                              title={`${p.name} (${p.partCode}) - Qty: ${p.quantity}`}
+                            >
+                              <Package size={11} />
+                              <span>{p.quantity}x {p.partCode || p.name}</span>
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-[11px] text-app-muted italic">Labor only (No parts)</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-app-muted tabular-nums hidden lg:table-cell">{s.laborHours} hrs</TableCell>
+                    <TableCell className="font-bold text-app-text tabular-nums">
+                      ${Number(s.estimatedCost || 0).toFixed(2)}
+                    </TableCell>
+                    <TableCell>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          can('services', 'update') && handleToggleActive(s)
+                        }}
+                        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm text-[11px] font-semibold transition-colors cursor-pointer ${
+                          s.isActive
+                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                            : 'bg-app-hover text-app-muted border border-app-border'
+                        }`}
+                      >
+                        {s.isActive ? (
+                          <>
+                            <CheckCircle size={13} weight="fill" /> {t('status.Active')}
+                          </>
+                        ) : (
+                          <>
+                            <XCircle size={13} /> {t('status.Draft')}
+                          </>
+                        )}
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
           <TableFooterBar pagination={pagination} onPageChange={setCurrentPage} />
-        </Table>
+        </>
+      )}
+
+      {/* Mobile Floating Action Button (FAB) for Add Service */}
+      {can('services', 'create') && (
+        <button
+          onClick={handleOpenAdd}
+          className="fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center size-13 rounded-full bg-app-accent text-app-accentText shadow-xl active:scale-95 transition-transform touch-manipulation cursor-pointer border border-white/20"
+          aria-label={t('services.addService')}
+        >
+          <Plus size={22} weight="bold" />
+        </button>
       )}
 
       {/* Add Service Modal */}

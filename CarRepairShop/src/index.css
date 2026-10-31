@@ -26,6 +26,10 @@
   --sidebar-text: #4B5563;      /* Sidebar link text */
   --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
   --shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+
+  /* Safe area helpers for iOS notches and gesture bars */
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-top: env(safe-area-inset-top, 0px);
 }
 
 html.dark {
@@ -82,8 +86,22 @@ html.dark {
     background-color: var(--bg-canvas);
     color: var(--text-primary);
     min-height: 100vh;
+    min-height: 100dvh;
     line-height: 1.5;
     transition: background-color 0.2s ease, color 0.2s ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: none;
+  }
+
+  /* Prevent iOS Safari / Android Chrome auto-zoom on input focus */
+  @media screen and (max-width: 640px) {
+    input,
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
   }
 
   .font-mono {
@@ -114,6 +132,16 @@ html.dark {
   ::-webkit-scrollbar-thumb:hover {
     background: var(--text-muted);
   }
+
+  /* Tactile native tap feedback */
+  .active-press {
+    transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.12s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .active-press:active {
+    transform: scale(0.975);
+  }
+
   /* Modal Entrance Animations */
   @keyframes modalBackdropFadeIn {
     from {
@@ -135,12 +163,28 @@ html.dark {
     }
   }
 
+  /* Mobile Bottom Sheet Entrance Animation */
+  @keyframes sheetSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   .animate-modal-backdrop {
     animation: modalBackdropFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
   .animate-modal-content {
     animation: modalContentZoomIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-sheet-content {
+    animation: sheetSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
   @keyframes drawerSlideInRight {

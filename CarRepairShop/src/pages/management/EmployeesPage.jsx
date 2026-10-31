@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, PencilSimple, Trash, CheckCircle, ShieldCheck, Key } from '@phosphor-icons/react'
+import { Plus, PencilSimple, Trash, CheckCircle, ShieldCheck, Phone, Key } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import {
   useEmployees,
@@ -28,6 +28,7 @@ import {
   SearchableSelect,
   Input,
   PageHeader,
+  MobileDataCard,
 } from '../../components/ui'
 
 const SYSTEM_ROLES = [
@@ -200,97 +201,180 @@ export default function EmployeesPage() {
           />
         </div>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t('employees.employeeId')}</TableHead>
-              <TableHead>{t('employees.name')}</TableHead>
-              <TableHead className="hidden md:table-cell">{t('employees.position')}</TableHead>
-              <TableHead className="hidden sm:table-cell">System Role</TableHead>
-              <TableHead className="hidden lg:table-cell">{t('employees.department')}</TableHead>
-              <TableHead>{t('employees.attendance')}</TableHead>
-              <TableHead className="text-right">{t('common.actions')}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+        <>
+          {/* Mobile Cards View (< 768px) */}
+          <div className="space-y-2.5 md:hidden">
             {employees.map((emp) => (
-              <TableRow key={emp.id} onClick={() => handleOpenEdit(emp)} className="cursor-pointer">
-                <TableCell className="font-mono font-semibold text-app-accent">{emp.empCode}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2.5">
-                    {emp.image ? (
-                      <img
-                        src={emp.image}
-                        alt={emp.name}
-                        className="w-8 h-8 rounded-sm object-cover ring-1 ring-app-border flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 rounded-sm bg-app-accent/15 flex items-center justify-center text-app-accent font-bold text-xs flex-shrink-0">
-                        {emp.name ? emp.name[0] : 'E'}
-                      </div>
-                    )}
-                    <div>
-                      <p className="font-semibold text-app-text">{emp.name}</p>
-                      <p className="text-[10px] text-app-muted">{emp.phone || emp.email}</p>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell className="text-app-muted hidden md:table-cell font-medium">{emp.roleTitle}</TableCell>
-                <TableCell className="hidden sm:table-cell">
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-app-accent/10 text-app-accent border border-app-accent/20">
-                    <ShieldCheck size={12} weight="bold" />
-                    <span>{emp.roleName || emp.role || 'Staff'}</span>
-                  </span>
-                </TableCell>
-                <TableCell className="text-app-muted hidden lg:table-cell">
-                  <span className="px-2 py-0.5 rounded text-xs bg-app-input border border-app-border font-medium">
-                    {emp.department || 'Workshop'}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleToggleAttendanceClick(emp)
-                    }}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-xs font-semibold border transition-all cursor-pointer ${
-                      emp.attendanceToday === 'Present'
-                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
-                        : 'bg-app-hover text-app-muted border-app-border'
-                    }`}
-                  >
-                    <CheckCircle size={13} weight="bold" />
-                    <span>{emp.attendanceToday}</span>
-                  </button>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                    {can('employees', 'update') && (
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEdit(emp)}
-                        className="p-1 rounded-sm text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
-                        title={t('common.edit')}
-                      >
-                        <PencilSimple size={14} />
-                      </button>
-                    )}
+              <MobileDataCard
+                key={emp.id}
+                onClick={() => handleOpenEdit(emp)}
+                icon={
+                  emp.image ? (
+                    <img
+                      src={emp.image}
+                      alt={emp.name}
+                      className="w-9 h-9 rounded-full object-cover ring-1 ring-app-border"
+                    />
+                  ) : (
+                    <span className="font-bold text-app-accent">{emp.name ? emp.name[0] : 'E'}</span>
+                  )
+                }
+                title={emp.name}
+                subtitle={`${emp.roleTitle || 'Staff'} • ${emp.department || 'Workshop'}`}
+                status={{
+                  label: emp.attendanceToday,
+                  color: emp.attendanceToday === 'Present' ? 'green' : 'amber',
+                }}
+                chips={[
+                  {
+                    value: emp.empCode,
+                  },
+                  {
+                    icon: <ShieldCheck size={13} weight="bold" />,
+                    value: emp.roleName || emp.role || 'Staff',
+                  },
+                  ...(emp.phone
+                    ? [
+                        {
+                          icon: <Phone size={13} weight="bold" />,
+                          value: (
+                            <a
+                              href={`tel:${emp.phone}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="hover:underline text-app-accent font-semibold"
+                            >
+                              {emp.phone}
+                            </a>
+                          ),
+                        },
+                      ]
+                    : []),
+                ]}
+                actions={
+                  <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleAttendanceClick(emp)}
+                      className={`px-2.5 py-1 rounded text-[11px] font-semibold border transition-all cursor-pointer ${
+                        emp.attendanceToday === 'Present'
+                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                          : 'bg-app-hover text-app-muted border-app-border'
+                      }`}
+                    >
+                      {emp.attendanceToday}
+                    </button>
                     {can('employees', 'delete') && (
                       <button
                         type="button"
                         onClick={() => handleOpenDelete(emp)}
-                        className="p-1 rounded-sm text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                        className="p-1 rounded text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
                         title={t('common.delete')}
                       >
-                        <Trash size={14} />
+                        <Trash size={15} />
                       </button>
                     )}
                   </div>
-                </TableCell>
-              </TableRow>
+                }
+              />
             ))}
-          </TableBody>
+          </div>
+
+          {/* Desktop High-Density Table (>= 768px) */}
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('employees.employeeId')}</TableHead>
+                  <TableHead>{t('employees.name')}</TableHead>
+                  <TableHead className="hidden md:table-cell">{t('employees.position')}</TableHead>
+                  <TableHead className="hidden sm:table-cell">System Role</TableHead>
+                  <TableHead className="hidden lg:table-cell">{t('employees.department')}</TableHead>
+                  <TableHead>{t('employees.attendance')}</TableHead>
+                  <TableHead className="text-right">{t('common.actions')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {employees.map((emp) => (
+                  <TableRow key={emp.id} onClick={() => handleOpenEdit(emp)} className="cursor-pointer">
+                    <TableCell className="font-mono font-semibold text-app-accent">{emp.empCode}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2.5">
+                        {emp.image ? (
+                          <img
+                            src={emp.image}
+                            alt={emp.name}
+                            className="w-8 h-8 rounded-sm object-cover ring-1 ring-app-border flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-sm bg-app-accent/15 flex items-center justify-center text-app-accent font-bold text-xs flex-shrink-0">
+                            {emp.name ? emp.name[0] : 'E'}
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-semibold text-app-text">{emp.name}</p>
+                          <p className="text-[10px] text-app-muted">{emp.phone || emp.email}</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-app-muted hidden md:table-cell font-medium">{emp.roleTitle}</TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-app-accent/10 text-app-accent border border-app-accent/20">
+                        <ShieldCheck size={12} weight="bold" />
+                        <span>{emp.roleName || emp.role || 'Staff'}</span>
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-app-muted hidden lg:table-cell">
+                      <span className="px-2 py-0.5 rounded text-xs bg-app-input border border-app-border font-medium">
+                        {emp.department || 'Workshop'}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleToggleAttendanceClick(emp)
+                        }}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-xs font-semibold border transition-all cursor-pointer ${
+                          emp.attendanceToday === 'Present'
+                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                            : 'bg-app-hover text-app-muted border-app-border'
+                        }`}
+                      >
+                        <CheckCircle size={13} weight="bold" />
+                        <span>{emp.attendanceToday}</span>
+                      </button>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                        {can('employees', 'update') && (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEdit(emp)}
+                            className="p-1 rounded-sm text-app-muted hover:text-app-text hover:bg-app-hover transition-colors cursor-pointer"
+                            title={t('common.edit')}
+                          >
+                            <PencilSimple size={14} />
+                          </button>
+                        )}
+                        {can('employees', 'delete') && (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenDelete(emp)}
+                            className="p-1 rounded-sm text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                            title={t('common.delete')}
+                          >
+                            <Trash size={14} />
+                          </button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
           <TableFooterBar
             page={currentPage}
             totalPages={pagination?.totalPages || 1}
@@ -299,7 +383,18 @@ export default function EmployeesPage() {
             onPrev={() => setCurrentPage((p) => Math.max(1, p - 1))}
             onNext={() => setCurrentPage((p) => Math.min(pagination?.totalPages || 1, p + 1))}
           />
-        </Table>
+        </>
+      )}
+
+      {/* Mobile Floating Action Button (FAB) for Add Employee */}
+      {can('employees', 'create') && (
+        <button
+          onClick={handleOpenAdd}
+          className="fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center size-13 rounded-full bg-app-accent text-app-accentText shadow-xl active:scale-95 transition-transform touch-manipulation cursor-pointer border border-white/20"
+          aria-label={t('employees.addEmployee')}
+        >
+          <Plus size={22} weight="bold" />
+        </button>
       )}
 
       {/* Add Employee Modal */}

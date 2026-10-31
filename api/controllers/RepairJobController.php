@@ -2,6 +2,7 @@
 // api/controllers/RepairJobController.php
 
 require_once __DIR__ . '/../models/RepairJobModel.php';
+require_once __DIR__ . '/../utils/sanitizer.php';
 require_once __DIR__ . '/../utils/pagination.php';
 
 class RepairJobController
@@ -39,14 +40,14 @@ class RepairJobController
 
     public function store(array $authPayload): void
     {
-        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        $input = Sanitizer::getJsonInput();
         http_response_code(201);
         echo json_encode(['data' => RepairJobModel::create($input, (int) ($authPayload['id'] ?? 0))]);
     }
 
     public function update(int $id, array $authPayload): void
     {
-        $input   = json_decode(file_get_contents('php://input'), true) ?? [];
+        $input   = Sanitizer::getJsonInput();
         $updated = RepairJobModel::update($id, $input, (int) ($authPayload['id'] ?? 0));
         if (!$updated) {
             http_response_code(404);

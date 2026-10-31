@@ -3,6 +3,7 @@
 
 class RateLimiter {
     private static $tableInitialized = false;
+    private static $globalTableInitialized = false;
 
     /**
      * Ensure the rate limiting table exists in PostgreSQL
@@ -32,6 +33,32 @@ class RateLimiter {
     }
 
     /**
+     * Ensure the global requests tracking table exists in PostgreSQL
+     */
+    private static function initGlobalTable() {
+        if (self::$globalTableInitialized) return;
+        global $pdo;
+        try {
+            if ($pdo) {
+                $pdo->exec("
+                    CREATE TABLE IF NOT EXISTS global_api_requests (
+                        id SERIAL PRIMARY KEY,
+                        ip_address VARCHAR(45) NOT NULL,
+                        requested_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+                    )
+                ");
+                $pdo->exec("
+                    CREATE INDEX IF NOT EXISTS idx_global_requests_ip_time 
+                    ON global_api_requests (ip_address, requested_at)
+                ");
+            }
+            self::$globalTableInitialized = true;
+        } catch (Throwable $e) {
+            error_log("RateLimiter global table init warning: " . $e->getMessage());
+        }
+    }
+
+    /**
      * Get client IP address securely
      */
     public static function getClientIp() {
@@ -46,7 +73,7 @@ class RateLimiter {
     }
 
     /**
-     * Check if client IP or username has exceeded maximum failed attempts
+     * Check if client IP or username has exceeded maximum failed login attempts
      */
     public static function isRateLimited($identifier, $maxAttempts = 5, $decayMinutes = 15) {
         $ip = self::getClientIp();
@@ -148,6 +175,52 @@ class RateLimiter {
             run("DELETE FROM login_attempts WHERE ip_address = ? OR identifier = ?", [$ip, $cleanId]);
         } catch (Throwable $e) {
             error_log("RateLimiter PG reset error: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Check if client IP has exceeded maximum allowed global API requests
+     */
+    public static function isGlobalThrottled(int $maxRequests = 120, int $decayMinutes = 1): bool {
+        $ip = self::getClientIp();
+        $redis = Cache::getClient();
+        if ($redis) {
+            try {
+                $key = "ratelimit:global:$ip";
+                $count = $redis->incr($key);
+                if ($count === 1) {
+                    $redis->expire($key, $decayMinutes * 60);
+                }
+                return $count > $maxRequests;
+            } catch (Throwable $e) {
+                error_log("RateLimiter Redis global check error: " . $e->getMessage());
+            }
+        }
+
+        self::initGlobalTable();
+
+        try {
+            $sql = "
+                SELECT COUNT(*) AS cnt 
+                FROM global_api_requests 
+                WHERE ip_address = ? 
+                  AND requested_at >= NOW() - INTERVAL '$decayMinutes minutes'
+            ";
+            $row = get($sql, [$ip]);
+            $currentCount = (int)($row['cnt'] ?? 0);
+
+            // Record this request
+            run("INSERT INTO global_api_requests (ip_address) VALUES (?)", [$ip]);
+
+            // Periodic cleanup (1 in 50 chance)
+            if (mt_rand(1, 50) === 1) {
+                run("DELETE FROM global_api_requests WHERE requested_at < NOW() - INTERVAL '1 hour'");
+            }
+
+            return $currentCount >= $maxRequests;
+        } catch (Throwable $e) {
+            error_log("RateLimiter PG global check error: " . $e->getMessage());
+            return false;
         }
     }
 }

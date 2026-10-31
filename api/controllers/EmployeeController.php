@@ -2,6 +2,7 @@
 // api/controllers/EmployeeController.php
 
 require_once __DIR__ . '/../models/EmployeeModel.php';
+require_once __DIR__ . '/../utils/sanitizer.php';
 require_once __DIR__ . '/../utils/pagination.php';
 
 class EmployeeController
@@ -23,7 +24,7 @@ class EmployeeController
 
     public function store(): void
     {
-        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        $input = Sanitizer::getJsonInput();
         if (!trim($input['name'] ?? '')) {
             http_response_code(400);
             echo json_encode(['error' => 'Employee name is required']);
@@ -35,7 +36,7 @@ class EmployeeController
 
     public function update(int $id): void
     {
-        $input   = json_decode(file_get_contents('php://input'), true) ?? [];
+        $input   = Sanitizer::getJsonInput();
         $updated = EmployeeModel::update($id, $input);
         if (!$updated) {
             http_response_code(404);

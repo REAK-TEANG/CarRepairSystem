@@ -2,6 +2,7 @@
 // api/controllers/SupplierController.php
 
 require_once __DIR__ . '/../models/SupplierModel.php';
+require_once __DIR__ . '/../utils/sanitizer.php';
 require_once __DIR__ . '/../utils/pagination.php';
 
 class SupplierController
@@ -22,7 +23,7 @@ class SupplierController
 
     public function store(): void
     {
-        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        $input = Sanitizer::getJsonInput();
         if (!trim($input['name'] ?? '')) {
             http_response_code(400);
             echo json_encode(['error' => 'Supplier name is required']);
@@ -34,7 +35,7 @@ class SupplierController
 
     public function update(int $id): void
     {
-        $input   = json_decode(file_get_contents('php://input'), true) ?? [];
+        $input   = Sanitizer::getJsonInput();
         $updated = SupplierModel::update($id, $input);
         if (!$updated) {
             http_response_code(404);

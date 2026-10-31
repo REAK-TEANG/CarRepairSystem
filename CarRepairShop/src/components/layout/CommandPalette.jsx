@@ -312,7 +312,7 @@ function CommandPaletteDialog({ onClose }) {
                         className={cn(
                           'p-1.5 rounded-md flex-shrink-0 transition-colors',
                           isSelected
-                            ? 'bg-app-accent text-app-text-inverted'
+                            ? 'bg-app-accent text-app-accentText'
                             : 'bg-app-input text-app-muted'
                         )}
                       >

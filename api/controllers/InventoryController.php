@@ -2,6 +2,7 @@
 // api/controllers/InventoryController.php
 
 require_once __DIR__ . '/../models/InventoryModel.php';
+require_once __DIR__ . '/../utils/sanitizer.php';
 require_once __DIR__ . '/../utils/pagination.php';
 
 class InventoryController
@@ -28,7 +29,7 @@ class InventoryController
 
     public function store(): void
     {
-        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        $input = Sanitizer::getJsonInput();
         if (!trim($input['name'] ?? '')) {
             http_response_code(400);
             echo json_encode(['error' => 'Part name is required']);
@@ -40,7 +41,7 @@ class InventoryController
 
     public function update(int $id): void
     {
-        $input   = json_decode(file_get_contents('php://input'), true) ?? [];
+        $input   = Sanitizer::getJsonInput();
         $updated = InventoryModel::update($id, $input);
         if (!$updated) {
             http_response_code(404);
@@ -52,7 +53,7 @@ class InventoryController
 
     public function adjust(int $id, array $authPayload): void
     {
-        $input   = json_decode(file_get_contents('php://input'), true) ?? [];
+        $input   = Sanitizer::getJsonInput();
         $updated = InventoryModel::adjust($id, $input, (int) ($authPayload['id'] ?? 0));
         if (!$updated) {
             http_response_code(404);

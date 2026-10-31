@@ -2,6 +2,7 @@
 // api/controllers/ServiceController.php
 
 require_once __DIR__ . '/../models/ServiceModel.php';
+require_once __DIR__ . '/../utils/sanitizer.php';
 require_once __DIR__ . '/../utils/pagination.php';
 
 class ServiceController
@@ -34,7 +35,7 @@ class ServiceController
 
     public function store(): void
     {
-        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        $input = Sanitizer::getJsonInput();
         if (!trim($input['name'] ?? '')) {
             http_response_code(400);
             echo json_encode(['error' => 'Service name is required']);
@@ -46,7 +47,7 @@ class ServiceController
 
     public function update(int $id): void
     {
-        $input   = json_decode(file_get_contents('php://input'), true) ?? [];
+        $input   = Sanitizer::getJsonInput();
         $updated = ServiceModel::update($id, $input);
         if (!$updated) {
             http_response_code(404);

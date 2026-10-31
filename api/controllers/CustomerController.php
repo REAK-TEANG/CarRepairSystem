@@ -2,6 +2,7 @@
 // api/controllers/CustomerController.php
 
 require_once __DIR__ . '/../models/CustomerModel.php';
+require_once __DIR__ . '/../utils/sanitizer.php';
 require_once __DIR__ . '/../utils/pagination.php';
 
 class CustomerController
@@ -33,7 +34,7 @@ class CustomerController
 
     public function store(): void
     {
-        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        $input = Sanitizer::getJsonInput();
         if (!trim($input['name'] ?? '')) {
             http_response_code(400);
             echo json_encode(['error' => 'Customer name is required']);
@@ -45,7 +46,7 @@ class CustomerController
 
     public function update(int $id): void
     {
-        $input   = json_decode(file_get_contents('php://input'), true) ?? [];
+        $input   = Sanitizer::getJsonInput();
         $updated = CustomerModel::update($id, $input);
         if (!$updated) {
             http_response_code(404);

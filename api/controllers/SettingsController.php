@@ -2,6 +2,7 @@
 // api/controllers/SettingsController.php
 
 require_once __DIR__ . '/../models/SettingsModel.php';
+require_once __DIR__ . '/../utils/sanitizer.php';
 require_once __DIR__ . '/../middleware/AuthMiddleware.php';
 
 class SettingsController
@@ -13,7 +14,7 @@ class SettingsController
 
     public function update(): void
     {
-        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        $input = Sanitizer::getJsonInput();
         SettingsModel::save($input);
         echo json_encode(['success' => true, 'message' => 'Settings saved successfully']);
     }
@@ -27,7 +28,7 @@ class SettingsController
     {
         AuthMiddleware::requireAdmin($authPayload);
 
-        $rawMatrix = json_decode(file_get_contents('php://input'), true);
+        $rawMatrix = Sanitizer::getJsonInput();
         if (!is_array($rawMatrix)) {
             http_response_code(400);
             echo json_encode(['error' => 'Invalid permissions matrix payload']);

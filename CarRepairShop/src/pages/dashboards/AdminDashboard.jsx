@@ -14,7 +14,7 @@ import {
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { CardSkeleton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '../../components/ui'
+import { CardSkeleton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, DatePicker } from '../../components/ui'
 import { useInvoices } from '../../hooks/useInvoices'
 import { useCustomers } from '../../hooks/useCustomers'
 import { useRepairJobs } from '../../hooks/useRepairJobs'
@@ -265,22 +265,20 @@ export default function AdminDashboard() {
                       <label className="block text-[11px] text-app-muted font-medium mb-1">
                         {t('reports.startDate', 'Start Date')}
                       </label>
-                      <input
-                        type="date"
+                      <DatePicker
                         value={customStart}
                         onChange={(e) => setCustomStart(e.target.value)}
-                        className="w-full px-2 py-1 bg-app-input border border-app-border rounded text-xs text-app-text focus:outline-none focus:border-app-accent font-mono"
+                        placeholder="Start Date"
                       />
                     </div>
                     <div>
                       <label className="block text-[11px] text-app-muted font-medium mb-1">
                         {t('reports.endDate', 'End Date')}
                       </label>
-                      <input
-                        type="date"
+                      <DatePicker
                         value={customEnd}
                         onChange={(e) => setCustomEnd(e.target.value)}
-                        className="w-full px-2 py-1 bg-app-input border border-app-border rounded text-xs text-app-text focus:outline-none focus:border-app-accent font-mono"
+                        placeholder="End Date"
                       />
                     </div>
                   </div>

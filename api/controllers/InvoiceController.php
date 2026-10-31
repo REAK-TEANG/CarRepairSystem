@@ -2,6 +2,7 @@
 // api/controllers/InvoiceController.php
 
 require_once __DIR__ . '/../models/InvoiceModel.php';
+require_once __DIR__ . '/../utils/sanitizer.php';
 require_once __DIR__ . '/../utils/pagination.php';
 
 class InvoiceController
@@ -23,14 +24,14 @@ class InvoiceController
 
     public function store(): void
     {
-        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        $input = Sanitizer::getJsonInput();
         http_response_code(201);
         echo json_encode(['data' => InvoiceModel::create($input)]);
     }
 
     public function pay(int $id, array $authPayload): void
     {
-        $input   = json_decode(file_get_contents('php://input'), true) ?? [];
+        $input   = Sanitizer::getJsonInput();
         $updated = InvoiceModel::pay($id, $input, (int) ($authPayload['id'] ?? 0));
         if (!$updated) {
             http_response_code(404);

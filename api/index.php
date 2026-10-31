@@ -2,11 +2,14 @@
 // api/index.php
 
 // -----------------------------------------------------------------------------
-// 1. Security Headers
+// 1. Comprehensive HTTP Security Headers
 // -----------------------------------------------------------------------------
 header("X-Content-Type-Options: nosniff");
 header("X-Frame-Options: SAMEORIGIN");
 header("Referrer-Policy: strict-origin-when-cross-origin");
+header("X-XSS-Protection: 1; mode=block");
+header("Permissions-Policy: camera=(), microphone=(), geolocation=()");
+header("Content-Security-Policy: default-src 'self'; frame-ancestors 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:;");
 
 // -----------------------------------------------------------------------------
 // 2. Dynamic CORS Whitelist & Preflight Handling
@@ -53,14 +56,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 header('Content-Type: application/json; charset=utf-8');
 
+// -----------------------------------------------------------------------------
+// 3. Core Dependencies & Utilities
+// -----------------------------------------------------------------------------
 require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/utils/headers.php';
 require_once __DIR__ . '/utils/jwt.php';
 require_once __DIR__ . '/utils/cache.php';
+require_once __DIR__ . '/utils/sanitizer.php';
+require_once __DIR__ . '/utils/rateLimit.php';
 require_once __DIR__ . '/utils/pagination.php';
 require_once __DIR__ . '/utils/eventBus.php';
 require_once __DIR__ . '/middleware/AuthMiddleware.php';
+
+// Sanitize global incoming inputs to prevent XSS injection
+$_GET     = Sanitizer::clean($_GET);
+$_POST    = Sanitizer::clean($_POST);
+$_COOKIE  = Sanitizer::clean($_COOKIE);
+$_REQUEST = Sanitizer::clean($_REQUEST);
 
 // Helper: Safely resolve JWT secret
 function getJwtSecret() {
@@ -77,31 +91,9 @@ function getJwtSecret() {
     return $secret;
 }
 
-// Auth middleware function
+// Global Authentication helper: Unified with AuthMiddleware
 function authenticate() {
-    $token = getBearerToken();
-    
-    if (!$token) {
-        http_response_code(401);
-        echo json_encode(['error' => 'No authorization token provided']);
-        exit;
-    }
-    
-    $secret = getJwtSecret();
-    
-    $payload = JWT::decode($token, $secret);
-    if (!$payload) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Invalid or expired token']);
-        exit;
-    }
-
-    // Set PostgreSQL Row Level Security (RLS) context for this request
-    if (function_exists('setDatabaseUserContext')) {
-        setDatabaseUserContext($payload['role'] ?? null, $payload['id'] ?? null);
-    }
-    
-    return $payload;
+    return AuthMiddleware::requireAuth();
 }
 
 /**
@@ -142,6 +134,21 @@ $path = '/' . trim($path, '/');
 if ($path === '//') $path = '/';
 $segments = array_values(array_filter(explode('/', trim($path, '/'))));
 $module = strtolower($segments[0] ?? '');
+
+// -----------------------------------------------------------------------------
+// 4. Global API Rate Limiting / Flooding Protection (120 req/min per IP)
+// -----------------------------------------------------------------------------
+if ($_SERVER['REQUEST_METHOD'] !== 'OPTIONS' && $module !== 'health' && $module !== '') {
+    if (RateLimiter::isGlobalThrottled(120, 1)) {
+        http_response_code(429);
+        header('Retry-After: 60');
+        echo json_encode([
+            'error' => 'Too Many Requests',
+            'message' => 'API rate limit exceeded. Maximum 120 requests per minute.'
+        ]);
+        exit;
+    }
+}
 
 try {
     switch ($module) {
@@ -209,13 +216,10 @@ try {
     case 'realtime':
         require_once __DIR__ . '/routes/events.php';
         break;
-    case 'health':
-        echo json_encode(['status' => 'ok', 'backend' => 'PHP']);
+    default:
+        http_response_code(404);
+        echo json_encode(['error' => 'Not Found', 'path' => $path]);
         break;
-        default:
-            http_response_code(404);
-            echo json_encode(['error' => 'Not Found', 'path' => $path]);
-            break;
     }
 } catch (Throwable $e) {
     error_log(sprintf("[%s] Uncaught Exception: %s in %s on line %d\nStack Trace:\n%s", 

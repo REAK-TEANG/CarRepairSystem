@@ -19,7 +19,7 @@ import { useSuppliers } from '../../hooks/useSuppliers'
 import { useDebounce } from '../../hooks/useDebounce'
 import { usePaginationData } from '../../hooks/usePaginationData'
 import { useAuth } from '../../context/AuthContext'
-import { Modal, StatusBadge, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Button, Input, Textarea, ImageUpload, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, SearchableSelect } from '../../components/ui'
+import { Modal, StatusBadge, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Button, Input, Textarea, ImageUpload, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, SearchableSelect, DatePicker, MobileDataCard } from '../../components/ui'
 
 
 export default function InventoryPage() {
@@ -422,7 +422,123 @@ export default function InventoryPage() {
           />
         </div>
       ) : (
-        <Table>
+        <>
+          {/* Mobile Native Spare Parts Cards (< 768px) */}
+          <div className="space-y-2.5 md:hidden">
+            {filtered.map((part) => {
+              const isLow = part.stockQty <= part.minThreshold;
+              const isOut = part.stockQty === 0;
+
+              return (
+                <MobileDataCard
+                  key={part.id}
+                  title={part.name}
+                  subtitle={`${part.partCode} · ${part.brand}`}
+                  badge={`${part.stockQty} in stock`}
+                  badgeColor={
+                    isOut
+                      ? 'bg-rose-500/10 text-rose-600 border-rose-500/20'
+                      : isLow
+                      ? 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                      : 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                  }
+                  avatar={
+                    part.image ? (
+                      <img src={part.image} alt={part.name} className="w-full h-full object-cover rounded-lg" />
+                    ) : (
+                      <Package size={16} className="text-app-muted" />
+                    )
+                  }
+                  onClick={() => handleOpenView(part)}
+                  metadata={[
+                    {
+                      label: 'Price',
+                      value: `${Number(part.unitPrice).toFixed(2)}`,
+                      mono: true,
+                    },
+                    {
+                      label: 'Category',
+                      value: part.category,
+                    },
+                    {
+                      label: 'Bin',
+                      value: part.location || 'General',
+                      mono: true,
+                    },
+                    {
+                      label: 'Min Level',
+                      value: `${part.minThreshold} pcs`,
+                    },
+                  ]}
+                  actions={
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-1.5">
+                        {can('inventory', 'update') && (
+                          <>
+                            <Button
+                              size="xs"
+                              variant="secondary"
+                              className="text-emerald-600 dark:text-emerald-400"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenAdjust(part, 'In');
+                              }}
+                            >
+                              <ArrowUp size={12} weight="bold" />
+                              <span>Stock In</span>
+                            </Button>
+                            <Button
+                              size="xs"
+                              variant="secondary"
+                              className="text-amber-600 dark:text-amber-400"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenAdjust(part, 'Out');
+                              }}
+                            >
+                              <ArrowDown size={12} weight="bold" />
+                              <span>Stock Out</span>
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {can('inventory', 'update') && (
+                          <Button
+                            size="icon-xs"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenEdit(part);
+                            }}
+                          >
+                            <PencilSimple size={13} />
+                          </Button>
+                        )}
+                        {can('inventory', 'delete') && (
+                          <Button
+                            size="icon-xs"
+                            variant="ghost"
+                            className="text-rose-500 hover:bg-rose-500/10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenDelete(part);
+                            }}
+                          >
+                            <Trash size={13} />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  }
+                />
+              );
+            })}
+          </div>
+
+          {/* Desktop High-Density Table (>= 768px) */}
+          <div className="hidden md:block">
+            <Table>
           <TableHeader>
             <TableRow>
               <TableHead>{t('inventory.partCode')}</TableHead>
@@ -485,6 +601,10 @@ export default function InventoryPage() {
               </TableRow>
             ))}
           </TableBody>
+          </Table>
+          </div>
+
+          {/* Universal Responsive Pagination Bar */}
           <TableFooterBar
             page={page}
             totalPages={totalPages}
@@ -493,7 +613,7 @@ export default function InventoryPage() {
             onPrev={() => setPage((p) => Math.max(1, p - 1))}
             onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
           />
-        </Table>
+        </>
       )}
     </>
   ) : (
@@ -622,28 +742,26 @@ export default function InventoryPage() {
                           <label className="block text-[11px] text-app-muted font-medium mb-1">
                             {t('reports.startDate', 'Start Date')}
                           </label>
-                          <input
-                            type="date"
+                          <DatePicker
                             value={txCustomStart}
                             onChange={(e) => {
                               setTxCustomStart(e.target.value)
                               setTxPage(1)
                             }}
-                            className="w-full px-2 py-1 bg-app-input border border-app-border rounded text-xs text-app-text focus:outline-none focus:border-app-accent font-mono"
+                            placeholder="Start Date"
                           />
                         </div>
                         <div>
                           <label className="block text-[11px] text-app-muted font-medium mb-1">
                             {t('reports.endDate', 'End Date')}
                           </label>
-                          <input
-                            type="date"
+                          <DatePicker
                             value={txCustomEnd}
                             onChange={(e) => {
                               setTxCustomEnd(e.target.value)
                               setTxPage(1)
                             }}
-                            className="w-full px-2 py-1 bg-app-input border border-app-border rounded text-xs text-app-text focus:outline-none focus:border-app-accent font-mono"
+                            placeholder="End Date"
                           />
                         </div>
                       </div>
@@ -813,6 +931,17 @@ export default function InventoryPage() {
       )}
     </div>
   )}
+
+      {/* Mobile Floating Action Button (FAB) */}
+      {can('inventory', 'create') && (
+        <button
+          onClick={handleOpenAdd}
+          className="fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center size-13 rounded-full bg-app-accent text-app-accentText shadow-xl active:scale-95 transition-transform touch-manipulation cursor-pointer border border-white/20"
+          aria-label={t('inventory.createPart')}
+        >
+          <Plus size={22} weight="bold" />
+        </button>
+      )}
 
       {/* Add Part Modal */}
       {/* Add New Part Modal */}

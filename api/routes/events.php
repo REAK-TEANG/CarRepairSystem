@@ -4,23 +4,10 @@ require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../utils/headers.php';
 require_once __DIR__ . '/../utils/jwt.php';
 require_once __DIR__ . '/../utils/eventBus.php';
+require_once __DIR__ . '/../middleware/AuthMiddleware.php';
 
-// Support authentication via Header or ?token= query parameter (standard for EventSource)
-$token = getBearerToken();
-
-if (!$token) {
-    http_response_code(401);
-    echo json_encode(['error' => 'No token provided for real-time stream']);
-    exit;
-}
-
-$secret = function_exists('getJwtSecret') ? getJwtSecret() : (getenv('JWT_SECRET') ?: 'carrepair_super_secret_jwt_key_2026_x89!@#%^&_workshop_pro');
-$userPayload = JWT::decode($token, $secret);
-if (!$userPayload) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Invalid or expired token for real-time stream']);
-    exit;
-}
+// Validate token, blacklist status, and authenticate user
+$userPayload = AuthMiddleware::requireAuth();
 
 $subPath = $segments[1] ?? '';
 

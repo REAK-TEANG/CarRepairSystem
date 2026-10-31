@@ -53,13 +53,13 @@ export default function MechanicDashboard() {
           <h1 className="text-lg font-semibold tracking-tight">{t('titles.mechanicWorkspace')}</h1>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full sm:w-auto">
           {/* Mode Switcher */}
-          <div className="flex items-center bg-app-card border border-app-border rounded-lg p-0.5 shadow-xs">
+          <div className="grid grid-cols-2 bg-app-card border border-app-border rounded-lg p-0.5 shadow-xs w-full sm:w-auto">
             <button
               type="button"
               onClick={() => setViewMode('bay')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
+              className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer touch-manipulation active:scale-[0.98] ${
                 viewMode === 'bay'
                   ? 'bg-app-accent text-app-accentText shadow-xs'
                   : 'text-app-muted hover:text-app-text'
@@ -71,7 +71,7 @@ export default function MechanicDashboard() {
             <button
               type="button"
               onClick={() => setViewMode('pipeline')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
+              className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer touch-manipulation active:scale-[0.98] ${
                 viewMode === 'pipeline'
                   ? 'bg-app-accent text-app-accentText shadow-xs'
                   : 'text-app-muted hover:text-app-text'
@@ -84,7 +84,7 @@ export default function MechanicDashboard() {
 
           {/* Admin / Manager Technician Filter */}
           {!isMechanicUser && (
-            <div className="w-56">
+            <div className="w-full sm:w-56">
               <SearchableSelect
                 value={selectedMechanicId}
                 onChange={(val) => setSelectedMechanicId(val)}
@@ -148,7 +148,7 @@ export default function MechanicDashboard() {
 
       {/* Active Work Queue & Mode Display */}
       {viewMode === 'bay' ? (
-        <BayModeView jobs={jobs} onOpenJobDrawer={handleOpenJobDrawer} />
+        <BayModeView jobs={jobs} inventory={inventory} onOpenJobDrawer={handleOpenJobDrawer} />
       ) : (
         <RepairPipelineTracker mechanicFilter={effectiveMechanicId} />
       )}

@@ -2,6 +2,7 @@
 // api/controllers/AppointmentController.php
 
 require_once __DIR__ . '/../models/AppointmentModel.php';
+require_once __DIR__ . '/../utils/sanitizer.php';
 require_once __DIR__ . '/../utils/pagination.php';
 
 class AppointmentController
@@ -23,14 +24,14 @@ class AppointmentController
 
     public function store(): void
     {
-        $input = json_decode(file_get_contents('php://input'), true) ?? [];
+        $input = Sanitizer::getJsonInput();
         http_response_code(201);
         echo json_encode(['data' => AppointmentModel::create($input)]);
     }
 
     public function update(int $id): void
     {
-        $input   = json_decode(file_get_contents('php://input'), true) ?? [];
+        $input   = Sanitizer::getJsonInput();
         $updated = AppointmentModel::update($id, $input);
         if (!$updated) {
             http_response_code(404);
@@ -42,7 +43,7 @@ class AppointmentController
 
     public function updateStatus(int $id): void
     {
-        $input  = json_decode(file_get_contents('php://input'), true) ?? [];
+        $input  = Sanitizer::getJsonInput();
         $status = $input['status'] ?? null;
         if (!$status) {
             http_response_code(400);

@@ -17,7 +17,7 @@ import { useRepairJobs } from '../../hooks/useRepairJobs'
 import { useDebounce } from '../../hooks/useDebounce'
 import { usePaginationData } from '../../hooks/usePaginationData'
 import { useAuth } from '../../context/AuthContext'
-import { Modal, StatusBadge, EmptyState, ConfirmDialog, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, SearchableSelect, Input } from '../../components/ui'
+import { Modal, StatusBadge, EmptyState, ConfirmDialog, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, SearchableSelect, Input, DatePicker, MobileDataCard } from '../../components/ui'
 import InvoiceDocument from '../../components/invoices/InvoiceDocument'
 
 export default function InvoicesPage() {
@@ -270,7 +270,93 @@ export default function InvoicesPage() {
           />
         </div>
       ) : (
-        <Table>
+        <>
+          {/* Mobile Native Invoice Cards (< 768px) */}
+          <div className="space-y-2.5 md:hidden">
+            {invoices.map((inv) => {
+              const bal = inv.balanceDue !== undefined ? inv.balanceDue : Math.max(0, inv.amount - (inv.paidAmount || 0));
+              const percentPaid = inv.amount > 0 ? Math.min(100, Math.round(((inv.paidAmount || 0) / inv.amount) * 100)) : 0;
+
+              return (
+                <MobileDataCard
+                  key={inv.id}
+                  title={inv.customer}
+                  subtitle={`${inv.invoiceNumber} · ${inv.vehicle || 'Vehicle Service'}`}
+                  badge={`${Number(inv.amount).toFixed(2)}`}
+                  badgeColor="bg-app-accent/15 text-app-accent border-app-accent/30 font-mono font-bold"
+                  avatar={<Receipt size={16} className="text-app-accent" />}
+                  onClick={() => handleOpenView(inv)}
+                  metadata={[
+                    {
+                      label: 'Status',
+                      value: <StatusBadge status={inv.status} />,
+                    },
+                    {
+                      label: 'Balance',
+                      value: `${bal.toFixed(2)}`,
+                      mono: true,
+                    },
+                    {
+                      label: 'Due Date',
+                      value: inv.dueDate,
+                      mono: true,
+                    },
+                    {
+                      label: 'Paid',
+                      value: `${percentPaid}%`,
+                    },
+                  ]}
+                  actions={
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-1.5">
+                        {can('invoices', 'update') && inv.status !== 'Paid' && (
+                          <Button
+                            size="xs"
+                            variant="default"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenPay(inv);
+                            }}
+                          >
+                            <Wallet size={12} weight="bold" />
+                            <span>Pay</span>
+                          </Button>
+                        )}
+                        <Button
+                          size="xs"
+                          variant="secondary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenView(inv);
+                          }}
+                        >
+                          <Receipt size={12} />
+                          <span>View Invoice</span>
+                        </Button>
+                      </div>
+                      {can('invoices', 'delete') && (
+                        <Button
+                          size="icon-xs"
+                          variant="ghost"
+                          className="text-rose-500 hover:bg-rose-500/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenDelete(inv);
+                          }}
+                        >
+                          <Trash size={13} />
+                        </Button>
+                      )}
+                    </div>
+                  }
+                />
+              );
+            })}
+          </div>
+
+          {/* Desktop High-Density Table (>= 768px) */}
+          <div className="hidden md:block">
+            <Table>
           <TableHeader>
             <TableRow>
               <TableHead>{t('invoices.invoiceNumber')}</TableHead>
@@ -370,8 +456,23 @@ export default function InvoicesPage() {
               )
             })}
           </TableBody>
+          </Table>
+          </div>
+
+          {/* Universal Responsive Pagination Bar */}
           <TableFooterBar pagination={pagination} onPageChange={setCurrentPage} />
-        </Table>
+        </>
+      )}
+
+      {/* Mobile Floating Action Button (FAB) */}
+      {can('invoices', 'create') && (
+        <button
+          onClick={handleOpenAdd}
+          className="fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center size-13 rounded-full bg-app-accent text-app-accentText shadow-xl active:scale-95 transition-transform touch-manipulation cursor-pointer border border-white/20"
+          aria-label={t('invoices.createInvoice')}
+        >
+          <Plus size={22} weight="bold" />
+        </button>
       )}
 
       {/* Generate Invoice Modal */}
@@ -425,8 +526,7 @@ export default function InvoicesPage() {
             </div>
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('invoices.dueDate')}</label>
-              <Input
-                type="date"
+              <DatePicker
                 value={formData.dueDate}
                 onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
               />

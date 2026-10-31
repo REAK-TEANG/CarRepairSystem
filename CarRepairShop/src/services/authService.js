@@ -62,11 +62,26 @@ export const authService = {
   },
 
   /**
-   * Log out user and clear stored token
+   * Log out user, notify server to revoke/blacklist token, and clear stored session
    */
   logout() {
-    apiClient.clearToken()
-    localStorage.removeItem('demo_role')
-    localStorage.removeItem('auth_user')
+    try {
+      const token = apiClient.getToken()
+      if (token) {
+        fetch(`${apiClient.config.BASE_URL}/auth/logout`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        }).catch(() => {})
+      }
+    } catch {
+      // non-blocking
+    } finally {
+      apiClient.clearToken()
+      localStorage.removeItem('demo_role')
+      localStorage.removeItem('auth_user')
+    }
   },
 }

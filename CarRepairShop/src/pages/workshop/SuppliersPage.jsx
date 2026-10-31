@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { Plus, Trash, Buildings } from '@phosphor-icons/react'
+import { Plus, Trash, Buildings, User, Phone, EnvelopeSimple } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from '../../hooks/useSuppliers'
 import { useDebounce } from '../../hooks/useDebounce'
 import { usePaginationData } from '../../hooks/usePaginationData'
 import { useAuth } from '../../context/AuthContext'
-import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, Input, PageHeader } from '../../components/ui'
+import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, Input, PageHeader, MobileDataCard } from '../../components/ui'
 
 export default function SuppliersPage() {
   const { t } = useTranslation()
@@ -135,44 +135,112 @@ export default function SuppliersPage() {
           />
         </div>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t('suppliers.companyName')}</TableHead>
-              <TableHead>{t('suppliers.contactPerson')}</TableHead>
-              <TableHead className="hidden md:table-cell">{t('suppliers.categories')}</TableHead>
-              <TableHead className="hidden lg:table-cell">{t('suppliers.paymentTerms')}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+        <>
+          {/* Mobile Cards View (< 768px) */}
+          <div className="space-y-2.5 md:hidden">
             {suppliers.map((s) => (
-              <TableRow
+              <MobileDataCard
                 key={s.id}
                 onClick={() => handleOpenEdit(s)}
-                className="cursor-pointer"
-              >
-                <TableCell>
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-sm bg-app-accent/15 flex items-center justify-center text-app-accent font-bold text-xs flex-shrink-0">
-                      <Buildings size={14} />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-app-text">{s.name}</p>
-                      <p className="text-[10px] text-app-muted">{s.email || 'supplier@domain.com'}</p>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <p className="font-medium text-app-text">{s.contactPerson}</p>
-                  <p className="text-[10px] text-app-muted font-mono">{s.phone}</p>
-                </TableCell>
-                <TableCell className="text-app-muted hidden md:table-cell">{s.categories}</TableCell>
-                <TableCell className="text-app-muted hidden lg:table-cell">{s.address || 'Net 30 Days'}</TableCell>
-              </TableRow>
+                icon={<Buildings size={18} className="text-app-accent" />}
+                title={s.name}
+                subtitle={s.categories || 'Automotive Parts'}
+                status={{
+                  label: s.categories || 'Supplier',
+                  color: 'blue',
+                }}
+                chips={[
+                  ...(s.contactPerson
+                    ? [
+                        {
+                          icon: <User size={13} weight="bold" />,
+                          value: s.contactPerson,
+                        },
+                      ]
+                    : []),
+                  ...(s.phone
+                    ? [
+                        {
+                          icon: <Phone size={13} weight="bold" />,
+                          value: (
+                            <a
+                              href={`tel:${s.phone}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="hover:underline text-app-accent font-semibold"
+                            >
+                              {s.phone}
+                            </a>
+                          ),
+                        },
+                      ]
+                    : []),
+                  ...(s.email
+                    ? [
+                        {
+                          icon: <EnvelopeSimple size={13} weight="bold" />,
+                          value: s.email,
+                        },
+                      ]
+                    : []),
+                ]}
+              />
             ))}
-          </TableBody>
+          </div>
+
+          {/* Desktop High-Density Table (>= 768px) */}
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('suppliers.companyName')}</TableHead>
+                  <TableHead>{t('suppliers.contactPerson')}</TableHead>
+                  <TableHead className="hidden md:table-cell">{t('suppliers.categories')}</TableHead>
+                  <TableHead className="hidden lg:table-cell">{t('suppliers.paymentTerms')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {suppliers.map((s) => (
+                  <TableRow
+                    key={s.id}
+                    onClick={() => handleOpenEdit(s)}
+                    className="cursor-pointer"
+                  >
+                    <TableCell>
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-sm bg-app-accent/15 flex items-center justify-center text-app-accent font-bold text-xs flex-shrink-0">
+                          <Buildings size={14} />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-app-text">{s.name}</p>
+                          <p className="text-[10px] text-app-muted">{s.email || 'supplier@domain.com'}</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <p className="font-medium text-app-text">{s.contactPerson}</p>
+                      <p className="text-[10px] text-app-muted font-mono">{s.phone}</p>
+                    </TableCell>
+                    <TableCell className="text-app-muted hidden md:table-cell">{s.categories}</TableCell>
+                    <TableCell className="text-app-muted hidden lg:table-cell">{s.address || 'Net 30 Days'}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
           <TableFooterBar pagination={pagination} onPageChange={setCurrentPage} />
-        </Table>
+        </>
+      )}
+
+      {/* Mobile Floating Action Button (FAB) for Add Supplier */}
+      {can('suppliers', 'create') && (
+        <button
+          onClick={handleOpenAdd}
+          className="fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center size-13 rounded-full bg-app-accent text-app-accentText shadow-xl active:scale-95 transition-transform touch-manipulation cursor-pointer border border-white/20"
+          aria-label={t('suppliers.addSupplier')}
+        >
+          <Plus size={22} weight="bold" />
+        </button>
       )}
 
       {/* Add Supplier Modal */}

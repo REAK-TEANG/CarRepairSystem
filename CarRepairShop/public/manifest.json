@@ -1,0 +1,19 @@
+{
+  "short_name": "KAIRO",
+  "name": "KAIRO Auto Repair & Workshop",
+  "description": "Professional Auto Repair & Workshop Management System",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#101214",
+  "theme_color": "#16A34A",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "scope": "/"
+}

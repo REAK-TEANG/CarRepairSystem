@@ -1,8 +1,11 @@
 <?php
 // api/routes/reports.php
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../utils/cache.php';
+require_once __DIR__ . '/../middleware/AuthMiddleware.php';
 
-$authPayload = authenticate(); 
+$authPayload = AuthMiddleware::requireAuth(); 
+AuthMiddleware::authorize('reports', 'read', $authPayload);
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -127,8 +130,6 @@ if ($path === '/reports' || $path === '/reports/') {
     }
 } else if (preg_match('#^/reports/revenue#', $path)) {
     if ($method === 'GET') {
-        $period = $_GET['period'] ?? 'monthly';
-        // Proper DB query for revenue by month (for PostgreSQL)
         $revenueData = all("
             SELECT TO_CHAR(created_at, 'Mon') as month, 
                    COALESCE(SUM(total_amount), 0) as revenue 

@@ -2,6 +2,7 @@
 // api/controllers/ReportController.php
 
 require_once __DIR__ . '/../models/ReportModel.php';
+require_once __DIR__ . '/../utils/sanitizer.php';
 
 class ReportController
 {

@@ -34,6 +34,7 @@ import {
   TableCell,
   TableFooterBar,
   Input,
+  MobileDataCard,
 } from '../../components/ui'
 import FastIntakeModal from '../../components/workshop/FastIntakeModal'
 import JobCardDrawer from '../../components/workshop/JobCardDrawer'
@@ -138,7 +139,7 @@ export default function RepairJobsPage() {
           <Button
             onClick={() => setIsIntakeOpen(true)}
             size="sm"
-            className="bg-app-accent text-app-text-inverted hover:bg-app-accent-hover font-semibold shadow-xs"
+            className="bg-app-accent text-app-accentText hover:bg-app-accentHover font-semibold shadow-xs"
           >
             <Plus size={14} weight="bold" />
             <span>Fast Vehicle Intake</span>
@@ -158,7 +159,7 @@ export default function RepairJobsPage() {
               }}
               className={`px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                 activeFilter === tab
-                  ? 'bg-app-accent text-app-text-inverted font-semibold'
+                  ? 'bg-app-accent text-app-accentText font-semibold'
                   : 'text-app-muted hover:text-app-text hover:bg-app-hover'
               }`}
             >
@@ -203,7 +204,86 @@ export default function RepairJobsPage() {
           />
         </div>
       ) : (
-        <Table>
+        <>
+          {/* Mobile Native Pipeline Cards (< 768px) */}
+          <div className="space-y-2.5 md:hidden">
+            {jobs.map((job) => (
+              <MobileDataCard
+                key={job.id}
+                title={job.vehicle}
+                subtitle={`${job.orderNumber} · ${job.plate}`}
+                badge={<StatusBadge status={job.status} />}
+                onClick={() => handleOpenDrawer(job)}
+                metadata={[
+                  {
+                    label: 'Client',
+                    value: job.customer || 'Walk-in',
+                  },
+                  {
+                    label: 'Tech',
+                    value: job.mechanic || 'Unassigned',
+                  },
+                  {
+                    label: 'Cost',
+                    value: job.actualCost || job.estimatedCost || '$0.00',
+                    mono: true,
+                  },
+                  {
+                    label: 'Parts',
+                    value: `${job.partsUsed?.length || 0} items`,
+                  },
+                ]}
+                actions={
+                  <div className="flex items-center justify-between w-full">
+                    <Button
+                      size="xs"
+                      variant="secondary"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleOpenDrawer(job)
+                      }}
+                    >
+                      <Eye size={12} weight="bold" />
+                      <span>Job Card</span>
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      {job.status === 'Completed' && (
+                        <Button
+                          size="xs"
+                          variant="outline"
+                          className="text-blue-500 border-blue-500/30 hover:bg-blue-500/10"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handle1ClickInvoice(job)
+                          }}
+                        >
+                          <Receipt size={12} />
+                          <span>Invoice</span>
+                        </Button>
+                      )}
+                      {can('repair_jobs', 'delete') && (
+                        <Button
+                          size="icon-xs"
+                          variant="ghost"
+                          className="text-rose-500 hover:bg-rose-500/10"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleOpenDelete(job)
+                          }}
+                        >
+                          <Trash size={13} />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                }
+              />
+            ))}
+          </div>
+
+          {/* Desktop High-Density Table (>= 768px) */}
+          <div className="hidden md:block">
+            <Table>
           <TableHeader>
             <TableRow>
               <TableHead>{t('repairJobs.orderId')}</TableHead>
@@ -306,6 +386,10 @@ export default function RepairJobsPage() {
               </TableRow>
             ))}
           </TableBody>
+          </Table>
+          </div>
+
+          {/* Universal Responsive Pagination Bar */}
           <TableFooterBar
             page={page}
             totalPages={totalPages}
@@ -314,7 +398,18 @@ export default function RepairJobsPage() {
             onPrev={() => setPage((p) => Math.max(1, p - 1))}
             onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
           />
-        </Table>
+        </>
+      )}
+
+      {/* Mobile Floating Action Button (FAB) for Quick Intake */}
+      {can('repair_jobs', 'create') && (
+        <button
+          onClick={() => setIsIntakeOpen(true)}
+          className="fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center size-13 rounded-full bg-app-accent text-app-accentText shadow-xl active:scale-95 transition-transform touch-manipulation cursor-pointer border border-white/20"
+          aria-label={t('repairJobs.newRepairJob')}
+        >
+          <Plus size={22} weight="bold" />
+        </button>
       )}
 
       {/* Fast Vehicle Intake Modal (Under 30s Check-in) */}

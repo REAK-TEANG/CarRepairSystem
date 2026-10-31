@@ -36,6 +36,7 @@ import {
   TableFooterBar,
   SearchableSelect,
   Input,
+  MobileDataCard,
 } from '../../components/ui'
 import VehicleHistoryDrawer from '../../components/workshop/VehicleHistoryDrawer'
 import FastIntakeModal from '../../components/workshop/FastIntakeModal'
@@ -295,7 +296,99 @@ export default function VehiclesPage() {
           />
         </div>
       ) : (
-        <Table>
+        <>
+          {/* Mobile Native Card View (< 768px) */}
+          <div className="space-y-2.5 md:hidden">
+            {filteredVehicles.map((v) => {
+              const vJobs = getVehicleJobs(v)
+              const hasActive = vJobs.some((j) =>
+                ['Repairing', 'Diagnosing', 'Waiting for Parts', 'In Progress', 'Ready for Pickup'].includes(j.status)
+              )
+
+              return (
+                <MobileDataCard
+                  key={v.id}
+                  title={`${v.brand} ${v.model}`}
+                  subtitle={`${v.year} · ${v.color}`}
+                  badge={v.number}
+                  badgeColor="bg-app-accent/15 text-app-accent border-app-accent/30 font-mono font-bold"
+                  avatar={
+                    v.image ? (
+                      <img src={v.image} alt={v.model} className="w-full h-full object-cover rounded-lg" />
+                    ) : (
+                      <Car size={16} weight="duotone" className="text-app-muted" />
+                    )
+                  }
+                  onClick={() => handleOpenHistory(v)}
+                  metadata={[
+                    {
+                      icon: <GasPump size={13} className="text-app-accent" />,
+                      value: v.fuelType,
+                    },
+                    {
+                      label: 'Mileage',
+                      value: `${Number(v.mileage || 0).toLocaleString()} km`,
+                      mono: true,
+                    },
+                    {
+                      label: 'Owner',
+                      value: v.owner || '—',
+                    },
+                    {
+                      label: 'Status',
+                      value: hasActive ? 'Active in Bay' : `${vJobs.length} Orders`,
+                    },
+                  ]}
+                  actions={
+                    <div className="flex items-center gap-1.5 w-full justify-between">
+                      <Button
+                        size="xs"
+                        variant="secondary"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleStartRepairForVehicle(v)
+                        }}
+                      >
+                        <Plus size={12} weight="bold" />
+                        <span>Intake</span>
+                      </Button>
+                      <div className="flex items-center gap-1">
+                        {can('vehicles', 'update') && (
+                          <Button
+                            size="icon-xs"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleOpenEdit(v)
+                            }}
+                          >
+                            <PencilSimple size={13} />
+                          </Button>
+                        )}
+                        {can('vehicles', 'delete') && (
+                          <Button
+                            size="icon-xs"
+                            variant="ghost"
+                            className="text-rose-500 hover:bg-rose-500/10"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleOpenDelete(v, e)
+                            }}
+                          >
+                            <Trash size={13} />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  }
+                />
+              )
+            })}
+          </div>
+
+          {/* Desktop High-Density Table (>= 768px) */}
+          <div className="hidden md:block">
+            <Table>
           <TableHeader>
             <TableRow>
               <TableHead>{t('vehicles.plateNumber')}</TableHead>
@@ -406,6 +499,10 @@ export default function VehiclesPage() {
               )
             })}
           </TableBody>
+          </Table>
+          </div>
+
+          {/* Universal Responsive Pagination Bar */}
           <TableFooterBar
             page={page}
             totalPages={totalPages}
@@ -414,7 +511,18 @@ export default function VehiclesPage() {
             onPrev={() => setPage((p) => Math.max(1, p - 1))}
             onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
           />
-        </Table>
+        </>
+      )}
+
+      {/* Mobile Floating Action Button (FAB) */}
+      {can('vehicles', 'create') && (
+        <button
+          onClick={handleOpenAdd}
+          className="fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center size-13 rounded-full bg-app-accent text-app-accentText shadow-xl active:scale-95 transition-transform touch-manipulation cursor-pointer border border-white/20"
+          aria-label={t('vehicles.createVehicle')}
+        >
+          <Plus size={22} weight="bold" />
+        </button>
       )}
 
       {/* Register Vehicle Modal */}

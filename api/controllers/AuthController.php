@@ -2,6 +2,7 @@
 // api/controllers/AuthController.php
 
 require_once __DIR__ . '/../models/AuthModel.php';
+require_once __DIR__ . '/../utils/sanitizer.php';
 require_once __DIR__ . '/../utils/jwt.php';
 
 class AuthController
@@ -31,7 +32,7 @@ class AuthController
 
     public function login(): void
     {
-        $input    = json_decode(file_get_contents('php://input'), true) ?? [];
+        $input    = Sanitizer::getJsonInput();
         $username = $input['username'] ?? '';
         $password = $input['password'] ?? '';
 
@@ -86,7 +87,7 @@ class AuthController
 
     public function quickLogin(): void
     {
-        $input    = json_decode(file_get_contents('php://input'), true) ?? [];
+        $input    = Sanitizer::getJsonInput();
         $role     = trim($input['role'] ?? '');
         $username = trim($input['username'] ?? '');
 

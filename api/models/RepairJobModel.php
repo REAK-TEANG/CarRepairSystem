@@ -226,7 +226,7 @@ class RepairJobModel
             }
 
             $serviceId = !empty($input['serviceId']) ? (int) $input['serviceId'] : null;
-            if ($serviceId || (is_array($input['usedParts'] ?? null) && count($input['usedParts']) > 0)) {
+            if ($serviceId !== null || isset($input['usedParts'])) {
                 self::autoStockOut($updated['id'], $updated['order_number'], $serviceId, $input['usedParts'] ?? null, $performedBy);
             }
 
@@ -257,13 +257,13 @@ class RepairJobModel
     }
 
     /**
-     * Auto Stock-Out: deducts spare parts from inventory and logs transactions.
-     * Moved from the old procedural route file.
+     * Auto Stock-Out: deducts or syncs spare parts with inventory and logs transactions.
      */
     public static function autoStockOut(int $repairOrderId, string $orderNumber, ?int $serviceId, ?array $usedParts, int $performedBy): array
     {
-        $partsToDeduct = [];
+        $targetParts = [];
 
+        // 1. Service parts from Service Catalog
         if ($serviceId) {
             $serviceParts = Database::all("
               SELECT sp.id AS spare_part_id, sp.part_code, sp.name, sp.unit_price, sp.stock_quantity,
@@ -275,8 +275,9 @@ class RepairJobModel
                 [$serviceId]
             );
             foreach ($serviceParts as $sp) {
-                $partsToDeduct[] = [
-                    'sparePartId' => $sp['spare_part_id'],
+                $spId = (int)$sp['spare_part_id'];
+                $targetParts[$spId] = [
+                    'sparePartId' => $spId,
                     'partCode'    => $sp['part_code'],
                     'name'        => $sp['name'],
                     'unitPrice'   => (float) ($sp['unit_price'] ?? 0),
@@ -286,47 +287,184 @@ class RepairJobModel
             }
         }
 
-        if (is_array($usedParts) && count($usedParts) > 0) {
+        // 2. Custom or selected used parts from frontend
+        if (is_array($usedParts)) {
             foreach ($usedParts as $item) {
-                $partId = $item['sparePartId'] ?? $item['spare_part_id'] ?? $item['id'] ?? null;
-                $qty    = (int) ($item['quantity'] ?? 1);
-                if (!$partId) continue;
-                $partInfo = Database::get('SELECT id, part_code, name, unit_price, stock_quantity FROM spare_parts WHERE id = ?', [$partId]);
+                $qty = (int) ($item['quantity'] ?? 1);
+                if ($qty <= 0) continue;
+
+                $rawId = $item['sparePartId'] ?? $item['spare_part_id'] ?? null;
+                $code  = $item['partCode'] ?? $item['partNumber'] ?? $item['code'] ?? null;
+
+                if (!$rawId && isset($item['id'])) {
+                    if (is_numeric($item['id']) || (is_string($item['id']) && ctype_digit($item['id']))) {
+                        $rawId = (int)$item['id'];
+                    } elseif (!$code) {
+                        $code = (string)$item['id'];
+                    }
+                }
+
+                $partInfo = null;
+
+                // Lookup by integer ID if numeric
+                if ($rawId !== null && (is_numeric($rawId) || ctype_digit((string)$rawId))) {
+                    $partInfo = Database::get(
+                        'SELECT id, part_code, name, unit_price, stock_quantity FROM spare_parts WHERE id = ?',
+                        [(int)$rawId]
+                    );
+                }
+
+                // Lookup by part code
+                if (!$partInfo && $code) {
+                    $cleanCode = (string)$code;
+                    if (preg_match('/^\d+-([A-Za-z0-9\-_]+)-\d+$/', $cleanCode, $m)) {
+                        $cleanCode = $m[1];
+                    }
+                    $partInfo = Database::get(
+                        'SELECT id, part_code, name, unit_price, stock_quantity FROM spare_parts WHERE LOWER(part_code) = LOWER(?) LIMIT 1',
+                        [$cleanCode]
+                    );
+                    if (!$partInfo) {
+                        $partInfo = Database::get(
+                            'SELECT id, part_code, name, unit_price, stock_quantity FROM spare_parts WHERE part_code ILIKE ? LIMIT 1',
+                            ['%' . $cleanCode . '%']
+                        );
+                    }
+                }
+
+                // Lookup by name
+                if (!$partInfo && !empty($item['name'])) {
+                    $cleanName = trim($item['name']);
+                    $partInfo = Database::get(
+                        'SELECT id, part_code, name, unit_price, stock_quantity FROM spare_parts WHERE LOWER(name) = LOWER(?) LIMIT 1',
+                        [$cleanName]
+                    );
+                    if (!$partInfo) {
+                        $partInfo = Database::get(
+                            'SELECT id, part_code, name, unit_price, stock_quantity FROM spare_parts WHERE name ILIKE ? LIMIT 1',
+                            ['%' . $cleanName . '%']
+                        );
+                    }
+                }
+
+                // Auto-create supply item in spare_parts if not found
+                if (!$partInfo) {
+                    $partCodeToUse = !empty($cleanCode) ? $cleanCode : (!empty($code) ? (string)$code : 'SUP-' . strtoupper(substr(md5(uniqid()), 0, 6)));
+                    if (preg_match('/^\d+-([A-Za-z0-9\-_]+)-\d+$/', $partCodeToUse, $m)) {
+                        $partCodeToUse = $m[1];
+                    }
+                    $nameToUse  = !empty($item['name']) ? trim($item['name']) : 'Shop Supply (' . $partCodeToUse . ')';
+                    $priceToUse = isset($item['unitPrice']) ? (float)$item['unitPrice'] : (isset($item['price']) ? (float)$item['price'] : 15.00);
+
+                    Database::run(
+                        "INSERT INTO spare_parts (part_code, name, category, unit_price, stock_quantity, min_stock, location)
+                         VALUES (?, ?, 'Supplies', ?, 50, 5, 'Shop Floor Shelf')
+                         ON CONFLICT (part_code) DO NOTHING",
+                        [$partCodeToUse, $nameToUse, $priceToUse]
+                    );
+                    $partInfo = Database::get('SELECT id, part_code, name, unit_price, stock_quantity FROM spare_parts WHERE part_code = ?', [$partCodeToUse]);
+                }
+
                 if ($partInfo) {
-                    $partsToDeduct[] = [
-                        'sparePartId' => $partInfo['id'],
-                        'partCode'    => $partInfo['part_code'],
-                        'name'        => $partInfo['name'],
-                        'unitPrice'   => (float) ($partInfo['unit_price'] ?? 0),
-                        'quantity'    => $qty,
-                        'serviceName' => null,
-                    ];
+                    $spId = (int)$partInfo['id'];
+                    $price = isset($item['unitPrice']) ? (float)$item['unitPrice'] : (isset($item['price']) ? (float)$item['price'] : (float)$partInfo['unit_price']);
+
+                    if (isset($targetParts[$spId])) {
+                        $targetParts[$spId]['quantity'] += $qty;
+                    } else {
+                        $targetParts[$spId] = [
+                            'sparePartId' => $spId,
+                            'partCode'    => $partInfo['part_code'],
+                            'name'        => $partInfo['name'],
+                            'unitPrice'   => $price,
+                            'quantity'    => $qty,
+                            'serviceName' => null,
+                        ];
+                    }
                 }
             }
         }
 
+        // Fetch existing parts recorded in repair_parts for this repair order
+        $existingRows = Database::all(
+            'SELECT spare_part_id, quantity, unit_price FROM repair_parts WHERE repair_order_id = ?',
+            [$repairOrderId]
+        );
+        $existingMap = [];
+        foreach ($existingRows as $er) {
+            $existingMap[(int)$er['spare_part_id']] = (int)$er['quantity'];
+        }
+
         $perfBy = ($performedBy > 0) ? $performedBy : null;
-        foreach ($partsToDeduct as $part) {
-            Database::run(
-                "UPDATE spare_parts SET stock_quantity = GREATEST(0, stock_quantity - ?), updated_at = NOW() WHERE id = ?",
-                [$part['quantity'], $part['sparePartId']]
-            );
-            $notes = $part['serviceName']
-                ? "Auto Stock-Out for Service \"{$part['serviceName']}\" on Job {$orderNumber}"
-                : "Auto Stock-Out for Repair Job {$orderNumber}";
-            Database::run(
-                "INSERT INTO inventory_transactions (spare_part_id, type, quantity, reference_id, reference_type, notes, performed_by)
-                 VALUES (?, 'Stock Out', ?, ?, 'repair_order', ?, ?)",
-                [$part['sparePartId'], $part['quantity'], $repairOrderId, $notes, $perfBy]
-            );
+
+        // Apply net delta and upsert target parts
+        foreach ($targetParts as $spId => $part) {
+            $prevQty = $existingMap[$spId] ?? 0;
+            $newQty  = $part['quantity'];
+            $delta   = $newQty - $prevQty;
+
+            if ($delta > 0) {
+                // Deduct additional stock
+                Database::run(
+                    "UPDATE spare_parts SET stock_quantity = GREATEST(0, stock_quantity - ?), updated_at = NOW() WHERE id = ?",
+                    [$delta, $spId]
+                );
+                $notes = $part['serviceName']
+                    ? "Auto Stock-Out for Service \"{$part['serviceName']}\" on Job {$orderNumber}"
+                    : "Auto Stock-Out for Repair Job {$orderNumber}";
+                Database::run(
+                    "INSERT INTO inventory_transactions (spare_part_id, type, quantity, reference_id, reference_type, notes, performed_by)
+                     VALUES (?, 'Stock Out', ?, ?, 'repair_order', ?, ?)",
+                    [$spId, $delta, $repairOrderId, $notes, $perfBy]
+                );
+            } elseif ($delta < 0) {
+                // Return stock back to inventory
+                $returnQty = abs($delta);
+                Database::run(
+                    "UPDATE spare_parts SET stock_quantity = stock_quantity + ?, updated_at = NOW() WHERE id = ?",
+                    [$returnQty, $spId]
+                );
+                Database::run(
+                    "INSERT INTO inventory_transactions (spare_part_id, type, quantity, reference_id, reference_type, notes, performed_by)
+                     VALUES (?, 'Stock In', ?, ?, 'repair_order', 'Returned excess parts from Job {$orderNumber}', ?)",
+                    [$spId, $returnQty, $repairOrderId, $perfBy]
+                );
+            }
+
             Database::run(
                 "INSERT INTO repair_parts (repair_order_id, spare_part_id, quantity, unit_price, total_price)
-                 VALUES (?, ?, ?, ?, ?)",
-                [$repairOrderId, $part['sparePartId'], $part['quantity'], $part['unitPrice'], $part['unitPrice'] * $part['quantity']]
+                 VALUES (?, ?, ?, ?, ?)
+                 ON CONFLICT (repair_order_id, spare_part_id)
+                 DO UPDATE SET quantity = EXCLUDED.quantity,
+                               unit_price = EXCLUDED.unit_price,
+                               total_price = EXCLUDED.quantity * EXCLUDED.unit_price",
+                [$repairOrderId, $spId, $newQty, $part['unitPrice'], $part['unitPrice'] * $newQty]
             );
         }
 
-        return $partsToDeduct;
+        // Handle parts removed completely (only when usedParts was explicitly supplied as a full list)
+        if (is_array($usedParts)) {
+            foreach ($existingMap as $oldSpId => $oldQty) {
+                if (!isset($targetParts[$oldSpId])) {
+                    // Restore stock
+                    Database::run(
+                        "UPDATE spare_parts SET stock_quantity = stock_quantity + ?, updated_at = NOW() WHERE id = ?",
+                        [$oldQty, $oldSpId]
+                    );
+                    Database::run(
+                        "INSERT INTO inventory_transactions (spare_part_id, type, quantity, reference_id, reference_type, notes, performed_by)
+                         VALUES (?, 'Stock In', ?, ?, 'repair_order', 'Removed part from Repair Job {$orderNumber}', ?)",
+                        [$oldSpId, $oldQty, $repairOrderId, $perfBy]
+                    );
+                    Database::run(
+                        "DELETE FROM repair_parts WHERE repair_order_id = ? AND spare_part_id = ?",
+                        [$repairOrderId, $oldSpId]
+                    );
+                }
+            }
+        }
+
+        return array_values($targetParts);
     }
 
     // -------------------------------------------------------------------------

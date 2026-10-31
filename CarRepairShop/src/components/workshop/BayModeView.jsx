@@ -37,6 +37,7 @@ const QA_ITEMS = [
 
 export default function BayModeView({
   jobs = [],
+  inventory = [],
   onOpenJobDrawer,
 }) {
   const { addToast } = useToast()
@@ -109,14 +110,46 @@ export default function BayModeView({
   // Quick 1-tap Part Logger
   const handleQuickAddSupply = async (supply) => {
     if (!activeJob) return
-    const newPart = {
-      id: `${activeJob.id}-${supply.code}-${activeParts.length + 1}`,
-      name: supply.name,
-      partNumber: supply.code,
-      quantity: 1,
-      price: supply.price,
+
+    // Match with real inventory items if available
+    const matched = inventory.find(
+      (inv) =>
+        (inv.partCode && inv.partCode.toLowerCase() === supply.code.toLowerCase()) ||
+        (inv.code && inv.code.toLowerCase() === supply.code.toLowerCase()) ||
+        (inv.name && inv.name.toLowerCase().includes(supply.name.toLowerCase()))
+    )
+
+    const sparePartId = matched?.id ? Number(matched.id) : null
+    const price = matched ? Number(matched.unitPrice || matched.price || supply.price) : supply.price
+
+    // If supply is already in activeParts, increment quantity instead of adding duplicate
+    const existingIndex = activeParts.findIndex(
+      (p) =>
+        (sparePartId && Number(p.sparePartId || p.id) === sparePartId) ||
+        (p.partCode && p.partCode.toLowerCase() === supply.code.toLowerCase()) ||
+        (p.partNumber && p.partNumber.toLowerCase() === supply.code.toLowerCase()) ||
+        (p.name && p.name.toLowerCase() === supply.name.toLowerCase())
+    )
+
+    let updatedParts
+    if (existingIndex >= 0) {
+      updatedParts = [...activeParts]
+      updatedParts[existingIndex] = {
+        ...updatedParts[existingIndex],
+        quantity: (Number(updatedParts[existingIndex].quantity) || 1) + 1,
+      }
+    } else {
+      const newPart = {
+        sparePartId: sparePartId,
+        partCode: supply.code,
+        partNumber: supply.code,
+        name: supply.name,
+        quantity: 1,
+        price,
+        unitPrice: price,
+      }
+      updatedParts = [...activeParts, newPart]
     }
-    const updatedParts = [...activeParts, newPart]
 
     try {
       await updateJobMutation.mutateAsync({
@@ -373,7 +406,7 @@ export default function BayModeView({
                         <div>
                           <p className="font-semibold text-app-text">{part.name}</p>
                           <p className="text-[10px] font-mono text-app-muted">
-                            Qty: {part.quantity || 1} • ${Number(part.price || 0).toFixed(2)}
+                            Qty: {part.quantity || 1} • ${Number(part.unitPrice || part.price || 0).toFixed(2)}
                           </p>
                         </div>
                         <button

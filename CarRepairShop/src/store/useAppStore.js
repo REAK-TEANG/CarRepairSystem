@@ -15,6 +15,10 @@ export const useAppStore = create(
       commandPaletteOpen: false,
       setCommandPaletteOpen: (value) => set({ commandPaletteOpen: value }),
       toggleCommandPalette: () => set((state) => ({ commandPaletteOpen: !state.commandPaletteOpen })),
+
+      fastIntakeModalOpen: false,
+      setFastIntakeModalOpen: (value) => set({ fastIntakeModalOpen: value }),
+      toggleFastIntakeModal: () => set((state) => ({ fastIntakeModalOpen: !state.fastIntakeModalOpen })),
     }),
     {
       name: 'app-ui-storage',

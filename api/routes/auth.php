@@ -2,7 +2,9 @@
 // api/routes/auth.php
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../utils/jwt.php';
+require_once __DIR__ . '/../utils/sanitizer.php';
 require_once __DIR__ . '/../utils/rateLimit.php';
+require_once __DIR__ . '/../middleware/AuthMiddleware.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $path = $segments[1] ?? '';
@@ -57,7 +59,7 @@ if ($method === 'GET' && ($path === 'accounts' || $path === 'roles-accounts')) {
     exit;
 
 } else if ($method === 'POST' && $path === 'login') {
-    $input = json_decode(file_get_contents('php://input'), true);
+    $input = Sanitizer::getJsonInput();
     $username = $input['username'] ?? '';
     $password = $input['password'] ?? '';
 
@@ -81,7 +83,7 @@ if ($method === 'GET' && ($path === 'accounts' || $path === 'roles-accounts')) {
         exit;
     }
     
-    // Query authenticated user directly from the database
+    // Query authenticated user directly from the database using PDO prepared statements
     $user = get(
         "SELECT u.*, r.name as role_name 
          FROM users u 
@@ -105,7 +107,7 @@ if ($method === 'GET' && ($path === 'accounts' || $path === 'roles-accounts')) {
 
     $isPasswordValid = false;
     if (!empty($user['password_hash'])) {
-        if ($user['password_hash'] === $password) { // Handle old plain-text migration if any
+        if ($user['password_hash'] === $password) { // Handle legacy plain-text migration if any
             $isPasswordValid = true;
             $newHash = password_hash($password, PASSWORD_BCRYPT);
             run('UPDATE users SET password_hash = ? WHERE id = ?', [$newHash, $user['id']]);
@@ -164,7 +166,7 @@ if ($method === 'GET' && ($path === 'accounts' || $path === 'roles-accounts')) {
     exit;
 
 } else if ($method === 'POST' && $path === 'quick-login') {
-    $input = json_decode(file_get_contents('php://input'), true);
+    $input = Sanitizer::getJsonInput();
     $role = trim($input['role'] ?? '');
     $username = trim($input['username'] ?? '');
 
@@ -234,7 +236,7 @@ if ($method === 'GET' && ($path === 'accounts' || $path === 'roles-accounts')) {
     exit;
 
 } else if ($method === 'GET' && $path === 'me') {
-    $authPayload = authenticate();
+    $authPayload = AuthMiddleware::requireAuth();
     
     $user = get(
         "SELECT u.id, u.username, u.email, u.full_name, u.phone, u.avatar_url, u.is_active, u.last_login,
@@ -269,15 +271,37 @@ if ($method === 'GET' && ($path === 'accounts' || $path === 'roles-accounts')) {
     ]);
     exit;
 
+} else if ($method === 'POST' && $path === 'logout') {
+    $token = getBearerToken();
+    if ($token) {
+        $payload = JWT::decode($token, $secret);
+        $ttl = ($payload && isset($payload['exp'])) ? max(60, $payload['exp'] - time()) : 86400;
+        AuthMiddleware::blacklistToken($token, $ttl);
+    }
+
+    echo json_encode([
+        'success' => true,
+        'message' => 'Logged out successfully'
+    ]);
+    exit;
+
 } else if ($method === 'POST' && ($path === 'change-password' || $path === 'change_password')) {
-    $authPayload = authenticate();
-    $input = json_decode(file_get_contents('php://input'), true) ?? [];
+    $authPayload = AuthMiddleware::requireAuth();
+    $input = Sanitizer::getJsonInput();
     $current = $input['currentPassword'] ?? '';
     $new = $input['newPassword'] ?? '';
 
     if (!$current || !$new) {
         http_response_code(400);
         echo json_encode(['error' => 'Current password and new password are required']);
+        exit;
+    }
+
+    // Enforce strong password complexity policy
+    $passwordCheck = Sanitizer::validatePassword($new);
+    if (!$passwordCheck['valid']) {
+        http_response_code(400);
+        echo json_encode(['error' => $passwordCheck['error']]);
         exit;
     }
 
@@ -302,7 +326,7 @@ if ($method === 'GET' && ($path === 'accounts' || $path === 'roles-accounts')) {
     exit;
 
 } else if ($method === 'POST' && ($path === 'forgot-password' || $path === 'forgot_password')) {
-    $input = json_decode(file_get_contents('php://input'), true) ?? [];
+    $input = Sanitizer::getJsonInput();
     $ident = strtolower(trim($input['emailOrUsername'] ?? $input['email'] ?? ''));
 
     if (!$ident) {
@@ -327,7 +351,7 @@ if ($method === 'GET' && ($path === 'accounts' || $path === 'roles-accounts')) {
     exit;
 
 } else if ($method === 'POST' && ($path === 'reset-password' || $path === 'reset_password')) {
-    $input = json_decode(file_get_contents('php://input'), true) ?? [];
+    $input = Sanitizer::getJsonInput();
     $ident = strtolower(trim($input['emailOrUsername'] ?? $input['email'] ?? ''));
     $code = trim($input['resetCode'] ?? '');
     $newPass = $input['newPassword'] ?? '';
@@ -335,6 +359,14 @@ if ($method === 'GET' && ($path === 'accounts' || $path === 'roles-accounts')) {
     if (!$ident || !$code || !$newPass) {
         http_response_code(400);
         echo json_encode(['error' => 'Email/username, reset code, and new password are required']);
+        exit;
+    }
+
+    // Enforce strong password complexity policy
+    $passwordCheck = Sanitizer::validatePassword($newPass);
+    if (!$passwordCheck['valid']) {
+        http_response_code(400);
+        echo json_encode(['error' => $passwordCheck['error']]);
         exit;
     }
 

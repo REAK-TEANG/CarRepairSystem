@@ -1,13 +1,16 @@
 <?php
 // api/routes/settings.php
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../utils/sanitizer.php';
+require_once __DIR__ . '/../middleware/AuthMiddleware.php';
 
-$authPayload = authenticate(); 
+$authPayload = AuthMiddleware::requireAuth(); 
 
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($path === '/settings/permissions') {
     if ($method === 'GET') {
+        AuthMiddleware::authorize('settings', 'read', $authPayload);
         $row = get("SELECT setting_value FROM settings WHERE setting_key = 'roles_permissions_matrix'");
         if ($row && $row['setting_value']) {
             $matrix = json_decode($row['setting_value'], true);
@@ -20,14 +23,10 @@ if ($path === '/settings/permissions') {
         exit;
     } else if ($method === 'PUT') {
         // Strict admin check
-        if (($authPayload['role'] ?? '') !== 'admin') {
-            http_response_code(403);
-            echo json_encode(['error' => 'Forbidden']);
-            exit;
-        }
+        AuthMiddleware::requireAdmin($authPayload);
 
-        $rawMatrix = json_decode(file_get_contents('php://input'), true);
-        if (!is_array($rawMatrix)) {
+        $rawMatrix = Sanitizer::getJsonInput();
+        if (!is_array($rawMatrix) || empty($rawMatrix)) {
             http_response_code(400);
             echo json_encode(['error' => 'Invalid permissions matrix payload']);
             exit;
@@ -53,6 +52,7 @@ if ($path === '/settings/permissions') {
     }
 } else if ($path === '/settings' || $path === '/settings/') {
     if ($method === 'GET') {
+        AuthMiddleware::authorize('settings', 'read', $authPayload);
         $rows = all('SELECT * FROM settings');
 
         $settingsObj = [
@@ -87,13 +87,9 @@ if ($path === '/settings/permissions') {
         exit;
 
     } else if ($method === 'PUT') {
-        if (($authPayload['role'] ?? '') !== 'admin') {
-            http_response_code(403);
-            echo json_encode(['error' => 'Forbidden: Only administrators can update shop settings']);
-            exit;
-        }
+        AuthMiddleware::requireAdmin($authPayload);
 
-        $input = json_decode(file_get_contents('php://input'), true);
+        $input = Sanitizer::getJsonInput();
 
         $updates = [];
         if (isset($input['shopName'])) $updates['shop_name'] = $input['shopName'];

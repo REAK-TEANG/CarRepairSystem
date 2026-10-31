@@ -22,6 +22,10 @@ export default {
           accentHover:'var(--accent-hover)',
           accentLight:'var(--accent-secondary)',
           accentText: 'var(--accent-text)',
+          // Defensive aliases to prevent black-text fallback on buttons
+          'text-inverted': 'var(--accent-text)',
+          'accent-hover':  'var(--accent-hover)',
+          'accent-text':   'var(--accent-text)',
         },
         primary: {
           50:  '#EFF6FF',

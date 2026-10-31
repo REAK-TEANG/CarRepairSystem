@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { MagnifyingGlass, Plus, Trash, Wrench, Car, UsersThree } from '@phosphor-icons/react'
+import { MagnifyingGlass, Plus, Trash, Wrench, Car, UsersThree, Phone, CurrencyDollar } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useMechanics, useCreateMechanic, useUpdateMechanic, useDeleteMechanic } from '../../hooks/useMechanics'
 import { useDebounce } from '../../hooks/useDebounce'
 import { useAuth } from '../../context/AuthContext'
-import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, SearchableSelect, Input } from '../../components/ui'
+import { Modal, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, Button, SearchableSelect, Input, MobileDataCard } from '../../components/ui'
 import RepairPipelineTracker from '../../components/workshop/RepairPipelineTracker'
 
 import { usePaginationData } from '../../hooks/usePaginationData'
@@ -218,61 +218,116 @@ export default function MechanicsPage() {
               />
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('mechanics.name')}</TableHead>
-                  <TableHead>{t('mechanics.specialization')}</TableHead>
-                  <TableHead className="hidden md:table-cell">{t('mechanics.experience')}</TableHead>
-                  <TableHead className="hidden lg:table-cell">{t('mechanics.hourlyRate')}</TableHead>
-                  <TableHead>{t('mechanics.status')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              {/* Mobile Cards View (< 768px) */}
+              <div className="space-y-2.5 md:hidden">
                 {mechanics.map((m) => (
-                  <TableRow
+                  <MobileDataCard
                     key={m.id}
                     onClick={() => handleOpenEdit(m)}
-                    className="cursor-pointer"
-                  >
-                    <TableCell>
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-sm bg-app-accent/15 flex items-center justify-center text-app-accent font-bold text-xs flex-shrink-0">
-                          <Wrench size={14} />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-app-text">{m.name}</p>
-                          <p className="text-[10px] text-app-muted font-mono">{m.code} · {m.phone}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-app-text font-medium">{m.specialization}</TableCell>
-                    <TableCell className="text-app-muted tabular-nums hidden md:table-cell">
-                      {m.experienceYears} {t('mechanics.experience')}
-                    </TableCell>
-                    <TableCell className="font-bold text-app-accent tabular-nums hidden lg:table-cell">
-                      ${m.hourlyRate}/hr
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-sm text-[11px] font-semibold border ${
-                          m.status === 'Active'
-                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
-                            : m.status === 'On Leave'
-                            ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
-                            : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20'
-                        }`}
-                      >
-                        {t(`status.${m.status}`, m.status)}
-                      </span>
-                    </TableCell>
-                  </TableRow>
+                    icon={<Wrench size={18} className="text-app-accent" />}
+                    title={m.name}
+                    subtitle={`${m.specialization} • ${m.experienceYears} yrs exp`}
+                    status={{
+                      label: t(`status.${m.status}`, m.status),
+                      color: m.status === 'Active' ? 'green' : m.status === 'On Leave' ? 'amber' : 'red',
+                    }}
+                    chips={[
+                      {
+                        value: m.code,
+                      },
+                      {
+                        icon: <CurrencyDollar size={13} weight="bold" />,
+                        value: `$${m.hourlyRate}/hr`,
+                      },
+                      {
+                        icon: <Phone size={13} weight="bold" />,
+                        value: (
+                          <a
+                            href={`tel:${m.phone}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="hover:underline text-app-accent font-semibold"
+                          >
+                            {m.phone}
+                          </a>
+                        ),
+                      },
+                    ]}
+                  />
                 ))}
-              </TableBody>
+              </div>
+
+              {/* Desktop High-Density Table (>= 768px) */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t('mechanics.name')}</TableHead>
+                      <TableHead>{t('mechanics.specialization')}</TableHead>
+                      <TableHead className="hidden md:table-cell">{t('mechanics.experience')}</TableHead>
+                      <TableHead className="hidden lg:table-cell">{t('mechanics.hourlyRate')}</TableHead>
+                      <TableHead>{t('mechanics.status')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {mechanics.map((m) => (
+                      <TableRow
+                        key={m.id}
+                        onClick={() => handleOpenEdit(m)}
+                        className="cursor-pointer"
+                      >
+                        <TableCell>
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-sm bg-app-accent/15 flex items-center justify-center text-app-accent font-bold text-xs flex-shrink-0">
+                              <Wrench size={14} />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-app-text">{m.name}</p>
+                              <p className="text-[10px] text-app-muted font-mono">{m.code} · {m.phone}</p>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-app-text font-medium">{m.specialization}</TableCell>
+                        <TableCell className="text-app-muted tabular-nums hidden md:table-cell">
+                          {m.experienceYears} {t('mechanics.experience')}
+                        </TableCell>
+                        <TableCell className="font-bold text-app-accent tabular-nums hidden lg:table-cell">
+                          ${m.hourlyRate}/hr
+                        </TableCell>
+                        <TableCell>
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-sm text-[11px] font-semibold border ${
+                              m.status === 'Active'
+                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                                : m.status === 'On Leave'
+                                ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                                : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20'
+                            }`}
+                          >
+                            {t(`status.${m.status}`, m.status)}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
               <TableFooterBar pagination={pagination} onPageChange={setCurrentPage} />
-            </Table>
+            </>
           )}
-      </>
+        </>
+      )}
+
+      {/* Mobile Floating Action Button (FAB) for Add Mechanic */}
+      {can('mechanics', 'create') && activeTab === 'roster' && (
+        <button
+          onClick={handleOpenAdd}
+          className="fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center size-13 rounded-full bg-app-accent text-app-accentText shadow-xl active:scale-95 transition-transform touch-manipulation cursor-pointer border border-white/20"
+          aria-label={t('mechanics.addMechanic')}
+        >
+          <Plus size={22} weight="bold" />
+        </button>
       )}
 
       {/* Add Mechanic Modal */}

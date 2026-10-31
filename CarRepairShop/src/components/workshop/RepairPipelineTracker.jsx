@@ -179,16 +179,42 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
     const chosenPart = inventory.find((p) => String(p.id) === String(partSelection.sparePartId))
     if (!chosenPart) return
 
+    const existingParts = Array.isArray(selectedJob.partsUsed)
+      ? selectedJob.partsUsed
+      : typeof selectedJob.partsUsed === 'string' && selectedJob.partsUsed.trim()
+      ? JSON.parse(selectedJob.partsUsed)
+      : []
+
+    const addQty = Number(partSelection.quantity) || 1
+    const existingIndex = existingParts.findIndex(
+      (p) => String(p.sparePartId || p.id) === String(chosenPart.id)
+    )
+
+    let updatedParts
+    if (existingIndex >= 0) {
+      updatedParts = [...existingParts]
+      updatedParts[existingIndex] = {
+        ...updatedParts[existingIndex],
+        quantity: (Number(updatedParts[existingIndex].quantity) || 1) + addQty,
+      }
+    } else {
+      updatedParts = [
+        ...existingParts,
+        {
+          sparePartId: chosenPart.id,
+          partCode: chosenPart.partCode || chosenPart.sku || 'PART',
+          name: chosenPart.name,
+          unitPrice: Number(chosenPart.unitPrice || chosenPart.price || 0),
+          quantity: addQty,
+        },
+      ]
+    }
+
     try {
       await updateJobMutation.mutateAsync({
         id: selectedJob.id,
         data: {
-          usedParts: [
-            {
-              sparePartId: chosenPart.id,
-              quantity: Number(partSelection.quantity) || 1,
-            },
-          ],
+          usedParts: updatedParts,
         },
       })
       addToast(`Added ${partSelection.quantity}x ${chosenPart.name} to ${selectedJob.orderNumber}`, 'success')

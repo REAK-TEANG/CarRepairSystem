@@ -463,7 +463,7 @@ export default function FastIntakeModal({
                     className={cn(
                       'py-1.5 px-2 rounded-lg text-xs font-medium border text-center transition-all cursor-pointer',
                       fuelLevel === f
-                        ? 'bg-app-accent text-app-text-inverted border-app-accent font-bold shadow-xs'
+                        ? 'bg-app-accent text-app-accentText border-app-accent font-bold shadow-xs'
                         : 'bg-app-input border-app-border text-app-muted hover:text-app-text hover:bg-app-hover'
                     )}
                   >
@@ -568,7 +568,7 @@ export default function FastIntakeModal({
           <LoadingButton
             type="submit"
             isLoading={isSubmitting}
-            className="bg-app-accent text-app-text-inverted hover:bg-app-accent-hover font-semibold px-5"
+            className="bg-app-accent text-app-accentText hover:bg-app-accentHover font-semibold px-5"
           >
             Create Job Card &rarr;
           </LoadingButton>

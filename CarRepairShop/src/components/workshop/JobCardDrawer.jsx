@@ -116,7 +116,9 @@ export default function JobCardDrawer({
     if (!matched) return
 
     const price = Number(matched.price || matched.unitPrice || 0)
-    const existingIndex = partsUsed.findIndex((p) => String(p.id) === String(matched.id))
+    const existingIndex = partsUsed.findIndex(
+      (p) => String(p.sparePartId || p.id) === String(matched.id)
+    )
 
     if (existingIndex >= 0) {
       const updated = [...partsUsed]
@@ -127,9 +129,12 @@ export default function JobCardDrawer({
         ...partsUsed,
         {
           id: matched.id,
+          sparePartId: matched.id,
           name: matched.name,
-          sku: matched.sku || matched.code || 'PART',
+          sku: matched.sku || matched.code || matched.partCode || 'PART',
+          partCode: matched.partCode || matched.sku || matched.code || 'PART',
           price,
+          unitPrice: price,
           quantity: Number(newPartQty) || 1,
         },
       ])
@@ -264,7 +269,7 @@ export default function JobCardDrawer({
               type="button"
               isLoading={isSaving}
               onClick={handleSave}
-              className="bg-app-accent text-app-text-inverted hover:bg-app-accent-hover font-semibold px-4"
+              className="bg-app-accent text-app-accentText hover:bg-app-accentHover font-semibold px-4"
             >
               Save Changes
             </LoadingButton>
@@ -314,7 +319,7 @@ export default function JobCardDrawer({
         <p className="text-[11px] font-semibold text-app-muted uppercase tracking-wider px-1">
           Pipeline Status (1-Tap Progress)
         </p>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
           {STATUS_STEPS.map((step) => {
             const Icon = step.icon
             const isCurrent = status === step.key
@@ -324,9 +329,9 @@ export default function JobCardDrawer({
                 type="button"
                 onClick={() => handleStepStatus(step.key)}
                 className={cn(
-                  'flex items-center justify-center gap-2 py-2 px-2.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer',
+                  'flex items-center justify-center gap-1.5 sm:gap-2 py-2 px-1.5 sm:px-2.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer touch-manipulation active:scale-[0.98]',
                   isCurrent
-                    ? 'bg-app-accent text-app-text-inverted border-app-accent shadow-xs'
+                    ? 'bg-app-accent text-app-accentText border-app-accent shadow-xs'
                     : 'bg-app-card border-app-border text-app-muted hover:border-app-muted/60 hover:text-app-text'
                 )}
               >
@@ -339,12 +344,12 @@ export default function JobCardDrawer({
       </div>
 
       {/* 3. Navigation Tabs */}
-      <div className="flex border-b border-app-border gap-6 text-xs font-semibold">
+      <div className="flex border-b border-app-border gap-4 sm:gap-6 overflow-x-auto pb-1 text-xs font-semibold whitespace-nowrap">
         <button
           type="button"
           onClick={() => setActiveTab('overview')}
           className={cn(
-            'pb-2.5 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5',
+            'pb-2.5 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 flex-shrink-0 touch-manipulation',
             activeTab === 'overview'
               ? 'border-app-accent text-app-accent'
               : 'border-transparent text-app-muted hover:text-app-text'
@@ -357,7 +362,7 @@ export default function JobCardDrawer({
           type="button"
           onClick={() => setActiveTab('parts')}
           className={cn(
-            'pb-2.5 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5',
+            'pb-2.5 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 flex-shrink-0 touch-manipulation',
             activeTab === 'parts'
               ? 'border-app-accent text-app-accent'
               : 'border-transparent text-app-muted hover:text-app-text'
@@ -370,7 +375,7 @@ export default function JobCardDrawer({
           type="button"
           onClick={() => setActiveTab('invoice')}
           className={cn(
-            'pb-2.5 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5',
+            'pb-2.5 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 flex-shrink-0 touch-manipulation',
             activeTab === 'invoice'
               ? 'border-app-accent text-app-accent'
               : 'border-transparent text-app-muted hover:text-app-text'
@@ -447,7 +452,7 @@ export default function JobCardDrawer({
                     className={cn(
                       'py-1 rounded text-xs border text-center transition-all cursor-pointer font-medium',
                       fuelLevel === f
-                        ? 'bg-app-accent text-app-text-inverted border-app-accent font-bold'
+                        ? 'bg-app-accent text-app-accentText border-app-accent font-bold'
                         : 'bg-app-input border-app-border text-app-muted hover:text-app-text'
                     )}
                   >
@@ -517,7 +522,7 @@ export default function JobCardDrawer({
                   }
                 }}
                 disabled={!selectedServiceId}
-                className="bg-app-accent text-app-text-inverted hover:bg-app-accent-hover text-xs h-9 px-3"
+                className="bg-app-accent text-app-accentText hover:bg-app-accentHover text-xs h-9 px-3"
               >
                 + Add Service
               </Button>
@@ -554,7 +559,7 @@ export default function JobCardDrawer({
                 size="sm"
                 onClick={handleAddPart}
                 disabled={!newPartId}
-                className="bg-app-accent text-app-text-inverted hover:bg-app-accent-hover text-xs h-9"
+                className="bg-app-accent text-app-accentText hover:bg-app-accentHover text-xs h-9"
               >
                 <Plus size={14} className="mr-1" /> Add Part
               </Button>
@@ -648,7 +653,7 @@ export default function JobCardDrawer({
                 type="button"
                 isLoading={isGeneratingInvoice}
                 onClick={handleGenerateInvoice}
-                className="w-full bg-app-accent text-app-text-inverted hover:bg-app-accent-hover font-semibold py-2.5 flex items-center justify-center gap-2"
+                className="w-full bg-app-accent text-app-accentText hover:bg-app-accentHover font-semibold py-2.5 flex items-center justify-center gap-2"
               >
                 <Receipt size={16} weight="bold" />
                 Generate Official Invoice & Settle
