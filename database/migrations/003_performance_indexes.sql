@@ -84,6 +84,15 @@ CREATE INDEX IF NOT EXISTS idx_repair_parts_repair_order_id
 CREATE INDEX IF NOT EXISTS idx_repair_parts_spare_part_id 
     ON repair_parts (spare_part_id);
 
+DELETE FROM repair_parts a
+USING repair_parts b
+WHERE a.id < b.id
+  AND a.repair_order_id = b.repair_order_id
+  AND a.spare_part_id = b.spare_part_id;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_repair_parts_ro_sp_uniq 
+    ON repair_parts (repair_order_id, spare_part_id);
+
 CREATE INDEX IF NOT EXISTS idx_repair_services_repair_order_id 
     ON repair_services (repair_order_id);
 

@@ -1,10 +1,35 @@
-    <?php
+<?php
 // api/models/RepairJobModel.php
+
+require_once __DIR__ . '/../utils/eventBus.php';
 
 class RepairJobModel
 {
+    private static function ensureSchema(): void
+    {
+        static $checked = false;
+        if ($checked) return;
+        $checked = true;
+        try {
+            Database::run("
+                DELETE FROM repair_parts a
+                USING repair_parts b
+                WHERE a.id < b.id
+                  AND a.repair_order_id = b.repair_order_id
+                  AND a.spare_part_id = b.spare_part_id
+            ");
+            Database::run("
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_repair_parts_ro_sp_uniq 
+                ON repair_parts (repair_order_id, spare_part_id)
+            ");
+        } catch (\Throwable $e) {
+            // Non-blocking schema safeguard
+        }
+    }
+
     public static function getAll(array $filters = []): array
     {
+        self::ensureSchema();
         $sql    = self::baseSql();
         $params = [];
         $where  = [];
@@ -115,6 +140,7 @@ class RepairJobModel
 
     public static function create(array $input, int $performedBy): array
     {
+        self::ensureSchema();
         return Database::transaction(function () use ($input, $performedBy) {
             $orderNumber = generateUniqueCode('repair_orders', 'order_number', 'RO-2026', 4);
             $costNum    = (float) preg_replace('/[^0-9.]/', '', $input['estimatedCost'] ?? '350') ?: 350.00;
@@ -149,6 +175,11 @@ class RepairJobModel
                 if (!$mechExists) $mechanicId = null;
             }
 
+            $problemDesc = $input['problemDescription'] ?? $input['problem'] ?? null;
+            $intakeJson = isset($input['intakeInspection'])
+                ? (is_string($input['intakeInspection']) ? $input['intakeInspection'] : json_encode($input['intakeInspection']))
+                : json_encode(new \stdClass());
+
             Database::run(
                 "INSERT INTO repair_orders (
                     order_number, customer_id, vehicle_id, mechanic_id, problem_description, diagnosis,
@@ -159,13 +190,13 @@ class RepairJobModel
                     $customerId,
                     $vehicleId,
                     $mechanicId,
-                    $input['problem']         ?? null,
+                    $problemDesc,
                     $input['diagnosis']       ?? null,
                     $costNum,
                     $input['status']          ?? 'Pending',
                     (int) ($input['odometer'] ?? 0),
                     $input['fuelLevel']       ?? '1/2',
-                    json_encode($input['intakeInspection'] ?? new \stdClass()),
+                    $intakeJson,
                     $input['customerApproval'] ?? 'Approved',
                     $approvedAmt,
                 ]
@@ -202,44 +233,66 @@ class RepairJobModel
 
     public static function update(int $id, array $input, int $performedBy): ?array
     {
+        self::ensureSchema();
         return Database::transaction(function () use ($id, $input, $performedBy) {
+            $existing = Database::get('SELECT id, order_number FROM repair_orders WHERE id = ?', [$id]);
+            if (!$existing) {
+                return null;
+            }
+
             $actualNum = ($input['actualCost'] ?? null)
                 ? (float) preg_replace('/[^0-9.]/', '', $input['actualCost'])
                 : null;
             $estNum    = ($input['estimatedCost'] ?? null)
                 ? (float) preg_replace('/[^0-9.]/', '', $input['estimatedCost'])
                 : null;
-            $qaJson    = isset($input['qaChecklist']) ? json_encode($input['qaChecklist']) : null;
+            $qaJson    = isset($input['qaChecklist'])
+                ? (is_string($input['qaChecklist']) ? $input['qaChecklist'] : json_encode($input['qaChecklist']))
+                : null;
+            $inspectionJson = isset($input['intakeInspection'])
+                ? (is_string($input['intakeInspection']) ? $input['intakeInspection'] : json_encode($input['intakeInspection']))
+                : null;
             $mechanicId = (!empty($input['mechanicId']) && (int) $input['mechanicId'] > 0)
                 ? (int) $input['mechanicId']
                 : ((!empty($input['mechanic_id']) && (int) $input['mechanic_id'] > 0) ? (int) $input['mechanic_id'] : null);
 
             $status = !empty($input['status']) ? self::normalizeStatus($input['status']) : null;
+            $problem = $input['problemDescription'] ?? $input['problem'] ?? null;
+            $odometer = isset($input['odometer']) ? (int) $input['odometer'] : null;
+            $fuelLevel = $input['fuelLevel'] ?? $input['fuel_level'] ?? null;
 
             Database::run(
                 "UPDATE repair_orders
-                 SET status               = COALESCE(?, status),
-                     diagnosis            = COALESCE(?, diagnosis),
-                     actual_cost          = COALESCE(?, actual_cost),
-                     estimated_cost       = COALESCE(?, estimated_cost),
-                     mechanic_id          = COALESCE(?, mechanic_id),
-                     notes                = COALESCE(?, notes),
-                     qa_checklist         = COALESCE(?::jsonb, qa_checklist),
-                     labor_minutes        = COALESCE(?, labor_minutes),
-                     labor_rate           = COALESCE(?, labor_rate),
-                     customer_approval    = COALESCE(?, customer_approval),
-                     approved_amount      = COALESCE(?, approved_amount),
+                 SET status                = COALESCE(?, status),
+                     problem_description   = COALESCE(?, problem_description),
+                     diagnosis             = COALESCE(?, diagnosis),
+                     actual_cost           = COALESCE(?, actual_cost),
+                     estimated_cost        = COALESCE(?, estimated_cost),
+                     mechanic_id           = COALESCE(?, mechanic_id),
+                     notes                 = COALESCE(?, notes),
+                     odometer              = COALESCE(?, odometer),
+                     fuel_level            = COALESCE(?, fuel_level),
+                     intake_inspection     = COALESCE(?::jsonb, intake_inspection),
+                     qa_checklist          = COALESCE(?::jsonb, qa_checklist),
+                     labor_minutes         = COALESCE(?, labor_minutes),
+                     labor_rate            = COALESCE(?, labor_rate),
+                     customer_approval     = COALESCE(?, customer_approval),
+                     approved_amount       = COALESCE(?, approved_amount),
                      next_service_due_date = COALESCE(?, next_service_due_date),
-                     next_service_due_km  = COALESCE(?, next_service_due_km),
-                     updated_at           = NOW()
+                     next_service_due_km   = COALESCE(?, next_service_due_km),
+                     updated_at            = NOW()
                  WHERE id = ?",
                 [
                     $status,
-                    $input['diagnosis']       ?? null,
+                    $problem,
+                    $input['diagnosis']               ?? null,
                     $actualNum,
                     $estNum,
                     $mechanicId,
-                    $input['notes']           ?? null,
+                    $input['notes']                   ?? null,
+                    $odometer,
+                    $fuelLevel,
+                    $inspectionJson,
                     $qaJson,
                     isset($input['laborMinutes'])   ? (int)   $input['laborMinutes']   : null,
                     isset($input['laborRate'])      ? (float) $input['laborRate']      : null,
@@ -471,15 +524,20 @@ class RepairJobModel
                 );
             }
 
-            Database::run(
-                "INSERT INTO repair_parts (repair_order_id, spare_part_id, quantity, unit_price, total_price)
-                 VALUES (?, ?, ?, ?, ?)
-                 ON CONFLICT (repair_order_id, spare_part_id)
-                 DO UPDATE SET quantity = EXCLUDED.quantity,
-                               unit_price = EXCLUDED.unit_price,
-                               total_price = EXCLUDED.quantity * EXCLUDED.unit_price",
-                [$repairOrderId, $spId, $newQty, $part['unitPrice'], $part['unitPrice'] * $newQty]
-            );
+            if (isset($existingMap[$spId])) {
+                Database::run(
+                    "UPDATE repair_parts
+                     SET quantity = ?, unit_price = ?, total_price = ?
+                     WHERE repair_order_id = ? AND spare_part_id = ?",
+                    [$newQty, $part['unitPrice'], $part['unitPrice'] * $newQty, $repairOrderId, $spId]
+                );
+            } else {
+                Database::run(
+                    "INSERT INTO repair_parts (repair_order_id, spare_part_id, quantity, unit_price, total_price)
+                     VALUES (?, ?, ?, ?, ?)",
+                    [$repairOrderId, $spId, $newQty, $part['unitPrice'], $part['unitPrice'] * $newQty]
+                );
+            }
         }
 
         // Handle parts removed completely (only when usedParts was explicitly supplied as a full list)
