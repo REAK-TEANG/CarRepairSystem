@@ -2,6 +2,16 @@
 // api/index.php
 
 // -----------------------------------------------------------------------------
+// 0. Transparent Response Compression (Gzip)
+// -----------------------------------------------------------------------------
+if (!ob_get_level() && !headers_sent() && extension_loaded('zlib')) {
+    $acceptEncoding = $_SERVER['HTTP_ACCEPT_ENCODING'] ?? '';
+    if (str_contains($acceptEncoding, 'gzip')) {
+        ob_start('ob_gzhandler');
+    }
+}
+
+// -----------------------------------------------------------------------------
 // 1. Comprehensive HTTP Security Headers
 // -----------------------------------------------------------------------------
 header("X-Content-Type-Options: nosniff");

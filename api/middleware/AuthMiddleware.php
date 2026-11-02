@@ -211,7 +211,6 @@ class AuthMiddleware
         }
 
         // Check PostgreSQL fallback
-        self::initBlacklistTable();
         try {
             $row = get(
                 "SELECT 1 FROM token_blacklist WHERE token_hash = ? AND expires_at > NOW() LIMIT 1",
@@ -219,7 +218,11 @@ class AuthMiddleware
             );
             return !empty($row);
         } catch (Throwable $e) {
-            error_log("PostgreSQL token blacklist check error: " . $e->getMessage());
+            if (str_contains($e->getMessage(), 'does not exist') || str_contains($e->getMessage(), '42P01')) {
+                self::initBlacklistTable();
+            } else {
+                error_log("PostgreSQL token blacklist check error: " . $e->getMessage());
+            }
             return false;
         }
     }

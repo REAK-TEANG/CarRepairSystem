@@ -5,8 +5,11 @@ class InventoryModel
 {
     public static function getAll(): array
     {
+        // Exclude heavy photo_url from dropdown/catalog queries to ensure lightweight, fast responses
         $rows = Database::all("
-          SELECT sp.*, s.name AS supplier_name
+          SELECT sp.id, sp.part_code, sp.name, sp.category, sp.brand, sp.unit_price, 
+                 sp.stock_quantity, sp.min_stock, sp.supplier_id, sp.location,
+                 s.name AS supplier_name
           FROM spare_parts sp
           LEFT JOIN suppliers s ON sp.supplier_id = s.id
           ORDER BY sp.id DESC
