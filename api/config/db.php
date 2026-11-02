@@ -39,29 +39,27 @@ $usePersistent = filter_var(getenv('DB_PERSISTENT') ?: 'false', FILTER_VALIDATE_
 
 $sslmode = getenv('DB_SSLMODE') ?: (($host === 'localhost' || $host === '127.0.0.1') ? 'disable' : 'require');
 
-try {
+/**
+ * Instantiate a fresh PDO instance configured for PostgreSQL and PgBouncer connection poolers
+ */
+function createPdoInstance() {
+    global $host, $port, $dbname, $user, $password, $usePersistent, $sslmode;
     $dsn = "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=$sslmode";
     $options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES => false,
+        // Emulated prepares must be true for PgBouncer transaction pooling (Supabase port 6543)
+        // to prevent prepared statement name collisions across pooled connections
+        PDO::ATTR_EMULATE_PREPARES => true,
     ];
     if ($usePersistent) {
         $options[PDO::ATTR_PERSISTENT] = true;
     }
-    $pdo = new PDO($dsn, $user, $password, $options);
+    return new PDO($dsn, $user, $password, $options);
+}
 
-    // Self-healing schema synchronization: Ensure enum values match application expectations
-    static $schemaChecked = false;
-    if (!$schemaChecked) {
-        try {
-            $pdo->exec("ALTER TYPE repair_status ADD VALUE IF NOT EXISTS 'In Progress'");
-            $pdo->exec("ALTER TYPE repair_status ADD VALUE IF NOT EXISTS 'Cancelled'");
-            $schemaChecked = true;
-        } catch (Throwable $e) {
-            // Ignore if already applied or restricted
-        }
-    }
+try {
+    $pdo = createPdoInstance();
 } catch (PDOException $e) {
     error_log("Database connection failed: " . $e->getMessage());
     http_response_code(500);
@@ -80,11 +78,48 @@ try {
     exit;
 }
 
+/**
+ * Determine if a PDOException was caused by a severed or stale connection
+ */
+function isConnectionLost(Throwable $e): bool {
+    $msg = $e->getMessage();
+    $code = (string) $e->getCode();
+    return $code === '08006' ||
+           $code === '57P01' ||
+           stripos($msg, 'server closed the connection') !== false ||
+           stripos($msg, 'SSL SYSCALL error') !== false ||
+           stripos($msg, 'connection to server') !== false ||
+           stripos($msg, 'Broken pipe') !== false ||
+           stripos($msg, 'terminating connection') !== false ||
+           stripos($msg, 'no connection to the server') !== false ||
+           stripos($msg, 'could not receive data from server') !== false;
+}
+
 function query($sql, $params = []) {
     global $pdo;
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
-    return $stmt;
+    if ($pdo === null) {
+        $pdo = createPdoInstance();
+    }
+    try {
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt;
+    } catch (PDOException $e) {
+        // If connection was severed by PgBouncer or network timeout, reconnect and retry once
+        if (isConnectionLost($e) && !$pdo->inTransaction()) {
+            error_log("Database connection dropped, auto-reconnecting: " . $e->getMessage());
+            try {
+                $pdo = createPdoInstance();
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute($params);
+                return $stmt;
+            } catch (Throwable $retryException) {
+                error_log("Database reconnect retry failed: " . $retryException->getMessage());
+                throw $retryException;
+            }
+        }
+        throw $e;
+    }
 }
 
 function get($sql, $params = []) {
@@ -125,13 +160,23 @@ function transaction(callable $callback) {
     if ($pdo->inTransaction()) {
         return $callback($pdo);
     }
+    // Ping/test connection before starting transaction
+    try {
+        $pdo->query("SELECT 1");
+    } catch (Throwable $e) {
+        if (isConnectionLost($e)) {
+            $pdo = createPdoInstance();
+        }
+    }
     $pdo->beginTransaction();
     try {
         $result = $callback($pdo);
         $pdo->commit();
         return $result;
     } catch (Throwable $e) {
-        $pdo->rollBack();
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
         throw $e;
     }
 }

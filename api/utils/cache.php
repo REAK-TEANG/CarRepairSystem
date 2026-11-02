@@ -9,16 +9,30 @@ class Cache {
      */
     public static function getClient() {
         if (self::$client === null) {
+            $redisHost = getenv('REDIS_HOST');
+            $redisEnabled = getenv('REDIS_ENABLED');
+            
+            // Skip Redis immediately if not explicitly configured/enabled to avoid 1s TCP timeout penalty
+            if (!$redisHost || $redisEnabled === 'false' || $redisEnabled === '0') {
+                self::$client = false;
+                return null;
+            }
+
             try {
-                $redisHost = getenv('REDIS_HOST') ?: '127.0.0.1';
                 $redisPort = getenv('REDIS_PORT') ?: 6379;
+                $redisPassword = getenv('REDIS_PASSWORD') ?: null;
                 
-                self::$client = new \Predis\Client([
-                    'scheme' => 'tcp',
-                    'host'   => $redisHost,
-                    'port'   => $redisPort,
-                    'timeout' => 1.0, // short timeout so it doesn't hang if Redis is down
-                ]);
+                $config = [
+                    'scheme'  => 'tcp',
+                    'host'    => $redisHost,
+                    'port'    => $redisPort,
+                    'timeout' => 0.5,
+                ];
+                if ($redisPassword) {
+                    $config['password'] = $redisPassword;
+                }
+
+                self::$client = new \Predis\Client($config);
                 
                 // Test connection
                 self::$client->ping();
