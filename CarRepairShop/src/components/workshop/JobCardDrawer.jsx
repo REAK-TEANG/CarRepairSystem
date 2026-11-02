@@ -80,11 +80,16 @@ export default function JobCardDrawer({
 
   // Inventory Options for SearchableSelect
   const inventoryOptions = useMemo(() => {
-    return inventory.map((item) => ({
-      value: item.id,
-      label: `${item.name} (${item.sku || item.code || 'Part'})`,
-      sublabel: `Stock: ${item.quantity ?? item.stock ?? 0} | $${Number(item.price || item.unitPrice || 0).toFixed(2)}`,
-    }))
+    return inventory.map((item) => {
+      const stock = item.stockQty ?? item.quantity ?? item.stock ?? 0
+      const price = Number(item.unitPrice ?? item.price ?? 0).toFixed(2)
+      const code = item.partCode || item.sku || item.code || 'Part'
+      return {
+        value: item.id,
+        label: `${item.name} (${code})`,
+        sublabel: `Stock: ${stock} | $${price}`,
+      }
+    })
   }, [inventory])
 
   // Service Catalog Options

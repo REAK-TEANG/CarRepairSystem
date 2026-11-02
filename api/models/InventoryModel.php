@@ -304,16 +304,24 @@ class InventoryModel
 
     private static function format(array $r): array
     {
-        $qty = (int) ($r['stock_quantity'] ?? 0);
-        $min = (int) ($r['min_stock']      ?? 5);
+        $qty   = (int) ($r['stock_quantity'] ?? 0);
+        $min   = (int) ($r['min_stock']      ?? 5);
+        $price = (float) ($r['unit_price']   ?? 0);
+        $code  = $r['part_code'] ?? '';
+
         return [
             'id'           => $r['id'],
-            'partCode'     => $r['part_code'],
+            'partCode'     => $code,
+            'code'         => $code,
+            'sku'          => $code,
             'name'         => $r['name'],
             'category'     => $r['category'] ?: 'General',
             'brand'        => $r['brand']    ?? '',
-            'unitPrice'    => (float) ($r['unit_price'] ?? 0),
+            'unitPrice'    => $price,
+            'price'        => $price,
             'stockQty'     => $qty,
+            'quantity'     => $qty,
+            'stock'        => $qty,
             'minThreshold' => $min,
             'supplier'     => $r['supplier_name'] ?? 'Supplier',
             'supplierId'   => $r['supplier_id'],
