@@ -102,7 +102,7 @@ export default function TopBar({ onToggleSidebar }) {
         <button
           type="button"
           onClick={() => setCommandPaletteOpen(true)}
-          className="relative hidden sm:flex items-center gap-2 w-44 md:w-56 lg:w-72 px-3 py-1.5 rounded-lg border border-app-border bg-app-input text-app-muted hover:border-app-accent/50 hover:text-app-text transition-all text-xs cursor-pointer shadow-xs text-left"
+          className="relative hidden sm:flex items-center gap-2.5 w-44 md:w-56 lg:w-72 px-3 py-1.5 rounded-lg border border-app-border bg-app-input text-app-muted hover:border-app-accent/50 hover:text-app-text transition-all text-xs cursor-pointer shadow-xs text-left"
           title="Open Command Palette (Ctrl+K or ⌘K)"
         >
           <MagnifyingGlass size={14} className="text-app-muted flex-shrink-0" />

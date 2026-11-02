@@ -43,14 +43,14 @@ export function PageHeader({
             <div className={`relative ${searchWidth}`}>
               <MagnifyingGlass
                 size={14}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted z-10 pointer-events-none"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted z-10 pointer-events-none"
               />
               <Input
                 type="text"
                 placeholder={searchPlaceholder}
                 value={searchQuery ?? ''}
                 onChange={onSearch}
-                className="pl-8"
+                className="pl-9"
               />
             </div>
           )}

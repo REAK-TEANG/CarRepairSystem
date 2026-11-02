@@ -261,7 +261,7 @@ export default function VehiclesPage() {
         </div>
 
         <div className="relative w-full sm:w-60">
-          <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted pointer-events-none" />
+          <MagnifyingGlass size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted pointer-events-none z-10" />
           <Input
             type="text"
             placeholder={t('common.quickSearch')}
@@ -270,7 +270,7 @@ export default function VehiclesPage() {
               setSearchQuery(e.target.value)
               setPage(1)
             }}
-            className="pl-8"
+            className="pl-9"
           />
         </div>
       </div>

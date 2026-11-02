@@ -387,7 +387,7 @@ export default function InventoryPage() {
             </div>
 
             <div className="relative w-full sm:w-60">
-              <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted" />
+              <MagnifyingGlass size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted pointer-events-none z-10" />
               <Input
                 type="text"
                 placeholder={t('common.quickSearch')}
@@ -396,7 +396,7 @@ export default function InventoryPage() {
                   setSearchQuery(e.target.value)
                   setPage(1)
                 }}
-                className="pl-8"
+                className="pl-9"
               />
             </div>
           </div>
@@ -670,7 +670,7 @@ export default function InventoryPage() {
           <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
             {/* Search Input */}
             <div className="relative w-full sm:w-56">
-              <MagnifyingGlass size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted" />
+              <MagnifyingGlass size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted pointer-events-none z-10" />
               <input
                 type="text"
                 placeholder="Search part, reason, user..."
@@ -679,7 +679,7 @@ export default function InventoryPage() {
                   setTxSearch(e.target.value)
                   setTxPage(1)
                 }}
-                className="w-full pl-8 pr-7 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted/70 focus:outline-none focus:border-app-accent"
+                className="w-full pl-9 pr-7 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted/70 focus:outline-none focus:border-app-accent"
               />
               {txSearch && (
                 <button

@@ -905,14 +905,14 @@ export default function ReportsPage() {
         <div className="relative w-full sm:w-72">
           <MagnifyingGlass
             size={14}
-            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted pointer-events-none z-10"
           />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t('reports.searchReports', 'Filter records by keyword...')}
-            className="w-full pl-8 pr-7 py-1.5 bg-app-card border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted/70 focus:outline-none focus:border-app-accent shadow-xs"
+            className="w-full pl-9 pr-7 py-1.5 bg-app-card border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted/70 focus:outline-none focus:border-app-accent shadow-xs"
           />
           {searchQuery && (
             <button

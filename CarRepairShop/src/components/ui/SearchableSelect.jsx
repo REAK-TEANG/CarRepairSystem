@@ -304,7 +304,7 @@ export default function SearchableSelect({
               <MagnifyingGlass
                 size={14}
                 weight="bold"
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted pointer-events-none"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted pointer-events-none z-10"
               />
               <input
                 ref={searchInputRef}
@@ -315,7 +315,7 @@ export default function SearchableSelect({
                   setHighlightedIndex(0)
                 }}
                 placeholder={searchPlaceholder}
-                className="w-full pl-8 pr-7 py-1.5 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent focus:ring-1 focus:ring-app-accent/20 transition-all font-sans"
+                className="w-full pl-9 pr-7 py-1.5 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent focus:ring-1 focus:ring-app-accent/20 transition-all font-sans"
               />
               {search && (
                 <button

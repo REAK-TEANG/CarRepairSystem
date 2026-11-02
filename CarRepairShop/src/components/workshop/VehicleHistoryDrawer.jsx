@@ -302,13 +302,13 @@ export default function VehicleHistoryDrawer({
           {/* Quick Search inside History */}
           {vehicleJobs.length > 0 && (
             <div className="relative">
-              <MagnifyingGlass size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted" />
+              <MagnifyingGlass size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted pointer-events-none z-10" />
               <Input
                 type="text"
                 placeholder="Search orders, diagnoses, technicians..."
                 value={historySearch}
                 onChange={(e) => setHistorySearch(e.target.value)}
-                className="pl-8 py-1 text-xs h-8"
+                className="pl-9 py-1 text-xs h-8"
               />
             </div>
           )}

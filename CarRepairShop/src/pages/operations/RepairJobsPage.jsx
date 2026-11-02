@@ -170,16 +170,16 @@ export default function RepairJobsPage() {
         </div>
 
         <div className="relative w-full sm:w-64">
-          <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted z-10 pointer-events-none" />
+          <MagnifyingGlass size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted z-10 pointer-events-none" />
           <Input
             type="text"
-            placeholder="Search order, plate, customer..."
+            placeholder={t('common.quickSearch')}
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value)
               setPage(1)
             }}
-            className="w-full pl-8 pr-3 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+            className="w-full pl-9 pr-3 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
           />
         </div>
       </div>

@@ -310,7 +310,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                 placeholder="Search plate, vehicle, order..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5"
+                className="w-full pl-9 pr-3 py-1.5"
               />
             </div>
 

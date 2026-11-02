@@ -286,7 +286,7 @@ export default function FastIntakeModal({
               <div className="relative">
                 <MagnifyingGlass
                   size={15}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted pointer-events-none"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted pointer-events-none z-10"
                 />
                 <Input
                   type="text"
