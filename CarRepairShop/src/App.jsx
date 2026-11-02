@@ -29,7 +29,11 @@ const SettingsPage = lazy(() => import('./pages/management/SettingsPage'))
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes cache
+      staleTime: 0, // Always consider stale so window focus & route changes get fresh updates instantly
+      gcTime: 1000 * 60 * 10, // Retain data in garbage collector cache for 10m for instant UI transitions
+      refetchOnWindowFocus: true, // Fetch fresh data automatically when user refocuses the window
+      refetchOnReconnect: true,  // Fetch fresh data when network reconnects
+      refetchOnMount: true,      // Fetch fresh data on component mount
       retry: (failureCount, error) => {
         if (error?.status === 401 || error?.status === 403) return false
         return failureCount < 1

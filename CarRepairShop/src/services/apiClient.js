@@ -58,6 +58,8 @@ class ApiClient {
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache',
       ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
       ...customHeaders,
     }
@@ -86,6 +88,7 @@ class ApiClient {
     const headers = this.getHeaders(options.headers)
 
     const response = await fetch(url, {
+      cache: 'no-cache',
       ...options,
       headers,
     })

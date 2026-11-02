@@ -40,7 +40,6 @@ class EventBus {
      * @return int|null Event ID
      */
     public static function publish($topic, $eventType, array $payload = []) {
-        self::init();
         global $pdo;
 
         try {
@@ -68,8 +67,20 @@ class EventBus {
 
             return $eventId;
         } catch (Throwable $e) {
-            error_log("EventBus publish error: " . $e->getMessage());
-            return null;
+            // Self-heal: initialize schema on first run or missing table, then retry once
+            self::init();
+            try {
+                $jsonPayload = json_encode($payload);
+                $stmt = query(
+                    "INSERT INTO system_events (topic, event_type, payload, created_at) VALUES (?, ?, ?::jsonb, NOW()) RETURNING id",
+                    [$topic, $eventType, $jsonPayload]
+                );
+                $row = $stmt->fetch();
+                return (int)($row['id'] ?? 0);
+            } catch (Throwable $retryException) {
+                error_log("EventBus publish error: " . $retryException->getMessage());
+                return null;
+            }
         }
     }
 
@@ -77,7 +88,6 @@ class EventBus {
      * Retrieve events occurring after a given event ID
      */
     public static function getEventsSince($afterId = 0, $limit = 50) {
-        self::init();
         try {
             return all(
                 "SELECT id, topic, event_type, payload, created_at 
@@ -88,8 +98,20 @@ class EventBus {
                 [(int)$afterId, (int)$limit]
             );
         } catch (Throwable $e) {
-            error_log("EventBus getEventsSince error: " . $e->getMessage());
-            return [];
+            self::init();
+            try {
+                return all(
+                    "SELECT id, topic, event_type, payload, created_at 
+                     FROM system_events 
+                     WHERE id > ? 
+                     ORDER BY id ASC 
+                     LIMIT ?",
+                    [(int)$afterId, (int)$limit]
+                );
+            } catch (Throwable $retryException) {
+                error_log("EventBus getEventsSince error: " . $retryException->getMessage());
+                return [];
+            }
         }
     }
 
@@ -97,12 +119,17 @@ class EventBus {
      * Get the latest event ID currently in the system
      */
     public static function getLatestEventId() {
-        self::init();
         try {
             $row = get("SELECT COALESCE(MAX(id), 0) AS max_id FROM system_events");
             return (int)($row['max_id'] ?? 0);
         } catch (Throwable $e) {
-            return 0;
+            self::init();
+            try {
+                $row = get("SELECT COALESCE(MAX(id), 0) AS max_id FROM system_events");
+                return (int)($row['max_id'] ?? 0);
+            } catch (Throwable $retryException) {
+                return 0;
+            }
         }
     }
 }

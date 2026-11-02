@@ -6,7 +6,7 @@ export function useServiceReminders(params = {}, options = {}) {
   return useQuery({
     queryKey: ['service_reminders', params],
     queryFn: () => serviceReminderService.getAll(params),
-    staleTime: 1000 * 60 * 5,
+    placeholderData: (previousData) => previousData,
     ...options,
   })
 }
@@ -19,7 +19,7 @@ export function useCreateServiceReminder() {
     mutationFn: (newReminder) => serviceReminderService.create(newReminder),
     onSuccess: () => {
       addToast('Next service reminder scheduled', 'success')
-      queryClient.invalidateQueries({ queryKey: ['service_reminders'] })
+      queryClient.invalidateQueries({ queryKey: ['service_reminders'], exact: false, refetchType: 'active' })
     },
     onError: () => {
       addToast('Failed to schedule reminder', 'warning')
@@ -35,7 +35,7 @@ export function useUpdateServiceReminder() {
     mutationFn: ({ id, data }) => serviceReminderService.update(id, data),
     onSuccess: () => {
       addToast('Service reminder updated', 'success')
-      queryClient.invalidateQueries({ queryKey: ['service_reminders'] })
+      queryClient.invalidateQueries({ queryKey: ['service_reminders'], exact: false, refetchType: 'active' })
     },
     onError: () => {
       addToast('Failed to update reminder', 'warning')
@@ -51,7 +51,7 @@ export function useDeleteServiceReminder() {
     mutationFn: (id) => serviceReminderService.delete(id),
     onSuccess: () => {
       addToast('Service reminder removed', 'success')
-      queryClient.invalidateQueries({ queryKey: ['service_reminders'] })
+      queryClient.invalidateQueries({ queryKey: ['service_reminders'], exact: false, refetchType: 'active' })
     },
     onError: () => {
       addToast('Failed to delete reminder', 'warning')
