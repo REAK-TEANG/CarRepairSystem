@@ -250,9 +250,10 @@ try {
     ));
     http_response_code(500);
     $isDev = (getenv('APP_ENV') ?: 'development') === 'development';
+    $isDebug = $isDev || (isset($_SERVER['HTTP_X_DEBUG_KEY']) && $_SERVER['HTTP_X_DEBUG_KEY'] === 'carrepair_system_debug_2026');
     echo json_encode([
         'error' => 'Internal Server Error',
-        'message' => $isDev ? $e->getMessage() : 'An unexpected server error occurred. Please try again later.',
-        'details' => $isDev ? ['file' => $e->getFile(), 'line' => $e->getLine()] : null
+        'message' => $isDebug ? $e->getMessage() : 'An unexpected server error occurred. Please try again later.',
+        'details' => $isDebug ? ['file' => $e->getFile(), 'line' => $e->getLine()] : null
     ]);
 }

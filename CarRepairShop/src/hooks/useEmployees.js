@@ -9,9 +9,9 @@ const hooks = createEntityHooks({
   queryKey: 'employees',
   service: employeeService,
   entityName: 'Employee',
-  createOptimistic: (newEmp, previous) => ({
+  createOptimistic: (newEmp, previous = []) => ({
     id: Date.now(),
-    employeeCode: `EMP-${String(previous.length + 1).padStart(3, '0')}`,
+    employeeCode: `EMP-${String((previous?.length || 0) + 1).padStart(3, '0')}`,
     attendanceStatus: 'Present',
     status: 'Active',
     salary: Number(newEmp.salary) || 3500,

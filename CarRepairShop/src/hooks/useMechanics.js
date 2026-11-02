@@ -5,9 +5,9 @@ const hooks = createEntityHooks({
   queryKey: 'mechanics',
   service: mechanicService,
   entityName: 'Mechanic',
-  createOptimistic: (newMechanic, previous) => ({
+  createOptimistic: (newMechanic, previous = []) => ({
     id: Date.now(),
-    code: `MEC-${String(previous.length + 1).padStart(3, '0')}`,
+    code: `MEC-${String((previous?.length || 0) + 1).padStart(3, '0')}`,
     activeJobs: 0,
     completedJobs: 0,
     rating: 5.0,

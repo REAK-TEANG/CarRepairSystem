@@ -99,16 +99,31 @@ class AppointmentModel
         $code = generateUniqueCode('appointments', 'appointment_code', 'APT-2026', 3);
 
         $customerId = (!empty($input['customerId']) && is_numeric($input['customerId'])) ? (int) $input['customerId'] : null;
+        if ($customerId) {
+            $custExists = Database::get('SELECT id FROM customers WHERE id = ?', [$customerId]);
+            if (!$custExists) $customerId = null;
+        }
         if (!$customerId && !empty($input['customer'])) {
             $cust = Database::get('SELECT id FROM customers WHERE LOWER(full_name) = LOWER(?) LIMIT 1', [trim($input['customer'])]);
             if ($cust) $customerId = (int) $cust['id'];
         }
         if (!$customerId) {
             $firstCust = Database::get('SELECT id FROM customers ORDER BY id ASC LIMIT 1');
-            $customerId = $firstCust ? (int) $firstCust['id'] : 1;
+            if ($firstCust) {
+                $customerId = (int) $firstCust['id'];
+            } else {
+                $cCode = generateUniqueCode('customers', 'customer_code', 'CUST', 3);
+                Database::run("INSERT INTO customers (customer_code, full_name, phone) VALUES (?, ?, ?)", [$cCode, 'Walk-in Customer', '012000000']);
+                $newCust = Database::get('SELECT id FROM customers WHERE customer_code = ?', [$cCode]);
+                $customerId = (int) $newCust['id'];
+            }
         }
 
         $vehicleId = (!empty($input['vehicleId']) && is_numeric($input['vehicleId'])) ? (int) $input['vehicleId'] : null;
+        if ($vehicleId) {
+            $vehExists = Database::get('SELECT id FROM vehicles WHERE id = ?', [$vehicleId]);
+            if (!$vehExists) $vehicleId = null;
+        }
         if (!$vehicleId && !empty($input['plate'])) {
             $veh = Database::get('SELECT id FROM vehicles WHERE LOWER(vehicle_number) = LOWER(?) LIMIT 1', [trim($input['plate'])]);
             if ($veh) $vehicleId = (int) $veh['id'];
@@ -118,10 +133,22 @@ class AppointmentModel
             if (!$firstVeh) {
                 $firstVeh = Database::get('SELECT id FROM vehicles ORDER BY id ASC LIMIT 1');
             }
-            $vehicleId = $firstVeh ? (int) $firstVeh['id'] : 1;
+            if ($firstVeh) {
+                $vehicleId = (int) $firstVeh['id'];
+            } else {
+                Database::run("INSERT INTO vehicles (customer_id, vehicle_number, brand, model, year) VALUES (?, ?, ?, ?, ?)", [
+                    $customerId, '2X-' . rand(1000, 9999), 'Toyota', 'Prius', (int) date('Y')
+                ]);
+                $newVeh = Database::get('SELECT id FROM vehicles WHERE customer_id = ? ORDER BY id DESC LIMIT 1', [$customerId]);
+                $vehicleId = (int) $newVeh['id'];
+            }
         }
 
         $mechanicId = (!empty($input['mechanicId']) && is_numeric($input['mechanicId'])) ? (int) $input['mechanicId'] : null;
+        if ($mechanicId) {
+            $mechExists = Database::get('SELECT id FROM employees WHERE id = ?', [$mechanicId]);
+            if (!$mechExists) $mechanicId = null;
+        }
         if (!$mechanicId && !empty($input['mechanic'])) {
             $mech = Database::get('SELECT e.id FROM employees e JOIN users u ON e.user_id = u.id WHERE LOWER(u.full_name) = LOWER(?) LIMIT 1', [trim($input['mechanic'])]);
             if ($mech) $mechanicId = (int) $mech['id'];

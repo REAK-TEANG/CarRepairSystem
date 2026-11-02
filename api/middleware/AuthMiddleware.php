@@ -20,7 +20,7 @@ class AuthMiddleware
             'manager'         => ['create', 'read', 'update', 'export'],
             'service_advisor' => ['create', 'read', 'update', 'delete', 'export'],
             'mechanic'        => ['read'],
-            'cashier'         => ['read'],
+            'cashier'         => ['create', 'read', 'update'],
             'storekeeper'     => [],
         ],
         'vehicles' => [
@@ -28,7 +28,7 @@ class AuthMiddleware
             'manager'         => ['create', 'read', 'update', 'export'],
             'service_advisor' => ['create', 'read', 'update', 'delete', 'export'],
             'mechanic'        => ['read'],
-            'cashier'         => ['read'],
+            'cashier'         => ['create', 'read', 'update'],
             'storekeeper'     => [],
         ],
         'appointments' => [
@@ -36,7 +36,7 @@ class AuthMiddleware
             'manager'         => ['create', 'read', 'update', 'delete', 'export'],
             'service_advisor' => ['create', 'read', 'update', 'delete', 'export'],
             'mechanic'        => ['read'],
-            'cashier'         => ['read'],
+            'cashier'         => ['create', 'read', 'update'],
             'storekeeper'     => [],
         ],
         'repair_jobs' => [

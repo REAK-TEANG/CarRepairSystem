@@ -120,9 +120,34 @@ class RepairJobModel
             $costNum    = (float) preg_replace('/[^0-9.]/', '', $input['estimatedCost'] ?? '350') ?: 350.00;
             $approvedAmt = isset($input['approvedAmount']) ? (float) $input['approvedAmount'] : $costNum;
 
-            $customerId  = (!empty($input['customerId']) && is_numeric($input['customerId'])) ? (int) $input['customerId'] : 1;
-            $vehicleId   = (!empty($input['vehicleId']) && is_numeric($input['vehicleId']))   ? (int) $input['vehicleId']  : 1;
+            $customerId  = (!empty($input['customerId']) && is_numeric($input['customerId'])) ? (int) $input['customerId'] : null;
+            if ($customerId) {
+                $custExists = Database::get('SELECT id FROM customers WHERE id = ?', [$customerId]);
+                if (!$custExists) $customerId = null;
+            }
+            if (!$customerId) {
+                $firstCust = Database::get('SELECT id FROM customers ORDER BY id ASC LIMIT 1');
+                $customerId = $firstCust ? (int) $firstCust['id'] : 1;
+            }
+
+            $vehicleId   = (!empty($input['vehicleId']) && is_numeric($input['vehicleId']))   ? (int) $input['vehicleId']  : null;
+            if ($vehicleId) {
+                $vehExists = Database::get('SELECT id FROM vehicles WHERE id = ?', [$vehicleId]);
+                if (!$vehExists) $vehicleId = null;
+            }
+            if (!$vehicleId) {
+                $firstVeh = Database::get('SELECT id FROM vehicles WHERE customer_id = ? ORDER BY id ASC LIMIT 1', [$customerId]);
+                if (!$firstVeh) {
+                    $firstVeh = Database::get('SELECT id FROM vehicles ORDER BY id ASC LIMIT 1');
+                }
+                $vehicleId = $firstVeh ? (int) $firstVeh['id'] : 1;
+            }
+
             $mechanicId  = (!empty($input['mechanicId']) && is_numeric($input['mechanicId'])) ? (int) $input['mechanicId'] : null;
+            if ($mechanicId) {
+                $mechExists = Database::get('SELECT id FROM employees WHERE id = ?', [$mechanicId]);
+                if (!$mechExists) $mechanicId = null;
+            }
 
             Database::run(
                 "INSERT INTO repair_orders (

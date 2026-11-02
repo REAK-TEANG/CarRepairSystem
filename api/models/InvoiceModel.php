@@ -119,31 +119,33 @@ class InvoiceModel
             $invoiceNumber = generateUniqueCode('invoices', 'invoice_number', 'INV-2026', 3);
             $amt          = (float) ($input['amount'] ?? 0);
 
-            $roId   = $input['repairOrderId'] ?? null;
-            $custId = $input['customerId']    ?? null;
+            $roId   = (!empty($input['repairOrderId']) && is_numeric($input['repairOrderId'])) ? (int) $input['repairOrderId'] : null;
+            $custId = (!empty($input['customerId']) && is_numeric($input['customerId'])) ? (int) $input['customerId'] : null;
 
             // Resolve repair order
-            if (!$roId && ($input['orderNumber'] ?? null)) {
-                $foundRo = Database::get('SELECT id, customer_id FROM repair_orders WHERE order_number = ?', [$input['orderNumber']]);
+            if (!$roId && (!empty($input['orderNumber']))) {
+                $foundRo = Database::get('SELECT id, customer_id FROM repair_orders WHERE order_number = ?', [trim($input['orderNumber'])]);
                 if ($foundRo) {
-                    $roId   = $foundRo['id'];
-                    $custId = $custId ?? $foundRo['customer_id'];
+                    $roId   = (int) $foundRo['id'];
+                    $custId = $custId ?? (int) $foundRo['customer_id'];
                 }
             }
             if (!$roId) {
                 $anyRo  = Database::get('SELECT id, customer_id FROM repair_orders ORDER BY id DESC LIMIT 1');
-                $roId   = $anyRo ? $anyRo['id'] : 1;
-                $custId = $custId ?? ($anyRo['customer_id'] ?? null);
+                $roId   = $anyRo ? (int) $anyRo['id'] : 1;
+                $custId = $custId ?? ($anyRo['customer_id'] ? (int) $anyRo['customer_id'] : null);
             }
             if (!$custId) {
                 $anyCust = Database::get('SELECT id FROM customers ORDER BY id LIMIT 1');
-                $custId  = $anyCust ? $anyCust['id'] : 1;
+                $custId  = $anyCust ? (int) $anyCust['id'] : 1;
             }
+
+            $dueDate = !empty($input['dueDate']) ? $input['dueDate'] : null;
 
             Database::run(
                 "INSERT INTO invoices (invoice_number, repair_order_id, customer_id, total_amount, amount_paid, balance_due, status, due_date)
                  VALUES (?, ?, ?, ?, 0.00, ?, 'Issued', ?)",
-                [$invoiceNumber, $roId, $custId, $amt, $amt, $input['dueDate'] ?? null]
+                [$invoiceNumber, $roId, $custId, $amt, $amt, $dueDate]
             );
 
             $inserted = Database::get('SELECT * FROM invoices WHERE invoice_number = ? ORDER BY id DESC LIMIT 1', [$invoiceNumber]);

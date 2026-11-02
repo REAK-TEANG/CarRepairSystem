@@ -5,9 +5,9 @@ const hooks = createEntityHooks({
   queryKey: 'customers',
   service: customerService,
   entityName: 'Customer',
-  createOptimistic: (newCustomer, previous) => ({
+  createOptimistic: (newCustomer, previous = []) => ({
     id: Date.now(),
-    code: `CUS-${String(previous.length + 1).padStart(3, '0')}`,
+    code: `CUST-${String((previous?.length || 0) + 1).padStart(3, '0')}`,
     registrationDate: new Date().toISOString().split('T')[0],
     vehiclesCount: 0,
     totalSpent: '$0.00',

@@ -105,7 +105,19 @@ export function createEntityHooks({
         await queryClient.cancelQueries({ queryKey: rootKey })
         const previousSnapshots = queryClient.getQueriesData({ queryKey: rootKey })
 
-        const optimisticItem = createOptimistic(newData)
+        // Safely extract existing list array to pass into optimistic creator
+        let previousItems = []
+        for (const [, qData] of previousSnapshots) {
+          if (Array.isArray(qData)) {
+            previousItems = qData
+            break
+          } else if (Array.isArray(qData?.data)) {
+            previousItems = qData.data
+            break
+          }
+        }
+
+        const optimisticItem = createOptimistic(newData, previousItems)
 
         queryClient.setQueriesData({ queryKey: rootKey }, (old) =>
           applyOptimisticInsert(old, optimisticItem)

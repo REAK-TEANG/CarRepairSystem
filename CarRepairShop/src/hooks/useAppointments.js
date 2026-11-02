@@ -9,9 +9,9 @@ const hooks = createEntityHooks({
   queryKey: 'appointments',
   service: appointmentService,
   entityName: 'Appointment',
-  createOptimistic: (newApt, previous) => ({
+  createOptimistic: (newApt, previous = []) => ({
     id: Date.now(),
-    code: `APT-${String(previous.length + 1).padStart(3, '0')}`,
+    code: `APT-${String((previous?.length || 0) + 1).padStart(3, '0')}`,
     status: 'Scheduled',
     ...newApt,
   }),
