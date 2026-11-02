@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useToast } from '@/context/ToastContext'
+import { useAuth } from '@/context/AuthContext'
 
 /**
  * Factory for creating standardized CRUD entity hooks with TanStack Query.
@@ -21,12 +22,23 @@ export function createEntityHooks({
   const rootKey = Array.isArray(queryKey) ? queryKey : [queryKey]
 
   function useList(params = {}, options = {}) {
+    let auth = null
+    try {
+      auth = useAuth()
+    } catch {
+      // safe fallback if rendered outside AuthProvider
+    }
+    const moduleName = rootKey[0]
+    const hasPermission = auth?.can ? auth.can(moduleName, 'read') : true
+    const isEnabled = (options.enabled ?? true) && hasPermission
+
     return useQuery({
       queryKey: [...rootKey, params],
       queryFn: () => service.getAll(params),
       placeholderData: (previousData) => previousData,
       staleTime: 1000 * 60 * 2,
       ...options,
+      enabled: isEnabled,
     })
   }
 

@@ -35,7 +35,7 @@ $port = getenv('DB_PORT') ?: '5432';
 $dbname = getenv('DB_NAME') ?: 'carrepairshop';
 $user = getenv('DB_USER') ?: 'postgres';
 $password = getenv('DB_PASSWORD') ?: '123';
-$usePersistent = filter_var(getenv('DB_PERSISTENT') ?: 'true', FILTER_VALIDATE_BOOLEAN);
+$usePersistent = filter_var(getenv('DB_PERSISTENT') ?: 'false', FILTER_VALIDATE_BOOLEAN);
 
 $sslmode = getenv('DB_SSLMODE') ?: (($host === 'localhost' || $host === '127.0.0.1') ? 'disable' : 'require');
 
@@ -50,6 +50,18 @@ try {
         $options[PDO::ATTR_PERSISTENT] = true;
     }
     $pdo = new PDO($dsn, $user, $password, $options);
+
+    // Self-healing schema synchronization: Ensure enum values match application expectations
+    static $schemaChecked = false;
+    if (!$schemaChecked) {
+        try {
+            $pdo->exec("ALTER TYPE repair_status ADD VALUE IF NOT EXISTS 'In Progress'");
+            $pdo->exec("ALTER TYPE repair_status ADD VALUE IF NOT EXISTS 'Cancelled'");
+            $schemaChecked = true;
+        } catch (Throwable $e) {
+            // Ignore if already applied or restricted
+        }
+    }
 } catch (PDOException $e) {
     error_log("Database connection failed: " . $e->getMessage());
     http_response_code(500);

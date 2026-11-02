@@ -1,16 +1,27 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { inventoryService } from '@/services/inventoryService'
 import { useToast } from '@/context/ToastContext'
+import { useAuth } from '@/context/AuthContext'
 
 const QUERY_KEY = ['inventory']
 
 export function useInventory(params = {}, options = {}) {
+  let auth = null
+  try {
+    auth = useAuth()
+  } catch {
+    // safe fallback if rendered outside AuthProvider
+  }
+  const hasPermission = auth?.can ? auth.can('inventory', 'read') : true
+  const isEnabled = (options.enabled ?? true) && hasPermission
+
   return useQuery({
     queryKey: ['inventory', params],
     queryFn: () => inventoryService.getAll(params),
     placeholderData: (previousData) => previousData,
     staleTime: 1000 * 60 * 2,
     ...options,
+    enabled: isEnabled,
   })
 }
 

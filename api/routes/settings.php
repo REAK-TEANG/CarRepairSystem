@@ -10,7 +10,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 if ($path === '/settings/permissions') {
     if ($method === 'GET') {
-        AuthMiddleware::authorize('settings', 'read', $authPayload);
+        // Any authenticated user can read the permissions matrix to configure client-side RBAC
         $row = get("SELECT setting_value FROM settings WHERE setting_key = 'roles_permissions_matrix'");
         if ($row && $row['setting_value']) {
             $matrix = json_decode($row['setting_value'], true);
