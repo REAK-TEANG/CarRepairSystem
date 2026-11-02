@@ -96,42 +96,65 @@ class AppointmentModel
 
     public static function create(array $input): array
     {
-        $code     = generateUniqueCode('appointments', 'appointment_code', 'APT-2026', 3);
+        $code = generateUniqueCode('appointments', 'appointment_code', 'APT-2026', 3);
+
+        $customerId = (!empty($input['customerId']) && is_numeric($input['customerId'])) ? (int) $input['customerId'] : null;
+        if (!$customerId && !empty($input['customer'])) {
+            $cust = Database::get('SELECT id FROM customers WHERE LOWER(full_name) = LOWER(?) LIMIT 1', [trim($input['customer'])]);
+            if ($cust) $customerId = (int) $cust['id'];
+        }
+        if (!$customerId) {
+            $firstCust = Database::get('SELECT id FROM customers ORDER BY id ASC LIMIT 1');
+            $customerId = $firstCust ? (int) $firstCust['id'] : 1;
+        }
+
+        $vehicleId = (!empty($input['vehicleId']) && is_numeric($input['vehicleId'])) ? (int) $input['vehicleId'] : null;
+        if (!$vehicleId && !empty($input['plate'])) {
+            $veh = Database::get('SELECT id FROM vehicles WHERE LOWER(vehicle_number) = LOWER(?) LIMIT 1', [trim($input['plate'])]);
+            if ($veh) $vehicleId = (int) $veh['id'];
+        }
+        if (!$vehicleId) {
+            $firstVeh = Database::get('SELECT id FROM vehicles WHERE customer_id = ? ORDER BY id ASC LIMIT 1', [$customerId]);
+            if (!$firstVeh) {
+                $firstVeh = Database::get('SELECT id FROM vehicles ORDER BY id ASC LIMIT 1');
+            }
+            $vehicleId = $firstVeh ? (int) $firstVeh['id'] : 1;
+        }
+
+        $mechanicId = (!empty($input['mechanicId']) && is_numeric($input['mechanicId'])) ? (int) $input['mechanicId'] : null;
+        if (!$mechanicId && !empty($input['mechanic'])) {
+            $mech = Database::get('SELECT e.id FROM employees e JOIN users u ON e.user_id = u.id WHERE LOWER(u.full_name) = LOWER(?) LIMIT 1', [trim($input['mechanic'])]);
+            if ($mech) $mechanicId = (int) $mech['id'];
+        }
 
         Database::run(
             "INSERT INTO appointments (appointment_code, customer_id, vehicle_id, mechanic_id, scheduled_date, scheduled_time, status, notes)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             [
                 $code,
-                $input['customerId']  ?? 1,
-                $input['vehicleId']   ?? 1,
-                $input['mechanicId']  ?? null,
-                $input['date']        ?? date('Y-m-d'),
-                $input['time']        ?? '09:00',
-                $input['status']      ?? 'Scheduled',
-                $input['notes']       ?? null,
+                $customerId,
+                $vehicleId,
+                $mechanicId,
+                !empty($input['date']) ? $input['date'] : date('Y-m-d'),
+                !empty($input['time']) ? $input['time'] : '09:00',
+                !empty($input['status']) ? $input['status'] : 'Scheduled',
+                !empty($input['notes']) ? $input['notes'] : null,
             ]
         );
 
         $inserted = Database::get('SELECT * FROM appointments WHERE appointment_code = ? ORDER BY id DESC LIMIT 1', [$code]);
-        $customer = Database::get('SELECT full_name FROM customers WHERE id = ?', [$inserted['customer_id']]);
-        $vehicle  = Database::get('SELECT vehicle_number, brand, model FROM vehicles WHERE id = ?', [$inserted['vehicle_id']]);
-
-        EventBus::publish('appointments', 'created', [
-            'id' => $inserted['id'],
-            'code' => $code,
-            'status' => $inserted['status'],
-            'scheduledDate' => $inserted['scheduled_date'],
-            'customerName' => $customer['full_name'] ?? '',
-        ]);
-
-        return self::format(array_merge($inserted, [
-            'customer_name'  => $customer['full_name'] ?? '',
-            'vehicle_number' => $vehicle['vehicle_number'] ?? '',
-            'brand'          => $vehicle['brand'] ?? '',
-            'model'          => $vehicle['model'] ?? '',
-            'mechanic_name'  => null,
-        ]));
+        if ($inserted) {
+            if (class_exists('EventBus')) {
+                EventBus::publish('appointments', 'created', [
+                    'id' => $inserted['id'],
+                    'code' => $code,
+                    'status' => $inserted['status'],
+                    'scheduledDate' => $inserted['scheduled_date'],
+                ]);
+            }
+            return self::findById((int) $inserted['id']) ?? [];
+        }
+        return [];
     }
 
     public static function update(int $id, array $input): ?array
@@ -175,10 +198,12 @@ class AppointmentModel
         Database::run("UPDATE appointments SET status = ?, updated_at = NOW() WHERE id = ?", [$status, $id]);
         $res = self::findById($id);
         if ($res) {
-            EventBus::publish('appointments', 'status_changed', [
-                'id' => $id,
-                'status' => $status,
-            ]);
+            if (class_exists('EventBus')) {
+                EventBus::publish('appointments', 'status_changed', [
+                    'id' => $id,
+                    'status' => $status,
+                ]);
+            }
         }
         return $res;
     }
@@ -191,7 +216,9 @@ class AppointmentModel
         }
 
         Database::run("UPDATE appointments SET status = 'Cancelled', updated_at = NOW() WHERE id = ?", [$id]);
-        EventBus::publish('appointments', 'cancelled', ['id' => $id]);
+        if (class_exists('EventBus')) {
+            EventBus::publish('appointments', 'cancelled', ['id' => $id]);
+        }
         return true;
     }
 

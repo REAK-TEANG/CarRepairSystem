@@ -35,17 +35,21 @@ class ServiceReminderModel
 
     public static function create(array $input): array
     {
+        $customerId = (!empty($input['customerId']) && is_numeric($input['customerId'])) ? (int) $input['customerId'] : null;
+        $vehicleId  = (!empty($input['vehicleId']) && is_numeric($input['vehicleId']))   ? (int) $input['vehicleId']  : null;
+        $roId       = (!empty($input['repairOrderId']) && is_numeric($input['repairOrderId'])) ? (int) $input['repairOrderId'] : null;
+
         $res = Database::get(
             "INSERT INTO service_reminders (customer_id, vehicle_id, repair_order_id, service_type, due_date, due_odometer, notes, status)
              VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending')
              RETURNING id",
             [
-                $input['customerId']     ?? null,
-                $input['vehicleId']      ?? null,
-                $input['repairOrderId']  ?? null,
+                $customerId,
+                $vehicleId,
+                $roId,
                 $input['serviceType']    ?? null,
                 $input['dueDate']        ?? null,
-                isset($input['dueOdometer']) ? (int) $input['dueOdometer'] : null,
+                isset($input['dueOdometer']) && is_numeric($input['dueOdometer']) ? (int) $input['dueOdometer'] : null,
                 $input['notes']          ?? null,
             ]
         );

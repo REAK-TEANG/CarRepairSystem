@@ -120,6 +120,10 @@ class RepairJobModel
             $costNum    = (float) preg_replace('/[^0-9.]/', '', $input['estimatedCost'] ?? '350') ?: 350.00;
             $approvedAmt = isset($input['approvedAmount']) ? (float) $input['approvedAmount'] : $costNum;
 
+            $customerId  = (!empty($input['customerId']) && is_numeric($input['customerId'])) ? (int) $input['customerId'] : 1;
+            $vehicleId   = (!empty($input['vehicleId']) && is_numeric($input['vehicleId']))   ? (int) $input['vehicleId']  : 1;
+            $mechanicId  = (!empty($input['mechanicId']) && is_numeric($input['mechanicId'])) ? (int) $input['mechanicId'] : null;
+
             Database::run(
                 "INSERT INTO repair_orders (
                     order_number, customer_id, vehicle_id, mechanic_id, problem_description, diagnosis,
@@ -127,9 +131,9 @@ class RepairJobModel
                  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 [
                     $orderNumber,
-                    $input['customerId']      ?? 1,
-                    $input['vehicleId']       ?? 1,
-                    $input['mechanicId']      ?? null,
+                    $customerId,
+                    $vehicleId,
+                    $mechanicId,
                     $input['problem']         ?? null,
                     $input['diagnosis']       ?? null,
                     $costNum,
