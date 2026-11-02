@@ -217,7 +217,29 @@ export default function DatePicker({
     }
   }
 
+  // Check if a given calendar day is disabled by minDate or maxDate
+  const isDateDisabled = useCallback(
+    (year, month, day) => {
+      const parsedMin = parseDateString(minDate)
+      const parsedMax = parseDateString(maxDate)
+
+      if (parsedMin) {
+        if (year < parsedMin.year) return true
+        if (year === parsedMin.year && month < parsedMin.month) return true
+        if (year === parsedMin.year && month === parsedMin.month && day < parsedMin.day) return true
+      }
+      if (parsedMax) {
+        if (year > parsedMax.year) return true
+        if (year === parsedMax.year && month > parsedMax.month) return true
+        if (year === parsedMax.year && month === parsedMax.month && day > parsedMax.day) return true
+      }
+      return false
+    },
+    [minDate, maxDate]
+  )
+
   const handleSelectDate = (year, month, day) => {
+    if (isDateDisabled(year, month, day)) return
     const formatted = toDateString(year, month, day)
     emitChange(formatted)
     setIsOpen(false)
@@ -527,27 +549,33 @@ export default function DatePicker({
                       today.getMonth() === item.month &&
                       today.getDate() === item.day
 
+                    const isCellDisabled = isDateDisabled(item.year, item.month, item.day)
+
                     return (
                       <button
                         key={`${item.year}-${item.month}-${item.day}-${idx}`}
                         type="button"
-                        onClick={() => handleSelectDate(item.year, item.month, item.day)}
+                        disabled={isCellDisabled}
+                        onClick={isCellDisabled ? undefined : () => handleSelectDate(item.year, item.month, item.day)}
                         className={cn(
-                          'relative h-8 w-8 mx-auto flex items-center justify-center rounded-lg text-xs font-medium transition-all cursor-pointer outline-none focus:outline-none select-none',
+                          'relative h-8 w-8 mx-auto flex items-center justify-center rounded-lg text-xs font-medium transition-all select-none',
+                          isCellDisabled
+                            ? 'opacity-25 cursor-not-allowed pointer-events-none line-through text-app-muted'
+                            : 'cursor-pointer outline-none focus:outline-none',
                           // Current month vs other month
                           item.isCurrentMonth
                             ? 'text-app-text'
                             : 'text-app-muted/35 hover:text-app-muted/70',
                           // Selected state
-                          isSelected
+                          isSelected && !isCellDisabled
                             ? 'bg-app-accent text-app-accentText font-bold shadow-xs scale-105 z-10'
-                            : 'hover:bg-app-hover active:scale-95',
+                            : !isCellDisabled && 'hover:bg-app-hover active:scale-95',
                           // Today ring indicator if not selected
-                          isToday && !isSelected && 'border border-app-accent/60 font-semibold'
+                          isToday && !isSelected && !isCellDisabled && 'border border-app-accent/60 font-semibold'
                         )}
                       >
                         {item.day}
-                        {isToday && !isSelected && (
+                        {isToday && !isSelected && !isCellDisabled && (
                           <span className="absolute bottom-1 w-1 h-1 rounded-full bg-app-accent" />
                         )}
                       </button>

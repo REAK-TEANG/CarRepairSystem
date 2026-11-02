@@ -44,6 +44,13 @@ function getMiniCalendarDays(year, month) {
   return cells
 }
 
+function getLocalDateString(d = new Date()) {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 export default function AppointmentsPage() {
   const { t } = useTranslation()
   const { can } = useAuth()
@@ -124,7 +131,7 @@ export default function AppointmentsPage() {
     mechanic: '',
     mechanicId: '',
     service: '',
-    date: new Date().toISOString().split('T')[0],
+    date: getLocalDateString(),
     time: '09:00',
     notes: '',
     status: 'Scheduled',
@@ -135,7 +142,7 @@ export default function AppointmentsPage() {
     customerId: '',
     vehicleId: '',
     serviceType: 'Routine Oil & Filter Change (5,000 km)',
-    dueDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    dueDate: getLocalDateString(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)),
     dueOdometer: '',
     notes: '',
   }))
@@ -146,6 +153,15 @@ export default function AppointmentsPage() {
     const defaultMec = mechanics[0]
     const defaultSvc = services[0]
 
+    const todayStr = getLocalDateString()
+    let initialDate = todayStr
+    if (selectedDate) {
+      const clickedDateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(selectedDate).padStart(2, '0')}`
+      if (clickedDateStr >= todayStr) {
+        initialDate = clickedDateStr
+      }
+    }
+
     setFormData({
       customer: defaultCust ? defaultCust.name : '',
       customerId: defaultCust ? defaultCust.id : '',
@@ -155,7 +171,7 @@ export default function AppointmentsPage() {
       mechanic: defaultMec ? defaultMec.name : '',
       mechanicId: defaultMec ? defaultMec.id : '',
       service: defaultSvc ? defaultSvc.name : '',
-      date: new Date().toISOString().split('T')[0],
+      date: initialDate,
       time: '09:00',
       notes: '',
       status: 'Scheduled',
@@ -164,6 +180,9 @@ export default function AppointmentsPage() {
   }
 
   const handleBookFromReminder = (rem) => {
+    const todayStr = getLocalDateString()
+    const validDate = rem.dueDate && rem.dueDate >= todayStr ? rem.dueDate : todayStr
+
     setFormData({
       customer: rem.customer,
       customerId: rem.customerId,
@@ -173,7 +192,7 @@ export default function AppointmentsPage() {
       mechanic: mechanics[0]?.name || '',
       mechanicId: mechanics[0]?.id || '',
       service: rem.serviceType,
-      date: rem.dueDate || new Date().toISOString().split('T')[0],
+      date: validDate,
       time: '09:00',
       notes: `Booked from maintenance reminder: ${rem.serviceType}`,
       status: 'Confirmed',
@@ -208,6 +227,12 @@ export default function AppointmentsPage() {
 
   const handleCreate = async (e) => {
     e.preventDefault()
+    const todayStr = getLocalDateString()
+    if (formData.date < todayStr) {
+      addToast('Appointment date cannot be behind the current date.', 'warning')
+      return
+    }
+
     createAptMutation.mutate(formData, {
       onSuccess: () => setIsAddOpen(false),
     })
@@ -223,7 +248,7 @@ export default function AppointmentsPage() {
           customerId: '',
           vehicleId: '',
           serviceType: 'Routine Oil & Filter Change (5,000 km)',
-          dueDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          dueDate: getLocalDateString(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)),
           dueOdometer: '',
           notes: '',
         })
@@ -234,6 +259,13 @@ export default function AppointmentsPage() {
   const handleUpdate = async (e) => {
     e.preventDefault()
     if (!selectedApt) return
+
+    const todayStr = getLocalDateString()
+    if (formData.date < todayStr && selectedApt.status !== 'Completed' && selectedApt.status !== 'Cancelled') {
+      addToast('Appointment date cannot be behind the current date.', 'warning')
+      return
+    }
+
     updateAptMutation.mutate(
       { id: selectedApt.id, data: formData },
       { onSuccess: () => setIsEditOpen(false) }
@@ -997,6 +1029,7 @@ export default function AppointmentsPage() {
               <label className="block text-app-muted font-medium mb-1">{t('common.date')} *</label>
               <DatePicker
                 required
+                minDate={getLocalDateString()}
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
               />
@@ -1081,6 +1114,7 @@ export default function AppointmentsPage() {
             <div>
               <label className="block text-app-muted font-medium mb-1">{t('common.date')}</label>
               <DatePicker
+                minDate={getLocalDateString()}
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
               />

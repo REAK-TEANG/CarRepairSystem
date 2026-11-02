@@ -154,6 +154,11 @@ class AppointmentModel
             if ($mech) $mechanicId = (int) $mech['id'];
         }
 
+        $schedDate = !empty($input['date']) ? $input['date'] : date('Y-m-d');
+        if ($schedDate < date('Y-m-d')) {
+            $schedDate = date('Y-m-d');
+        }
+
         Database::run(
             "INSERT INTO appointments (appointment_code, customer_id, vehicle_id, mechanic_id, scheduled_date, scheduled_time, status, notes)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
@@ -162,7 +167,7 @@ class AppointmentModel
                 $customerId,
                 $vehicleId,
                 $mechanicId,
-                !empty($input['date']) ? $input['date'] : date('Y-m-d'),
+                $schedDate,
                 !empty($input['time']) ? $input['time'] : '09:00',
                 !empty($input['status']) ? $input['status'] : 'Scheduled',
                 !empty($input['notes']) ? $input['notes'] : null,

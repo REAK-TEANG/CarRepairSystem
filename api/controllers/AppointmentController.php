@@ -36,19 +36,40 @@ class AppointmentController
     public function store(): void
     {
         $input = Sanitizer::getJsonInput();
+        $date  = trim($input['date'] ?? '');
+        $today = date('Y-m-d');
+        if ($date && $date < $today) {
+            http_response_code(400);
+            echo json_encode([
+                'error' => 'Validation Error',
+                'message' => 'Appointment date cannot be behind the current date.'
+            ]);
+            return;
+        }
         http_response_code(201);
         echo json_encode(['data' => AppointmentModel::create($input)]);
     }
 
     public function update(int $id): void
     {
-        $input   = Sanitizer::getJsonInput();
-        $updated = AppointmentModel::update($id, $input);
-        if (!$updated) {
+        $input    = Sanitizer::getJsonInput();
+        $date     = trim($input['date'] ?? '');
+        $today    = date('Y-m-d');
+        $existing = AppointmentModel::findById($id);
+        if (!$existing) {
             http_response_code(404);
             echo json_encode(['error' => 'Appointment not found']);
             return;
         }
+        if ($date && $date !== $existing['date'] && $date < $today && in_array($existing['status'], ['Scheduled', 'Confirmed', 'Pending'])) {
+            http_response_code(400);
+            echo json_encode([
+                'error' => 'Validation Error',
+                'message' => 'Appointment date cannot be behind the current date.'
+            ]);
+            return;
+        }
+        $updated = AppointmentModel::update($id, $input);
         echo json_encode(['data' => $updated]);
     }
 
