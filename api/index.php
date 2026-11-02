@@ -29,6 +29,7 @@ $allowedOrigins = [
     'http://localhost:3000',
     'http://127.0.0.1:5173',
     'http://127.0.0.1:3000',
+    'https://car-repair-system-ebon.vercel.app',
 ];
 if ($envFrontend = getenv('FRONTEND_URL')) {
     foreach (explode(',', $envFrontend) as $url) {
@@ -56,7 +57,12 @@ if ($origin && (in_array($origin, $allowedOrigins) || $isVercelOrigin || $isDev)
 }
 
 header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, Accept, X-Requested-With, X-Client-Version");
+$reqHeaders = $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'] ?? '';
+if ($reqHeaders) {
+    header("Access-Control-Allow-Headers: $reqHeaders");
+} else {
+    header("Access-Control-Allow-Headers: Content-Type, Authorization, Accept, X-Requested-With, X-Client-Version, Cache-Control, Pragma, Expires, Origin");
+}
 header("Access-Control-Max-Age: 86400"); // 24 hours preflight cache
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
