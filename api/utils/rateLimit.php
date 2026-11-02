@@ -210,8 +210,6 @@ class RateLimiter {
             }
         }
 
-        self::initGlobalTable();
-
         try {
             $sql = "
                 SELECT COUNT(*) AS cnt 
@@ -225,14 +223,21 @@ class RateLimiter {
             // Record this request
             run("INSERT INTO global_api_requests (ip_address) VALUES (?)", [$ip]);
 
-            // Periodic cleanup (1 in 50 chance)
-            if (mt_rand(1, 50) === 1) {
+            // Periodic cleanup (1 in 100 chance to minimize lock contention)
+            if (mt_rand(1, 100) === 1) {
                 run("DELETE FROM global_api_requests WHERE requested_at < NOW() - INTERVAL '1 hour'");
             }
 
             return $currentCount >= $maxRequests;
         } catch (Throwable $e) {
-            error_log("RateLimiter PG global check error: " . $e->getMessage());
+            if (str_contains($e->getMessage(), 'does not exist') || str_contains($e->getMessage(), '42P01')) {
+                self::initGlobalTable();
+                try {
+                    run("INSERT INTO global_api_requests (ip_address) VALUES (?)", [$ip]);
+                } catch (Throwable) {}
+            } else {
+                error_log("RateLimiter PG global check error: " . $e->getMessage());
+            }
             return false;
         }
     }
