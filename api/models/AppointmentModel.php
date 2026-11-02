@@ -96,9 +96,7 @@ class AppointmentModel
 
     public static function create(array $input): array
     {
-        $countRow = Database::get('SELECT COUNT(*) AS cnt FROM appointments');
-        $cnt      = (int) ($countRow['cnt'] ?? 0) + 1;
-        $code     = 'APT-2026-' . str_pad($cnt, 3, '0', STR_PAD_LEFT);
+        $code     = generateUniqueCode('appointments', 'appointment_code', 'APT-2026', 3);
 
         Database::run(
             "INSERT INTO appointments (appointment_code, customer_id, vehicle_id, mechanic_id, scheduled_date, scheduled_time, status, notes)

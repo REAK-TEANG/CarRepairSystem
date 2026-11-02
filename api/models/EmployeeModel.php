@@ -96,60 +96,60 @@ class EmployeeModel
             }
         }
 
-        $countRow = Database::get('SELECT COUNT(*) AS cnt FROM employees');
-        $cnt      = (int) ($countRow['cnt'] ?? 0) + 1;
-        $empCode  = 'EMP-' . str_pad($cnt, 3, '0', STR_PAD_LEFT);
+        return Database::transaction(function () use ($input, $name, $phone, $email, $password, $roleId) {
+            $empCode = generateUniqueCode('employees', 'employee_code', 'EMP', 3);
 
-        $username   = 'emp_' . time() . '_' . rand(10, 99);
-        $hash       = password_hash($password, PASSWORD_BCRYPT);
-        $userEmail  = $email ?: "$username@carrepair.com";
+            $username   = 'emp_' . time() . '_' . rand(10, 99);
+            $hash       = password_hash($password, PASSWORD_BCRYPT);
+            $userEmail  = $email ?: "$username@carrepair.com";
 
-        Database::run(
-            "INSERT INTO users (username, email, password_hash, full_name, phone, role_id) VALUES (?, ?, ?, ?, ?, ?)",
-            [$username, $userEmail, $hash, $name, $phone, $roleId]
-        );
+            Database::run(
+                "INSERT INTO users (username, email, password_hash, full_name, phone, role_id) VALUES (?, ?, ?, ?, ?, ?)",
+                [$username, $userEmail, $hash, $name, $phone, $roleId]
+            );
 
-        $uRow   = Database::get("SELECT id FROM users WHERE username = ? ORDER BY id DESC LIMIT 1", [$username]);
-        $userId = (int) ($uRow['id'] ?? 0);
+            $uRow   = Database::get("SELECT id FROM users WHERE username = ? ORDER BY id DESC LIMIT 1", [$username]);
+            $userId = (int) ($uRow['id'] ?? 0);
 
-        $salaryStr   = $input['baseSalary'] ?? '3500';
-        $salaryNum   = (float) preg_replace('/[^0-9.]/', '', $salaryStr) ?: 3500.0;
-        $finalPhoto  = $input['image'] ?? $input['photoUrl'] ?? null;
-        $roleTitle   = $input['roleTitle'] ?? 'Staff';
-        $department  = $input['department'] ?? 'Workshop';
-        $spec        = $input['specialization'] ?? null;
-        $experience  = !empty($input['experience']) ? (int) $input['experience'] : 0;
-        $status      = $input['status'] ?? 'Active';
+            $salaryStr   = $input['baseSalary'] ?? '3500';
+            $salaryNum   = (float) preg_replace('/[^0-9.]/', '', $salaryStr) ?: 3500.0;
+            $finalPhoto  = $input['image'] ?? $input['photoUrl'] ?? null;
+            $roleTitle   = $input['roleTitle'] ?? 'Staff';
+            $department  = $input['department'] ?? 'Workshop';
+            $spec        = $input['specialization'] ?? null;
+            $experience  = !empty($input['experience']) ? (int) $input['experience'] : 0;
+            $status      = $input['status'] ?? 'Active';
 
-        Database::run(
-            "INSERT INTO employees (user_id, employee_code, position, department, specialization, experience_years, salary, employment_status, photo_url)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            [$userId, $empCode, $roleTitle, $department, $spec, $experience, $salaryNum, $status, $finalPhoto]
-        );
+            Database::run(
+                "INSERT INTO employees (user_id, employee_code, position, department, specialization, experience_years, salary, employment_status, photo_url)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                [$userId, $empCode, $roleTitle, $department, $spec, $experience, $salaryNum, $status, $finalPhoto]
+            );
 
-        $eRow  = Database::get("SELECT id FROM employees WHERE employee_code = ? ORDER BY id DESC LIMIT 1", [$empCode]);
-        $empId = (int) ($eRow['id'] ?? 0);
+            $eRow  = Database::get("SELECT id FROM employees WHERE employee_code = ? ORDER BY id DESC LIMIT 1", [$empCode]);
+            $empId = (int) ($eRow['id'] ?? 0);
 
-        $rRow = Database::get("SELECT name FROM roles WHERE id = ?", [$roleId]);
-        $roleName = $rRow['name'] ?? 'Mechanic';
+            $rRow = Database::get("SELECT name FROM roles WHERE id = ?", [$roleId]);
+            $roleName = $rRow['name'] ?? 'Mechanic';
 
-        return [
-            'id'              => $empId,
-            'userId'          => $userId,
-            'empCode'         => $empCode,
-            'name'            => $name,
-            'roleTitle'       => $roleTitle,
-            'department'      => $department,
-            'roleId'          => $roleId,
-            'role'            => strtolower(str_replace(' ', '_', $roleName)),
-            'roleName'        => $roleName,
-            'phone'           => $phone ?? '',
-            'email'           => $userEmail,
-            'baseSalary'      => '$' . $salaryNum . '/mo',
-            'attendanceToday' => 'Present',
-            'status'          => $status,
-            'image'           => $finalPhoto ?? '',
-        ];
+            return [
+                'id'              => $empId,
+                'userId'          => $userId,
+                'empCode'         => $empCode,
+                'name'            => $name,
+                'roleTitle'       => $roleTitle,
+                'department'      => $department,
+                'roleId'          => $roleId,
+                'role'            => strtolower(str_replace(' ', '_', $roleName)),
+                'roleName'        => $roleName,
+                'phone'           => $phone ?? '',
+                'email'           => $userEmail,
+                'baseSalary'      => '$' . $salaryNum . '/mo',
+                'attendanceToday' => 'Present',
+                'status'          => $status,
+                'image'           => $finalPhoto ?? '',
+            ];
+        });
     }
 
     public static function update(int $id, array $input): ?array

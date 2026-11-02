@@ -116,9 +116,7 @@ class InvoiceModel
     public static function create(array $input): array
     {
         return Database::transaction(function () use ($input) {
-            $countRow     = Database::get('SELECT COUNT(*) AS cnt FROM invoices');
-            $cnt          = (int) ($countRow['cnt'] ?? 0) + 1;
-            $invoiceNumber = 'INV-2026-' . str_pad($cnt, 3, '0', STR_PAD_LEFT);
+            $invoiceNumber = generateUniqueCode('invoices', 'invoice_number', 'INV-2026', 3);
             $amt          = (float) ($input['amount'] ?? 0);
 
             $roId   = $input['repairOrderId'] ?? null;
@@ -199,9 +197,7 @@ class InvoiceModel
             );
 
             // Record payment
-            $payCount = Database::get('SELECT COUNT(*) AS cnt FROM payments');
-            $cnt      = (int) ($payCount['cnt'] ?? 0) + 1;
-            $payNum   = 'PAY-2026-' . str_pad($cnt, 3, '0', STR_PAD_LEFT);
+            $payNum   = generateUniqueCode('payments', 'payment_number', 'PAY-2026', 3);
 
             $validMethods  = ['Cash', 'Credit/Debit Card', 'Bank Transfer', 'Mobile Payment', 'QR Payment'];
             $paymentMethod = $input['paymentMethod'] ?? 'Credit/Debit Card';

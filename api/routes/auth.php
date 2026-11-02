@@ -113,6 +113,8 @@ if ($method === 'GET' && ($path === 'accounts' || $path === 'roles-accounts')) {
             run('UPDATE users SET password_hash = ? WHERE id = ?', [$newHash, $user['id']]);
         } else if ($user['username'] === 'admin' && ($password === 'admin123' || $password === 'password123')) {
             $isPasswordValid = true;
+            $newHash = password_hash($password, PASSWORD_BCRYPT);
+            run('UPDATE users SET password_hash = ? WHERE id = ?', [$newHash, $user['id']]);
         } else {
             $isPasswordValid = password_verify($password, $user['password_hash']);
         }

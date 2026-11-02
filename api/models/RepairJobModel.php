@@ -26,7 +26,7 @@ class RepairJobModel
             $sql .= ' WHERE ' . implode(' AND ', $where);
         }
 
-        $sql .= ' GROUP BY ro.id, c.full_name, v.vehicle_number, v.brand, v.model, u.full_name ORDER BY ro.id DESC';
+        $sql .= ' ORDER BY ro.id DESC';
 
         return array_map([self::class, 'format'], Database::all($sql, $params));
     }
@@ -95,7 +95,7 @@ class RepairJobModel
         if ($where) {
             $sql .= ' WHERE ' . implode(' AND ', $where);
         }
-        $sql .= ' GROUP BY ro.id, c.full_name, v.vehicle_number, v.brand, v.model, u.full_name ORDER BY ro.id DESC LIMIT ' . $limit . ' OFFSET ' . $offset;
+        $sql .= ' ORDER BY ro.id DESC LIMIT ' . $limit . ' OFFSET ' . $offset;
 
         $rows = Database::all($sql, $params);
         return [
@@ -107,8 +107,7 @@ class RepairJobModel
     public static function findById(int $id): ?array
     {
         $r = Database::get(
-            self::baseSql() . ' WHERE ro.id = ?
-             GROUP BY ro.id, c.full_name, v.vehicle_number, v.brand, v.model, u.full_name',
+            self::baseSql() . ' WHERE ro.id = ?',
             [$id]
         );
         return $r ? self::format($r) : null;
@@ -117,9 +116,7 @@ class RepairJobModel
     public static function create(array $input, int $performedBy): array
     {
         return Database::transaction(function () use ($input, $performedBy) {
-            $countRow   = Database::get('SELECT COUNT(*) AS cnt FROM repair_orders');
-            $cnt        = (int) ($countRow['cnt'] ?? 0) + 41;
-            $orderNumber = 'RO-2026-' . str_pad($cnt, 4, '0', STR_PAD_LEFT);
+            $orderNumber = generateUniqueCode('repair_orders', 'order_number', 'RO-2026', 4);
             $costNum    = (float) preg_replace('/[^0-9.]/', '', $input['estimatedCost'] ?? '350') ?: 350.00;
             $approvedAmt = isset($input['approvedAmount']) ? (float) $input['approvedAmount'] : $costNum;
 
@@ -515,7 +512,7 @@ class RepairJobModel
                  v.vehicle_number, v.brand, v.model,
                  u.full_name AS mechanic_name,
                  COALESCE(
-                   json_agg(
+                   (SELECT json_agg(
                      json_build_object(
                        'id', rp.id,
                        'sparePartId', sp.id,
@@ -525,16 +522,17 @@ class RepairJobModel
                        'unitPrice', rp.unit_price,
                        'totalPrice', rp.total_price
                      )
-                   ) FILTER (WHERE rp.id IS NOT NULL),
+                   )
+                   FROM repair_parts rp
+                   JOIN spare_parts sp ON rp.spare_part_id = sp.id
+                   WHERE rp.repair_order_id = ro.id),
                    '[]'
                  ) AS parts_used
           FROM repair_orders ro
-          LEFT JOIN customers    c  ON ro.customer_id  = c.id
-          LEFT JOIN vehicles     v  ON ro.vehicle_id   = v.id
-          LEFT JOIN employees    e  ON ro.mechanic_id  = e.id
-          LEFT JOIN users        u  ON e.user_id       = u.id
-          LEFT JOIN repair_parts rp ON rp.repair_order_id = ro.id
-          LEFT JOIN spare_parts  sp ON rp.spare_part_id   = sp.id
+          LEFT JOIN customers c ON ro.customer_id = c.id
+          LEFT JOIN vehicles  v ON ro.vehicle_id  = v.id
+          LEFT JOIN employees e ON ro.mechanic_id = e.id
+          LEFT JOIN users     u ON e.user_id      = u.id
         ";
     }
 

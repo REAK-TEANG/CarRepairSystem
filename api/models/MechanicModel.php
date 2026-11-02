@@ -88,50 +88,50 @@ class MechanicModel
     {
         $name = trim($input['name'] ?? '');
 
-        $countRow = Database::get('SELECT COUNT(*) AS cnt FROM employees');
-        $cnt      = (int) ($countRow['cnt'] ?? 0) + 1;
-        $code     = 'EMP-' . str_pad($cnt, 3, '0', STR_PAD_LEFT);
+        return Database::transaction(function () use ($input, $name) {
+            $code = generateUniqueCode('employees', 'employee_code', 'EMP', 3);
 
-        $username = 'mech_' . time();
-        $rawPass  = !empty($input['password']) ? $input['password'] : bin2hex(random_bytes(6));
-        $hash     = password_hash($rawPass, PASSWORD_BCRYPT);
-        $email    = $input['email'] ?? "$username@carrepair.com";
-        $phone    = $input['phone'] ?? null;
+            $username = 'mech_' . time();
+            $rawPass  = !empty($input['password']) ? $input['password'] : bin2hex(random_bytes(6));
+            $hash     = password_hash($rawPass, PASSWORD_BCRYPT);
+            $email    = $input['email'] ?? "$username@carrepair.com";
+            $phone    = $input['phone'] ?? null;
 
-        Database::run(
-            "INSERT INTO users (username, email, password_hash, full_name, phone, role_id) VALUES (?, ?, ?, ?, ?, 4)",
-            [$username, $email, $hash, $name, $phone]
-        );
+            Database::run(
+                "INSERT INTO users (username, email, password_hash, full_name, phone, role_id) VALUES (?, ?, ?, ?, ?, 4)",
+                [$username, $email, $hash, $name, $phone]
+            );
 
-        $uRow   = Database::get("SELECT id FROM users WHERE username = ? ORDER BY id DESC LIMIT 1", [$username]);
-        $userId = (int) ($uRow['id'] ?? 0);
+            $uRow   = Database::get("SELECT id FROM users WHERE username = ? ORDER BY id DESC LIMIT 1", [$username]);
+            $userId = (int) ($uRow['id'] ?? 0);
 
-        $specialization = $input['specialization'] ?? 'General Repair';
-        $experience     = !empty($input['experience']) ? (int) $input['experience'] : 3;
-        $status         = $input['status'] ?? 'Active';
+            $specialization = $input['specialization'] ?? 'General Repair';
+            $experience     = !empty($input['experience']) ? (int) $input['experience'] : 3;
+            $status         = $input['status'] ?? 'Active';
 
-        Database::run(
-            "INSERT INTO employees (user_id, employee_code, position, specialization, experience_years, employment_status)
-             VALUES (?, ?, 'Mechanic', ?, ?, ?)",
-            [$userId, $code, $specialization, $experience, $status]
-        );
+            Database::run(
+                "INSERT INTO employees (user_id, employee_code, position, specialization, experience_years, employment_status)
+                 VALUES (?, ?, 'Mechanic', ?, ?, ?)",
+                [$userId, $code, $specialization, $experience, $status]
+            );
 
-        $eRow  = Database::get("SELECT id FROM employees WHERE employee_code = ? ORDER BY id DESC LIMIT 1", [$code]);
-        $empId = (int) ($eRow['id'] ?? 0);
+            $eRow  = Database::get("SELECT id FROM employees WHERE employee_code = ? ORDER BY id DESC LIMIT 1", [$code]);
+            $empId = (int) ($eRow['id'] ?? 0);
 
-        return [
-            'id'             => $empId,
-            'code'           => $code,
-            'name'           => $name,
-            'phone'          => $phone ?? '',
-            'email'          => $email,
-            'specialization' => $specialization,
-            'experience'     => $experience,
-            'rating'         => 5.0,
-            'activeJobs'     => 0,
-            'completedJobs'  => 0,
-            'status'         => $status,
-        ];
+            return [
+                'id'             => $empId,
+                'code'           => $code,
+                'name'           => $name,
+                'phone'          => $phone ?? '',
+                'email'          => $email,
+                'specialization' => $specialization,
+                'experience'     => $experience,
+                'rating'         => 5.0,
+                'activeJobs'     => 0,
+                'completedJobs'  => 0,
+                'status'         => $status,
+            ];
+        });
     }
 
     public static function update(int $id, array $input): ?array

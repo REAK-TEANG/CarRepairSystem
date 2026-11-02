@@ -201,6 +201,36 @@ function setDatabaseUserContext($role = null, $userId = null) {
     }
 }
 
+/**
+ * Generate a collision-free unique code for a given table/column.
+ * Uses MAX-based extraction instead of COUNT(*) to avoid gaps/collision issues.
+ *
+ * @param string $table     Table name (unquoted, trusted input)
+ * @param string $column    Column name holding the code
+ * @param string $prefix    e.g. 'RO-2026', 'INV-2026', 'CUST'
+ * @param int    $padLength Zero-pad length for the numeric suffix
+ * @return string           e.g. 'RO-2026-0059'
+ */
+function generateUniqueCode(string $table, string $column, string $prefix, int $padLength = 4): string {
+    $rows = all(
+        "SELECT $column FROM $table WHERE $column LIKE ? ORDER BY id DESC LIMIT 100",
+        ["$prefix-%"]
+    );
+    $maxNum = 0;
+    foreach ($rows as $r) {
+        if (preg_match('/(\d+)$/', $r[$column] ?? '', $m)) {
+            $num = (int) $m[1];
+            if ($num > $maxNum) $maxNum = $num;
+        }
+    }
+    $next = $maxNum + 1;
+    do {
+        $candidate = sprintf('%s-%0' . $padLength . 'd', $prefix, $next++);
+        $exists = get("SELECT 1 FROM $table WHERE $column = ?", [$candidate]);
+    } while ($exists);
+    return $candidate;
+}
+
 class Database {
     public static function query($sql, $params = []) { return query($sql, $params); }
     public static function get($sql, $params = []) { return get($sql, $params); }

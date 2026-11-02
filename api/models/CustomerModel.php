@@ -80,9 +80,7 @@ class CustomerModel
 
     public static function create(array $input): array
     {
-        $countRow = Database::get('SELECT COUNT(*) AS cnt FROM customers');
-        $cnt      = (int) ($countRow['cnt'] ?? 0) + 1;
-        $code     = 'CUST-' . str_pad($cnt, 3, '0', STR_PAD_LEFT);
+        $code     = generateUniqueCode('customers', 'customer_code', 'CUST', 3);
 
         Database::run(
             "INSERT INTO customers (customer_code, full_name, phone, email, address, notes) VALUES (?, ?, ?, ?, ?, ?)",
