@@ -25,6 +25,11 @@ if (preg_match('#^/(?:inventory|spare-parts)/(\d+)/adjust$#', $path, $m)) {
 // Single item actions
 if (preg_match('#^/(?:inventory|spare-parts)/(\d+)$#', $path, $m)) {
     $id = (int) $m[1];
+    if ($method === 'GET') {
+        AuthMiddleware::authorize('inventory', 'read', $authPayload);
+        $ctrl->show($id);
+        exit;
+    }
     if ($method === 'PUT' || $method === 'PATCH') {
         AuthMiddleware::authorize('inventory', 'update', $authPayload);
         $ctrl->update($id);

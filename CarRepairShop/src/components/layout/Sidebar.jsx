@@ -96,7 +96,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
           </div>
           {!collapsed && (
             <div className="min-w-0">
-              <h1 className="text-sm font-black text-app-text tracking-[0.18em] uppercase truncate font-sans">
+              <h1 className="text-sm font-bold text-app-text tracking-tight truncate font-sans">
                 {t('common.appName')}
               </h1>
             </div>
@@ -124,7 +124,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
           return (
             <div key={section.categoryKey}>
               {!collapsed && (
-                <p className="px-2.5 mb-1 text-[10px] font-semibold text-app-muted/80 uppercase tracking-wider">
+                <p className="px-2.5 mb-1 text-xs font-semibold text-app-muted">
                   {t(section.categoryKey)}
                 </p>
               )}

@@ -18,14 +18,34 @@ export default function MobileDataCard({
   subtitle,
   badge,
   badgeColor,
+  status,
   icon,
   avatar,
   metadata = [],
+  chips,
   actions,
   onClick,
   className = '',
   children,
 }) {
+  // Normalize badge & badgeColor with status object support
+  const effectiveBadge = badge || (status ? (typeof status === 'string' ? status : status.label) : null)
+  let effectiveBadgeColor = badgeColor
+  if (!effectiveBadgeColor && status?.color) {
+    if (status.color === 'green' || status.color === 'emerald') {
+      effectiveBadgeColor = 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+    } else if (status.color === 'amber' || status.color === 'yellow') {
+      effectiveBadgeColor = 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+    } else if (status.color === 'rose' || status.color === 'red') {
+      effectiveBadgeColor = 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
+    } else if (status.color === 'blue' || status.color === 'sky') {
+      effectiveBadgeColor = 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20'
+    }
+  }
+
+  // Normalize items from metadata or chips
+  const items = (metadata && metadata.length > 0) ? metadata : (chips || [])
+
   return (
     <div
       onClick={onClick}
@@ -62,14 +82,14 @@ export default function MobileDataCard({
 
         {/* Right Status Badge / Price */}
         <div className="flex items-center gap-1.5 flex-shrink-0">
-          {badge && (
+          {effectiveBadge && (
             <span
               className={clsx(
                 'inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium border',
-                badgeColor || 'bg-app-hover text-app-muted border-app-border'
+                effectiveBadgeColor || 'bg-app-hover text-app-muted border-app-border'
               )}
             >
-              {badge}
+              {effectiveBadge}
             </span>
           )}
           {onClick && (
@@ -83,9 +103,9 @@ export default function MobileDataCard({
       </div>
 
       {/* Metadata Chips Grid */}
-      {metadata.length > 0 && (
+      {items.length > 0 && (
         <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 pt-1 text-xs text-app-muted border-t border-app-border/40">
-          {metadata.map((item, idx) => {
+          {items.map((item, idx) => {
             if (!item || (!item.label && !item.value)) return null
             return (
               <div key={idx} className="flex items-center gap-1.5 min-w-0 truncate">

@@ -107,9 +107,10 @@ export default function SuppliersPage() {
               onClick={handleOpenAdd}
               size="sm"
               className="gap-1.5 flex-shrink-0"
+              title={t('suppliers.addSupplier')}
             >
               <Plus size={14} weight="bold" />
-              <span>{t('suppliers.addSupplier')}</span>
+              <span className="hidden sm:inline">{t('suppliers.addSupplier')}</span>
             </Button>
           )
         }
@@ -236,7 +237,7 @@ export default function SuppliersPage() {
       {can('suppliers', 'create') && (
         <button
           onClick={handleOpenAdd}
-          className="fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center size-13 rounded-full bg-app-accent text-app-accentText shadow-xl active:scale-95 transition-transform touch-manipulation cursor-pointer border border-white/20"
+          className="fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center w-12 h-12 min-w-[48px] min-h-[48px] rounded-full bg-app-accent text-app-accentText shadow-xl active:scale-95 transition-transform touch-manipulation cursor-pointer border border-white/20"
           aria-label={t('suppliers.addSupplier')}
         >
           <Plus size={22} weight="bold" />
@@ -307,7 +308,9 @@ export default function SuppliersPage() {
               {t('common.cancel')}
             </Button>
             <LoadingButton type="submit" loading={createSupplierMutation.isPending}>
-              {t('suppliers.createSupplier')}
+              <Plus size={14} weight="bold" className="sm:mr-1" />
+              <span className="hidden sm:inline">{t('suppliers.createSupplier')}</span>
+              <span className="sm:hidden">Add</span>
             </LoadingButton>
           </div>
         </form>

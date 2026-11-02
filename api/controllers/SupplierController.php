@@ -21,6 +21,17 @@ class SupplierController
         echo json_encode(Pagination::formatResponse($result['data'], $result['total'], $params['page'], $params['limit']));
     }
 
+    public function show(int $id): void
+    {
+        $supplier = SupplierModel::findById($id);
+        if (!$supplier) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Supplier not found']);
+            return;
+        }
+        echo json_encode(['data' => $supplier]);
+    }
+
     public function store(): void
     {
         $input = Sanitizer::getJsonInput();
@@ -47,11 +58,19 @@ class SupplierController
 
     public function destroy(int $id): void
     {
-        if (!SupplierModel::delete($id)) {
-            http_response_code(404);
-            echo json_encode(['error' => 'Supplier not found']);
-            return;
+        try {
+            if (!SupplierModel::delete($id)) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Supplier not found']);
+                return;
+            }
+            echo json_encode(['success' => true, 'message' => 'Supplier removed successfully']);
+        } catch (PDOException $e) {
+            http_response_code(409);
+            echo json_encode([
+                'error' => 'Conflict',
+                'message' => 'Cannot delete supplier with active purchase orders or inventory parts.'
+            ]);
         }
-        echo json_encode(['success' => true, 'message' => 'Supplier removed successfully']);
     }
 }

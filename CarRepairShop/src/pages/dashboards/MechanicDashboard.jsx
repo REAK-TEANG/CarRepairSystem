@@ -59,6 +59,7 @@ export default function MechanicDashboard() {
             <button
               type="button"
               onClick={() => setViewMode('bay')}
+              title="Bay Mode"
               className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer touch-manipulation active:scale-[0.98] ${
                 viewMode === 'bay'
                   ? 'bg-app-accent text-app-accentText shadow-xs'
@@ -66,11 +67,13 @@ export default function MechanicDashboard() {
               }`}
             >
               <DeviceTablet size={15} weight="bold" />
-              <span>Bay Mode</span>
+              <span>Bay</span>
+              <span className="hidden sm:inline">&nbsp;Mode</span>
             </button>
             <button
               type="button"
               onClick={() => setViewMode('pipeline')}
+              title="Pipeline Flow"
               className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer touch-manipulation active:scale-[0.98] ${
                 viewMode === 'pipeline'
                   ? 'bg-app-accent text-app-accentText shadow-xs'
@@ -78,7 +81,8 @@ export default function MechanicDashboard() {
               }`}
             >
               <Kanban size={15} weight="bold" />
-              <span>Pipeline Flow</span>
+              <span>Pipeline</span>
+              <span className="hidden sm:inline">&nbsp;Flow</span>
             </button>
           </div>
 

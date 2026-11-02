@@ -83,7 +83,7 @@ export default function TopBar({ onToggleSidebar }) {
       <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 min-w-0">
         <button
           onClick={onToggleSidebar}
-          className="p-1.5 rounded-md text-app-muted hover:bg-app-hover active:scale-[0.98] hover:text-app-text transition-colors lg:hidden flex-shrink-0"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-md text-app-muted hover:bg-app-hover active:scale-[0.98] hover:text-app-text transition-colors lg:hidden flex-shrink-0"
           aria-label="Toggle navigation menu"
         >
           <List size={20} weight="bold" />
@@ -118,7 +118,7 @@ export default function TopBar({ onToggleSidebar }) {
         {/* Mobile Search Icon Button */}
         <button
           onClick={() => setCommandPaletteOpen(true)}
-          className="p-2 rounded-sm text-app-muted hover:bg-app-hover active:scale-[0.98] hover:text-app-text transition-all sm:hidden cursor-pointer"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-sm text-app-muted hover:bg-app-hover active:scale-[0.98] hover:text-app-text transition-all sm:hidden cursor-pointer"
           title="Search (⌘K)"
         >
           <MagnifyingGlass size={18} weight="bold" />
@@ -132,7 +132,7 @@ export default function TopBar({ onToggleSidebar }) {
           {/* Theme Switcher Button */}
           <button
             onClick={toggleTheme}
-            className="p-1.5 sm:p-2 rounded-sm text-app-muted hover:bg-app-card hover:text-app-text transition-all"
+            className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 p-2 rounded-sm text-app-muted hover:bg-app-card hover:text-app-text transition-all flex items-center justify-center"
             title={isDark ? t('common.lightMode') : t('common.darkMode')}
           >
             {isDark ? <Sun size={17} weight="bold" className="text-amber-400" /> : <Moon size={17} weight="bold" />}
@@ -181,7 +181,7 @@ export default function TopBar({ onToggleSidebar }) {
                       setNotifOpen(!notifOpen)
                       setProfileOpen(false)
                     }}
-                    className="relative p-1.5 sm:p-2 rounded-sm text-app-muted hover:bg-app-card hover:text-app-text transition-all"
+                    className="relative min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 p-2 rounded-sm text-app-muted hover:bg-app-card hover:text-app-text transition-all flex items-center justify-center"
                     aria-label="Notifications"
                   >
                     <Bell size={17} weight={notifOpen ? 'fill' : 'bold'} />
@@ -191,9 +191,9 @@ export default function TopBar({ onToggleSidebar }) {
                   </button>
 
                   {notifOpen && (
-                    <div className="absolute right-0 mt-3 w-72 sm:w-80 bg-app-card border border-app-border rounded-sm shadow-card py-2 z-50 max-w-[calc(100vw-1.5rem)]">
+                    <div className="absolute right-0 mt-3 w-[calc(100vw-1.5rem)] sm:w-80 bg-app-card border border-app-border rounded-sm shadow-card py-2 z-50 max-w-xs sm:max-w-none">
                       <div className="px-4 py-2.5 border-b border-app-border flex items-center justify-between">
-                        <h3 className="text-xs font-semibold text-app-text">{t('common.liveAlerts')}</h3>
+                        <h3 className="text-xs font-semibold text-app-text">{t('common.alerts', 'Alerts')}</h3>
                         <span className="text-xs font-mono text-app-muted">
                           {liveAlerts.length}
                         </span>
@@ -240,7 +240,7 @@ export default function TopBar({ onToggleSidebar }) {
               setProfileOpen(!profileOpen)
               setNotifOpen(false)
             }}
-            className="flex items-center gap-2 p-1 sm:p-1.5 sm:pr-2.5 rounded-sm hover:bg-app-hover transition-all border border-transparent hover:border-app-border"
+            className="flex items-center justify-center sm:justify-start gap-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 p-1 sm:p-1.5 sm:pr-2.5 rounded-sm hover:bg-app-hover transition-all border border-transparent hover:border-app-border"
           >
             <div className="relative">
               <div className="w-8 h-8 bg-app-accent/15 border border-app-accent/30 rounded-sm flex items-center justify-center text-app-accent font-bold text-xs shadow-subtle">
@@ -250,7 +250,7 @@ export default function TopBar({ onToggleSidebar }) {
             </div>
             <div className="hidden md:block text-left">
               <p className="text-xs font-bold text-app-text leading-tight">{user?.name || 'User'}</p>
-              <p className="text-[10px] text-app-muted font-medium uppercase tracking-wider">
+              <p className="text-[11px] text-app-muted font-medium">
                 {user ? t(`roles.${user.role}`, user.roleTitle) : ''}
               </p>
             </div>
@@ -258,7 +258,7 @@ export default function TopBar({ onToggleSidebar }) {
           </button>
 
           {profileOpen && (
-            <div className="absolute right-0 mt-3 w-56 sm:w-64 bg-app-card border border-app-border rounded-sm shadow-card py-2 z-50 text-xs max-w-[calc(100vw-1.5rem)]">
+            <div className="absolute right-0 mt-3 w-[calc(100vw-1.5rem)] sm:w-64 max-w-xs bg-app-card border border-app-border rounded-sm shadow-card py-2 z-50 text-xs">
               <div className="px-4 py-3 border-b border-app-border">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-app-accent/15 border border-app-accent/30 rounded-sm flex items-center justify-center text-app-accent font-bold text-sm flex-shrink-0">
@@ -277,7 +277,7 @@ export default function TopBar({ onToggleSidebar }) {
               <div className="p-1.5">
                 <button
                   onClick={handleSignOut}
-                  className="w-full flex items-center gap-2 px-3.5 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 rounded-sm transition-colors font-medium text-xs"
+                  className="w-full min-h-[40px] flex items-center gap-2 px-3.5 py-2.5 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 rounded-sm transition-colors font-medium text-xs cursor-pointer"
                 >
                   <SignOut size={15} />
                   {t('common.signOut')}

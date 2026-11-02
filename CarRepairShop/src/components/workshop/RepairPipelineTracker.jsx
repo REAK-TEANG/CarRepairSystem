@@ -527,7 +527,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                         title="Add extra spare part"
                       >
                         <Plus size={13} weight="bold" />
-                        <span>Part</span>
+                        <span className="hidden sm:inline">Part</span>
                       </button>
                     )}
 
@@ -542,7 +542,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                         title="Notify Customer"
                       >
                         <ChatCircleDots size={14} weight="bold" />
-                        <span>Notify</span>
+                        <span className="hidden sm:inline">Notify</span>
                       </button>
                     )}
 
@@ -554,7 +554,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                         title="Create Invoice"
                       >
                         <Receipt size={14} weight="bold" />
-                        <span>Invoice</span>
+                        <span className="hidden sm:inline">Invoice</span>
                       </button>
                     )}
 
@@ -568,7 +568,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                       title="View Details"
                     >
                       <Eye size={14} />
-                      <span>Details</span>
+                      <span className="hidden sm:inline">Details</span>
                     </button>
                   </div>
                 </div>
@@ -712,9 +712,6 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                 <h4 className="font-bold text-emerald-800 dark:text-emerald-300">
                   Pre-Delivery Quality Inspection for {selectedJob.vehicle} ({selectedJob.plate})
                 </h4>
-                <p className="text-[11px] text-emerald-700 dark:text-emerald-400 mt-0.5">
-                  Verify the 4 QA checklist criteria before notifying customer that vehicle is ready for pickup.
-                </p>
               </div>
             </div>
 
@@ -767,7 +764,8 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-sm text-xs font-bold transition-colors shadow-subtle flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
               >
                 <CheckCircle size={15} weight="bold" />
-                <span>Pass QA & Mark Ready for Pickup</span>
+                <span className="hidden sm:inline">Pass QA & Mark Ready for Pickup</span>
+                <span className="sm:hidden">Pass QA & Ready</span>
               </button>
             </div>
           </div>
@@ -781,10 +779,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
             <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-sm">
               <p className="text-amber-800 dark:text-amber-300 font-semibold flex items-center gap-1.5">
                 <Package size={15} />
-                Live Stock-Out for {selectedJob.orderNumber} ({selectedJob.vehicle})
-              </p>
-              <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-0.5">
-                Adding parts will immediately deduct inventory in PostgreSQL and append to this repair order.
+                Parts Allocation for {selectedJob.orderNumber} ({selectedJob.vehicle})
               </p>
             </div>
 
@@ -824,7 +819,8 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                 Cancel
               </button>
               <LoadingButton type="submit" loading={updateJobMutation.isPending}>
-                Deduct & Add to Order
+                <span className="hidden sm:inline">Deduct & Add to Order</span>
+                <span className="sm:hidden">Add to Order</span>
               </LoadingButton>
             </div>
           </form>
@@ -850,7 +846,8 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
                   className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm bg-app-card border border-app-border text-app-text hover:bg-app-hover active:scale-[0.98] font-semibold text-[11px] transition-colors cursor-pointer"
                 >
                   <Copy size={13} />
-                  <span>Copy Text</span>
+                  <span className="hidden sm:inline">Copy Text</span>
+                  <span className="sm:hidden">Copy</span>
                 </button>
               </div>
 
@@ -896,7 +893,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
 
             {/* Quick 1-Click Status Bar inside modal */}
             <div className="p-3.5 bg-app-input rounded-sm border border-app-border space-y-2">
-              <label className="text-[11px] text-app-muted uppercase font-bold">1-Click Fast Pipeline Stage Jump:</label>
+              <label className="text-xs font-semibold text-app-text">Jump to Stage</label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                 {PIPELINE_STEPS.map((s) => {
                   const isCurrent = selectedJob.status === s.id
@@ -923,13 +920,13 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 bg-app-card rounded-sm border border-app-border">
-                <p className="text-[10px] text-app-muted uppercase font-semibold flex items-center gap-1">
+                <p className="text-xs font-medium text-app-muted flex items-center gap-1">
                   <User size={12} /> Customer
                 </p>
                 <p className="font-semibold text-app-text mt-0.5">{selectedJob.customer}</p>
               </div>
               <div className="p-3 bg-app-card rounded-sm border border-app-border">
-                <p className="text-[10px] text-app-muted uppercase font-semibold flex items-center gap-1">
+                <p className="text-xs font-medium text-app-muted flex items-center gap-1">
                   <Wrench size={12} /> Assigned Technician
                 </p>
                 <p className="font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5">
@@ -939,13 +936,13 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
             </div>
 
             <div className="p-3 bg-app-card rounded-sm border border-app-border">
-              <p className="text-[10px] text-app-muted uppercase font-semibold">Problem / Work Requested</p>
+              <p className="text-xs font-medium text-app-muted">Problem Description</p>
               <p className="text-app-text mt-1">{selectedJob.problem}</p>
             </div>
 
             {selectedJob.diagnosis && (
               <div className="p-3 bg-app-card rounded-sm border border-app-border">
-                <p className="text-[10px] text-app-muted uppercase font-semibold">Diagnosis & Tech Notes</p>
+                <p className="text-xs font-medium text-app-muted">Diagnosis & Notes</p>
                 <p className="text-app-text mt-1">{selectedJob.diagnosis}</p>
               </div>
             )}
@@ -953,9 +950,9 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
             {/* Deducted Spare Parts */}
             <div className="p-3 bg-app-card rounded-sm border border-app-border space-y-2">
               <div className="flex items-center justify-between">
-                <p className="text-[10px] text-app-muted uppercase font-semibold flex items-center gap-1.5">
+                <p className="text-xs font-medium text-app-muted flex items-center gap-1.5">
                   <Package size={14} className="text-amber-500" />
-                  Parts Consumed from Inventory (Auto Stock-Out)
+                  Parts Consumed
                 </p>
                 <button
                   onClick={() => {

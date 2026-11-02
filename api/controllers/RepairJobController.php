@@ -59,11 +59,19 @@ class RepairJobController
 
     public function destroy(int $id): void
     {
-        if (!RepairJobModel::delete($id)) {
-            http_response_code(404);
-            echo json_encode(['error' => 'Repair order not found']);
-            return;
+        try {
+            if (!RepairJobModel::delete($id)) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Repair order not found']);
+                return;
+            }
+            echo json_encode(['success' => true, 'message' => 'Repair order deleted successfully']);
+        } catch (PDOException $e) {
+            http_response_code(409);
+            echo json_encode([
+                'error' => 'Conflict',
+                'message' => 'Cannot delete repair order due to active accounting or transaction dependencies.'
+            ]);
         }
-        echo json_encode(['success' => true, 'message' => 'Repair order deleted successfully']);
     }
 }

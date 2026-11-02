@@ -11,6 +11,7 @@ import {
   Trash,
   Package,
   Plus,
+  FloppyDisk,
 } from '@phosphor-icons/react'
 import { Drawer, StatusBadge, Button, Input, Textarea, SearchableSelect, LoadingButton } from '@/components/ui'
 import { useUpdateRepairJob } from '@/hooks/useRepairJobs'
@@ -271,7 +272,9 @@ export default function JobCardDrawer({
               onClick={handleSave}
               className="bg-app-accent text-app-accentText hover:bg-app-accentHover font-semibold px-4"
             >
-              Save Changes
+              <FloppyDisk size={14} weight="bold" className="sm:mr-1" />
+              <span className="hidden sm:inline">Save Changes</span>
+              <span className="sm:hidden">Save</span>
             </LoadingButton>
           </div>
         </div>
@@ -305,9 +308,9 @@ export default function JobCardDrawer({
           </div>
         </div>
 
-        {/* Live Total Pill */}
+        {/* Total Cost Display */}
         <div className="text-right">
-          <p className="text-[11px] text-app-muted font-medium uppercase tracking-wider">Job Total</p>
+          <p className="text-xs font-medium text-app-muted">Job Total</p>
           <p className="text-xl font-bold font-mono text-app-accent">
             ${totalCalculatedCost.toFixed(2)}
           </p>
@@ -316,8 +319,8 @@ export default function JobCardDrawer({
 
       {/* 2. Interactive Status Stepper */}
       <div className="p-3 rounded-xl border border-app-border bg-app-input/40 space-y-1.5">
-        <p className="text-[11px] font-semibold text-app-muted uppercase tracking-wider px-1">
-          Pipeline Status (1-Tap Progress)
+        <p className="text-xs font-medium text-app-muted px-1">
+          Pipeline Status
         </p>
         <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
           {STATUS_STEPS.map((step) => {
@@ -348,6 +351,7 @@ export default function JobCardDrawer({
         <button
           type="button"
           onClick={() => setActiveTab('overview')}
+          title="Overview & Work Order"
           className={cn(
             'pb-2.5 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 flex-shrink-0 touch-manipulation',
             activeTab === 'overview'
@@ -356,11 +360,13 @@ export default function JobCardDrawer({
           )}
         >
           <Wrench size={15} />
-          Overview & Work Order
+          <span>Overview</span>
+          <span className="hidden sm:inline">&nbsp;& Work Order</span>
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('parts')}
+          title={`Services & Parts (${partsUsed.length})`}
           className={cn(
             'pb-2.5 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 flex-shrink-0 touch-manipulation',
             activeTab === 'parts'
@@ -369,11 +375,14 @@ export default function JobCardDrawer({
           )}
         >
           <Package size={15} />
-          Services & Parts ({partsUsed.length})
+          <span>Parts</span>
+          <span className="hidden sm:inline">&nbsp;& Services</span>
+          <span>&nbsp;({partsUsed.length})</span>
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('invoice')}
+          title="Billing & Invoicing"
           className={cn(
             'pb-2.5 border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 flex-shrink-0 touch-manipulation',
             activeTab === 'invoice'
@@ -382,7 +391,8 @@ export default function JobCardDrawer({
           )}
         >
           <Receipt size={15} />
-          Billing & Invoicing
+          <span>Billing</span>
+          <span className="hidden sm:inline">&nbsp;& Invoicing</span>
         </button>
       </div>
 
@@ -524,7 +534,9 @@ export default function JobCardDrawer({
                 disabled={!selectedServiceId}
                 className="bg-app-accent text-app-accentText hover:bg-app-accentHover text-xs h-9 px-3"
               >
-                + Add Service
+                <Plus size={14} className="sm:mr-1" />
+                <span className="hidden sm:inline">Add Service</span>
+                <span className="sm:hidden">Add</span>
               </Button>
             </div>
           </div>
@@ -561,7 +573,9 @@ export default function JobCardDrawer({
                 disabled={!newPartId}
                 className="bg-app-accent text-app-accentText hover:bg-app-accentHover text-xs h-9"
               >
-                <Plus size={14} className="mr-1" /> Add Part
+                <Plus size={14} className="sm:mr-1" />
+                <span className="hidden sm:inline">Add Part</span>
+                <span className="sm:hidden">Add</span>
               </Button>
             </div>
           </div>
@@ -656,7 +670,8 @@ export default function JobCardDrawer({
                 className="w-full bg-app-accent text-app-accentText hover:bg-app-accentHover font-semibold py-2.5 flex items-center justify-center gap-2"
               >
                 <Receipt size={16} weight="bold" />
-                Generate Official Invoice & Settle
+                <span className="hidden sm:inline">Generate Official Invoice & Settle</span>
+                <span className="sm:hidden">Generate Invoice</span>
               </LoadingButton>
             </div>
           </div>

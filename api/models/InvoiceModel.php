@@ -248,6 +248,89 @@ class InvoiceModel
         });
     }
 
+    public static function findById(int $id): ?array
+    {
+        $r = Database::get("
+          SELECT i.*,
+                 c.full_name AS customer_name,
+                 c.customer_code, c.phone AS customer_phone,
+                 c.email AS customer_email, c.address AS customer_address,
+                 ro.order_number, ro.problem_description, ro.diagnosis,
+                 ro.odometer, ro.fuel_level, ro.labor_minutes, ro.labor_rate,
+                 v.vehicle_number, v.brand AS vehicle_brand, v.model AS vehicle_model,
+                 v.year AS vehicle_year, v.color AS vehicle_color, v.vin AS vehicle_vin,
+                 u.full_name AS mechanic_name,
+                 COALESCE(
+                   (SELECT json_agg(json_build_object(
+                     'id', rp.id, 'sparePartId', sp.id, 'partCode', sp.part_code,
+                     'name', sp.name, 'quantity', rp.quantity,
+                     'unitPrice', rp.unit_price, 'totalPrice', rp.total_price))
+                    FROM repair_parts rp JOIN spare_parts sp ON rp.spare_part_id = sp.id
+                    WHERE rp.repair_order_id = ro.id), '[]') AS parts_used,
+                 COALESCE(
+                   (SELECT json_agg(json_build_object(
+                     'id', p.id, 'paymentNumber', p.payment_number,
+                     'amount', p.amount, 'paymentMethod', p.payment_method,
+                     'paymentDate', p.payment_date))
+                    FROM payments p WHERE p.invoice_id = i.id), '[]') AS payments_list
+          FROM invoices i
+          LEFT JOIN customers     c  ON i.customer_id      = c.id
+          LEFT JOIN repair_orders ro ON i.repair_order_id  = ro.id
+          LEFT JOIN vehicles      v  ON ro.vehicle_id      = v.id
+          LEFT JOIN employees     e  ON ro.mechanic_id     = e.id
+          LEFT JOIN users         u  ON e.user_id          = u.id
+          WHERE i.id = ?
+        ", [$id]);
+
+        return $r ? self::format($r) : null;
+    }
+
+    public static function update(int $id, array $input): ?array
+    {
+        return Database::transaction(function () use ($id, $input) {
+            $inv = Database::get('SELECT * FROM invoices WHERE id = ?', [$id]);
+            if (!$inv) {
+                return null;
+            }
+
+            $totalAmount = isset($input['amount']) ? (float)$input['amount'] : (float)$inv['total_amount'];
+            $paidAmount  = (float)($inv['amount_paid'] ?? 0);
+            $balanceDue  = max(0, $totalAmount - $paidAmount);
+            $status      = $input['status'] ?? $inv['status'];
+            $dueDate     = $input['dueDate'] ?? $inv['due_date'];
+            $notes       = $input['notes'] ?? $inv['notes'];
+
+            Database::run(
+                "UPDATE invoices 
+                 SET total_amount = ?, balance_due = ?, status = ?, due_date = ?, notes = ?, updated_at = NOW() 
+                 WHERE id = ?",
+                [$totalAmount, $balanceDue, $status, $dueDate, $notes, $id]
+            );
+
+            EventBus::publish('invoices', 'updated', ['id' => $id, 'invoiceNumber' => $inv['invoice_number']]);
+
+            return self::findById($id);
+        });
+    }
+
+    public static function delete(int $id): bool
+    {
+        return Database::transaction(function () use ($id) {
+            $inv = Database::get('SELECT id, invoice_number FROM invoices WHERE id = ?', [$id]);
+            if (!$inv) {
+                return false;
+            }
+
+            // Clean up related payments and refunds first to respect FK integrity
+            Database::run('DELETE FROM refunds WHERE invoice_id = ?', [$id]);
+            Database::run('DELETE FROM payments WHERE invoice_id = ?', [$id]);
+            Database::run('DELETE FROM invoices WHERE id = ?', [$id]);
+
+            EventBus::publish('invoices', 'deleted', ['id' => $id, 'invoiceNumber' => $inv['invoice_number']]);
+            return true;
+        });
+    }
+
     // -------------------------------------------------------------------------
     // Private helpers
     // -------------------------------------------------------------------------

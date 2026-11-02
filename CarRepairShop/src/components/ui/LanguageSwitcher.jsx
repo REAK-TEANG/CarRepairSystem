@@ -41,7 +41,7 @@ export default function LanguageSwitcher({ variant = 'topbar', className }) {
               type="button"
               onClick={() => i18n.changeLanguage(l.code)}
               className={clsx(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-semibold transition-all',
+                'min-h-[44px] flex items-center justify-center gap-1.5 px-3 py-2 rounded-sm text-xs font-semibold transition-all cursor-pointer',
                 isActive
                   ? 'bg-app-card text-app-accent shadow-sm border border-app-border ring-1 ring-app-accent/20'
                   : 'text-app-muted hover:text-app-text hover:bg-app-card/50'
@@ -61,7 +61,7 @@ export default function LanguageSwitcher({ variant = 'topbar', className }) {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm text-xs font-medium text-app-text hover:bg-app-card transition-all border border-transparent hover:border-app-border"
+        className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center sm:justify-start gap-1.5 px-2.5 py-1.5 rounded-sm text-xs font-medium text-app-text hover:bg-app-card transition-all border border-transparent hover:border-app-border cursor-pointer"
         title={`Language: ${currentLang.label}`}
       >
         <span className="text-sm">{currentLang.flag}</span>
@@ -70,7 +70,7 @@ export default function LanguageSwitcher({ variant = 'topbar', className }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-44 bg-app-card border border-app-border rounded-sm shadow-card py-1.5 z-50 text-xs">
+        <div className="absolute right-0 mt-2 w-48 max-w-[calc(100vw-1.5rem)] bg-app-card border border-app-border rounded-sm shadow-card py-1.5 z-50 text-xs">
           <div className="px-3 py-1.5 border-b border-app-border text-[10px] font-bold text-app-muted uppercase tracking-wider flex items-center gap-1.5">
             <Globe size={13} weight="bold" />
             <span>Select Language / ភាសា</span>
@@ -84,7 +84,7 @@ export default function LanguageSwitcher({ variant = 'topbar', className }) {
                   type="button"
                   onClick={() => handleSelect(l.code)}
                   className={clsx(
-                    'w-full flex items-center justify-between px-3.5 py-2 hover:bg-app-hover active:scale-[0.98] text-left transition-colors',
+                    'w-full min-h-[40px] flex items-center justify-between px-3.5 py-2 hover:bg-app-hover active:scale-[0.98] text-left transition-colors cursor-pointer',
                     isSelected && 'text-app-accent font-bold bg-app-accent/10'
                   )}
                 >

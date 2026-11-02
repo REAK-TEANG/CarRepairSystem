@@ -9,6 +9,11 @@ $method      = $_SERVER['REQUEST_METHOD'];
 
 if (preg_match('#^/suppliers/(\d+)$#', $path, $m)) {
     $id = (int) $m[1];
+    if ($method === 'GET') {
+        AuthMiddleware::authorize('suppliers', 'read', $authPayload);
+        $ctrl->show($id);
+        exit;
+    }
     if ($method === 'PUT' || $method === 'PATCH') {
         AuthMiddleware::authorize('suppliers', 'update', $authPayload);
         $ctrl->update($id);

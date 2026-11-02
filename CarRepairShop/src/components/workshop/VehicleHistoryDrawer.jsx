@@ -124,9 +124,11 @@ export default function VehicleHistoryDrawer({
                   onEditVehicle(vehicle)
                 }}
                 className="gap-1.5 text-xs font-semibold"
+                title="Edit Vehicle"
               >
                 <PencilSimple size={14} weight="bold" />
-                Edit Vehicle
+                <span className="hidden sm:inline">Edit Vehicle</span>
+                <span className="sm:hidden">Edit</span>
               </Button>
             )}
           </div>
@@ -145,9 +147,11 @@ export default function VehicleHistoryDrawer({
                   onStartRepair(vehicle)
                 }}
                 className="gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white"
+                title="Start Repair Order"
               >
                 <Plus size={14} weight="bold" />
-                Start Repair Order
+                <span className="hidden sm:inline">Start Repair Order</span>
+                <span className="sm:hidden">Repair</span>
               </Button>
             )}
           </div>
@@ -205,7 +209,7 @@ export default function VehicleHistoryDrawer({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {/* Owner Card */}
           <div className="p-3.5 bg-app-card rounded-xl border border-app-border space-y-1.5 shadow-xs">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-app-muted flex items-center gap-1">
+            <p className="text-xs font-medium text-app-muted flex items-center gap-1">
               <User size={12} className="text-app-accent" /> Registered Customer
             </p>
             <p className="font-bold text-xs text-app-text">{vehicle.owner || 'Walk-in'}</p>
@@ -223,7 +227,7 @@ export default function VehicleHistoryDrawer({
 
           {/* Odometer & Workshop Status */}
           <div className="p-3.5 bg-app-card rounded-xl border border-app-border space-y-1.5 shadow-xs">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-app-muted flex items-center gap-1">
+            <p className="text-xs font-medium text-app-muted flex items-center gap-1">
               <Gauge size={12} className="text-emerald-500" /> Odometer & Health
             </p>
             <p className="font-mono font-black text-base text-app-text">

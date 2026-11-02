@@ -48,7 +48,7 @@ export default function AdminDashboard() {
 
   const isInitialLoading = (loadingInvoices || loadingJobs || loadingCustomers || loadingInventory) && invoices.length === 0
 
-  const [dateFilter, setDateFilter] = useState('all') // 'all' | 'this_week' | 'this_month' | 'custom'
+  const [dateFilter, setDateFilter] = useState('all') // 'all' | 'today' | 'this_week' | 'this_month' | 'custom'
   const [customStart, setCustomStart] = useState(() => {
     const d = new Date()
     d.setDate(d.getDate() - 7)
@@ -74,6 +74,13 @@ export default function AdminDashboard() {
       return null // Unrestricted: includes all records
     }
     const now = new Date()
+    if (dateFilter === 'today') {
+      const start = new Date(now)
+      start.setHours(0, 0, 0, 0)
+      const end = new Date(now)
+      end.setHours(23, 59, 59, 999)
+      return { start, end }
+    }
     if (dateFilter === 'this_week') {
       const day = now.getDay()
       const distanceToMonday = (day + 6) % 7
@@ -185,12 +192,14 @@ export default function AdminDashboard() {
           <button
             type="button"
             onClick={() => setIsFilterDropdownOpen((prev) => !prev)}
-            className="inline-flex items-center gap-2 px-3 py-1.5 bg-app-card border border-app-border hover:border-app-accent/50 text-app-text rounded-md text-xs font-medium shadow-xs transition-colors cursor-pointer select-none"
+            className="inline-flex items-center gap-2 min-h-[44px] sm:min-h-0 px-3 py-2 sm:py-1.5 bg-app-card border border-app-border hover:border-app-accent/50 text-app-text rounded-md text-xs font-medium shadow-xs transition-colors cursor-pointer select-none"
           >
             <CalendarBlank size={14} className="text-app-muted" weight="bold" />
-            <span>
+            <span className="truncate max-w-[130px] sm:max-w-none">
               {dateFilter === 'all'
                 ? t('common.all', 'All')
+                : dateFilter === 'today'
+                ? t('reports.today', 'Today')
                 : dateFilter === 'this_week'
                 ? t('reports.thisWeek')
                 : dateFilter === 'this_month'
@@ -201,61 +210,31 @@ export default function AdminDashboard() {
           </button>
 
           {isFilterDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-80 bg-app-card border border-app-border rounded-lg shadow-xl p-3 z-50 animate-modal-content space-y-3">
-              <div className="grid grid-cols-4 gap-1 p-1 bg-app-hover/60 rounded-md">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDateFilter('all')
-                    setIsFilterDropdownOpen(false)
-                  }}
-                  className={`py-1 px-1.5 text-xs font-semibold rounded transition-colors text-center cursor-pointer ${
-                    dateFilter === 'all'
-                      ? 'bg-app-accent text-app-accentText shadow-xs'
-                      : 'text-app-muted hover:text-app-text'
-                  }`}
-                >
-                  {t('common.all', 'All')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDateFilter('this_week')
-                    setIsFilterDropdownOpen(false)
-                  }}
-                  className={`py-1 px-1.5 text-xs font-semibold rounded transition-colors text-center cursor-pointer ${
-                    dateFilter === 'this_week'
-                      ? 'bg-app-accent text-app-accentText shadow-xs'
-                      : 'text-app-muted hover:text-app-text'
-                  }`}
-                >
-                  {t('reports.thisWeek')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDateFilter('this_month')
-                    setIsFilterDropdownOpen(false)
-                  }}
-                  className={`py-1 px-1.5 text-xs font-semibold rounded transition-colors text-center cursor-pointer ${
-                    dateFilter === 'this_month'
-                      ? 'bg-app-accent text-app-accentText shadow-xs'
-                      : 'text-app-muted hover:text-app-text'
-                  }`}
-                >
-                  {t('reports.thisMonth')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDateFilter('custom')}
-                  className={`py-1 px-1.5 text-xs font-semibold rounded transition-colors text-center cursor-pointer ${
-                    dateFilter === 'custom'
-                      ? 'bg-app-accent text-app-accentText shadow-xs'
-                      : 'text-app-muted hover:text-app-text'
-                  }`}
-                >
-                  {t('reports.customDate', 'Custom')}
-                </button>
+            <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] max-w-xs sm:w-96 bg-app-card border border-app-border rounded-lg shadow-xl p-3 z-50 animate-modal-content space-y-3">
+              <div className="grid grid-cols-5 gap-1 p-1 bg-app-hover/60 rounded-md">
+                {[
+                  { key: 'all', label: t('common.all', 'All') },
+                  { key: 'today', label: t('reports.today', 'Today') },
+                  { key: 'this_week', label: t('reports.thisWeek', 'This Week') },
+                  { key: 'this_month', label: t('reports.thisMonth', 'This Month') },
+                  { key: 'custom', label: t('reports.customDate', 'Custom') },
+                ].map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => {
+                      setDateFilter(item.key)
+                      if (item.key !== 'custom') setIsFilterDropdownOpen(false)
+                    }}
+                    className={`py-1.5 px-1 min-h-[36px] flex items-center justify-center text-[11px] sm:text-xs font-semibold rounded transition-colors text-center cursor-pointer ${
+                      dateFilter === item.key
+                        ? 'bg-app-accent text-app-accentText shadow-xs'
+                        : 'text-app-muted hover:text-app-text'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
               </div>
 
               {dateFilter === 'custom' && (
@@ -462,10 +441,7 @@ export default function AdminDashboard() {
           {/* Revenue Breakdown Bento Box */}
           <div className="bg-app-card rounded-sm border border-app-border p-4 shadow-card transition-colors duration-200">
             <div className="flex items-center justify-between mb-4 sm:mb-6">
-              <div>
-                <h2 className="text-sm font-semibold text-app-text">{t('reports.partsVsLabor')}</h2>
-                <p className="text-[11px] text-app-muted">Total Revenue & Inventory Distribution</p>
-              </div>
+              <h2 className="text-sm font-semibold text-app-text">{t('reports.partsVsLabor')}</h2>
               <span className="text-xs font-mono font-bold text-app-accent">${totalRevenue.toFixed(2)}</span>
             </div>
 
@@ -734,7 +710,7 @@ export default function AdminDashboard() {
           {/* Live Alerts Bento Card */}
           <div className="bg-app-card rounded-sm border border-app-border p-3 shadow-card transition-colors duration-200">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-xs font-semibold text-app-text">{t('common.liveAlerts')}</h3>
+              <h3 className="text-xs font-semibold text-app-text">{t('common.alerts', 'Alerts')}</h3>
               <span className="text-xs font-mono text-app-muted">
                 {notificationsFeed.length}
               </span>

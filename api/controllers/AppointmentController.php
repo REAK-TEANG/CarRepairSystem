@@ -22,6 +22,17 @@ class AppointmentController
         echo json_encode(Pagination::formatResponse($result['data'], $result['total'], $params['page'], $params['limit']));
     }
 
+    public function show(int $id): void
+    {
+        $appointment = AppointmentModel::findById($id);
+        if (!$appointment) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Appointment not found']);
+            return;
+        }
+        echo json_encode(['data' => $appointment]);
+    }
+
     public function store(): void
     {
         $input = Sanitizer::getJsonInput();

@@ -58,11 +58,19 @@ class VehicleController
 
     public function destroy(int $id): void
     {
-        if (!VehicleModel::delete($id)) {
-            http_response_code(404);
-            echo json_encode(['error' => 'Vehicle not found']);
-            return;
+        try {
+            if (!VehicleModel::delete($id)) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Vehicle not found']);
+                return;
+            }
+            echo json_encode(['success' => true, 'message' => 'Vehicle removed successfully']);
+        } catch (PDOException $e) {
+            http_response_code(409);
+            echo json_encode([
+                'error' => 'Conflict',
+                'message' => 'Cannot delete vehicle with active repair orders or service history.'
+            ]);
         }
-        echo json_encode(['success' => true, 'message' => 'Vehicle removed successfully']);
     }
 }

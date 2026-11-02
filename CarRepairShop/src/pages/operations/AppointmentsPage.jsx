@@ -293,18 +293,20 @@ export default function AppointmentsPage() {
                 setIsAddReminderOpen(true)
               }}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-md transition-colors cursor-pointer"
+              title="New Reminder"
             >
               <Plus size={14} weight="bold" />
-              <span>New Reminder</span>
+              <span className="hidden sm:inline">New Reminder</span>
             </button>
           ) : (
             can('appointments', 'create') && (
               <Button
                 onClick={handleOpenAdd}
                 size="sm"
+                title={t('appointments.newAppointment')}
               >
                 <Plus size={14} weight="bold" />
-                <span>{t('appointments.newAppointment')}</span>
+                <span className="hidden sm:inline">{t('appointments.newAppointment')}</span>
               </Button>
             )
           )}
@@ -315,7 +317,7 @@ export default function AppointmentsPage() {
       <div className="flex items-center gap-1.5 border-b border-app-border pb-2.5">
         <button
           onClick={() => setActiveTab('calendar')}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+          className={`min-h-[44px] sm:min-h-0 flex items-center gap-2 px-3.5 sm:px-3 py-2 sm:py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
             activeTab === 'calendar'
               ? 'bg-app-card text-app-text border border-app-border shadow-xs'
               : 'text-app-muted hover:text-app-text hover:bg-app-hover'
@@ -328,7 +330,7 @@ export default function AppointmentsPage() {
 
         <button
           onClick={() => setActiveTab('reminders')}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+          className={`min-h-[44px] sm:min-h-0 flex items-center gap-2 px-3.5 sm:px-3 py-2 sm:py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
             activeTab === 'reminders'
               ? 'bg-app-card text-app-text border border-app-border shadow-xs'
               : 'text-app-muted hover:text-app-text hover:bg-app-hover'
@@ -353,7 +355,7 @@ export default function AppointmentsPage() {
                     setCalYear(calYear - 1)
                   } else setCalMonth(calMonth - 1)
                 }}
-                className="p-1.5 rounded-sm text-app-muted hover:bg-app-hover active:scale-[0.98] hover:text-app-text transition-colors cursor-pointer"
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-sm text-app-muted hover:bg-app-hover active:scale-[0.98] hover:text-app-text transition-colors cursor-pointer"
               >
                 <CaretLeft size={14} weight="bold" />
               </button>
@@ -365,14 +367,14 @@ export default function AppointmentsPage() {
                     setCalYear(calYear + 1)
                   } else setCalMonth(calMonth + 1)
                 }}
-                className="p-1.5 rounded-sm text-app-muted hover:bg-app-hover active:scale-[0.98] hover:text-app-text transition-colors cursor-pointer"
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-sm text-app-muted hover:bg-app-hover active:scale-[0.98] hover:text-app-text transition-colors cursor-pointer"
               >
                 <CaretRight size={14} weight="bold" />
               </button>
             </div>
             <div className="grid grid-cols-7 gap-1 text-center mb-2">
               {DAYS.map((d) => (
-                <span key={d} className="text-[10px] font-semibold text-app-muted uppercase">
+                <span key={d} className="text-xs font-medium text-app-muted">
                   {d}
                 </span>
               ))}
@@ -433,7 +435,7 @@ export default function AppointmentsPage() {
                       setActiveFilter(st)
                       setPage(1)
                     }}
-                    className={`px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                    className={`min-h-[44px] sm:min-h-0 sm:py-1 px-3 sm:px-2.5 py-2 inline-flex items-center justify-center rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                       activeFilter === st
                         ? 'bg-app-accent text-app-accentText font-semibold'
                         : 'text-app-muted hover:text-app-text hover:bg-app-hover'
@@ -821,8 +823,8 @@ export default function AppointmentsPage() {
                     </TableRow>
                   ))}
                 </TableBody>
-                <TableFooterBar totalCount={reminders.length} currentCount={reminders.length} />
               </Table>
+              <TableFooterBar totalCount={reminders.length} currentCount={reminders.length} />
             </div>
           </>
         )}
@@ -903,7 +905,9 @@ export default function AppointmentsPage() {
               Cancel
             </button>
             <LoadingButton type="submit" loading={createReminderMutation.isPending}>
-              Schedule Reminder
+              <Plus size={14} weight="bold" className="sm:mr-1" />
+              <span className="hidden sm:inline">Schedule Reminder</span>
+              <span className="sm:hidden">Schedule</span>
             </LoadingButton>
           </div>
         </form>
@@ -1026,7 +1030,9 @@ export default function AppointmentsPage() {
               {t('common.cancel')}
             </button>
             <LoadingButton type="submit" loading={createAptMutation.isPending}>
-              {t('appointments.createAppointment')}
+              <Plus size={14} weight="bold" className="sm:mr-1" />
+              <span className="hidden sm:inline">{t('appointments.createAppointment')}</span>
+              <span className="sm:hidden">Create</span>
             </LoadingButton>
           </div>
         </form>
@@ -1117,18 +1123,18 @@ export default function AppointmentsPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 bg-app-input rounded-sm border border-app-border">
-                <p className="text-[10px] text-app-muted uppercase font-semibold">{t('appointments.customer')}</p>
+                <p className="text-xs font-medium text-app-muted">{t('appointments.customer')}</p>
                 <p className="font-semibold text-app-text mt-0.5">{selectedApt.customer}</p>
               </div>
               <div className="p-3 bg-app-input rounded-sm border border-app-border">
-                <p className="text-[10px] text-app-muted uppercase font-semibold">{t('appointments.vehicle')}</p>
+                <p className="text-xs font-medium text-app-muted">{t('appointments.vehicle')}</p>
                 <p className="font-semibold text-app-text mt-0.5">{selectedApt.vehicle}</p>
                 <p className="text-[10px] font-mono text-app-muted">{selectedApt.plate}</p>
               </div>
             </div>
 
             <div className="p-3 bg-app-input rounded-sm border border-app-border">
-              <p className="text-[10px] text-app-muted uppercase font-semibold">{t('common.date')} & {t('common.time')}</p>
+              <p className="text-xs font-medium text-app-muted">{t('common.date')} & {t('common.time')}</p>
               <p className="font-semibold text-app-text mt-0.5">{selectedApt.date} at {selectedApt.time}</p>
             </div>
 
@@ -1143,7 +1149,8 @@ export default function AppointmentsPage() {
                 className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-colors cursor-pointer shadow-sm shadow-emerald-500/20"
               >
                 <Sparkle size={15} weight="bold" />
-                Check-In Customer & Start Repair Order
+                <span className="hidden sm:inline">Check-In Customer & Start Repair Order</span>
+                <span className="sm:hidden">Check-In & Start Repair</span>
               </button>
             )}
           </div>

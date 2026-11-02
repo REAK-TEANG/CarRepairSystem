@@ -1,0 +1,1030 @@
+{
+  "timestamp": "2026-11-02T11:41:56.302Z",
+  "viewports": {
+    "desktop": "1440x900",
+    "mobile": "375x812 (iPhone X/13 Mini touch)"
+  },
+  "results": [
+    {
+      "device": "desktop",
+      "route": "login",
+      "metrics": {
+        "url": "/login",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "overflowCount": 0,
+        "sampleOverflow": []
+      }
+    },
+    {
+      "device": "desktop",
+      "route": "admin_dashboard",
+      "metrics": {
+        "url": "/admin/dashboard",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "overflowCount": 0,
+        "sampleOverflow": []
+      }
+    },
+    {
+      "device": "desktop",
+      "route": "appointments",
+      "metrics": {
+        "url": "/appointments",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "overflowCount": 0,
+        "sampleOverflow": []
+      }
+    },
+    {
+      "device": "desktop",
+      "route": "invoices",
+      "metrics": {
+        "url": "/invoices",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "overflowCount": 0,
+        "sampleOverflow": []
+      }
+    },
+    {
+      "device": "desktop",
+      "route": "inventory",
+      "metrics": {
+        "url": "/inventory",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "overflowCount": 0,
+        "sampleOverflow": []
+      }
+    },
+    {
+      "device": "desktop",
+      "route": "reports",
+      "metrics": {
+        "url": "/reports",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "overflowCount": 0,
+        "sampleOverflow": []
+      }
+    },
+    {
+      "device": "desktop",
+      "route": "settings",
+      "metrics": {
+        "url": "/settings",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "overflowCount": 0,
+        "sampleOverflow": []
+      }
+    },
+    {
+      "device": "desktop",
+      "route": "repair_jobs",
+      "metrics": {
+        "url": "/repair-jobs",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "overflowCount": 0,
+        "sampleOverflow": []
+      }
+    },
+    {
+      "device": "desktop",
+      "route": "vehicles",
+      "metrics": {
+        "url": "/vehicles",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "overflowCount": 0,
+        "sampleOverflow": []
+      }
+    },
+    {
+      "device": "mobile",
+      "route": "login",
+      "metrics": {
+        "url": "/login",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 375,
+        "clientWidth": 375,
+        "overflowCount": 0,
+        "sampleOverflow": [],
+        "undersizedCount": 5,
+        "sampleUndersized": [
+          {
+            "tag": "button",
+            "text": "🇰🇭\nភាសាខ្មែរ",
+            "className": "flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-semibold transitio",
+            "width": 74,
+            "height": 25
+          },
+          {
+            "tag": "button",
+            "text": "🇬🇧\nEnglish",
+            "className": "flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-semibold transitio",
+            "width": 76,
+            "height": 27
+          },
+          {
+            "tag": "button",
+            "text": "Forgot password?",
+            "className": "text-[11px] text-app-accent hover:underline font-medium transition-colors cursor",
+            "width": 94,
+            "height": 17
+          },
+          {
+            "tag": "button",
+            "text": "Show password",
+            "className": "absolute right-1 top-1/2 -translate-y-1/2 text-app-muted hover:text-app-text tra",
+            "width": 40,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "Sign Up",
+            "className": "text-app-accent hover:underline font-semibold cursor-pointer",
+            "width": 41,
+            "height": 17
+          }
+        ]
+      }
+    },
+    {
+      "device": "mobile",
+      "route": "admin_dashboard",
+      "metrics": {
+        "url": "/admin/dashboard",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 375,
+        "clientWidth": 375,
+        "overflowCount": 0,
+        "sampleOverflow": [],
+        "undersizedCount": 7,
+        "sampleUndersized": [
+          {
+            "tag": "button",
+            "text": "Switch to Daylight Mode",
+            "className": "min-h-[40px] min-w-[40px] sm:min-h-0 sm:min-w-0 p-2 rounded-sm text-app-muted ho",
+            "width": 40,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "Notifications",
+            "className": "relative min-h-[40px] min-w-[40px] sm:min-h-0 sm:min-w-0 p-2 rounded-sm text-app",
+            "width": 40,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "SA",
+            "className": "flex items-center gap-2 min-h-[44px] sm:min-h-0 p-1 sm:p-1.5 sm:pr-2.5 rounded-s",
+            "width": 37,
+            "height": 44
+          },
+          {
+            "tag": "a",
+            "text": "View All",
+            "className": "text-xs text-app-accent hover:underline font-semibold flex items-center gap-1",
+            "width": 58,
+            "height": 14
+          },
+          {
+            "tag": "a",
+            "text": "View ▾",
+            "className": "text-[11px] text-app-accent hover:underline",
+            "width": 38,
+            "height": 17
+          },
+          {
+            "tag": "a",
+            "text": "0 staff",
+            "className": "text-[11px] text-app-accent hover:underline",
+            "width": 33,
+            "height": 17
+          },
+          {
+            "tag": "button",
+            "text": "Create Fast Intake",
+            "className": "w-12 h-12 rounded-full bg-app-accent text-app-accentText flex items-center justi",
+            "width": 42,
+            "height": 42
+          }
+        ]
+      }
+    },
+    {
+      "device": "mobile",
+      "route": "appointments",
+      "metrics": {
+        "url": "/appointments",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 375,
+        "clientWidth": 375,
+        "overflowCount": 67,
+        "sampleOverflow": [
+          {
+            "tag": "button",
+            "className": "px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors c",
+            "right": 415,
+            "width": 68
+          },
+          {
+            "tag": "table",
+            "className": "w-full caption-bottom text-xs border-collapse",
+            "right": 712,
+            "width": 700
+          },
+          {
+            "tag": "thead",
+            "className": "bg-app-hover/50 border-b border-app-border",
+            "right": 712,
+            "width": 700
+          },
+          {
+            "tag": "tr",
+            "className": "",
+            "right": 712,
+            "width": 700
+          },
+          {
+            "tag": "th",
+            "className": "h-8 px-3 text-left align-middle text-[11px] font-semibold text-app-muted whitesp",
+            "right": 432,
+            "width": 105
+          }
+        ],
+        "undersizedCount": 45,
+        "sampleUndersized": [
+          {
+            "tag": "button",
+            "text": "Switch to Daylight Mode",
+            "className": "min-h-[40px] min-w-[40px] sm:min-h-0 sm:min-w-0 p-2 rounded-sm text-app-muted ho",
+            "width": 40,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "Notifications",
+            "className": "relative min-h-[40px] min-w-[40px] sm:min-h-0 sm:min-w-0 p-2 rounded-sm text-app",
+            "width": 40,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "SA",
+            "className": "flex items-center gap-2 min-h-[44px] sm:min-h-0 p-1 sm:p-1.5 sm:pr-2.5 rounded-s",
+            "width": 37,
+            "height": 44
+          },
+          {
+            "tag": "button",
+            "text": "New Appointment",
+            "className": "group/button inline-flex shrink-0 items-center justify-center border border-tran",
+            "width": 37,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "Appointments\n0",
+            "className": "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-co",
+            "width": 129,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "Reminders\n0",
+            "className": "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-co",
+            "width": 110,
+            "height": 26
+          },
+          {
+            "tag": "button",
+            "text": "",
+            "className": "p-1.5 rounded-sm text-app-muted hover:bg-app-hover active:scale-[0.98] hover:tex",
+            "width": 25,
+            "height": 25
+          },
+          {
+            "tag": "button",
+            "text": "",
+            "className": "p-1.5 rounded-sm text-app-muted hover:bg-app-hover active:scale-[0.98] hover:tex",
+            "width": 25,
+            "height": 25
+          },
+          {
+            "tag": "button",
+            "text": "1",
+            "className": "h-8 rounded-sm flex flex-col items-center justify-center relative text-xs font-m",
+            "width": 43,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "2",
+            "className": "h-8 rounded-sm flex flex-col items-center justify-center relative text-xs font-m",
+            "width": 43,
+            "height": 28
+          }
+        ]
+      }
+    },
+    {
+      "device": "mobile",
+      "route": "invoices",
+      "metrics": {
+        "url": "/invoices",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 375,
+        "clientWidth": 375,
+        "overflowCount": 66,
+        "sampleOverflow": [
+          {
+            "tag": "table",
+            "className": "w-full caption-bottom text-xs border-collapse",
+            "right": 712,
+            "width": 700
+          },
+          {
+            "tag": "thead",
+            "className": "bg-app-hover/50 border-b border-app-border",
+            "right": 712,
+            "width": 700
+          },
+          {
+            "tag": "tr",
+            "className": "",
+            "right": 712,
+            "width": 700
+          },
+          {
+            "tag": "th",
+            "className": "h-8 px-3 text-left align-middle text-[11px] font-semibold text-app-muted whitesp",
+            "right": 432,
+            "width": 105
+          },
+          {
+            "tag": "div",
+            "className": "h-2.5 rounded bg-app-border/80 animate-pulse w-20",
+            "right": 407,
+            "width": 70
+          }
+        ],
+        "undersizedCount": 11,
+        "sampleUndersized": [
+          {
+            "tag": "button",
+            "text": "Switch to Daylight Mode",
+            "className": "min-h-[40px] min-w-[40px] sm:min-h-0 sm:min-w-0 p-2 rounded-sm text-app-muted ho",
+            "width": 40,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "Notifications",
+            "className": "relative min-h-[40px] min-w-[40px] sm:min-h-0 sm:min-w-0 p-2 rounded-sm text-app",
+            "width": 40,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "SA",
+            "className": "flex items-center gap-2 min-h-[44px] sm:min-h-0 p-1 sm:p-1.5 sm:pr-2.5 rounded-s",
+            "width": 37,
+            "height": 44
+          },
+          {
+            "tag": "button",
+            "text": "Create Invoice",
+            "className": "group/button inline-flex shrink-0 items-center justify-center border border-tran",
+            "width": 37,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "All\n0",
+            "className": "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium whit",
+            "width": 43,
+            "height": 21
+          },
+          {
+            "tag": "button",
+            "text": "Paid\n0",
+            "className": "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium whit",
+            "width": 51,
+            "height": 21
+          },
+          {
+            "tag": "button",
+            "text": "Issued\n0",
+            "className": "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium whit",
+            "width": 62,
+            "height": 21
+          },
+          {
+            "tag": "button",
+            "text": "Partially Paid\n0",
+            "className": "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium whit",
+            "width": 94,
+            "height": 21
+          },
+          {
+            "tag": "button",
+            "text": "Overdue\n0",
+            "className": "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium whit",
+            "width": 72,
+            "height": 21
+          },
+          {
+            "tag": "button",
+            "text": "Create Invoice",
+            "className": "fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center size-13 ",
+            "width": 24,
+            "height": 24
+          }
+        ]
+      }
+    },
+    {
+      "device": "mobile",
+      "route": "inventory",
+      "metrics": {
+        "url": "/inventory",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 375,
+        "clientWidth": 375,
+        "overflowCount": 66,
+        "sampleOverflow": [
+          {
+            "tag": "table",
+            "className": "w-full caption-bottom text-xs border-collapse",
+            "right": 712,
+            "width": 700
+          },
+          {
+            "tag": "thead",
+            "className": "bg-app-hover/50 border-b border-app-border",
+            "right": 712,
+            "width": 700
+          },
+          {
+            "tag": "tr",
+            "className": "",
+            "right": 712,
+            "width": 700
+          },
+          {
+            "tag": "th",
+            "className": "h-8 px-3 text-left align-middle text-[11px] font-semibold text-app-muted whitesp",
+            "right": 432,
+            "width": 105
+          },
+          {
+            "tag": "div",
+            "className": "h-2.5 rounded bg-app-border/80 animate-pulse w-20",
+            "right": 407,
+            "width": 70
+          }
+        ],
+        "undersizedCount": 9,
+        "sampleUndersized": [
+          {
+            "tag": "button",
+            "text": "Switch to Daylight Mode",
+            "className": "min-h-[40px] min-w-[40px] sm:min-h-0 sm:min-w-0 p-2 rounded-sm text-app-muted ho",
+            "width": 40,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "Notifications",
+            "className": "relative min-h-[40px] min-w-[40px] sm:min-h-0 sm:min-w-0 p-2 rounded-sm text-app",
+            "width": 40,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "SA",
+            "className": "flex items-center gap-2 min-h-[44px] sm:min-h-0 p-1 sm:p-1.5 sm:pr-2.5 rounded-s",
+            "width": 37,
+            "height": 44
+          },
+          {
+            "tag": "button",
+            "text": "Add Spare Part",
+            "className": "group/button inline-flex shrink-0 items-center justify-center border border-tran",
+            "width": 37,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "Parts\n0",
+            "className": "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-co",
+            "width": 85,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "Stock Logs\n0",
+            "className": "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-co",
+            "width": 112,
+            "height": 26
+          },
+          {
+            "tag": "button",
+            "text": "All",
+            "className": "px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors c",
+            "width": 31,
+            "height": 21
+          },
+          {
+            "tag": "button",
+            "text": "Add New Spare Part",
+            "className": "fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center size-13 ",
+            "width": 24,
+            "height": 24
+          },
+          {
+            "tag": "button",
+            "text": "Create Fast Intake",
+            "className": "w-12 h-12 rounded-full bg-app-accent text-app-accentText flex items-center justi",
+            "width": 42,
+            "height": 42
+          }
+        ]
+      }
+    },
+    {
+      "device": "mobile",
+      "route": "reports",
+      "metrics": {
+        "url": "/reports",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 375,
+        "clientWidth": 375,
+        "overflowCount": 4,
+        "sampleOverflow": [
+          {
+            "tag": "button",
+            "className": "px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors c",
+            "right": 418,
+            "width": 150
+          },
+          {
+            "tag": "button",
+            "className": "px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors c",
+            "right": 578,
+            "width": 157
+          },
+          {
+            "tag": "button",
+            "className": "px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors c",
+            "right": 765,
+            "width": 183
+          },
+          {
+            "tag": "button",
+            "className": "px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors c",
+            "right": 939,
+            "width": 171
+          }
+        ],
+        "undersizedCount": 29,
+        "sampleUndersized": [
+          {
+            "tag": "button",
+            "text": "Switch to Daylight Mode",
+            "className": "min-h-[40px] min-w-[40px] sm:min-h-0 sm:min-w-0 p-2 rounded-sm text-app-muted ho",
+            "width": 40,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "Notifications",
+            "className": "relative min-h-[40px] min-w-[40px] sm:min-h-0 sm:min-w-0 p-2 rounded-sm text-app",
+            "width": 40,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "SA",
+            "className": "flex items-center gap-2 min-h-[44px] sm:min-h-0 p-1 sm:p-1.5 sm:pr-2.5 rounded-s",
+            "width": 37,
+            "height": 44
+          },
+          {
+            "tag": "button",
+            "text": "Export Report",
+            "className": "group/button inline-flex shrink-0 items-center justify-center border border-tran",
+            "width": 56,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "All Reports",
+            "className": "px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors c",
+            "width": 76,
+            "height": 25
+          },
+          {
+            "tag": "button",
+            "text": "Financial (Invoices & Revenue)",
+            "className": "px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors c",
+            "width": 174,
+            "height": 25
+          },
+          {
+            "tag": "button",
+            "text": "Operations (Work Orders)",
+            "className": "px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors c",
+            "width": 150,
+            "height": 25
+          },
+          {
+            "tag": "button",
+            "text": "Inventory (Stock Valuation)",
+            "className": "px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors c",
+            "width": 157,
+            "height": 25
+          },
+          {
+            "tag": "button",
+            "text": "Technicians (Labor & Efficienc",
+            "className": "px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors c",
+            "width": 183,
+            "height": 25
+          },
+          {
+            "tag": "button",
+            "text": "Customers (Accounts & Fleet)",
+            "className": "px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors c",
+            "width": 171,
+            "height": 25
+          }
+        ]
+      }
+    },
+    {
+      "device": "mobile",
+      "route": "settings",
+      "metrics": {
+        "url": "/settings",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 375,
+        "clientWidth": 375,
+        "overflowCount": 277,
+        "sampleOverflow": [
+          {
+            "tag": "table",
+            "className": "w-full caption-bottom text-xs border-collapse",
+            "right": 712,
+            "width": 700
+          },
+          {
+            "tag": "thead",
+            "className": "bg-app-hover/50 border-b border-app-border sticky top-0 z-10",
+            "right": 712,
+            "width": 700
+          },
+          {
+            "tag": "tr",
+            "className": "border-b border-app-border/70 transition-colors hover:bg-app-hover/60 data-[stat",
+            "right": 712,
+            "width": 700
+          },
+          {
+            "tag": "th",
+            "className": "h-8 px-3 align-middle text-app-muted uppercase tracking-wider whitespace-nowrap ",
+            "right": 420,
+            "width": 49
+          },
+          {
+            "tag": "button",
+            "className": "hover:text-app-text transition-colors inline-flex items-center gap-1 cursor-poin",
+            "right": 410,
+            "width": 28
+          }
+        ],
+        "undersizedCount": 103,
+        "sampleUndersized": [
+          {
+            "tag": "button",
+            "text": "Switch to Daylight Mode",
+            "className": "min-h-[40px] min-w-[40px] sm:min-h-0 sm:min-w-0 p-2 rounded-sm text-app-muted ho",
+            "width": 40,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "Notifications",
+            "className": "relative min-h-[40px] min-w-[40px] sm:min-h-0 sm:min-w-0 p-2 rounded-sm text-app",
+            "width": 40,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "SA",
+            "className": "flex items-center gap-2 min-h-[44px] sm:min-h-0 p-1 sm:p-1.5 sm:pr-2.5 rounded-s",
+            "width": 37,
+            "height": 44
+          },
+          {
+            "tag": "button",
+            "text": "RBAC",
+            "className": "flex items-center gap-1.5 sm:gap-2 min-h-[40px] sm:min-h-0 px-2.5 sm:px-3 py-2 s",
+            "width": 68,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "Profile",
+            "className": "flex items-center gap-1.5 sm:gap-2 min-h-[40px] sm:min-h-0 px-2.5 sm:px-3 py-2 s",
+            "width": 70,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "Lang",
+            "className": "flex items-center gap-1.5 sm:gap-2 min-h-[40px] sm:min-h-0 px-2.5 sm:px-3 py-2 s",
+            "width": 62,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "Tax",
+            "className": "flex items-center gap-1.5 sm:gap-2 min-h-[40px] sm:min-h-0 px-2.5 sm:px-3 py-2 s",
+            "width": 56,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "Safety",
+            "className": "flex items-center gap-1.5 sm:gap-2 min-h-[40px] sm:min-h-0 px-2.5 sm:px-3 py-2 s",
+            "width": 70,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "Reset",
+            "className": "inline-flex items-center gap-1.5 px-3 py-2 bg-app-hover hover:bg-app-border roun",
+            "width": 68,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "Save",
+            "className": "inline-flex items-center gap-1.5 px-4 py-2 bg-app-accent hover:bg-app-accentHove",
+            "width": 73,
+            "height": 29
+          }
+        ]
+      }
+    },
+    {
+      "device": "mobile",
+      "route": "repair_jobs",
+      "metrics": {
+        "url": "/repair-jobs",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 375,
+        "clientWidth": 375,
+        "overflowCount": 66,
+        "sampleOverflow": [
+          {
+            "tag": "table",
+            "className": "w-full caption-bottom text-xs border-collapse",
+            "right": 712,
+            "width": 700
+          },
+          {
+            "tag": "thead",
+            "className": "bg-app-hover/50 border-b border-app-border",
+            "right": 712,
+            "width": 700
+          },
+          {
+            "tag": "tr",
+            "className": "",
+            "right": 712,
+            "width": 700
+          },
+          {
+            "tag": "th",
+            "className": "h-8 px-3 text-left align-middle text-[11px] font-semibold text-app-muted whitesp",
+            "right": 432,
+            "width": 105
+          },
+          {
+            "tag": "div",
+            "className": "h-2.5 rounded bg-app-border/80 animate-pulse w-20",
+            "right": 407,
+            "width": 70
+          }
+        ],
+        "undersizedCount": 10,
+        "sampleUndersized": [
+          {
+            "tag": "button",
+            "text": "Switch to Daylight Mode",
+            "className": "min-h-[40px] min-w-[40px] sm:min-h-0 sm:min-w-0 p-2 rounded-sm text-app-muted ho",
+            "width": 40,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "Notifications",
+            "className": "relative min-h-[40px] min-w-[40px] sm:min-h-0 sm:min-w-0 p-2 rounded-sm text-app",
+            "width": 40,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "SA",
+            "className": "flex items-center gap-2 min-h-[44px] sm:min-h-0 p-1 sm:p-1.5 sm:pr-2.5 rounded-s",
+            "width": 37,
+            "height": 44
+          },
+          {
+            "tag": "button",
+            "text": "Fast Vehicle Intake",
+            "className": "group/button inline-flex shrink-0 items-center justify-center border border-tran",
+            "width": 37,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "All",
+            "className": "px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors c",
+            "width": 31,
+            "height": 21
+          },
+          {
+            "tag": "button",
+            "text": "Pending",
+            "className": "px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors c",
+            "width": 59,
+            "height": 21
+          },
+          {
+            "tag": "button",
+            "text": "In Progress",
+            "className": "px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors c",
+            "width": 74,
+            "height": 21
+          },
+          {
+            "tag": "button",
+            "text": "Completed",
+            "className": "px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors c",
+            "width": 72,
+            "height": 21
+          },
+          {
+            "tag": "button",
+            "text": "repairJobs.newRepairJob",
+            "className": "fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center size-13 ",
+            "width": 24,
+            "height": 24
+          },
+          {
+            "tag": "button",
+            "text": "Create Fast Intake",
+            "className": "w-12 h-12 rounded-full bg-app-accent text-app-accentText flex items-center justi",
+            "width": 42,
+            "height": 42
+          }
+        ]
+      }
+    },
+    {
+      "device": "mobile",
+      "route": "vehicles",
+      "metrics": {
+        "url": "/vehicles",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 375,
+        "clientWidth": 375,
+        "overflowCount": 52,
+        "sampleOverflow": [
+          {
+            "tag": "table",
+            "className": "w-full caption-bottom text-xs border-collapse",
+            "right": 607,
+            "width": 595
+          },
+          {
+            "tag": "thead",
+            "className": "bg-app-hover/50 border-b border-app-border",
+            "right": 607,
+            "width": 595
+          },
+          {
+            "tag": "tr",
+            "className": "",
+            "right": 607,
+            "width": 595
+          },
+          {
+            "tag": "th",
+            "className": "h-8 px-3 text-left align-middle text-[11px] font-semibold text-app-muted whitesp",
+            "right": 432,
+            "width": 105
+          },
+          {
+            "tag": "div",
+            "className": "h-2.5 rounded bg-app-border/80 animate-pulse w-20",
+            "right": 407,
+            "width": 70
+          }
+        ],
+        "undersizedCount": 11,
+        "sampleUndersized": [
+          {
+            "tag": "button",
+            "text": "Switch to Daylight Mode",
+            "className": "min-h-[40px] min-w-[40px] sm:min-h-0 sm:min-w-0 p-2 rounded-sm text-app-muted ho",
+            "width": 40,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "Notifications",
+            "className": "relative min-h-[40px] min-w-[40px] sm:min-h-0 sm:min-w-0 p-2 rounded-sm text-app",
+            "width": 40,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "SA",
+            "className": "flex items-center gap-2 min-h-[44px] sm:min-h-0 p-1 sm:p-1.5 sm:pr-2.5 rounded-s",
+            "width": 37,
+            "height": 44
+          },
+          {
+            "tag": "button",
+            "text": "Register Vehicle",
+            "className": "group/button inline-flex shrink-0 items-center justify-center border border-tran",
+            "width": 37,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "All\n0",
+            "className": "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium whit",
+            "width": 43,
+            "height": 21
+          },
+          {
+            "tag": "button",
+            "text": "Petrol\n0",
+            "className": "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium whit",
+            "width": 58,
+            "height": 21
+          },
+          {
+            "tag": "button",
+            "text": "Diesel\n0",
+            "className": "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium whit",
+            "width": 60,
+            "height": 21
+          },
+          {
+            "tag": "button",
+            "text": "Hybrid\n0",
+            "className": "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium whit",
+            "width": 63,
+            "height": 21
+          },
+          {
+            "tag": "button",
+            "text": "Electric\n0",
+            "className": "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium whit",
+            "width": 67,
+            "height": 21
+          },
+          {
+            "tag": "button",
+            "text": "Register New Vehicle",
+            "className": "fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center size-13 ",
+            "width": 24,
+            "height": 24
+          }
+        ]
+      }
+    }
+  ]
+}

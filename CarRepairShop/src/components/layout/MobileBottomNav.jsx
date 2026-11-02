@@ -173,7 +173,7 @@ export default function MobileBottomNav({ onOpenMore }) {
                 onClick={tab.action}
                 aria-label="Create Fast Intake"
                 className={cn(
-                  'w-12 h-12 rounded-full bg-app-accent text-app-accentText',
+                  'w-12 h-12 min-w-[48px] min-h-[48px] shrink-0 rounded-full bg-app-accent text-app-accentText',
                   'flex items-center justify-center shadow-lg active:scale-90 transition-transform duration-150',
                   'border-4 border-[var(--bg-canvas)] outline-none focus:outline-none cursor-pointer'
                 )}
@@ -191,7 +191,7 @@ export default function MobileBottomNav({ onOpenMore }) {
               key={tab.label}
               type="button"
               onClick={tab.action}
-              className="flex flex-col items-center justify-center py-1 px-3 text-app-muted hover:text-app-text active:scale-95 transition-all outline-none focus:outline-none cursor-pointer"
+              className="flex flex-col items-center justify-center min-h-[44px] min-w-[44px] py-1 px-3 text-app-muted hover:text-app-text active:scale-95 transition-all outline-none focus:outline-none cursor-pointer"
             >
               <Icon size={20} weight="regular" />
               <span className="text-[10px] font-semibold mt-1 tracking-tight">
@@ -209,7 +209,7 @@ export default function MobileBottomNav({ onOpenMore }) {
             key={tab.href}
             to={tab.href}
             className={cn(
-              'flex flex-col items-center justify-center py-1 px-3 transition-all active:scale-95 outline-none',
+              'flex flex-col items-center justify-center min-h-[44px] min-w-[44px] py-1 px-3 transition-all active:scale-95 outline-none',
               isActive
                 ? 'text-app-accent'
                 : 'text-app-muted hover:text-app-text'
@@ -229,7 +229,7 @@ export default function MobileBottomNav({ onOpenMore }) {
               {tab.label}
             </span>
             {isActive && (
-              <span className="w-1 h-1 rounded-full bg-app-accent mt-0.5 animate-pulse" />
+              <span className="w-1 h-1 rounded-full bg-app-accent mt-0.5" />
             )}
           </NavLink>
         )

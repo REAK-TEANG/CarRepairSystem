@@ -1,0 +1,463 @@
+{
+  "timestamp": "2026-11-02T11:48:24.092Z",
+  "viewports": {
+    "desktop": "1440x900",
+    "mobile": "375x812 (iPhone X/13 Mini touch)"
+  },
+  "results": [
+    {
+      "device": "desktop",
+      "route": "login",
+      "metrics": {
+        "url": "/login",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      }
+    },
+    {
+      "device": "desktop",
+      "route": "admin_dashboard",
+      "metrics": {
+        "url": "/admin/dashboard",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      }
+    },
+    {
+      "device": "desktop",
+      "route": "appointments",
+      "metrics": {
+        "url": "/appointments",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      }
+    },
+    {
+      "device": "desktop",
+      "route": "invoices",
+      "metrics": {
+        "url": "/invoices",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      }
+    },
+    {
+      "device": "desktop",
+      "route": "inventory",
+      "metrics": {
+        "url": "/inventory",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      }
+    },
+    {
+      "device": "desktop",
+      "route": "reports",
+      "metrics": {
+        "url": "/reports",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      }
+    },
+    {
+      "device": "desktop",
+      "route": "settings",
+      "metrics": {
+        "url": "/settings",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      }
+    },
+    {
+      "device": "desktop",
+      "route": "repair_jobs",
+      "metrics": {
+        "url": "/repair-jobs",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      }
+    },
+    {
+      "device": "desktop",
+      "route": "vehicles",
+      "metrics": {
+        "url": "/vehicles",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      }
+    },
+    {
+      "device": "mobile",
+      "route": "login",
+      "metrics": {
+        "url": "/login",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 375,
+        "clientWidth": 375,
+        "overflowCount": 0,
+        "undersizedCount": 3,
+        "sampleUndersized": [
+          {
+            "tag": "button",
+            "text": "Forgot password?",
+            "className": "text-[11px] text-app-accent hover:underline font-medium transition-colors cursor",
+            "width": 94,
+            "height": 17
+          },
+          {
+            "tag": "button",
+            "text": "Show password",
+            "className": "absolute right-1 top-1/2 -translate-y-1/2 text-app-muted hover:text-app-text tra",
+            "width": 40,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "Sign Up",
+            "className": "text-app-accent hover:underline font-semibold cursor-pointer",
+            "width": 41,
+            "height": 17
+          }
+        ]
+      }
+    },
+    {
+      "device": "mobile",
+      "route": "admin_dashboard",
+      "metrics": {
+        "url": "/admin/dashboard",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 375,
+        "clientWidth": 375,
+        "overflowCount": 0,
+        "undersizedCount": 3,
+        "sampleUndersized": [
+          {
+            "tag": "a",
+            "text": "View All",
+            "className": "text-xs text-app-accent hover:underline font-semibold flex items-center gap-1",
+            "width": 58,
+            "height": 14
+          },
+          {
+            "tag": "a",
+            "text": "View ▾",
+            "className": "text-[11px] text-app-accent hover:underline",
+            "width": 38,
+            "height": 17
+          },
+          {
+            "tag": "a",
+            "text": "0 staff",
+            "className": "text-[11px] text-app-accent hover:underline",
+            "width": 33,
+            "height": 17
+          }
+        ]
+      }
+    },
+    {
+      "device": "mobile",
+      "route": "appointments",
+      "metrics": {
+        "url": "/appointments",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 375,
+        "clientWidth": 375,
+        "overflowCount": 67,
+        "undersizedCount": 32,
+        "sampleUndersized": [
+          {
+            "tag": "button",
+            "text": "New Appointment",
+            "className": "group/button inline-flex shrink-0 items-center justify-center border border-tran",
+            "width": 37,
+            "height": 44
+          },
+          {
+            "tag": "button",
+            "text": "1",
+            "className": "h-8 rounded-sm flex flex-col items-center justify-center relative text-xs font-m",
+            "width": 43,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "2",
+            "className": "h-8 rounded-sm flex flex-col items-center justify-center relative text-xs font-m",
+            "width": 43,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "3",
+            "className": "h-8 rounded-sm flex flex-col items-center justify-center relative text-xs font-m",
+            "width": 43,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "4",
+            "className": "h-8 rounded-sm flex flex-col items-center justify-center relative text-xs font-m",
+            "width": 43,
+            "height": 28
+          }
+        ]
+      }
+    },
+    {
+      "device": "mobile",
+      "route": "invoices",
+      "metrics": {
+        "url": "/invoices",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 375,
+        "clientWidth": 375,
+        "overflowCount": 66,
+        "undersizedCount": 2,
+        "sampleUndersized": [
+          {
+            "tag": "button",
+            "text": "Create Invoice",
+            "className": "group/button inline-flex shrink-0 items-center justify-center border border-tran",
+            "width": 37,
+            "height": 44
+          },
+          {
+            "tag": "button",
+            "text": "All\n0",
+            "className": "min-h-[44px] sm:min-h-0 sm:py-1 px-3 sm:px-2.5 py-2 inline-flex items-center jus",
+            "width": 41,
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "device": "mobile",
+      "route": "inventory",
+      "metrics": {
+        "url": "/inventory",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 375,
+        "clientWidth": 375,
+        "overflowCount": 66,
+        "undersizedCount": 4,
+        "sampleUndersized": [
+          {
+            "tag": "button",
+            "text": "Add Spare Part",
+            "className": "group/button inline-flex shrink-0 items-center justify-center border border-tran",
+            "width": 37,
+            "height": 44
+          },
+          {
+            "tag": "button",
+            "text": "Parts\n0",
+            "className": "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-co",
+            "width": 85,
+            "height": 28
+          },
+          {
+            "tag": "button",
+            "text": "Stock Logs\n0",
+            "className": "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-co",
+            "width": 112,
+            "height": 26
+          },
+          {
+            "tag": "button",
+            "text": "All",
+            "className": "px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors c",
+            "width": 31,
+            "height": 21
+          }
+        ]
+      }
+    },
+    {
+      "device": "mobile",
+      "route": "reports",
+      "metrics": {
+        "url": "/reports",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 375,
+        "clientWidth": 375,
+        "overflowCount": 4,
+        "undersizedCount": 24,
+        "sampleUndersized": [
+          {
+            "tag": "button",
+            "text": "All Reports",
+            "className": "px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors c",
+            "width": 76,
+            "height": 25
+          },
+          {
+            "tag": "button",
+            "text": "Financial (Invoices & Revenue)",
+            "className": "px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors c",
+            "width": 174,
+            "height": 25
+          },
+          {
+            "tag": "button",
+            "text": "Operations (Work Orders)",
+            "className": "px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors c",
+            "width": 150,
+            "height": 25
+          },
+          {
+            "tag": "button",
+            "text": "Inventory (Stock Valuation)",
+            "className": "px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors c",
+            "width": 157,
+            "height": 25
+          },
+          {
+            "tag": "button",
+            "text": "Technicians (Labor & Efficienc",
+            "className": "px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors c",
+            "width": 183,
+            "height": 25
+          }
+        ]
+      }
+    },
+    {
+      "device": "mobile",
+      "route": "settings",
+      "metrics": {
+        "url": "/settings",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 375,
+        "clientWidth": 375,
+        "overflowCount": 277,
+        "undersizedCount": 99,
+        "sampleUndersized": [
+          {
+            "tag": "button",
+            "text": "RBAC",
+            "className": "flex items-center gap-1.5 sm:gap-2 min-h-[40px] sm:min-h-0 px-2.5 sm:px-3 py-2 s",
+            "width": 68,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "Profile",
+            "className": "flex items-center gap-1.5 sm:gap-2 min-h-[40px] sm:min-h-0 px-2.5 sm:px-3 py-2 s",
+            "width": 70,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "Lang",
+            "className": "flex items-center gap-1.5 sm:gap-2 min-h-[40px] sm:min-h-0 px-2.5 sm:px-3 py-2 s",
+            "width": 62,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "Tax",
+            "className": "flex items-center gap-1.5 sm:gap-2 min-h-[40px] sm:min-h-0 px-2.5 sm:px-3 py-2 s",
+            "width": 56,
+            "height": 40
+          },
+          {
+            "tag": "button",
+            "text": "Safety",
+            "className": "flex items-center gap-1.5 sm:gap-2 min-h-[40px] sm:min-h-0 px-2.5 sm:px-3 py-2 s",
+            "width": 70,
+            "height": 40
+          }
+        ]
+      }
+    },
+    {
+      "device": "mobile",
+      "route": "repair_jobs",
+      "metrics": {
+        "url": "/repair-jobs",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 375,
+        "clientWidth": 375,
+        "overflowCount": 66,
+        "undersizedCount": 2,
+        "sampleUndersized": [
+          {
+            "tag": "button",
+            "text": "Fast Vehicle Intake",
+            "className": "group/button inline-flex shrink-0 items-center justify-center border border-tran",
+            "width": 37,
+            "height": 44
+          },
+          {
+            "tag": "button",
+            "text": "All",
+            "className": "min-h-[44px] sm:min-h-0 sm:py-1 px-3 sm:px-2.5 py-2 inline-flex items-center jus",
+            "width": 34,
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "device": "mobile",
+      "route": "vehicles",
+      "metrics": {
+        "url": "/vehicles",
+        "hasHorizontalOverflow": false,
+        "scrollWidth": 375,
+        "clientWidth": 375,
+        "overflowCount": 52,
+        "undersizedCount": 6,
+        "sampleUndersized": [
+          {
+            "tag": "button",
+            "text": "Register Vehicle",
+            "className": "group/button inline-flex shrink-0 items-center justify-center border border-tran",
+            "width": 37,
+            "height": 44
+          },
+          {
+            "tag": "button",
+            "text": "All\n0",
+            "className": "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium whit",
+            "width": 43,
+            "height": 21
+          },
+          {
+            "tag": "button",
+            "text": "Petrol\n0",
+            "className": "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium whit",
+            "width": 58,
+            "height": 21
+          },
+          {
+            "tag": "button",
+            "text": "Diesel\n0",
+            "className": "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium whit",
+            "width": 60,
+            "height": 21
+          },
+          {
+            "tag": "button",
+            "text": "Hybrid\n0",
+            "className": "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium whit",
+            "width": 63,
+            "height": 21
+          }
+        ]
+      }
+    }
+  ]
+}

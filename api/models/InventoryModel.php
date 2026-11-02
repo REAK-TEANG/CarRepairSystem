@@ -61,6 +61,18 @@ class InventoryModel
         ];
     }
 
+    public static function findById(int $id): ?array
+    {
+        $r = Database::get("
+          SELECT sp.*, s.name AS supplier_name
+          FROM spare_parts sp
+          LEFT JOIN suppliers s ON sp.supplier_id = s.id
+          WHERE sp.id = ?
+        ", [$id]);
+
+        return $r ? self::format($r) : null;
+    }
+
     public static function getTransactions(): array
     {
         $rows = Database::all("
@@ -114,10 +126,13 @@ class InventoryModel
             $finalCode = $candidate;
         }
 
-        $qty       = !empty($input['stockQty'])    ? (int)   $input['stockQty']    : 0;
-        $min       = !empty($input['minThreshold']) ? (int)   $input['minThreshold'] : 5;
-        $finalPhoto = $input['image'] ?? $input['photoUrl'] ?? null;
-        $supplierId = !empty($input['supplierId']) ? $input['supplierId'] : null;
+        $qty        = !empty($input['stockQty']) ? (int) $input['stockQty'] : (!empty($input['stock_quantity']) ? (int) $input['stock_quantity'] : 0);
+        $min        = !empty($input['minThreshold']) ? (int) $input['minThreshold'] : (!empty($input['min_stock']) ? (int) $input['min_stock'] : 5);
+        $finalPhoto = $input['image'] ?? $input['photoUrl'] ?? $input['photo_url'] ?? null;
+        $supplierId = (!empty($input['supplierId']) && (int) $input['supplierId'] > 0)
+            ? (int) $input['supplierId']
+            : ((!empty($input['supplier_id']) && (int) $input['supplier_id'] > 0) ? (int) $input['supplier_id'] : null);
+        $unitPrice  = isset($input['unitPrice']) && $input['unitPrice'] !== '' ? (float) $input['unitPrice'] : (isset($input['unit_price']) && $input['unit_price'] !== '' ? (float) $input['unit_price'] : 0.0);
 
         Database::run(
             "INSERT INTO spare_parts (part_code, name, category, brand, unit_price, stock_quantity, min_stock, supplier_id, location, photo_url)
@@ -127,7 +142,7 @@ class InventoryModel
                 trim($input['name'] ?? ''),
                 $input['category'] ?? null,
                 $input['brand']    ?? null,
-                (float) ($input['unitPrice'] ?? 0),
+                $unitPrice,
                 $qty,
                 $min,
                 $supplierId,
@@ -153,37 +168,67 @@ class InventoryModel
 
     public static function update(int $id, array $input): ?array
     {
-        $qty        = isset($input['stockQty'])    ? (int)   $input['stockQty']    : null;
-        $min        = isset($input['minThreshold']) ? (int)   $input['minThreshold'] : null;
-        $finalPhoto = $input['image'] ?? $input['photoUrl'] ?? null;
-        $unitPrice  = isset($input['unitPrice'])   ? (float) $input['unitPrice']   : null;
+        $part = Database::get('SELECT * FROM spare_parts WHERE id = ?', [$id]);
+        if (!$part) {
+            return null;
+        }
 
-        Database::run(
-            "UPDATE spare_parts
-             SET name           = COALESCE(?, name),
-                 category       = COALESCE(?, category),
-                 brand          = COALESCE(?, brand),
-                 unit_price     = COALESCE(?, unit_price),
-                 stock_quantity = COALESCE(?, stock_quantity),
-                 min_stock      = COALESCE(?, min_stock),
-                 supplier_id    = COALESCE(?, supplier_id),
-                 location       = COALESCE(?, location),
-                 photo_url      = COALESCE(?, photo_url),
-                 updated_at     = NOW()
-             WHERE id = ?",
-            [
-                $input['name']       ?? null,
-                $input['category']   ?? null,
-                $input['brand']      ?? null,
-                $unitPrice,
-                $qty,
-                $min,
-                $input['supplierId'] ?? null,
-                $input['location']   ?? null,
-                $finalPhoto,
-                $id,
-            ]
-        );
+        $fields = [];
+        $params = [];
+
+        if (array_key_exists('name', $input)) {
+            $fields[] = 'name = ?';
+            $params[] = trim($input['name'] ?? '');
+        }
+        if (array_key_exists('category', $input)) {
+            $fields[] = 'category = ?';
+            $params[] = $input['category'] ?: null;
+        }
+        if (array_key_exists('brand', $input)) {
+            $fields[] = 'brand = ?';
+            $params[] = $input['brand'] ?: null;
+        }
+        if (array_key_exists('unitPrice', $input) || array_key_exists('unit_price', $input)) {
+            $val = $input['unitPrice'] ?? $input['unit_price'];
+            $fields[] = 'unit_price = ?';
+            $params[] = ($val !== null && $val !== '') ? (float) $val : 0.0;
+        }
+        if (array_key_exists('stockQty', $input) || array_key_exists('stock_quantity', $input)) {
+            $val = $input['stockQty'] ?? $input['stock_quantity'];
+            $fields[] = 'stock_quantity = ?';
+            $params[] = ($val !== null && $val !== '') ? (int) $val : 0;
+        }
+        if (array_key_exists('minThreshold', $input) || array_key_exists('min_stock', $input)) {
+            $val = $input['minThreshold'] ?? $input['min_stock'];
+            $fields[] = 'min_stock = ?';
+            $params[] = ($val !== null && $val !== '') ? (int) $val : 5;
+        }
+        if (array_key_exists('supplierId', $input) || array_key_exists('supplier_id', $input)) {
+            $supVal = $input['supplierId'] ?? $input['supplier_id'];
+            $fields[] = 'supplier_id = ?';
+            $params[] = (!empty($supVal) && (int) $supVal > 0) ? (int) $supVal : null;
+        }
+        if (array_key_exists('location', $input)) {
+            $fields[] = 'location = ?';
+            $params[] = $input['location'] ?: 'Shelf A-01';
+        }
+        if (array_key_exists('image', $input) || array_key_exists('photoUrl', $input) || array_key_exists('photo_url', $input)) {
+            $photo = $input['image'] ?? $input['photoUrl'] ?? $input['photo_url'] ?? null;
+            $fields[] = 'photo_url = ?';
+            $params[] = $photo ?: null;
+        }
+        if (array_key_exists('isActive', $input) || array_key_exists('is_active', $input)) {
+            $activeVal = $input['isActive'] ?? $input['is_active'];
+            $fields[] = 'is_active = ?';
+            $params[] = filter_var($activeVal, FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false';
+        }
+
+        if (!empty($fields)) {
+            $fields[] = 'updated_at = NOW()';
+            $params[] = $id;
+            $sql = 'UPDATE spare_parts SET ' . implode(', ', $fields) . ' WHERE id = ?';
+            Database::run($sql, $params);
+        }
 
         $updated = Database::get('SELECT * FROM spare_parts WHERE id = ?', [$id]);
         if (!$updated) {

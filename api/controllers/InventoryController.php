@@ -27,6 +27,17 @@ class InventoryController
         echo json_encode(Pagination::formatResponse($result['data'], $result['total'], $params['page'], $params['limit']));
     }
 
+    public function show(int $id): void
+    {
+        $part = InventoryModel::findById($id);
+        if (!$part) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Spare part not found']);
+            return;
+        }
+        echo json_encode(['data' => $part]);
+    }
+
     public function store(): void
     {
         $input = Sanitizer::getJsonInput();
@@ -65,11 +76,17 @@ class InventoryController
 
     public function destroy(int $id): void
     {
-        if (!InventoryModel::delete($id)) {
-            http_response_code(404);
-            echo json_encode(['error' => 'Spare part not found']);
-            return;
+        try {
+            if (!InventoryModel::delete($id)) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Spare part not found']);
+                return;
+            }
+            echo json_encode(['success' => true, 'message' => 'Spare part removed successfully']);
+        } catch (PDOException $e) {
+            // If referenced by transactions or repair orders, deactivate rather than failing
+            Database::run('UPDATE spare_parts SET is_active = FALSE, updated_at = NOW() WHERE id = ?', [$id]);
+            echo json_encode(['success' => true, 'message' => 'Spare part has existing transaction history and has been archived.']);
         }
-        echo json_encode(['success' => true, 'message' => 'Spare part removed successfully']);
     }
 }

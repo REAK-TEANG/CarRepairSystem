@@ -117,9 +117,10 @@ export default function MechanicsPage() {
             onClick={handleOpenAdd}
             size="sm"
             className="gap-1.5"
+            title={t('mechanics.addMechanic')}
           >
             <Plus size={14} weight="bold" />
-            <span>{t('mechanics.addMechanic')}</span>
+            <span className="hidden sm:inline">{t('mechanics.addMechanic')}</span>
           </Button>
         )}
       </div>
@@ -323,7 +324,7 @@ export default function MechanicsPage() {
       {can('mechanics', 'create') && activeTab === 'roster' && (
         <button
           onClick={handleOpenAdd}
-          className="fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center size-13 rounded-full bg-app-accent text-app-accentText shadow-xl active:scale-95 transition-transform touch-manipulation cursor-pointer border border-white/20"
+          className="fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center w-12 h-12 min-w-[48px] min-h-[48px] rounded-full bg-app-accent text-app-accentText shadow-xl active:scale-95 transition-transform touch-manipulation cursor-pointer border border-white/20"
           aria-label={t('mechanics.addMechanic')}
         >
           <Plus size={22} weight="bold" />
@@ -402,7 +403,9 @@ export default function MechanicsPage() {
               {t('common.cancel')}
             </Button>
             <LoadingButton type="submit" loading={createMechanicMutation.isPending}>
-              {t('mechanics.createMechanic')}
+              <Plus size={14} weight="bold" className="sm:mr-1" />
+              <span className="hidden sm:inline">{t('mechanics.createMechanic')}</span>
+              <span className="sm:hidden">Add</span>
             </LoadingButton>
           </div>
         </form>

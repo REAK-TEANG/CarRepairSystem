@@ -158,9 +158,10 @@ export default function InvoicesPage() {
             onClick={handleOpenAdd}
             size="sm"
             className="gap-1.5"
+            title={t('invoices.createInvoice')}
           >
             <Plus size={14} weight="bold" />
-            <span>{t('invoices.createInvoice')}</span>
+            <span className="hidden sm:inline">{t('invoices.createInvoice')}</span>
           </Button>
         )}
       </div>
@@ -221,7 +222,7 @@ export default function InvoicesPage() {
                   setStatusFilter(st)
                   setCurrentPage(1)
                 }}
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                className={`min-h-[44px] sm:min-h-0 sm:py-1 px-3 sm:px-2.5 py-2 inline-flex items-center justify-center rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                   isActive
                     ? 'bg-app-accent text-app-accentText font-semibold'
                     : 'text-app-muted hover:text-app-text hover:bg-app-hover'
@@ -331,7 +332,8 @@ export default function InvoicesPage() {
                           }}
                         >
                           <Receipt size={12} />
-                          <span>View Invoice</span>
+                          <span className="hidden sm:inline">View Invoice</span>
+                          <span className="sm:hidden">View</span>
                         </Button>
                       </div>
                       {can('invoices', 'delete') && (
@@ -468,7 +470,7 @@ export default function InvoicesPage() {
       {can('invoices', 'create') && (
         <button
           onClick={handleOpenAdd}
-          className="fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center size-13 rounded-full bg-app-accent text-app-accentText shadow-xl active:scale-95 transition-transform touch-manipulation cursor-pointer border border-white/20"
+          className="fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center w-12 h-12 min-w-[48px] min-h-[48px] rounded-full bg-app-accent text-app-accentText shadow-xl active:scale-95 transition-transform touch-manipulation cursor-pointer border border-white/20"
           aria-label={t('invoices.createInvoice')}
         >
           <Plus size={22} weight="bold" />
@@ -543,7 +545,9 @@ export default function InvoicesPage() {
               {t('common.cancel')}
             </Button>
             <LoadingButton type="submit" loading={createInvoiceMutation.isPending}>
-              {t('invoices.createInvoice')}
+              <Plus size={14} weight="bold" className="sm:mr-1" />
+              <span className="hidden sm:inline">{t('invoices.createInvoice')}</span>
+              <span className="sm:hidden">Create</span>
             </LoadingButton>
           </div>
         </form>
@@ -642,7 +646,8 @@ export default function InvoicesPage() {
               {t('common.cancel')}
             </Button>
             <LoadingButton type="submit" loading={recordPaymentMutation.isPending} icon={CheckCircle} variant="primary">
-              Confirm Payment Received
+              <span className="hidden sm:inline">Confirm Payment Received</span>
+              <span className="sm:hidden">Confirm Payment</span>
             </LoadingButton>
           </div>
         </form>

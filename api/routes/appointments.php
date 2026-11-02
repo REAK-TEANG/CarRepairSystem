@@ -16,6 +16,11 @@ if (preg_match('#^/appointments/(\d+)/status$#', $path, $m)) {
     }
 } else if (preg_match('#^/appointments/(\d+)$#', $path, $m)) {
     $id = (int) $m[1];
+    if ($method === 'GET') {
+        AuthMiddleware::authorize('appointments', 'read', $authPayload);
+        $ctrl->show($id);
+        exit;
+    }
     if ($method === 'PUT' || $method === 'PATCH') {
         AuthMiddleware::authorize('appointments', 'update', $authPayload);
         $ctrl->update($id);

@@ -76,6 +76,24 @@ class AppointmentModel
         ];
     }
 
+    public static function findById(int $id): ?array
+    {
+        $r = Database::get("
+          SELECT a.*,
+                 c.full_name AS customer_name,
+                 v.vehicle_number, v.brand, v.model,
+                 u.full_name AS mechanic_name
+          FROM appointments a
+          LEFT JOIN customers  c ON a.customer_id  = c.id
+          LEFT JOIN vehicles   v ON a.vehicle_id   = v.id
+          LEFT JOIN employees  e ON a.mechanic_id  = e.id
+          LEFT JOIN users      u ON e.user_id      = u.id
+          WHERE a.id = ?
+        ", [$id]);
+
+        return $r ? self::format($r) : null;
+    }
+
     public static function create(array $input): array
     {
         $countRow = Database::get('SELECT COUNT(*) AS cnt FROM appointments');
@@ -120,6 +138,10 @@ class AppointmentModel
 
     public static function update(int $id, array $input): ?array
     {
+        $mechanicId = (!empty($input['mechanicId']) && (int) $input['mechanicId'] > 0)
+            ? (int) $input['mechanicId']
+            : ((!empty($input['mechanic_id']) && (int) $input['mechanic_id'] > 0) ? (int) $input['mechanic_id'] : null);
+
         Database::run(
             "UPDATE appointments
              SET status         = COALESCE(?, status),
@@ -130,11 +152,11 @@ class AppointmentModel
                  updated_at     = NOW()
              WHERE id = ?",
             [
-                $input['status']     ?? null,
-                $input['mechanicId'] ?? null,
-                $input['date']       ?? null,
-                $input['time']       ?? null,
-                $input['notes']      ?? null,
+                $input['status'] ?? null,
+                $mechanicId,
+                $input['date']   ?? null,
+                $input['time']   ?? null,
+                $input['notes']  ?? null,
                 $id,
             ]
         );
@@ -178,24 +200,6 @@ class AppointmentModel
     // -------------------------------------------------------------------------
     // Private helpers
     // -------------------------------------------------------------------------
-
-    private static function findById(int $id): ?array
-    {
-        $r = Database::get("
-          SELECT a.*,
-                 c.full_name AS customer_name,
-                 v.vehicle_number, v.brand, v.model,
-                 u.full_name AS mechanic_name
-          FROM appointments a
-          LEFT JOIN customers  c ON a.customer_id  = c.id
-          LEFT JOIN vehicles   v ON a.vehicle_id   = v.id
-          LEFT JOIN employees  e ON a.mechanic_id  = e.id
-          LEFT JOIN users      u ON e.user_id      = u.id
-          WHERE a.id = ?",
-            [$id]
-        );
-        return $r ? self::format($r) : null;
-    }
 
     private static function format(array $r): array
     {

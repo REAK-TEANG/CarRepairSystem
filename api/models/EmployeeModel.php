@@ -64,6 +64,19 @@ class EmployeeModel
         ];
     }
 
+    public static function findById(int $id): ?array
+    {
+        $r = Database::get("
+          SELECT e.*, u.full_name, u.phone, u.email, u.role_id, r.name AS role_name
+          FROM employees e
+          LEFT JOIN users u ON e.user_id = u.id
+          LEFT JOIN roles r ON u.role_id = r.id
+          WHERE e.id = ?
+        ", [$id]);
+
+        return $r ? self::format($r) : null;
+    }
+
     public static function create(array $input): array
     {
         $name     = trim($input['name'] ?? '');

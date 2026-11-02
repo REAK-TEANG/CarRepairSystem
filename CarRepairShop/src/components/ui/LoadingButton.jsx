@@ -5,6 +5,7 @@ import { Spin } from '../animation/AnimeWrapper'
 export default function LoadingButton({
   children,
   loading = false,
+  isLoading,        // alias – stripped from DOM spread
   disabled = false,
   icon: Icon,
   variant = 'primary',
@@ -13,6 +14,7 @@ export default function LoadingButton({
   onClick,
   ...props
 }) {
+  const isActive = loading || isLoading
   const baseStyles =
     'inline-flex items-center justify-center gap-2 rounded-lg text-xs font-semibold transition-all select-none disabled:opacity-50 disabled:cursor-not-allowed shadow-subtle cursor-pointer'
 
@@ -30,12 +32,12 @@ export default function LoadingButton({
   return (
     <button
       type={type}
-      disabled={disabled || loading}
+      disabled={disabled || isActive}
       onClick={onClick}
       className={clsx(baseStyles, variants[variant], 'px-4 py-2', className)}
       {...props}
     >
-      {loading ? (
+      {isActive ? (
         <>
           <Spin>
             <CircleNotch size={15} weight="bold" className="text-current flex-shrink-0" />

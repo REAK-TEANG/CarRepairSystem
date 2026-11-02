@@ -59,11 +59,19 @@ class MechanicController
 
     public function destroy(int $id): void
     {
-        if (!MechanicModel::delete($id)) {
-            http_response_code(404);
-            echo json_encode(['error' => 'Mechanic not found']);
-            return;
+        try {
+            if (!MechanicModel::delete($id)) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Mechanic not found']);
+                return;
+            }
+            echo json_encode(['success' => true, 'message' => 'Mechanic removed successfully']);
+        } catch (PDOException $e) {
+            http_response_code(409);
+            echo json_encode([
+                'error' => 'Conflict',
+                'message' => 'Cannot delete mechanic assigned to active or historical repair orders.'
+            ]);
         }
-        echo json_encode(['success' => true, 'message' => 'Mechanic removed successfully']);
     }
 }

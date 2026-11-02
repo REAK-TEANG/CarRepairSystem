@@ -58,11 +58,19 @@ class CustomerController
 
     public function destroy(int $id): void
     {
-        if (!CustomerModel::delete($id)) {
-            http_response_code(404);
-            echo json_encode(['error' => 'Customer not found']);
-            return;
+        try {
+            if (!CustomerModel::delete($id)) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Customer not found']);
+                return;
+            }
+            echo json_encode(['success' => true, 'message' => 'Customer deleted successfully']);
+        } catch (PDOException $e) {
+            http_response_code(409);
+            echo json_encode([
+                'error' => 'Conflict',
+                'message' => 'Cannot delete customer with active or historical records (appointments, repair orders, or invoices).'
+            ]);
         }
-        echo json_encode(['success' => true, 'message' => 'Customer deleted successfully']);
     }
 }

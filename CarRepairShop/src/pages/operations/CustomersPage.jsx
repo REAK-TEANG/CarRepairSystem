@@ -110,10 +110,11 @@ export default function CustomersPage() {
             <Button
               onClick={handleOpenAdd}
               size="sm"
-              className="hidden sm:inline-flex flex-shrink-0"
+              className="flex-shrink-0"
+              title={t('customers.addCustomer')}
             >
               <Plus size={14} weight="bold" />
-              <span>{t('customers.addCustomer')}</span>
+              <span className="hidden sm:inline">{t('customers.addCustomer')}</span>
             </Button>
           )
         }
@@ -235,7 +236,7 @@ export default function CustomersPage() {
       {can('customers', 'create') && (
         <button
           onClick={handleOpenAdd}
-          className="fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center size-13 rounded-full bg-app-accent text-app-accentText shadow-xl active:scale-95 transition-transform touch-manipulation cursor-pointer border border-white/20"
+          className="fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center w-12 h-12 min-w-[48px] min-h-[48px] rounded-full bg-app-accent text-app-accentText shadow-xl active:scale-95 transition-transform touch-manipulation cursor-pointer border border-white/20"
           aria-label={t('customers.addCustomer')}
         >
           <Plus size={22} weight="bold" />
@@ -292,7 +293,9 @@ export default function CustomersPage() {
               {t('common.cancel')}
             </Button>
             <LoadingButton type="submit" loading={createCustomerMutation.isPending}>
-              {t('customers.createCustomer')}
+              <Plus size={14} weight="bold" className="sm:mr-1" />
+              <span className="hidden sm:inline">{t('customers.createCustomer')}</span>
+              <span className="sm:hidden">Create</span>
             </LoadingButton>
           </div>
         </form>

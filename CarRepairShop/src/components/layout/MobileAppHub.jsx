@@ -245,7 +245,7 @@ export default function MobileAppHub({ isOpen, onClose }) {
 
             return (
               <div key={section.categoryKey}>
-                <p className="px-1.5 mb-1.5 text-[11px] font-bold text-app-muted uppercase tracking-wider">
+                <p className="px-1.5 mb-1.5 text-xs font-semibold text-app-muted">
                   {t(section.categoryKey)}
                 </p>
 

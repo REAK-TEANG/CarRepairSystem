@@ -1,4 +1,4 @@
-<?php
+    <?php
 // api/models/RepairJobModel.php
 
 class RepairJobModel
@@ -184,6 +184,11 @@ class RepairJobModel
                 ? (float) preg_replace('/[^0-9.]/', '', $input['estimatedCost'])
                 : null;
             $qaJson    = isset($input['qaChecklist']) ? json_encode($input['qaChecklist']) : null;
+            $mechanicId = (!empty($input['mechanicId']) && (int) $input['mechanicId'] > 0)
+                ? (int) $input['mechanicId']
+                : ((!empty($input['mechanic_id']) && (int) $input['mechanic_id'] > 0) ? (int) $input['mechanic_id'] : null);
+
+            $status = !empty($input['status']) ? self::normalizeStatus($input['status']) : null;
 
             Database::run(
                 "UPDATE repair_orders
@@ -203,11 +208,11 @@ class RepairJobModel
                      updated_at           = NOW()
                  WHERE id = ?",
                 [
-                    $input['status']          ?? null,
+                    $status,
                     $input['diagnosis']       ?? null,
                     $actualNum,
                     $estNum,
-                    $input['mechanicId']      ?? null,
+                    $mechanicId,
                     $input['notes']           ?? null,
                     $qaJson,
                     isset($input['laborMinutes'])   ? (int)   $input['laborMinutes']   : null,
@@ -250,6 +255,15 @@ class RepairJobModel
             if (!$exists) {
                 return false;
             }
+            // Cascade delete any linked invoices and payments in this transaction
+            $invs = Database::all('SELECT id FROM invoices WHERE repair_order_id = ?', [$id]);
+            foreach ($invs as $inv) {
+                Database::run('DELETE FROM refunds WHERE invoice_id = ?', [$inv['id']]);
+                Database::run('DELETE FROM payments WHERE invoice_id = ?', [$inv['id']]);
+                Database::run('DELETE FROM invoices WHERE id = ?', [$inv['id']]);
+            }
+            Database::run('DELETE FROM repair_parts WHERE repair_order_id = ?', [$id]);
+            Database::run('DELETE FROM repair_services WHERE repair_order_id = ?', [$id]);
             Database::run('DELETE FROM repair_orders WHERE id = ?', [$id]);
             EventBus::publish('repair_jobs', 'deleted', ['id' => $id, 'orderNumber' => $exists['order_number']]);
             return true;
@@ -470,6 +484,28 @@ class RepairJobModel
     // -------------------------------------------------------------------------
     // Private helpers
     // -------------------------------------------------------------------------
+
+    private static function normalizeStatus(?string $status): ?string
+    {
+        if (!$status) return null;
+        $map = [
+            'in progress' => 'In Progress',
+            'in-progress' => 'In Progress',
+            'in_progress' => 'In Progress',
+            'completed' => 'Completed',
+            'pending' => 'Pending',
+            'diagnosing' => 'Diagnosing',
+            'repairing' => 'Repairing',
+            'waiting for parts' => 'Waiting for Parts',
+            'waiting_for_parts' => 'Waiting for Parts',
+            'ready for pickup' => 'Ready for Pickup',
+            'ready_for_pickup' => 'Ready for Pickup',
+            'cancelled' => 'Cancelled',
+            'canceled' => 'Cancelled',
+        ];
+        $key = strtolower(trim($status));
+        return $map[$key] ?? $status;
+    }
 
     private static function baseSql(): string
     {

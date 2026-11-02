@@ -9,6 +9,11 @@ $method      = $_SERVER['REQUEST_METHOD'];
 
 if (preg_match('#^/(?:service-?reminders|servicereminders)/(\d+)$#i', $path, $m)) {
     $id = (int) $m[1];
+    if ($method === 'GET') {
+        AuthMiddleware::authorize('service_reminders', 'read', $authPayload);
+        $ctrl->show($id);
+        exit;
+    }
     if ($method === 'PUT' || $method === 'PATCH') {
         AuthMiddleware::authorize('service_reminders', 'update', $authPayload);
         $ctrl->update($id);

@@ -14,6 +14,25 @@ if (preg_match('#^/invoices/(\d+)/(?:pay|payments)$#', $path, $m)) {
     exit;
 }
 
+if (preg_match('#^/invoices/(\d+)$#', $path, $m)) {
+    $id = (int) $m[1];
+    if ($method === 'GET') {
+        AuthMiddleware::authorize('invoices', 'read', $authPayload);
+        $ctrl->show($id);
+        exit;
+    }
+    if ($method === 'PUT' || $method === 'PATCH') {
+        AuthMiddleware::authorize('invoices', 'update', $authPayload);
+        $ctrl->update($id);
+        exit;
+    }
+    if ($method === 'DELETE') {
+        AuthMiddleware::authorize('invoices', 'delete', $authPayload);
+        $ctrl->destroy($id);
+        exit;
+    }
+}
+
 if ($method === 'GET') {
     AuthMiddleware::authorize('invoices', 'read', $authPayload);
     $ctrl->index();

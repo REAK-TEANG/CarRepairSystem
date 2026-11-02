@@ -227,9 +227,9 @@ export default function VehiclesPage() {
           </span>
         </div>
         {can('vehicles', 'create') && (
-          <Button onClick={handleOpenAdd} size="sm">
+          <Button onClick={handleOpenAdd} size="sm" title={t('vehicles.addVehicle')}>
             <Plus size={14} weight="bold" />
-            <span>{t('vehicles.addVehicle')}</span>
+            <span className="hidden sm:inline">{t('vehicles.addVehicle')}</span>
           </Button>
         )}
       </div>
@@ -518,7 +518,7 @@ export default function VehiclesPage() {
       {can('vehicles', 'create') && (
         <button
           onClick={handleOpenAdd}
-          className="fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center size-13 rounded-full bg-app-accent text-app-accentText shadow-xl active:scale-95 transition-transform touch-manipulation cursor-pointer border border-white/20"
+          className="fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center w-12 h-12 min-w-[48px] min-h-[48px] rounded-full bg-app-accent text-app-accentText shadow-xl active:scale-95 transition-transform touch-manipulation cursor-pointer border border-white/20"
           aria-label={t('vehicles.createVehicle')}
         >
           <Plus size={22} weight="bold" />
@@ -635,7 +635,9 @@ export default function VehiclesPage() {
               {t('common.cancel')}
             </Button>
             <LoadingButton type="submit" loading={createVehicleMutation.isPending}>
-              {t('vehicles.createVehicle')}
+              <Plus size={14} weight="bold" className="sm:mr-1" />
+              <span className="hidden sm:inline">{t('vehicles.createVehicle')}</span>
+              <span className="sm:hidden">Register</span>
             </LoadingButton>
           </div>
         </form>

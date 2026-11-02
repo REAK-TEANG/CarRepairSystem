@@ -198,10 +198,10 @@ export default function BayModeView({
     <div className="space-y-4">
       {/* BAY SELECTOR: Large Touch Tabs */}
       <div>
-        <p className="text-[11px] font-bold uppercase tracking-wider text-app-muted mb-2 flex items-center gap-1.5">
+        <div className="text-xs font-semibold text-app-text mb-2 flex items-center gap-1.5">
           <Car size={13} weight="bold" />
           Active Bay Vehicles ({bayJobs.length})
-        </p>
+        </div>
         <div className="flex items-center gap-2.5 overflow-x-auto pb-1.5 scrollbar-thin">
           {bayJobs.map((job) => {
             const isSelected = activeJob?.id === job.id
@@ -283,8 +283,8 @@ export default function BayModeView({
 
               {/* Service & Problem High-contrast Banner */}
               <div className="mt-4 p-3.5 rounded-lg bg-app-input/80 border border-app-border">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-app-muted mb-1">
-                  Reported Issue / Work Order Description
+                <p className="text-xs font-medium text-app-muted mb-1">
+                  Issue Description
                 </p>
                 <p className="text-xs sm:text-sm font-semibold text-app-text">
                   {activeJob.problemDescription || activeJob.problem || activeJob.service || 'Scheduled Maintenance & Inspection'}
@@ -293,8 +293,8 @@ export default function BayModeView({
 
               {/* 1-Tap Touch Status Progression Bar */}
               <div className="mt-4">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-app-muted mb-2">
-                  1-Tap Job Phase Status
+                <p className="text-xs font-medium text-app-muted mb-2">
+                  Job Phase
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <button
@@ -309,7 +309,7 @@ export default function BayModeView({
                     )}
                   >
                     <Clock size={16} weight="bold" />
-                    <span>Diagnosing</span>
+                    <span>Diag</span><span className="hidden sm:inline">nosing</span>
                   </button>
 
                   <button
@@ -324,7 +324,7 @@ export default function BayModeView({
                     )}
                   >
                     <Wrench size={16} weight="bold" />
-                    <span>Repairing</span>
+                    <span>Repair</span><span className="hidden sm:inline">ing</span>
                   </button>
 
                   <button
@@ -339,7 +339,7 @@ export default function BayModeView({
                     )}
                   >
                     <Package size={16} weight="bold" />
-                    <span>Waiting Parts</span>
+                    <span>Waiting</span><span className="hidden sm:inline">&nbsp;Parts</span>
                   </button>
 
                   <button
@@ -354,7 +354,7 @@ export default function BayModeView({
                     )}
                   >
                     <CheckCircle size={16} weight="bold" />
-                    <span>Ready for Pickup</span>
+                    <span>Ready</span><span className="hidden sm:inline">&nbsp;Pickup</span>
                   </button>
                 </div>
               </div>
@@ -396,7 +396,7 @@ export default function BayModeView({
               {/* Active Logged Parts Table */}
               {activeParts.length > 0 && (
                 <div className="border border-app-border rounded-lg overflow-hidden">
-                  <div className="bg-app-input px-3 py-2 border-b border-app-border flex items-center justify-between text-[11px] font-bold text-app-muted uppercase">
+                  <div className="bg-app-input px-3 py-2 border-b border-app-border flex items-center justify-between text-xs font-medium text-app-muted">
                     <span>Logged Item</span>
                     <span className="pr-6">Action</span>
                   </div>

@@ -38,7 +38,7 @@ export function PageHeader({
       </div>
 
       {(onSearch || actions || children) && (
-        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
           {onSearch && (
             <div className={`relative ${searchWidth}`}>
               <MagnifyingGlass

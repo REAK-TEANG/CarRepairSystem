@@ -171,9 +171,10 @@ export default function ServicesPage() {
             onClick={handleOpenAdd}
             size="sm"
             className="gap-1.5"
+            title={t('services.addService')}
           >
             <Plus size={14} weight="bold" />
-            <span>{t('services.addService')}</span>
+            <span className="hidden sm:inline">{t('services.addService')}</span>
           </Button>
         )}
       </div>
@@ -359,7 +360,7 @@ export default function ServicesPage() {
       {can('services', 'create') && (
         <button
           onClick={handleOpenAdd}
-          className="fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center size-13 rounded-full bg-app-accent text-app-accentText shadow-xl active:scale-95 transition-transform touch-manipulation cursor-pointer border border-white/20"
+          className="fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center w-12 h-12 min-w-[48px] min-h-[48px] rounded-full bg-app-accent text-app-accentText shadow-xl active:scale-95 transition-transform touch-manipulation cursor-pointer border border-white/20"
           aria-label={t('services.addService')}
         >
           <Plus size={22} weight="bold" />
@@ -507,7 +508,9 @@ export default function ServicesPage() {
               {t('common.cancel')}
             </button>
             <LoadingButton type="submit" loading={createServiceMutation.isPending}>
-              {t('services.createService')}
+              <Plus size={14} weight="bold" className="sm:mr-1" />
+              <span className="hidden sm:inline">{t('services.createService')}</span>
+              <span className="sm:hidden">Add</span>
             </LoadingButton>
           </div>
         </form>

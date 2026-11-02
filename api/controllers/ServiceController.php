@@ -59,11 +59,19 @@ class ServiceController
 
     public function destroy(int $id): void
     {
-        if (!ServiceModel::delete($id)) {
-            http_response_code(404);
-            echo json_encode(['error' => 'Service not found']);
-            return;
+        try {
+            if (!ServiceModel::delete($id)) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Service not found']);
+                return;
+            }
+            echo json_encode(['success' => true, 'message' => 'Service removed successfully']);
+        } catch (PDOException $e) {
+            http_response_code(409);
+            echo json_encode([
+                'error' => 'Conflict',
+                'message' => 'Cannot delete service that is linked to active repair jobs or parts mapping.'
+            ]);
         }
-        echo json_encode(['success' => true, 'message' => 'Service removed successfully']);
     }
 }

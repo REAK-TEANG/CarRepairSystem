@@ -57,6 +57,21 @@ class SupplierModel
         ];
     }
 
+    public static function findById(int $id): ?array
+    {
+        $r = Database::get("
+          SELECT s.*,
+                 COUNT(sp.id) AS parts_count,
+                 COALESCE(STRING_AGG(DISTINCT sp.category, ', '), 'OEM Parts, Fluids') AS categories_list
+          FROM suppliers s
+          LEFT JOIN spare_parts sp ON sp.supplier_id = s.id
+          WHERE s.id = ?
+          GROUP BY s.id
+        ", [$id]);
+
+        return $r ? self::format($r) : null;
+    }
+
     public static function create(array $input): array
     {
         Database::run(

@@ -62,7 +62,7 @@ export default function ReportsPage() {
   const [searchQuery, setSearchQuery] = useState('')
 
   // Date Range Filter
-  const [timeRange, setTimeRange] = useState('all') // 'all' | 'this_week' | 'this_month' | 'this_quarter' | 'this_year' | 'custom'
+  const [timeRange, setTimeRange] = useState('all') // 'all' | 'today' | 'this_week' | 'this_month' | 'this_quarter' | 'this_year' | 'custom'
   const [customStart, setCustomStart] = useState(() => {
     const d = new Date()
     d.setDate(d.getDate() - 30)
@@ -111,6 +111,13 @@ export default function ReportsPage() {
   // Calculate Active Date Range Bounds
   const activeBounds = useMemo(() => {
     const now = new Date()
+    if (timeRange === 'today') {
+      const start = new Date(now)
+      start.setHours(0, 0, 0, 0)
+      const end = new Date(now)
+      end.setHours(23, 59, 59, 999)
+      return { start, end, label: t('reports.today', 'Today') }
+    }
     if (timeRange === 'this_week') {
       const day = now.getDay()
       const diff = (day + 6) % 7 // Monday
@@ -618,7 +625,7 @@ export default function ReportsPage() {
             <button
               type="button"
               onClick={() => setIsTimeDropdownOpen((prev) => !prev)}
-              className="inline-flex items-center gap-2 px-3 py-1.5 bg-app-card border border-app-border hover:border-app-accent/50 text-app-text rounded-md text-xs font-medium shadow-xs transition-colors cursor-pointer select-none"
+              className="inline-flex items-center gap-2 min-h-[44px] sm:min-h-0 px-3 py-2 sm:py-1.5 bg-app-card border border-app-border hover:border-app-accent/50 text-app-text rounded-md text-xs font-medium shadow-xs transition-colors cursor-pointer select-none"
             >
               <CalendarBlank size={14} className="text-app-muted" weight="bold" />
               <span>{activeBounds.label}</span>
@@ -631,10 +638,11 @@ export default function ReportsPage() {
             </button>
 
             {isTimeDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-72 bg-app-card border border-app-border rounded-lg shadow-xl p-3 z-50 animate-modal-content space-y-3">
+              <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] max-w-xs sm:w-72 bg-app-card border border-app-border rounded-lg shadow-xl p-3 z-50 animate-modal-content space-y-3">
                 <div className="grid grid-cols-2 gap-1 p-1 bg-app-hover/60 rounded-md">
                   {[
                     { key: 'all', label: t('reports.allTime', 'All Time') },
+                    { key: 'today', label: t('reports.today', 'Today') },
                     { key: 'this_week', label: t('reports.thisWeek') },
                     { key: 'this_month', label: t('reports.thisMonth') },
                     { key: 'this_quarter', label: t('reports.thisQuarter', 'This Quarter') },
@@ -648,7 +656,9 @@ export default function ReportsPage() {
                         setTimeRange(item.key)
                         if (item.key !== 'custom') setIsTimeDropdownOpen(false)
                       }}
-                      className={`py-1 px-2 text-xs font-semibold rounded transition-colors text-center cursor-pointer ${
+                      className={`min-h-[36px] py-1.5 px-2 text-xs font-semibold rounded transition-colors text-center cursor-pointer flex items-center justify-center ${
+                        item.key === 'custom' ? 'col-span-2' : ''
+                      } ${
                         timeRange === item.key
                           ? 'bg-app-accent text-app-accentText shadow-xs'
                           : 'text-app-muted hover:text-app-text'
@@ -702,9 +712,10 @@ export default function ReportsPage() {
               onClick={() => setIsExportDropdownOpen((prev) => !prev)}
               size="sm"
               className="gap-2"
+              title={t('reports.exportReport')}
             >
               <DownloadSimple size={14} weight="bold" />
-              <span>{t('reports.exportReport')}</span>
+              <span className="hidden sm:inline">{t('reports.exportReport')}</span>
               <CaretDown
                 size={12}
                 className={`transition-transform duration-200 ${
@@ -714,11 +725,11 @@ export default function ReportsPage() {
             </Button>
 
             {isExportDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-52 bg-app-card border border-app-border rounded-lg shadow-xl p-1.5 z-50 animate-modal-content space-y-1">
+              <div className="absolute right-0 mt-2 w-56 max-w-[calc(100vw-2rem)] bg-app-card border border-app-border rounded-lg shadow-xl p-1.5 z-50 animate-modal-content space-y-1">
                 <button
                   type="button"
                   onClick={() => handleExportPdf()}
-                  className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium text-app-text hover:bg-app-hover rounded-md transition-colors cursor-pointer text-left"
+                  className="w-full min-h-[44px] flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-app-text hover:bg-app-hover rounded-md transition-colors cursor-pointer text-left"
                 >
                   <FilePdf size={16} weight="bold" className="text-rose-500 flex-shrink-0" />
                   <div>
@@ -730,7 +741,7 @@ export default function ReportsPage() {
                 <button
                   type="button"
                   onClick={() => handleExportExcel()}
-                  className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium text-app-text hover:bg-app-hover rounded-md transition-colors cursor-pointer text-left"
+                  className="w-full min-h-[44px] flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-app-text hover:bg-app-hover rounded-md transition-colors cursor-pointer text-left"
                 >
                   <FileXls size={16} weight="bold" className="text-emerald-500 flex-shrink-0" />
                   <div>
@@ -742,7 +753,7 @@ export default function ReportsPage() {
                 <button
                   type="button"
                   onClick={() => handlePrint()}
-                  className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium text-app-text hover:bg-app-hover rounded-md transition-colors cursor-pointer text-left"
+                  className="w-full min-h-[44px] flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-app-text hover:bg-app-hover rounded-md transition-colors cursor-pointer text-left"
                 >
                   <Printer size={16} weight="bold" className="text-sky-500 flex-shrink-0" />
                   <div>
@@ -925,24 +936,21 @@ export default function ReportsPage() {
           <div className="p-3 bg-app-card border-b border-app-border flex items-center justify-between gap-2">
             <div>
               <h2 className="text-xs sm:text-sm font-semibold text-app-text">
-                {t('reports.financialAudit', 'Financial Audit')} · Invoices & Cashflow
+                {t('reports.financialAudit', 'Financial Audit')}
               </h2>
-              <p className="text-[11px] text-app-muted">
-                Showing {filteredInvoices.length} invoices ({activeBounds.label})
-              </p>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Button size="xs" variant="outline" onClick={() => handleExportPdf('Financial')}>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <Button size="xs" variant="outline" onClick={() => handleExportPdf('Financial')} title="Export PDF">
                 <FilePdf size={13} weight="bold" className="text-rose-500" />
-                <span>PDF</span>
+                <span className="hidden sm:inline">PDF</span>
               </Button>
-              <Button size="xs" variant="outline" onClick={() => handleExportExcel('Financial')}>
+              <Button size="xs" variant="outline" onClick={() => handleExportExcel('Financial')} title="Export Excel">
                 <FileXls size={13} weight="bold" className="text-emerald-500" />
-                <span>Excel</span>
+                <span className="hidden sm:inline">Excel</span>
               </Button>
-              <Button size="xs" variant="outline" onClick={() => handlePrint('Financial')}>
+              <Button size="xs" variant="outline" onClick={() => handlePrint('Financial')} title="Print">
                 <Printer size={13} weight="bold" className="text-sky-500" />
-                <span>Print</span>
+                <span className="hidden sm:inline">Print</span>
               </Button>
             </div>
           </div>
@@ -1034,24 +1042,21 @@ export default function ReportsPage() {
           <div className="p-3 bg-app-card border-b border-app-border flex items-center justify-between gap-2">
             <div>
               <h2 className="text-xs sm:text-sm font-semibold text-app-text">
-                {t('reports.operationsAudit', 'Operations Audit')} · Work Orders & Diagnostics
+                {t('reports.operationsAudit', 'Operations Audit')}
               </h2>
-              <p className="text-[11px] text-app-muted">
-                Showing {filteredRepairJobs.length} work orders ({activeBounds.label})
-              </p>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Button size="xs" variant="outline" onClick={() => handleExportPdf('Operations')}>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <Button size="xs" variant="outline" onClick={() => handleExportPdf('Operations')} title="Export PDF">
                 <FilePdf size={13} weight="bold" className="text-rose-500" />
-                <span>PDF</span>
+                <span className="hidden sm:inline">PDF</span>
               </Button>
-              <Button size="xs" variant="outline" onClick={() => handleExportExcel('Operations')}>
+              <Button size="xs" variant="outline" onClick={() => handleExportExcel('Operations')} title="Export Excel">
                 <FileXls size={13} weight="bold" className="text-emerald-500" />
-                <span>Excel</span>
+                <span className="hidden sm:inline">Excel</span>
               </Button>
-              <Button size="xs" variant="outline" onClick={() => handlePrint('Operations')}>
+              <Button size="xs" variant="outline" onClick={() => handlePrint('Operations')} title="Print">
                 <Printer size={13} weight="bold" className="text-sky-500" />
-                <span>Print</span>
+                <span className="hidden sm:inline">Print</span>
               </Button>
             </div>
           </div>
@@ -1121,24 +1126,21 @@ export default function ReportsPage() {
           <div className="p-3 bg-app-card border-b border-app-border flex items-center justify-between gap-2">
             <div>
               <h2 className="text-xs sm:text-sm font-semibold text-app-text">
-                {t('reports.inventoryAudit', 'Inventory Audit')} · Stock Valuation & Alerts
+                {t('reports.inventoryAudit', 'Inventory Audit')}
               </h2>
-              <p className="text-[11px] text-app-muted">
-                Showing {filteredInventory.length} spare parts in catalogue
-              </p>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Button size="xs" variant="outline" onClick={() => handleExportPdf('Inventory')}>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <Button size="xs" variant="outline" onClick={() => handleExportPdf('Inventory')} title="Export PDF">
                 <FilePdf size={13} weight="bold" className="text-rose-500" />
-                <span>PDF</span>
+                <span className="hidden sm:inline">PDF</span>
               </Button>
-              <Button size="xs" variant="outline" onClick={() => handleExportExcel('Inventory')}>
+              <Button size="xs" variant="outline" onClick={() => handleExportExcel('Inventory')} title="Export Excel">
                 <FileXls size={13} weight="bold" className="text-emerald-500" />
-                <span>Excel</span>
+                <span className="hidden sm:inline">Excel</span>
               </Button>
-              <Button size="xs" variant="outline" onClick={() => handlePrint('Inventory')}>
+              <Button size="xs" variant="outline" onClick={() => handlePrint('Inventory')} title="Print">
                 <Printer size={13} weight="bold" className="text-sky-500" />
-                <span>Print</span>
+                <span className="hidden sm:inline">Print</span>
               </Button>
             </div>
           </div>
@@ -1241,24 +1243,21 @@ export default function ReportsPage() {
           <div className="p-3 bg-app-card border-b border-app-border flex items-center justify-between gap-2">
             <div>
               <h2 className="text-xs sm:text-sm font-semibold text-app-text">
-                {t('reports.mechanicsAudit', 'Technician Productivity')} · Workload & Labor
+                {t('reports.mechanicsAudit', 'Technician Productivity')}
               </h2>
-              <p className="text-[11px] text-app-muted">
-                Showing {filteredMechanics.length} technicians ({activeBounds.label})
-              </p>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Button size="xs" variant="outline" onClick={() => handleExportPdf('Mechanics')}>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <Button size="xs" variant="outline" onClick={() => handleExportPdf('Mechanics')} title="Export PDF">
                 <FilePdf size={13} weight="bold" className="text-rose-500" />
-                <span>PDF</span>
+                <span className="hidden sm:inline">PDF</span>
               </Button>
-              <Button size="xs" variant="outline" onClick={() => handleExportExcel('Mechanics')}>
+              <Button size="xs" variant="outline" onClick={() => handleExportExcel('Mechanics')} title="Export Excel">
                 <FileXls size={13} weight="bold" className="text-emerald-500" />
-                <span>Excel</span>
+                <span className="hidden sm:inline">Excel</span>
               </Button>
-              <Button size="xs" variant="outline" onClick={() => handlePrint('Mechanics')}>
+              <Button size="xs" variant="outline" onClick={() => handlePrint('Mechanics')} title="Print">
                 <Printer size={13} weight="bold" className="text-sky-500" />
-                <span>Print</span>
+                <span className="hidden sm:inline">Print</span>
               </Button>
             </div>
           </div>
@@ -1323,24 +1322,21 @@ export default function ReportsPage() {
           <div className="p-3 bg-app-card border-b border-app-border flex items-center justify-between gap-2">
             <div>
               <h2 className="text-xs sm:text-sm font-semibold text-app-text">
-                {t('reports.customersAudit', 'Customer Accounts')} · Lifetime Value & Fleet
+                {t('reports.customersAudit', 'Customer Accounts')}
               </h2>
-              <p className="text-[11px] text-app-muted">
-                Showing {filteredCustomers.length} registered customers
-              </p>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Button size="xs" variant="outline" onClick={() => handleExportPdf('Customers')}>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <Button size="xs" variant="outline" onClick={() => handleExportPdf('Customers')} title="Export PDF">
                 <FilePdf size={13} weight="bold" className="text-rose-500" />
-                <span>PDF</span>
+                <span className="hidden sm:inline">PDF</span>
               </Button>
-              <Button size="xs" variant="outline" onClick={() => handleExportExcel('Customers')}>
+              <Button size="xs" variant="outline" onClick={() => handleExportExcel('Customers')} title="Export Excel">
                 <FileXls size={13} weight="bold" className="text-emerald-500" />
-                <span>Excel</span>
+                <span className="hidden sm:inline">Excel</span>
               </Button>
-              <Button size="xs" variant="outline" onClick={() => handlePrint('Customers')}>
+              <Button size="xs" variant="outline" onClick={() => handlePrint('Customers')} title="Print">
                 <Printer size={13} weight="bold" className="text-sky-500" />
-                <span>Print</span>
+                <span className="hidden sm:inline">Print</span>
               </Button>
             </div>
           </div>
@@ -1396,15 +1392,13 @@ export default function ReportsPage() {
             <div className="p-3 bg-app-card border-b border-app-border flex items-center justify-between gap-2">
               <div>
                 <h2 className="text-xs sm:text-sm font-semibold text-app-text">
-                  Official Workshop Audit Reports
+                  Workshop Reports
                 </h2>
-                <p className="text-[11px] text-app-muted">
-                  Standardized operational and compliance reports with instant 1-click export
-                </p>
               </div>
               <Button size="xs" variant="outline" onClick={() => handleExportPdf('All')}>
                 <FilePdf size={13} weight="bold" className="text-rose-500" />
-                <span>Executive PDF</span>
+                <span className="hidden sm:inline">Executive PDF</span>
+                <span className="sm:hidden">PDF</span>
               </Button>
             </div>
 
@@ -1432,33 +1426,36 @@ export default function ReportsPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5 self-end sm:self-center">
+                  <div className="flex items-center gap-1.5 flex-wrap self-end sm:self-center">
                     <Button
                       onClick={() => handleExportPdf(report.category)}
                       variant="outline"
                       size="xs"
                       className="gap-1"
+                      title="Export PDF"
                     >
                       <FilePdf size={12} weight="bold" className="text-rose-500" />
-                      <span>PDF</span>
+                      <span className="hidden sm:inline">PDF</span>
                     </Button>
                     <Button
                       onClick={() => handleExportExcel(report.category)}
                       variant="outline"
                       size="xs"
                       className="gap-1"
+                      title="Export Excel"
                     >
                       <FileXls size={12} weight="bold" className="text-emerald-500" />
-                      <span>Excel</span>
+                      <span className="hidden sm:inline">Excel</span>
                     </Button>
                     <Button
                       onClick={() => handlePrint(report.category)}
                       variant="outline"
                       size="xs"
                       className="gap-1"
+                      title="Print Report"
                     >
                       <Printer size={12} weight="bold" className="text-sky-500" />
-                      <span>Print</span>
+                      <span className="hidden sm:inline">Print</span>
                     </Button>
                   </div>
                 </div>
@@ -1479,7 +1476,8 @@ export default function ReportsPage() {
                 onClick={() => setSelectedCategory('Financial')}
                 className="text-xs text-app-accent hover:underline flex items-center gap-1 font-medium cursor-pointer"
               >
-                <span>View Full Financial Table</span>
+                <span className="hidden sm:inline">View Full Financial Table</span>
+                <span className="sm:hidden">View Full</span>
                 <ArrowUpRight size={12} weight="bold" />
               </button>
             </div>

@@ -45,7 +45,8 @@ export default function UnauthorizedPage() {
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-app-accent hover:bg-app-accentHover active:scale-[0.98] text-app-accentText font-semibold rounded-sm text-xs transition-colors shadow-subtle cursor-pointer"
           >
             <ArrowLeft size={16} weight="bold" />
-            {t('auth.backToHome')}
+            <span className="hidden sm:inline">{t('auth.backToHome')}</span>
+            <span className="sm:hidden">Return Home</span>
           </button>
 
           <button

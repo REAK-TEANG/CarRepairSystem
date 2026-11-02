@@ -16,6 +16,11 @@ if (preg_match('#^/employees/(\d+)/toggle-attendance$#', $path, $m)) {
 
 if (preg_match('#^/employees/(\d+)$#', $path, $m)) {
     $id = (int) $m[1];
+    if ($method === 'GET') {
+        AuthMiddleware::authorize('employees', 'read', $authPayload);
+        $ctrl->show($id);
+        exit;
+    }
     if ($method === 'PUT' || $method === 'PATCH') {
         AuthMiddleware::authorize('employees', 'update', $authPayload);
         $ctrl->update($id);

@@ -140,9 +140,10 @@ export default function RepairJobsPage() {
             onClick={() => setIsIntakeOpen(true)}
             size="sm"
             className="bg-app-accent text-app-accentText hover:bg-app-accentHover font-semibold shadow-xs"
+            title="Fast Vehicle Intake"
           >
             <Plus size={14} weight="bold" />
-            <span>Fast Vehicle Intake</span>
+            <span className="hidden sm:inline">Fast Vehicle Intake</span>
           </Button>
         )}
       </div>
@@ -157,7 +158,7 @@ export default function RepairJobsPage() {
                 setActiveFilter(tab)
                 setPage(1)
               }}
-              className={`px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+              className={`min-h-[44px] sm:min-h-0 sm:py-1 px-3 sm:px-2.5 py-2 inline-flex items-center justify-center rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                 activeFilter === tab
                   ? 'bg-app-accent text-app-accentText font-semibold'
                   : 'text-app-muted hover:text-app-text hover:bg-app-hover'
@@ -405,7 +406,7 @@ export default function RepairJobsPage() {
       {can('repair_jobs', 'create') && (
         <button
           onClick={() => setIsIntakeOpen(true)}
-          className="fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center size-13 rounded-full bg-app-accent text-app-accentText shadow-xl active:scale-95 transition-transform touch-manipulation cursor-pointer border border-white/20"
+          className="fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center w-12 h-12 min-w-[48px] min-h-[48px] rounded-full bg-app-accent text-app-accentText shadow-xl active:scale-95 transition-transform touch-manipulation cursor-pointer border border-white/20"
           aria-label={t('repairJobs.newRepairJob')}
         >
           <Plus size={22} weight="bold" />

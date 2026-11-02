@@ -326,9 +326,10 @@ export default function InventoryPage() {
           <Button
             onClick={handleOpenAdd}
             size="sm"
+            title={t('inventory.addPart')}
           >
             <Plus size={14} weight="bold" />
-            <span>{t('inventory.addPart')}</span>
+            <span className="hidden sm:inline">{t('inventory.addPart')}</span>
           </Button>
         )}
       </div>
@@ -725,6 +726,8 @@ export default function InventoryPage() {
                           if (item.key !== 'custom') setIsTxDateDropdownOpen(false)
                         }}
                         className={`py-1 px-2 text-xs font-semibold rounded transition-colors text-center cursor-pointer ${
+                          item.key === 'custom' ? 'col-span-2' : ''
+                        } ${
                           txDateRange === item.key
                             ? 'bg-app-accent text-app-accentText shadow-xs'
                             : 'text-app-muted hover:text-app-text'
@@ -827,8 +830,9 @@ export default function InventoryPage() {
           }
         />
       ) : (
-        <Table>
-          <TableHeader>
+        <>
+          <Table>
+            <TableHeader>
             <TableRow>
               <TableHead
                 onClick={() => handleToggleTxSort('partName')}
@@ -905,7 +909,7 @@ export default function InventoryPage() {
                 <TableCell>
                   <p className="text-app-text font-medium max-w-sm">{tx.notes || 'Routine stock operation'}</p>
                   {tx.referenceType && (
-                    <span className="text-[10px] text-app-muted uppercase font-mono">
+                    <span className="text-[10px] text-app-muted font-mono">
                       Ref: {tx.referenceType} #{tx.referenceId}
                     </span>
                   )}
@@ -919,6 +923,7 @@ export default function InventoryPage() {
               </TableRow>
             ))}
           </TableBody>
+        </Table>
           <TableFooterBar
             totalCount={filteredTransactions.length}
             page={txPage}
@@ -927,7 +932,7 @@ export default function InventoryPage() {
             onPrev={() => setTxPage((p) => Math.max(1, p - 1))}
             onNext={() => setTxPage((p) => Math.min(txTotalPages, p + 1))}
           />
-        </Table>
+        </>
       )}
     </div>
   )}
@@ -936,7 +941,7 @@ export default function InventoryPage() {
       {can('inventory', 'create') && (
         <button
           onClick={handleOpenAdd}
-          className="fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center size-13 rounded-full bg-app-accent text-app-accentText shadow-xl active:scale-95 transition-transform touch-manipulation cursor-pointer border border-white/20"
+          className="fixed right-4 bottom-20 z-40 md:hidden flex items-center justify-center w-12 h-12 min-w-[48px] min-h-[48px] rounded-full bg-app-accent text-app-accentText shadow-xl active:scale-95 transition-transform touch-manipulation cursor-pointer border border-white/20"
           aria-label={t('inventory.createPart')}
         >
           <Plus size={22} weight="bold" />
@@ -1082,7 +1087,9 @@ export default function InventoryPage() {
               {t('common.cancel')}
             </Button>
             <LoadingButton type="submit" loading={createPartMutation.isPending}>
-              {t('inventory.createPart')}
+              <Plus size={14} weight="bold" className="sm:mr-1" />
+              <span className="hidden sm:inline">{t('inventory.createPart')}</span>
+              <span className="sm:hidden">Add</span>
             </LoadingButton>
           </div>
         </form>
@@ -1286,27 +1293,27 @@ export default function InventoryPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 bg-app-input rounded-sm border border-app-border">
-                <p className="text-[10px] text-app-muted uppercase font-semibold">{t('inventory.stockQty')}</p>
+                <p className="text-xs font-medium text-app-muted">{t('inventory.stockQty')}</p>
                 <p className="text-sm font-bold text-app-text mt-0.5">{selectedPart.stockQty} units</p>
               </div>
               <div className="p-3 bg-app-input rounded-sm border border-app-border">
-                <p className="text-[10px] text-app-muted uppercase font-semibold">{t('inventory.sellingPrice')}</p>
+                <p className="text-xs font-medium text-app-muted">{t('inventory.sellingPrice')}</p>
                 <p className="text-sm font-bold text-app-accent mt-0.5">${Number(selectedPart.unitPrice).toFixed(2)}</p>
               </div>
               <div className="p-3 bg-app-input rounded-sm border border-app-border">
-                <p className="text-[10px] text-app-muted uppercase font-semibold">{t('inventory.brand')}</p>
+                <p className="text-xs font-medium text-app-muted">{t('inventory.brand')}</p>
                 <p className="font-semibold text-app-text mt-0.5">{selectedPart.brand}</p>
               </div>
               <div className="p-3 bg-app-input rounded-sm border border-app-border">
-                <p className="text-[10px] text-app-muted uppercase font-semibold">{t('inventory.category')}</p>
+                <p className="text-xs font-medium text-app-muted">{t('inventory.category')}</p>
                 <p className="font-semibold text-app-text mt-0.5">{selectedPart.category}</p>
               </div>
               <div className="p-3 bg-app-input rounded-sm border border-app-border">
-                <p className="text-[10px] text-app-muted uppercase font-semibold">{t('inventory.supplier')}</p>
+                <p className="text-xs font-medium text-app-muted">{t('inventory.supplier')}</p>
                 <p className="text-app-text mt-0.5">{selectedPart.supplier || 'N/A'}</p>
               </div>
               <div className="p-3 bg-app-input rounded-sm border border-app-border">
-                <p className="text-[10px] text-app-muted uppercase font-semibold">{t('inventory.location')}</p>
+                <p className="text-xs font-medium text-app-muted">{t('inventory.location')}</p>
                 <p className="font-mono text-app-text mt-0.5">{selectedPart.location || 'N/A'}</p>
               </div>
             </div>

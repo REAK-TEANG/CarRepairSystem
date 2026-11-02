@@ -1,5 +1,6 @@
 "use client"
 
+import { CaretLeft, CaretRight } from "@phosphor-icons/react"
 import { cn } from "@/lib/utils"
 
 function Table({
@@ -142,67 +143,72 @@ function TableFooterBar({
   const handleNext = onNext ?? (onPageChange ? () => onPageChange(Math.min(effectiveTotalPages || 1, (effectivePage || 1) + 1)) : undefined)
 
   return (
-    <tfoot data-slot="table-footer-bar" className="border-t border-app-border bg-app-card">
-      <tr>
-        <td colSpan={100} className="p-0">
-          <div
-            className={cn(
-              "flex items-center justify-between px-3.5 py-2.5 bg-app-card text-xs text-app-muted select-none",
-              className
+    <div data-slot="table-footer-bar" className={cn(
+      "flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5 border-t border-app-border bg-app-card text-xs text-app-muted select-none rounded-b-lg",
+      className
+    )}>
+      <div className="flex items-center gap-1.5">
+        {children || (
+          <span>
+            {effectivePage && effectiveTotalCount !== undefined ? (
+              effectiveTotalCount === 0 ? (
+                <>No records found</>
+              ) : (
+                <>
+                  <span className="hidden sm:inline">Showing </span>
+                  <strong className="text-app-text font-semibold">{start}–{end}</strong>
+                  <span className="hidden sm:inline"> of </span>
+                  <span className="sm:hidden text-app-muted/60"> / </span>
+                  <strong className="text-app-text font-semibold">{effectiveTotalCount}</strong>
+                  <span className="hidden sm:inline"> records</span>
+                </>
+              )
+            ) : (
+              <>
+                <span className="hidden sm:inline">Showing </span>
+                <strong className="text-app-text font-semibold">{currentCount ?? effectiveTotalCount ?? 0}</strong>
+                {effectiveTotalCount !== undefined && currentCount !== undefined && effectiveTotalCount !== currentCount ? (
+                  <>
+                    <span className="hidden sm:inline"> of </span>
+                    <span className="sm:hidden text-app-muted/60"> / </span>
+                    <strong className="text-app-text font-semibold">{effectiveTotalCount}</strong>
+                  </>
+                ) : null}{" "}
+                <span className="hidden sm:inline">records</span>
+              </>
             )}
-          >
-            <div className="flex items-center gap-1.5">
-              {children || (
-                <span>
-                  {effectivePage && effectiveTotalCount !== undefined ? (
-                    effectiveTotalCount === 0 ? (
-                      <>No records found</>
-                    ) : (
-                      <>
-                        Showing <strong className="text-app-text font-semibold">{start}–{end}</strong> of{" "}
-                        <strong className="text-app-text font-semibold">{effectiveTotalCount}</strong> records
-                      </>
-                    )
-                  ) : (
-                    <>
-                      Showing <strong className="text-app-text font-semibold">{currentCount ?? effectiveTotalCount ?? 0}</strong>
-                      {effectiveTotalCount !== undefined && currentCount !== undefined && effectiveTotalCount !== currentCount ? (
-                        <> of <strong className="text-app-text font-semibold">{effectiveTotalCount}</strong></>
-                      ) : null}{" "}
-                      records
-                    </>
-                  )}
-                </span>
-              )}
-            </div>
+          </span>
+        )}
+      </div>
 
-            {hasPagination ? (
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  disabled={effectivePage <= 1}
-                  onClick={handlePrev}
-                  className="px-2.5 py-1 rounded-md border border-app-border bg-app-card hover:bg-app-hover disabled:opacity-30 disabled:pointer-events-none transition-all text-app-text font-medium text-xs cursor-pointer active:scale-95 shadow-2xs"
-                >
-                  Prev
-                </button>
-                <span className="text-[11px] text-app-muted font-mono px-1">
-                  <strong className="text-app-text font-semibold">{effectivePage}</strong> / {effectiveTotalPages}
-                </span>
-                <button
-                  type="button"
-                  disabled={effectivePage >= effectiveTotalPages}
-                  onClick={handleNext}
-                  className="px-2.5 py-1 rounded-md border border-app-border bg-app-card hover:bg-app-hover disabled:opacity-30 disabled:pointer-events-none transition-all text-app-text font-medium text-xs cursor-pointer active:scale-95 shadow-2xs"
-                >
-                  Next
-                </button>
-              </div>
-            ) : null}
-          </div>
-        </td>
-      </tr>
-    </tfoot>
+      {hasPagination ? (
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <button
+            type="button"
+            disabled={effectivePage <= 1}
+            onClick={handlePrev}
+            title="Previous page"
+            className="min-h-[38px] sm:min-h-0 px-2.5 sm:px-2.5 py-1.5 sm:py-1 rounded-md border border-app-border bg-app-card hover:bg-app-hover disabled:opacity-30 disabled:pointer-events-none transition-all text-app-text font-medium text-xs cursor-pointer active:scale-95 shadow-2xs touch-manipulation flex items-center gap-1"
+          >
+            <CaretLeft size={14} weight="bold" />
+            <span className="hidden sm:inline">Prev</span>
+          </button>
+          <span className="text-[11px] text-app-muted font-mono px-1">
+            <strong className="text-app-text font-semibold">{effectivePage}</strong> / {effectiveTotalPages}
+          </span>
+          <button
+            type="button"
+            disabled={effectivePage >= effectiveTotalPages}
+            onClick={handleNext}
+            title="Next page"
+            className="min-h-[38px] sm:min-h-0 px-2.5 sm:px-2.5 py-1.5 sm:py-1 rounded-md border border-app-border bg-app-card hover:bg-app-hover disabled:opacity-30 disabled:pointer-events-none transition-all text-app-text font-medium text-xs cursor-pointer active:scale-95 shadow-2xs touch-manipulation flex items-center gap-1"
+          >
+            <span className="hidden sm:inline">Next</span>
+            <CaretRight size={14} weight="bold" />
+          </button>
+        </div>
+      ) : null}
+    </div>
   )
 }
 

@@ -18,6 +18,21 @@ class ServiceReminderModel
         return array_map([self::class, 'format'], $rows);
     }
 
+    public static function findById(int $id): ?array
+    {
+        $r = Database::get("
+          SELECT sr.*,
+                 c.full_name AS customer_name, c.phone AS customer_phone, c.email AS customer_email,
+                 v.brand, v.model, v.vehicle_number, v.mileage AS current_mileage
+          FROM service_reminders sr
+          JOIN customers c ON sr.customer_id = c.id
+          JOIN vehicles  v ON sr.vehicle_id  = v.id
+          WHERE sr.id = ?
+        ", [$id]);
+
+        return $r ? self::format($r) : null;
+    }
+
     public static function create(array $input): array
     {
         Database::run(

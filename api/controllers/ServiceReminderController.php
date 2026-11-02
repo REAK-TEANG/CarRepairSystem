@@ -11,6 +11,17 @@ class ServiceReminderController
         echo json_encode(['data' => ServiceReminderModel::getAll()]);
     }
 
+    public function show(int $id): void
+    {
+        $reminder = ServiceReminderModel::findById($id);
+        if (!$reminder) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Service reminder not found']);
+            return;
+        }
+        echo json_encode(['data' => $reminder]);
+    }
+
     public function store(): void
     {
         $input = Sanitizer::getJsonInput();

@@ -221,7 +221,7 @@ function CommandPaletteDialog({ onClose }) {
   return createPortal(
     <div
       id="portal-command-palette-root"
-      className="fixed inset-0 w-screen h-screen z-[9999999] flex items-start justify-center pt-[12vh] px-4 overflow-hidden"
+      className="fixed inset-0 w-screen h-screen z-[9999999] flex items-start justify-center pt-3 sm:pt-[12vh] px-2 sm:px-4 overflow-hidden"
       role="presentation"
     >
       {/* Backdrop */}
@@ -293,7 +293,7 @@ function CommandPaletteDialog({ onClose }) {
               return (
                 <div key={item.id} className="pt-1">
                   {isFirstInCategory && (
-                    <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-app-muted/80">
+                    <p className="px-3 py-1.5 text-xs font-semibold text-app-muted">
                       {item.category}
                     </p>
                   )}
@@ -301,7 +301,7 @@ function CommandPaletteDialog({ onClose }) {
                     onClick={() => item.action()}
                     onMouseEnter={() => setSelectedIndex(idx)}
                     className={cn(
-                      'flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-colors text-xs select-none gap-3',
+                      'flex items-center justify-between min-h-[44px] px-3 py-2 rounded-lg cursor-pointer transition-colors text-xs select-none gap-3',
                       isSelected
                         ? 'bg-app-accent/15 text-app-accent font-medium'
                         : 'text-app-text hover:bg-app-hover'

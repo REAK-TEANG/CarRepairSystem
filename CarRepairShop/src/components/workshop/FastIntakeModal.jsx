@@ -268,12 +268,14 @@ export default function FastIntakeModal({
               {isNewVehicleMode ? (
                 <>
                   <MagnifyingGlass size={13} weight="bold" />
-                  Search Existing Vehicles
+                  <span className="hidden sm:inline">Search Existing Vehicles</span>
+                  <span className="sm:hidden">Existing</span>
                 </>
               ) : (
                 <>
                   <PlusCircle size={13} weight="bold" />
-                  + New Vehicle / Walk-in
+                  <span className="hidden sm:inline">+ New Vehicle / Walk-in</span>
+                  <span className="sm:hidden">+ New</span>
                 </>
               )}
             </button>
@@ -461,7 +463,7 @@ export default function FastIntakeModal({
                     type="button"
                     onClick={() => setFuelLevel(f)}
                     className={cn(
-                      'py-1.5 px-2 rounded-lg text-xs font-medium border text-center transition-all cursor-pointer',
+                      'min-h-[40px] sm:min-h-0 py-2 sm:py-1.5 px-2 rounded-lg text-xs font-medium border text-center transition-all cursor-pointer flex items-center justify-center',
                       fuelLevel === f
                         ? 'bg-app-accent text-app-accentText border-app-accent font-bold shadow-xs'
                         : 'bg-app-input border-app-border text-app-muted hover:text-app-text hover:bg-app-hover'
@@ -539,7 +541,7 @@ export default function FastIntakeModal({
             <select
               value={priority}
               onChange={(e) => setPriority(e.target.value)}
-              className="w-full h-9 rounded-lg border border-app-border bg-app-input px-3 text-xs text-app-text focus:outline-none focus:border-app-accent"
+              className="w-full min-h-[44px] sm:min-h-0 h-11 sm:h-9 rounded-lg border border-app-border bg-app-input px-3 text-base sm:text-xs text-app-text focus:outline-none focus:border-app-accent transition-colors"
             >
               <option value="Low">Low</option>
               <option value="Medium">Medium (Standard)</option>
@@ -562,15 +564,16 @@ export default function FastIntakeModal({
 
         {/* Actions */}
         <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-app-border">
-          <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
+          <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting} className="min-h-[44px] sm:min-h-0">
             Cancel
           </Button>
           <LoadingButton
             type="submit"
             isLoading={isSubmitting}
-            className="bg-app-accent text-app-accentText hover:bg-app-accentHover font-semibold px-5"
+            className="min-h-[44px] sm:min-h-0 bg-app-accent text-app-accentText hover:bg-app-accentHover font-semibold px-5"
           >
-            Create Job Card &rarr;
+            <span className="hidden sm:inline">Create Job Card &rarr;</span>
+            <span className="sm:hidden">Create Job &rarr;</span>
           </LoadingButton>
         </div>
       </form>

@@ -232,18 +232,20 @@ export function AuthProvider({ children }) {
         })
     }
 
-    // Sync active permissions matrix from PostgreSQL database settings
-    settingsService
-      .getPermissionsMatrix()
-      .then((matrix) => {
-        if (matrix && typeof matrix === 'object') {
-          setPermissionsMatrix(matrix)
-          localStorage.setItem('workshop_permissions_matrix', JSON.stringify(matrix))
-        }
-      })
-      .catch(() => {
-        // ignore network errors on startup
-      })
+    // Sync active permissions matrix from PostgreSQL database settings if authenticated
+    if (token) {
+      settingsService
+        .getPermissionsMatrix()
+        .then((matrix) => {
+          if (matrix && typeof matrix === 'object') {
+            setPermissionsMatrix(matrix)
+            localStorage.setItem('workshop_permissions_matrix', JSON.stringify(matrix))
+          }
+        })
+        .catch(() => {
+          // ignore network errors on startup
+        })
+    }
 
     // Load registered database accounts asynchronously
     authService
@@ -288,6 +290,12 @@ export function AuthProvider({ children }) {
         }
         setCurrentUser(mergedUser)
         localStorage.setItem('auth_user', JSON.stringify(mergedUser))
+        settingsService.getPermissionsMatrix().then((matrix) => {
+          if (matrix && typeof matrix === 'object') {
+            setPermissionsMatrix(matrix)
+            localStorage.setItem('workshop_permissions_matrix', JSON.stringify(matrix))
+          }
+        }).catch(() => {})
         return { success: true, user: mergedUser }
       }
       return { success: false, error: 'Login failed' }
@@ -321,6 +329,12 @@ export function AuthProvider({ children }) {
         }
         setCurrentUser(mergedUser)
         localStorage.setItem('auth_user', JSON.stringify(mergedUser))
+        settingsService.getPermissionsMatrix().then((matrix) => {
+          if (matrix && typeof matrix === 'object') {
+            setPermissionsMatrix(matrix)
+            localStorage.setItem('workshop_permissions_matrix', JSON.stringify(matrix))
+          }
+        }).catch(() => {})
         return mergedUser
       }
       throw new Error('Account not found in database')

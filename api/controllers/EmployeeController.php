@@ -22,6 +22,17 @@ class EmployeeController
         echo json_encode(Pagination::formatResponse($result['data'], $result['total'], $params['page'], $params['limit']));
     }
 
+    public function show(int $id): void
+    {
+        $employee = EmployeeModel::findById($id);
+        if (!$employee) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Employee not found']);
+            return;
+        }
+        echo json_encode(['data' => $employee]);
+    }
+
     public function store(): void
     {
         $input = Sanitizer::getJsonInput();
@@ -54,11 +65,19 @@ class EmployeeController
 
     public function destroy(int $id): void
     {
-        if (!EmployeeModel::delete($id)) {
-            http_response_code(404);
-            echo json_encode(['error' => 'Employee not found']);
-            return;
+        try {
+            if (!EmployeeModel::delete($id)) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Employee not found']);
+                return;
+            }
+            echo json_encode(['success' => true, 'message' => 'Employee removed successfully']);
+        } catch (PDOException $e) {
+            http_response_code(409);
+            echo json_encode([
+                'error' => 'Conflict',
+                'message' => 'Cannot delete employee assigned to active or historical repair jobs.'
+            ]);
         }
-        echo json_encode(['success' => true, 'message' => 'Employee removed successfully']);
     }
 }

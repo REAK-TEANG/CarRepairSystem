@@ -161,12 +161,9 @@ export default function LoginPage() {
           <div className="w-12 h-12 rounded-xl bg-app-accent/15 border border-app-accent/30 flex items-center justify-center text-app-accent mb-3 shadow-xs">
             <Logo size={28} className="text-app-accent" />
           </div>
-          <h1 className="text-xl font-black tracking-[0.2em] uppercase text-app-text font-sans">
+          <h1 className="text-xl font-bold tracking-tight text-app-text font-sans">
             {t('common.appName')}
           </h1>
-          <p className="text-xs text-app-muted mt-1">
-            {t('auth.signInSubtitle')}
-          </p>
         </div>
 
         {/* Form */}
@@ -214,12 +211,12 @@ export default function LoginPage() {
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 placeholder="Password"
-                className="pr-9"
+                className="pr-10"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-app-muted hover:text-app-text transition-colors p-1"
+                className="absolute right-1 top-1/2 -translate-y-1/2 text-app-muted hover:text-app-text transition-colors p-2 min-h-[40px] min-w-[40px] flex items-center justify-center cursor-pointer"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeSlash size={16} /> : <Eye size={16} />}
@@ -231,13 +228,13 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-app-accent hover:bg-app-accentHover active:scale-[0.99] text-app-accentText font-semibold rounded-md text-xs transition-colors disabled:opacity-60 cursor-pointer mt-2"
+            className="w-full min-h-[48px] flex items-center justify-center gap-2 py-3 px-4 bg-app-accent hover:bg-app-accentHover active:scale-[0.99] text-app-accentText font-semibold rounded-md text-sm transition-colors disabled:opacity-60 cursor-pointer mt-2"
           >
             {loading ? (
-              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
             ) : (
               <>
-                <SignIn size={15} weight="bold" />
+                <SignIn size={18} weight="bold" />
                 <span>{t('common.signIn')}</span>
               </>
             )}
@@ -261,7 +258,7 @@ export default function LoginPage() {
                     type="button"
                     disabled={loading}
                     onClick={() => handleAccountSelect(acc)}
-                    className="flex flex-col items-start px-2.5 py-1.5 rounded-md bg-app-hover/50 hover:bg-app-hover border border-app-border hover:border-app-accent/40 text-left transition-colors group disabled:opacity-50 cursor-pointer"
+                    className="min-h-[44px] flex flex-col items-start justify-center px-2.5 py-1.5 rounded-md bg-app-hover/50 hover:bg-app-hover border border-app-border hover:border-app-accent/40 text-left transition-colors group disabled:opacity-50 cursor-pointer"
                   >
                     <span className="text-[11px] font-semibold text-app-text group-hover:text-app-accent transition-colors truncate w-full">
                       {acc.name || acc.username}

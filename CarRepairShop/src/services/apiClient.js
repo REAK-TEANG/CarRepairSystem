@@ -6,16 +6,21 @@
  */
 
 export function getApiBaseUrl() {
-  const envUrl = import.meta.env.VITE_API_URL
-  if (envUrl) return envUrl.replace(/\/+$/, '')
-
   const isBrowser = typeof window !== 'undefined'
   if (isBrowser) {
     // In browser, route via relative /api so all mobile/desktop devices send requests
-    // through the current origin (e.g. port 5173). The Vite dev server proxies /api
-    // to http://127.0.0.1:8000, preventing Windows Firewall from blocking port 8000 on mobile.
+    // through the current origin (e.g. port 5173, LAN IP, or Cloudflare tunnel).
+    // The Vite dev server proxies /api to http://127.0.0.1:8000, preventing Private Network Access
+    // (PNA) blocks, CORS failures, and Windows Firewall drops on mobile devices.
+    const envUrl = import.meta.env.VITE_API_URL
+    if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
+      return envUrl.replace(/\/+$/, '')
+    }
     return `${window.location.origin}/api`
   }
+
+  const envUrl = import.meta.env.VITE_API_URL
+  if (envUrl) return envUrl.replace(/\/+$/, '')
 
   return 'http://127.0.0.1:8000/api'
 }
