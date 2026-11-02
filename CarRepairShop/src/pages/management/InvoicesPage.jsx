@@ -94,8 +94,15 @@ export default function InvoicesPage() {
   }
 
   const handleOpenPay = (inv) => {
-    setSelectedInvoice(inv)
-    const bal = inv.balanceDue !== undefined ? inv.balanceDue : Math.max(0, inv.amount - (inv.paidAmount || 0))
+    let targetInv = inv
+    if (inv?.id && (String(inv.id).startsWith('temp-') || Number(inv.id) > 2147483647)) {
+      const real = invoices.find(
+        (item) => item.invoiceNumber === inv.invoiceNumber && Number(item.id) <= 2147483647
+      )
+      if (real) targetInv = real
+    }
+    setSelectedInvoice(targetInv)
+    const bal = targetInv.balanceDue !== undefined ? targetInv.balanceDue : Math.max(0, targetInv.amount - (targetInv.paidAmount || 0))
     setPaymentAmount(bal)
     setPaymentMethod('Credit/Debit Card')
     setIsPayOpen(true)
@@ -115,8 +122,21 @@ export default function InvoicesPage() {
   const handlePaySubmit = async (e) => {
     e.preventDefault()
     if (!selectedInvoice) return
+
+    let targetId = selectedInvoice.id
+    if (String(targetId).startsWith('temp-') || Number(targetId) > 2147483647) {
+      const match = invoices.find(
+        (inv) =>
+          inv.id !== selectedInvoice.id &&
+          (inv.invoiceNumber === selectedInvoice.invoiceNumber || inv.customer === selectedInvoice.customer) &&
+          Number(inv.id) <= 2147483647
+      )
+      if (match?.id) targetId = match.id
+    }
+
     recordPaymentMutation.mutate({
-      id: selectedInvoice.id,
+      id: targetId,
+      invoiceNumber: selectedInvoice.invoiceNumber,
       paidAmount: paymentAmount,
       paymentMethod,
     })

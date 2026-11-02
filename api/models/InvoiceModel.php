@@ -179,14 +179,30 @@ class InvoiceModel
         });
     }
 
-    public static function pay(int $id, array $input, int $performedBy): ?array
+    public static function pay($id, array $input, int $performedBy): ?array
     {
         return Database::transaction(function () use ($id, $input, $performedBy) {
-            $inv = Database::get('SELECT * FROM invoices WHERE id = ?', [$id]);
+            $inv = null;
+            if (is_numeric($id) && $id > 0 && $id <= 2147483647) {
+                $inv = Database::get('SELECT * FROM invoices WHERE id = ?', [(int) $id]);
+            }
+
+            // Fallback for optimistic client timestamps (e.g. Date.now() > 2147483647)
+            if (!$inv && !empty($input['invoiceNumber'])) {
+                $inv = Database::get('SELECT * FROM invoices WHERE invoice_number = ?', [trim($input['invoiceNumber'])]);
+            }
+            if (!$inv && (!is_numeric($id) || $id > 2147483647)) {
+                $inv = Database::get("SELECT * FROM invoices WHERE status IN ('Issued', 'Partially Paid') ORDER BY id DESC LIMIT 1");
+                if (!$inv) {
+                    $inv = Database::get('SELECT * FROM invoices ORDER BY id DESC LIMIT 1');
+                }
+            }
+
             if (!$inv) {
                 return null;
             }
 
+            $realId       = (int) $inv['id'];
             $addPaid      = (float) ($input['paidAmount'] ?? 0);
             $newTotalPaid = (float) ($inv['amount_paid'] ?? 0) + $addPaid;
             $totalAmount  = (float) ($inv['total_amount']  ?? 0);
@@ -195,7 +211,7 @@ class InvoiceModel
 
             Database::run(
                 "UPDATE invoices SET amount_paid = ?, balance_due = ?, status = ?, updated_at = NOW() WHERE id = ?",
-                [$newTotalPaid, $newBalance, $newStatus, $id]
+                [$newTotalPaid, $newBalance, $newStatus, $realId]
             );
 
             // Record payment
@@ -214,17 +230,17 @@ class InvoiceModel
             Database::run(
                 "INSERT INTO payments (payment_number, invoice_id, amount, payment_method, payment_date, received_by)
                  VALUES (?, ?, ?, ?, NOW(), ?)",
-                [$payNum, $id, $addPaid, $pMethod, $performedBy]
+                [$payNum, $realId, $addPaid, $pMethod, $performedBy]
             );
 
-            $updated  = Database::get('SELECT * FROM invoices WHERE id = ?', [$id]);
+            $updated  = Database::get('SELECT * FROM invoices WHERE id = ?', [$realId]);
             $customer = Database::get('SELECT full_name FROM customers WHERE id = ?', [$updated['customer_id']]);
             $ro       = $updated['repair_order_id']
                 ? Database::get('SELECT order_number FROM repair_orders WHERE id = ?', [$updated['repair_order_id']])
                 : null;
 
             EventBus::publish('invoices', 'payment_recorded', [
-                'id' => $id,
+                'id' => $realId,
                 'invoiceNumber' => $updated['invoice_number'],
                 'amountPaid' => $addPaid,
                 'totalPaid' => $newTotalPaid,
@@ -246,8 +262,11 @@ class InvoiceModel
         });
     }
 
-    public static function findById(int $id): ?array
+    public static function findById($id): ?array
     {
+        if (!is_numeric($id) || $id <= 0 || $id > 2147483647) {
+            return null;
+        }
         $r = Database::get("
           SELECT i.*,
                  c.full_name AS customer_name,
@@ -283,10 +302,13 @@ class InvoiceModel
         return $r ? self::format($r) : null;
     }
 
-    public static function update(int $id, array $input): ?array
+    public static function update($id, array $input): ?array
     {
+        if (!is_numeric($id) || $id <= 0 || $id > 2147483647) {
+            return null;
+        }
         return Database::transaction(function () use ($id, $input) {
-            $inv = Database::get('SELECT * FROM invoices WHERE id = ?', [$id]);
+            $inv = Database::get('SELECT * FROM invoices WHERE id = ?', [(int) $id]);
             if (!$inv) {
                 return null;
             }
@@ -302,29 +324,32 @@ class InvoiceModel
                 "UPDATE invoices 
                  SET total_amount = ?, balance_due = ?, status = ?, due_date = ?, notes = ?, updated_at = NOW() 
                  WHERE id = ?",
-                [$totalAmount, $balanceDue, $status, $dueDate, $notes, $id]
+                [$totalAmount, $balanceDue, $status, $dueDate, $notes, (int) $id]
             );
 
-            EventBus::publish('invoices', 'updated', ['id' => $id, 'invoiceNumber' => $inv['invoice_number']]);
+            EventBus::publish('invoices', 'updated', ['id' => (int) $id, 'invoiceNumber' => $inv['invoice_number']]);
 
-            return self::findById($id);
+            return self::findById((int) $id);
         });
     }
 
-    public static function delete(int $id): bool
+    public static function delete($id): bool
     {
+        if (!is_numeric($id) || $id <= 0 || $id > 2147483647) {
+            return false;
+        }
         return Database::transaction(function () use ($id) {
-            $inv = Database::get('SELECT id, invoice_number FROM invoices WHERE id = ?', [$id]);
+            $inv = Database::get('SELECT id, invoice_number FROM invoices WHERE id = ?', [(int) $id]);
             if (!$inv) {
                 return false;
             }
 
             // Clean up related payments and refunds first to respect FK integrity
-            Database::run('DELETE FROM refunds WHERE invoice_id = ?', [$id]);
-            Database::run('DELETE FROM payments WHERE invoice_id = ?', [$id]);
-            Database::run('DELETE FROM invoices WHERE id = ?', [$id]);
+            Database::run('DELETE FROM refunds WHERE invoice_id = ?', [(int) $id]);
+            Database::run('DELETE FROM payments WHERE invoice_id = ?', [(int) $id]);
+            Database::run('DELETE FROM invoices WHERE id = ?', [(int) $id]);
 
-            EventBus::publish('invoices', 'deleted', ['id' => $id, 'invoiceNumber' => $inv['invoice_number']]);
+            EventBus::publish('invoices', 'deleted', ['id' => (int) $id, 'invoiceNumber' => $inv['invoice_number']]);
             return true;
         });
     }

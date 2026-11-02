@@ -8,14 +8,14 @@ $ctrl        = new InvoiceController();
 $method      = $_SERVER['REQUEST_METHOD'];
 
 if (preg_match('#^/invoices/(\d+)/(?:pay|payments)$#', $path, $m)) {
-    $id = (int) $m[1];
+    $id = is_numeric($m[1]) ? (float) $m[1] : 0;
     AuthMiddleware::authorize('invoices', 'update', $authPayload);
     $ctrl->pay($id, $authPayload);
     exit;
 }
 
 if (preg_match('#^/invoices/(\d+)$#', $path, $m)) {
-    $id = (int) $m[1];
+    $id = is_numeric($m[1]) ? (float) $m[1] : 0;
     if ($method === 'GET') {
         AuthMiddleware::authorize('invoices', 'read', $authPayload);
         $ctrl->show($id);

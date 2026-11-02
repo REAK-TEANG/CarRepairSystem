@@ -22,7 +22,7 @@ class InvoiceController
         echo json_encode(Pagination::formatResponse($result['data'], $result['total'], $params['page'], $params['limit']));
     }
 
-    public function show(int $id): void
+    public function show($id): void
     {
         $invoice = InvoiceModel::findById($id);
         if (!$invoice) {
@@ -40,7 +40,7 @@ class InvoiceController
         echo json_encode(['data' => InvoiceModel::create($input)]);
     }
 
-    public function update(int $id): void
+    public function update($id): void
     {
         $input   = Sanitizer::getJsonInput();
         $updated = InvoiceModel::update($id, $input);
@@ -52,7 +52,7 @@ class InvoiceController
         echo json_encode(['data' => $updated]);
     }
 
-    public function destroy(int $id): void
+    public function destroy($id): void
     {
         try {
             if (!InvoiceModel::delete($id)) {
@@ -70,7 +70,7 @@ class InvoiceController
         }
     }
 
-    public function pay(int $id, array $authPayload): void
+    public function pay($id, array $authPayload): void
     {
         $input   = Sanitizer::getJsonInput();
         $updated = InvoiceModel::pay($id, $input, (int) ($authPayload['id'] ?? 0));

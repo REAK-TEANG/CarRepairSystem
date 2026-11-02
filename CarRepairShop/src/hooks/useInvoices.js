@@ -93,7 +93,29 @@ export function useCreateInvoice() {
         updateListWithInsert(old, optimisticItem)
       )
       addToast(`Invoice ${optimisticItem.invoiceNumber} generated`, 'success')
-      return { previousSnapshots }
+      return { previousSnapshots, optimisticId: optimisticItem.id }
+    },
+    onSuccess: (res, newInvoice, context) => {
+      const realInvoice = res?.data || res
+      if (realInvoice?.id) {
+        queryClient.setQueriesData({ queryKey: QUERY_KEY }, (old) => {
+          if (!old) return old
+          if (Array.isArray(old)) {
+            return old.map((item) =>
+              item.id === context?.optimisticId ? { ...item, ...realInvoice } : item
+            )
+          }
+          if (Array.isArray(old.data)) {
+            return {
+              ...old,
+              data: old.data.map((item) =>
+                item.id === context?.optimisticId ? { ...item, ...realInvoice } : item
+              ),
+            }
+          }
+          return old
+        })
+      }
     },
     onError: (err, newInvoice, context) => {
       if (context?.previousSnapshots) {
@@ -118,8 +140,8 @@ export function useRecordPayment() {
   const { addToast } = useToast()
 
   return useMutation({
-    mutationFn: ({ id, paidAmount, paymentMethod }) =>
-      invoiceService.recordPayment(id, { paidAmount, paymentMethod }),
+    mutationFn: ({ id, invoiceNumber, paidAmount, paymentMethod }) =>
+      invoiceService.recordPayment(id, { paidAmount, paymentMethod, invoiceNumber }),
     onMutate: async ({ id, paidAmount, paymentMethod }) => {
       await queryClient.cancelQueries({ queryKey: QUERY_KEY })
       const previousSnapshots = queryClient.getQueriesData({ queryKey: QUERY_KEY })

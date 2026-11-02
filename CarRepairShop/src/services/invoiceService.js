@@ -5,8 +5,8 @@ const crud = createCrudService('/invoices')
 
 export const invoiceService = {
   ...crud,
-  async recordPayment(id, { paidAmount, paymentMethod }) {
-    return apiClient.post(`/invoices/${id}/payments`, { paidAmount, paymentMethod })
+  async recordPayment(id, { paidAmount, paymentMethod, invoiceNumber }) {
+    return apiClient.post(`/invoices/${id}/payments`, { paidAmount, paymentMethod, invoiceNumber })
   },
 }
 
