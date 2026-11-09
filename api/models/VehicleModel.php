@@ -65,16 +65,18 @@ class VehicleModel
 
     public static function create(array $input): array
     {
-        $customerId  = self::resolveCustomerId($input['ownerId'] ?? null);
+        $ownerId     = !empty($input['customerId']) ? (int) $input['customerId'] : (!empty($input['ownerId']) ? (int) $input['ownerId'] : null);
+        $customerId  = self::resolveCustomerId($ownerId);
         $normalFuel  = self::normalizeFuel($input['fuelType'] ?? '');
         $photoUrl    = $input['image'] ?? $input['photoUrl'] ?? null;
+        $plate       = trim($input['plate'] ?? $input['plateNumber'] ?? $input['vehicleNumber'] ?? $input['number'] ?? $input['licensePlate'] ?? '');
 
         Database::run(
             "INSERT INTO vehicles (customer_id, vehicle_number, vin, brand, model, year, color, fuel_type, mileage, photo_url, notes)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
                 $customerId,
-                trim($input['number'] ?? ''),
+                $plate,
                 $input['vin']    ?? null,
                 $input['brand']  ?? null,
                 $input['model']  ?? null,
@@ -89,26 +91,35 @@ class VehicleModel
 
         $inserted = Database::get(
             'SELECT * FROM vehicles WHERE vehicle_number = ? ORDER BY id DESC LIMIT 1',
-            [trim($input['number'] ?? '')]
+            [$plate]
         );
-        $customer = Database::get('SELECT full_name FROM customers WHERE id = ?', [$inserted['customer_id']]);
+        if (!$inserted) {
+            $inserted = Database::get('SELECT * FROM vehicles ORDER BY id DESC LIMIT 1');
+        }
+        $customer = ($inserted && !empty($inserted['customer_id']))
+            ? Database::get('SELECT full_name FROM customers WHERE id = ?', [$inserted['customer_id']])
+            : null;
 
-        EventBus::publish('vehicles', 'created', [
-            'id' => $inserted['id'],
-            'vehicleNumber' => $inserted['vehicle_number'],
-            'brand' => $inserted['brand'],
-            'model' => $inserted['model'],
-            'customerId' => $inserted['customer_id'],
-        ]);
+        if ($inserted) {
+            EventBus::publish('vehicles', 'created', [
+                'id' => $inserted['id'],
+                'vehicleNumber' => $inserted['vehicle_number'],
+                'brand' => $inserted['brand'],
+                'model' => $inserted['model'],
+                'customerId' => $inserted['customer_id'],
+            ]);
+        }
 
-        return self::format(array_merge($inserted, ['customer_name' => $customer['full_name'] ?? '']));
+        return self::format(array_merge($inserted ?: [], ['customer_name' => $customer['full_name'] ?? '']));
     }
 
     public static function update(int $id, array $input): ?array
     {
-        $customerId = !empty($input['ownerId']) ? self::resolveCustomerId($input['ownerId']) : null;
+        $ownerId    = !empty($input['customerId']) ? (int) $input['customerId'] : (!empty($input['ownerId']) ? (int) $input['ownerId'] : null);
+        $customerId = $ownerId ? self::resolveCustomerId($ownerId) : null;
         $normalFuel = !empty($input['fuelType']) ? self::normalizeFuel($input['fuelType']) : null;
         $photoUrl   = $input['image'] ?? $input['photoUrl'] ?? null;
+        $plate      = isset($input['plate']) ? $input['plate'] : ($input['plateNumber'] ?? $input['vehicleNumber'] ?? $input['number'] ?? $input['licensePlate'] ?? null);
 
         Database::run(
             "UPDATE vehicles
@@ -126,7 +137,7 @@ class VehicleModel
                  updated_at     = NOW()
              WHERE id = ?",
             [
-                $input['number'] ?? null,
+                $plate,
                 $input['vin']    ?? null,
                 $input['brand']  ?? null,
                 $input['model']  ?? null,
@@ -200,19 +211,21 @@ class VehicleModel
     private static function format(array $r): array
     {
         return [
-            'id'       => $r['id'],
-            'number'   => $r['vehicle_number'],
-            'vin'      => $r['vin']       ?? '',
-            'brand'    => $r['brand']     ?? '',
-            'model'    => $r['model']     ?? '',
-            'year'     => (int) ($r['year']    ?? 2022),
-            'color'    => $r['color']     ?? '',
-            'fuelType' => $r['fuel_type'] ?? 'Gasoline',
-            'mileage'  => (int) ($r['mileage'] ?? 0),
-            'image'    => $r['photo_url'] ?? $r['image'] ?? '',
-            'owner'    => $r['customer_name'] ?? 'Owner',
-            'ownerId'  => $r['customer_id'],
-            'notes'    => $r['notes']     ?? '',
+            'id'         => $r['id'],
+            'number'     => $r['vehicle_number'],
+            'plate'      => $r['vehicle_number'],
+            'vin'        => $r['vin']       ?? '',
+            'brand'      => $r['brand']     ?? '',
+            'model'      => $r['model']     ?? '',
+            'year'       => (int) ($r['year']    ?? 2022),
+            'color'      => $r['color']     ?? '',
+            'fuelType'   => $r['fuel_type'] ?? 'Gasoline',
+            'mileage'    => (int) ($r['mileage'] ?? 0),
+            'image'      => $r['photo_url'] ?? $r['image'] ?? '',
+            'owner'      => $r['customer_name'] ?? 'Owner',
+            'ownerId'    => $r['customer_id'],
+            'customerId' => $r['customer_id'],
+            'notes'      => $r['notes']     ?? '',
         ];
     }
 }

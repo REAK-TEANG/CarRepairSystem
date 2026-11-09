@@ -82,11 +82,12 @@ class CustomerModel
     {
         $code     = generateUniqueCode('customers', 'customer_code', 'CUST', 3);
 
+        $customerName = trim($input['name'] ?? $input['fullName'] ?? $input['customerName'] ?? '');
         Database::run(
             "INSERT INTO customers (customer_code, full_name, phone, email, address, notes) VALUES (?, ?, ?, ?, ?, ?)",
             [
                 $code,
-                trim($input['name'] ?? ''),
+                $customerName,
                 $input['phone']   ?? null,
                 $input['email']   ?? null,
                 $input['address'] ?? null,
@@ -103,6 +104,7 @@ class CustomerModel
 
     public static function update(int $id, array $input): ?array
     {
+        $updatedName = isset($input['name']) ? $input['name'] : ($input['fullName'] ?? $input['customerName'] ?? null);
         Database::run(
             "UPDATE customers
              SET full_name = COALESCE(?, full_name),
@@ -113,7 +115,7 @@ class CustomerModel
                  updated_at = NOW()
              WHERE id = ?",
             [
-                $input['name']    ?? null,
+                $updatedName,
                 $input['phone']   ?? null,
                 $input['email']   ?? null,
                 $input['address'] ?? null,

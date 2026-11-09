@@ -35,9 +35,15 @@ class InvoiceController
 
     public function store(): void
     {
-        $input = Sanitizer::getJsonInput();
-        http_response_code(201);
-        echo json_encode(['data' => InvoiceModel::create($input)]);
+        try {
+            $input = Sanitizer::getJsonInput();
+            $invoice = InvoiceModel::create($input);
+            http_response_code(201);
+            echo json_encode(['data' => $invoice]);
+        } catch (\InvalidArgumentException $e) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Bad Request', 'message' => $e->getMessage()]);
+        }
     }
 
     public function update($id): void

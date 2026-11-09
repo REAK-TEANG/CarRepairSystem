@@ -35,7 +35,8 @@ class CustomerController
     public function store(): void
     {
         $input = Sanitizer::getJsonInput();
-        if (!trim($input['name'] ?? '')) {
+        $name = trim($input['name'] ?? $input['fullName'] ?? $input['customerName'] ?? '');
+        if (!$name) {
             http_response_code(400);
             echo json_encode(['error' => 'Customer name is required']);
             return;

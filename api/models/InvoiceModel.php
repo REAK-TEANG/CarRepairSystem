@@ -122,7 +122,16 @@ class InvoiceModel
             $roId   = (!empty($input['repairOrderId']) && is_numeric($input['repairOrderId'])) ? (int) $input['repairOrderId'] : null;
             $custId = (!empty($input['customerId']) && is_numeric($input['customerId'])) ? (int) $input['customerId'] : null;
 
-            // Resolve repair order
+            // Validate roId exists
+            if ($roId) {
+                $checkRo = Database::get('SELECT id, customer_id FROM repair_orders WHERE id = ?', [$roId]);
+                if ($checkRo) {
+                    $roId   = (int) $checkRo['id'];
+                    $custId = $custId ?? ($checkRo['customer_id'] ? (int) $checkRo['customer_id'] : null);
+                } else {
+                    $roId = null;
+                }
+            }
             if (!$roId && (!empty($input['orderNumber']))) {
                 $foundRo = Database::get('SELECT id, customer_id FROM repair_orders WHERE order_number = ?', [trim($input['orderNumber'])]);
                 if ($foundRo) {
@@ -132,12 +141,28 @@ class InvoiceModel
             }
             if (!$roId) {
                 $anyRo  = Database::get('SELECT id, customer_id FROM repair_orders ORDER BY id DESC LIMIT 1');
-                $roId   = $anyRo ? (int) $anyRo['id'] : 1;
-                $custId = $custId ?? ($anyRo['customer_id'] ? (int) $anyRo['customer_id'] : null);
+                if ($anyRo) {
+                    $roId   = (int) $anyRo['id'];
+                    $custId = $custId ?? ($anyRo['customer_id'] ? (int) $anyRo['customer_id'] : null);
+                }
+            }
+
+            // Validate custId exists
+            if ($custId) {
+                $checkCust = Database::get('SELECT id FROM customers WHERE id = ?', [$custId]);
+                if (!$checkCust) {
+                    $custId = null;
+                }
             }
             if (!$custId) {
                 $anyCust = Database::get('SELECT id FROM customers ORDER BY id LIMIT 1');
-                $custId  = $anyCust ? (int) $anyCust['id'] : 1;
+                if ($anyCust) {
+                    $custId  = (int) $anyCust['id'];
+                }
+            }
+
+            if (!$roId || !$custId) {
+                throw new \InvalidArgumentException('Cannot create invoice: A valid repair order and customer are required.');
             }
 
             $dueDate = !empty($input['dueDate']) ? $input['dueDate'] : null;

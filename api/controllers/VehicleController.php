@@ -35,7 +35,8 @@ class VehicleController
     public function store(): void
     {
         $input = Sanitizer::getJsonInput();
-        if (!trim($input['number'] ?? '')) {
+        $plate = trim($input['plate'] ?? $input['plateNumber'] ?? $input['vehicleNumber'] ?? $input['number'] ?? $input['licensePlate'] ?? '');
+        if (!$plate) {
             http_response_code(400);
             echo json_encode(['error' => 'Vehicle license plate number is required']);
             return;
