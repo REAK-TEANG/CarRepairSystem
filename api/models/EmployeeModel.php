@@ -5,11 +5,11 @@ class EmployeeModel
 {
     private static function ensureSchema(): void
     {
-        static $checked = false;
-        if ($checked) return;
-        $checked = true;
+        $flag = sys_get_temp_dir() . '/carrepair_employees_v2.flag';
+        if (file_exists($flag)) return;
         try {
             Database::run("ALTER TABLE employees ADD COLUMN IF NOT EXISTS department VARCHAR(100) DEFAULT 'Workshop'");
+            @file_put_contents($flag, '1');
         } catch (\Throwable $e) {
             // Non-blocking schema safeguard
         }

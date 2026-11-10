@@ -113,6 +113,8 @@ export default function AppointmentsPage() {
   }
 
   const handleIntakeSuccess = (createdJob) => {
+    setIsIntakeOpen(false)
+    setIntakeInitialData(null)
     if (intakeInitialData?.id) {
       updateAptMutation.mutate({ id: intakeInitialData.id, data: { status: 'In Progress' } })
     }

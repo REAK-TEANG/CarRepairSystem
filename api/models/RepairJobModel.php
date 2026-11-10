@@ -7,9 +7,8 @@ class RepairJobModel
 {
     private static function ensureSchema(): void
     {
-        static $checked = false;
-        if ($checked) return;
-        $checked = true;
+        $flag = sys_get_temp_dir() . '/carrepair_repair_orders_v2.flag';
+        if (file_exists($flag)) return;
         try {
             Database::run("
                 ALTER TABLE repair_orders 
@@ -37,6 +36,7 @@ class RepairJobModel
                 CREATE UNIQUE INDEX IF NOT EXISTS idx_repair_parts_ro_sp_uniq 
                 ON repair_parts (repair_order_id, spare_part_id)
             ");
+            @file_put_contents($flag, '1');
         } catch (\Throwable $e) {
             // Non-blocking schema safeguard
         }

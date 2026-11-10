@@ -168,6 +168,8 @@ export default function VehiclesPage() {
   }
 
   const handleIntakeSuccess = (createdJob) => {
+    setIsIntakeOpen(false)
+    setIntakeInitialData(null)
     addToast(`Repair Order ${createdJob.orderNumber || ''} created successfully!`, 'success')
     setActiveJobForDrawer(createdJob)
     setIsJobDrawerOpen(true)

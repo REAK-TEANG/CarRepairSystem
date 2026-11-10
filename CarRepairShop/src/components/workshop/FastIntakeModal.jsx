@@ -225,14 +225,19 @@ export default function FastIntakeModal({
       const res = await createJobMutation.mutateAsync(jobPayload)
       const createdJob = res.data || res
 
-      setIsSubmitting(false)
       handleClose()
-      onSuccess?.({
-        ...createdJob,
-        customer: targetCustomerName,
-        plate: targetPlate,
-        vehicle: targetVehicleName,
-      })
+      if (onSuccess) {
+        try {
+          onSuccess({
+            ...createdJob,
+            customer: targetCustomerName,
+            plate: targetPlate,
+            vehicle: targetVehicleName,
+          })
+        } catch (callbackErr) {
+          console.error('FastIntakeModal onSuccess callback error:', callbackErr)
+        }
+      }
     } catch (err) {
       setError(err?.message || 'Failed to create repair order. Please check inputs.')
     } finally {

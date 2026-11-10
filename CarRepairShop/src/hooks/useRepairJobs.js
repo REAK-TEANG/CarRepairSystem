@@ -86,7 +86,6 @@ export function useCreateRepairJob() {
       queryClient.setQueriesData({ queryKey: ['repair_jobs'] }, (old) =>
         updateListWithInsert(old, optimisticItem)
       )
-      addToast(`Work Order ${optimisticItem.orderNumber} created (Stock automatically adjusted)`, 'success')
       return { previousSnapshots }
     },
     onError: (err, newJob, context) => {
