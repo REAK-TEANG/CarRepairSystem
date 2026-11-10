@@ -7,7 +7,29 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- 2. Ensure Roles Exist
+-- 2. Add Missing Columns to Core Tables (Required by backend models)
+ALTER TABLE IF EXISTS employees 
+    ADD COLUMN IF NOT EXISTS department VARCHAR(100) DEFAULT 'Workshop';
+
+ALTER TABLE IF EXISTS repair_orders 
+    ADD COLUMN IF NOT EXISTS odometer INT DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS fuel_level VARCHAR(20) DEFAULT '1/2',
+    ADD COLUMN IF NOT EXISTS intake_inspection JSONB DEFAULT '{}'::jsonb,
+    ADD COLUMN IF NOT EXISTS qa_checklist JSONB DEFAULT '{}'::jsonb,
+    ADD COLUMN IF NOT EXISTS labor_minutes INT DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS labor_rate NUMERIC(10,2) DEFAULT 45.00,
+    ADD COLUMN IF NOT EXISTS customer_approval VARCHAR(50) DEFAULT 'Approved',
+    ADD COLUMN IF NOT EXISTS approved_amount NUMERIC(12,2) DEFAULT 0.00,
+    ADD COLUMN IF NOT EXISTS next_service_due_date DATE,
+    ADD COLUMN IF NOT EXISTS next_service_due_km INT;
+
+ALTER TABLE IF EXISTS spare_parts 
+    ADD COLUMN IF NOT EXISTS photo_url TEXT;
+
+ALTER TABLE IF EXISTS services 
+    ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+
+-- 3. Ensure Roles Exist
 INSERT INTO roles (id, name, description) VALUES
     (1, 'Admin', 'Full administrative access across all workshop operations'),
     (2, 'Manager', 'Workshop workflow oversight, scheduling, and staff dispatch'),
@@ -19,7 +41,7 @@ ON CONFLICT (id) DO UPDATE
 SET name = EXCLUDED.name, 
     description = EXCLUDED.description;
 
--- 3. Ensure Verified RBAC User Accounts with Working Bcrypt Hashes
+-- 4. Ensure Verified RBAC User Accounts with Working Bcrypt Hashes
 -- Password for admin: 'admin123'
 -- Password for all staff accounts: 'password123'
 
@@ -38,7 +60,7 @@ SET password_hash = EXCLUDED.password_hash,
     full_name = EXCLUDED.full_name,
     is_active = TRUE;
 
--- 4. Disable Row Level Security (RLS) on Application Tables to prevent blocking API queries
+-- 5. Disable Row Level Security (RLS) on Application Tables to prevent blocking API queries
 DO $$ 
 DECLARE 
     t text;
@@ -57,7 +79,11 @@ BEGIN
     END LOOP;
 END $$;
 
--- 5. Verification Query: Confirm user accounts are active and properly hashed
+-- 6. Verification Queries: Confirm department column exists and accounts are active
+SELECT column_name, data_type 
+FROM information_schema.columns 
+WHERE table_name = 'employees' AND column_name = 'department';
+
 SELECT u.id, u.username, u.email, r.name as role, u.is_active, 
        CASE WHEN u.password_hash IS NOT NULL THEN 'CONFIGURED' ELSE 'MISSING' END as password_status
 FROM users u

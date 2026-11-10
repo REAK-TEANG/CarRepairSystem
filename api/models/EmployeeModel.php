@@ -3,8 +3,21 @@
 
 class EmployeeModel
 {
+    private static function ensureSchema(): void
+    {
+        static $checked = false;
+        if ($checked) return;
+        $checked = true;
+        try {
+            Database::run("ALTER TABLE employees ADD COLUMN IF NOT EXISTS department VARCHAR(100) DEFAULT 'Workshop'");
+        } catch (\Throwable $e) {
+            // Non-blocking schema safeguard
+        }
+    }
+
     public static function getAll(): array
     {
+        self::ensureSchema();
         $rows = Database::all("
           SELECT e.*, u.full_name, u.phone, u.email, u.role_id, r.name AS role_name
           FROM employees e
@@ -18,6 +31,7 @@ class EmployeeModel
 
     public static function getPaginated(string $search = '', int $page = 1, int $limit = 10, ?string $status = null): array
     {
+        self::ensureSchema();
         $countSql = "
           SELECT COUNT(e.id) AS cnt
           FROM employees e
@@ -79,6 +93,7 @@ class EmployeeModel
 
     public static function create(array $input): array
     {
+        self::ensureSchema();
         $name     = trim($input['name'] ?? '');
         $phone    = $input['phone'] ?? null;
         $email    = $input['email'] ?? null;
