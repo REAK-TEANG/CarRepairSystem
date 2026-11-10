@@ -52,8 +52,9 @@ if ($envClient = getenv('CLIENT_URL')) {
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 $isDev = (getenv('APP_ENV') ?: 'development') === 'development';
 $isVercelOrigin = (bool) preg_match('#^https://[a-zA-Z0-9\-_.]+\.vercel\.app$#i', $origin);
+$isLocalNetwork = (bool) preg_match('#^https?://(?:localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(?:1[6-9]|2\d|3[0-1])\.\d+\.\d+)(?::\d+)?$#', $origin);
 
-if ($origin && (in_array($origin, $allowedOrigins) || $isVercelOrigin || $isDev)) {
+if ($origin && (in_array($origin, $allowedOrigins) || $isVercelOrigin || $isDev || $isLocalNetwork)) {
     header("Access-Control-Allow-Origin: $origin");
     header("Access-Control-Allow-Credentials: true");
     header("Vary: Origin");

@@ -67,6 +67,7 @@ export default function AppLayout() {
       <FastIntakeModal
         isOpen={fastIntakeModalOpen}
         onClose={() => setFastIntakeModalOpen(false)}
+        onSuccess={() => setFastIntakeModalOpen(false)}
       />
 
       {/* Global Universal Spotlight Command Palette */}

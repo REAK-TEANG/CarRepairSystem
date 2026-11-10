@@ -15,6 +15,9 @@ import { Modal, Button, Input, Textarea, SearchableSelect, LoadingButton } from 
 import { customerService } from '@/services/customerService'
 import { vehicleService } from '@/services/vehicleService'
 import { useCreateRepairJob } from '@/hooks/useRepairJobs'
+import { useVehicles } from '@/hooks/useVehicles'
+import { useMechanics } from '@/hooks/useMechanics'
+import { useAppStore } from '@/store/useAppStore'
 import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 
@@ -43,13 +46,19 @@ export default function FastIntakeModal({
   const queryClient = useQueryClient()
   const createJobMutation = useCreateRepairJob()
 
+  // Fallback to fetch vehicles & mechanics if not passed from parent page
+  const { data: fallbackVehicles = [] } = useVehicles({ all: true }, { enabled: !!isOpen && vehicles.length === 0 })
+  const { data: fallbackMechanics = [] } = useMechanics({ all: true }, { enabled: !!isOpen && mechanics.length === 0 })
+  const activeVehicles = vehicles.length > 0 ? vehicles : (Array.isArray(fallbackVehicles?.data) ? fallbackVehicles.data : (Array.isArray(fallbackVehicles) ? fallbackVehicles : []))
+  const activeMechanics = mechanics.length > 0 ? mechanics : (Array.isArray(fallbackMechanics?.data) ? fallbackMechanics.data : (Array.isArray(fallbackMechanics) ? fallbackMechanics : []))
+
   // State
   const [selectedVehicle, setSelectedVehicle] = useState(() => {
     if (initialData?.vehicleId) {
-      return vehicles.find((v) => String(v.id) === String(initialData.vehicleId)) || null
+      return activeVehicles.find((v) => String(v.id) === String(initialData.vehicleId)) || null
     }
     if (initialData?.plate) {
-      return vehicles.find((v) => v.number?.toLowerCase() === initialData.plate.toLowerCase()) || null
+      return activeVehicles.find((v) => v.number?.toLowerCase() === initialData.plate.toLowerCase()) || null
     }
     return null
   })
@@ -78,14 +87,14 @@ export default function FastIntakeModal({
   const matchingVehicles = useMemo(() => {
     if (!plateSearch.trim()) return []
     const q = plateSearch.toLowerCase().trim()
-    return vehicles.filter(
+    return activeVehicles.filter(
       (v) =>
         v.number?.toLowerCase().includes(q) ||
         v.brand?.toLowerCase().includes(q) ||
         v.model?.toLowerCase().includes(q) ||
         v.customerName?.toLowerCase().includes(q)
     )
-  }, [vehicles, plateSearch])
+  }, [activeVehicles, plateSearch])
 
   // Select an existing vehicle
   const handleSelectVehicle = (vehicle) => {
@@ -127,7 +136,8 @@ export default function FastIntakeModal({
 
   const handleClose = () => {
     handleReset()
-    onClose()
+    onClose?.()
+    useAppStore.getState().setFastIntakeModalOpen(false)
   }
 
   // Submit Fast Intake
@@ -215,6 +225,7 @@ export default function FastIntakeModal({
       const res = await createJobMutation.mutateAsync(jobPayload)
       const createdJob = res.data || res
 
+      setIsSubmitting(false)
       handleClose()
       onSuccess?.({
         ...createdJob,
@@ -229,7 +240,7 @@ export default function FastIntakeModal({
     }
   }
 
-  const mechanicOptions = mechanics.map((m) => ({
+  const mechanicOptions = activeMechanics.map((m) => ({
     value: m.id,
     label: m.name,
     sublabel: m.specialty || m.role || 'Mechanic',

@@ -88,6 +88,7 @@ export default function RepairJobsPage() {
   }
 
   const handleIntakeSuccess = (createdJob) => {
+    setIsIntakeOpen(false)
     addToast(`Repair Order ${createdJob.orderNumber || ''} created!`, 'success')
     setSelectedJob(createdJob)
     setIsDrawerOpen(true)
