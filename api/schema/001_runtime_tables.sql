@@ -42,6 +42,34 @@ CREATE TABLE IF NOT EXISTS user_sessions (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Databases created from migration 002 already have an older user_sessions table (token,
+-- expires_at, no status), so CREATE TABLE above is skipped for them. Upgrade it in place.
+ALTER TABLE user_sessions
+    ADD COLUMN IF NOT EXISTS session_token_hash VARCHAR(64),
+    ADD COLUMN IF NOT EXISTS device_type VARCHAR(50) DEFAULT 'Desktop',
+    ADD COLUMN IF NOT EXISTS current_route VARCHAR(255) DEFAULT '/',
+    ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'active',
+    ADD COLUMN IF NOT EXISTS close_reason VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS login_at TIMESTAMPTZ DEFAULT NOW(),
+    ADD COLUMN IF NOT EXISTS last_activity_at TIMESTAMPTZ DEFAULT NOW(),
+    ADD COLUMN IF NOT EXISTS logout_at TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
+-- The old columns are no longer written; stop them from rejecting new rows.
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema = current_schema() AND table_name = 'user_sessions' AND column_name = 'token') THEN
+        ALTER TABLE user_sessions ALTER COLUMN token DROP NOT NULL;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema = current_schema() AND table_name = 'user_sessions' AND column_name = 'expires_at') THEN
+        ALTER TABLE user_sessions ALTER COLUMN expires_at DROP NOT NULL;
+    END IF;
+END $$;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_user_sessions_token_hash ON user_sessions(session_token_hash);
 CREATE INDEX IF NOT EXISTS idx_user_sessions_user_status ON user_sessions(user_id, status);
 CREATE INDEX IF NOT EXISTS idx_user_sessions_last_activity ON user_sessions(last_activity_at DESC);
 CREATE INDEX IF NOT EXISTS idx_user_sessions_login_at ON user_sessions(login_at DESC);
