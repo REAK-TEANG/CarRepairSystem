@@ -4,6 +4,7 @@
 require_once __DIR__ . '/../models/InvoiceModel.php';
 require_once __DIR__ . '/../utils/sanitizer.php';
 require_once __DIR__ . '/../utils/pagination.php';
+require_once __DIR__ . '/../utils/auditLogger.php';
 
 class InvoiceController
 {
@@ -38,6 +39,8 @@ class InvoiceController
         try {
             $input = Sanitizer::getJsonInput();
             $invoice = InvoiceModel::create($input);
+            $invId = $invoice['id'] ?? ($invoice['invoice_number'] ?? 'N/A');
+            AuditLogger::log('CREATE', 'invoices', "Created invoice #$invId (Total: \${$invoice['total_amount']})", (string)$invId, $input);
             http_response_code(201);
             echo json_encode(['data' => $invoice]);
         } catch (\InvalidArgumentException $e) {
@@ -55,6 +58,10 @@ class InvoiceController
             echo json_encode(['error' => 'Invoice not found']);
             return;
         }
+        $desc = isset($input['paidAmount']) || isset($input['status'])
+            ? "Updated payment/status for invoice #$id"
+            : "Updated invoice #$id details";
+        AuditLogger::log('UPDATE', 'invoices', $desc, (string)$id, $input);
         echo json_encode(['data' => $updated]);
     }
 
@@ -66,6 +73,7 @@ class InvoiceController
                 echo json_encode(['error' => 'Invoice not found']);
                 return;
             }
+            AuditLogger::log('DELETE', 'invoices', "Deleted invoice #$id", (string)$id);
             echo json_encode(['success' => true, 'message' => 'Invoice deleted successfully']);
         } catch (PDOException $e) {
             http_response_code(409);

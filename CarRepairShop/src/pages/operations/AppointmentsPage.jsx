@@ -53,7 +53,7 @@ function getLocalDateString(d = new Date()) {
 
 export default function AppointmentsPage() {
   const { t } = useTranslation()
-  const { can } = useAuth()
+  const { can, user } = useAuth()
   const { addToast } = useToast()
 
   const [searchQuery, setSearchQuery] = useState('')
@@ -61,7 +61,14 @@ export default function AppointmentsPage() {
   const [activeFilter, setActiveFilter] = useState('All')
   const [page, setPage] = useState(1)
 
-  const { data: response, isLoading } = useAppointments({ page, limit: 10, search: debouncedSearch, status: activeFilter })
+  const appointmentParams = {
+    page,
+    limit: 10,
+    search: debouncedSearch,
+    status: activeFilter,
+    ...(user?.role === 'mechanic' ? { mechanicId: user?.employeeId || user?.id } : {}),
+  }
+  const { data: response, isLoading } = useAppointments(appointmentParams)
   const { items: appointments, totalCount, totalPages } = usePaginationData(response, { page, limit: 10 })
 
 
@@ -314,7 +321,7 @@ export default function AppointmentsPage() {
         </div>
         <div className="flex items-center gap-2">
           {activeTab === 'reminders' ? (
-            <button
+            <Button
               onClick={() => {
                 setReminderForm({
                   customerId: customers[0]?.id || '',
@@ -326,17 +333,19 @@ export default function AppointmentsPage() {
                 })
                 setIsAddReminderOpen(true)
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-md transition-colors cursor-pointer"
+              size="sm"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold shadow-xs touch-manipulation active-press"
               title="New Reminder"
             >
               <Plus size={14} weight="bold" />
               <span className="hidden sm:inline">New Reminder</span>
-            </button>
+            </Button>
           ) : (
             can('appointments', 'create') && (
               <Button
                 onClick={handleOpenAdd}
                 size="sm"
+                className="bg-app-accent text-app-accentText hover:bg-app-accentHover font-semibold shadow-xs touch-manipulation active-press"
                 title={t('appointments.newAppointment')}
               >
                 <Plus size={14} weight="bold" />
@@ -348,31 +357,35 @@ export default function AppointmentsPage() {
       </div>
 
       {/* View Switcher Tabs */}
-      <div className="flex items-center gap-1.5 border-b border-app-border pb-2.5">
+      <div className="flex items-center gap-2 border-b border-app-border pb-2.5">
         <button
           onClick={() => setActiveTab('calendar')}
-          className={`min-h-[44px] sm:min-h-0 flex items-center gap-2 px-3.5 sm:px-3 py-2 sm:py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer touch-manipulation active-press ${
             activeTab === 'calendar'
-              ? 'bg-app-card text-app-text border border-app-border shadow-xs'
+              ? 'bg-app-accent text-app-accentText shadow-xs'
               : 'text-app-muted hover:text-app-text hover:bg-app-hover'
           }`}
         >
           <CalendarBlank size={15} weight="bold" />
           <span>Appointments</span>
-          <span className="text-[10px] font-mono text-app-muted">{appointments.length}</span>
+          <span className={`text-[11px] font-mono px-1.5 py-0.2 rounded ${activeTab === 'calendar' ? 'bg-black/10 dark:bg-black/20 text-inherit font-bold' : 'text-app-muted'}`}>
+            {appointments.length}
+          </span>
         </button>
 
         <button
           onClick={() => setActiveTab('reminders')}
-          className={`min-h-[44px] sm:min-h-0 flex items-center gap-2 px-3.5 sm:px-3 py-2 sm:py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer touch-manipulation active-press ${
             activeTab === 'reminders'
-              ? 'bg-app-card text-app-text border border-app-border shadow-xs'
+              ? 'bg-app-accent text-app-accentText shadow-xs'
               : 'text-app-muted hover:text-app-text hover:bg-app-hover'
           }`}
         >
           <Bell size={15} weight="bold" />
           <span>Reminders</span>
-          <span className="text-[10px] font-mono text-app-muted">{reminders.length}</span>
+          <span className={`text-[11px] font-mono px-1.5 py-0.2 rounded ${activeTab === 'reminders' ? 'bg-black/10 dark:bg-black/20 text-inherit font-bold' : 'text-app-muted'}`}>
+            {reminders.length}
+          </span>
         </button>
       </div>
 
@@ -389,7 +402,7 @@ export default function AppointmentsPage() {
                     setCalYear(calYear - 1)
                   } else setCalMonth(calMonth - 1)
                 }}
-                className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-sm text-app-muted hover:bg-app-hover active:scale-[0.98] hover:text-app-text transition-colors cursor-pointer"
+                className="size-7.5 flex items-center justify-center rounded-md text-app-muted hover:bg-app-hover active:scale-95 hover:text-app-text transition-colors cursor-pointer"
               >
                 <CaretLeft size={14} weight="bold" />
               </button>
@@ -401,7 +414,7 @@ export default function AppointmentsPage() {
                     setCalYear(calYear + 1)
                   } else setCalMonth(calMonth + 1)
                 }}
-                className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-sm text-app-muted hover:bg-app-hover active:scale-[0.98] hover:text-app-text transition-colors cursor-pointer"
+                className="size-7.5 flex items-center justify-center rounded-md text-app-muted hover:bg-app-hover active:scale-95 hover:text-app-text transition-colors cursor-pointer"
               >
                 <CaretRight size={14} weight="bold" />
               </button>
@@ -469,9 +482,9 @@ export default function AppointmentsPage() {
                       setActiveFilter(st)
                       setPage(1)
                     }}
-                    className={`min-h-[44px] sm:min-h-0 sm:py-1 px-3 sm:px-2.5 py-2 inline-flex items-center justify-center rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                    className={`h-7.5 sm:h-7 px-2.5 py-1 inline-flex items-center justify-center rounded-md text-xs font-medium whitespace-nowrap transition-all cursor-pointer touch-manipulation active:scale-95 ${
                       activeFilter === st
-                        ? 'bg-app-accent text-app-accentText font-semibold'
+                        ? 'bg-app-accent text-app-accentText font-semibold shadow-xs'
                         : 'text-app-muted hover:text-app-text hover:bg-app-hover'
                     }`}
                   >

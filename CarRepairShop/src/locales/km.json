@@ -102,6 +102,7 @@
     "invoices": "វិក្កយបត្រ & ការទូទាត់",
     "employees": "បុគ្គលិក & វត្តមាន",
     "reports": "របាយការណ៍ & ការវិភាគ",
+    "auditLogs": "កំណត់ហេតុ & វគ្គការងារ",
     "settings": "ការកំណត់ប្រព័ន្ធ"
   },
   "titles": {
@@ -118,8 +119,24 @@
     "invoicesBilling": "វិក្កយបត្រ",
     "staffAttendance": "បុគ្គលិក",
     "analyticsReports": "របាយការណ៍",
+    "auditLogs": "សកម្មភាពគណនី & កំណត់ហេតុសវនកម្ម",
     "workshopSettings": "ការកំណត់",
     "systemSettings": "ការកំណត់"
+  },
+  "audit": {
+    "pageTitle": "សកម្មភាពគណនី & កំណត់ហេតុសវនកម្ម",
+    "pageSubtitle": "វត្តមានគណនីអនឡាញ កំណត់ហេតុបិទកម្មវិធី និងកំណត់ត្រាសកម្មភាពបុគ្គលិក",
+    "tabLiveSessions": "វគ្គការងារផ្ទាល់ & ប្រវត្តិ",
+    "tabAuditTrail": "កំណត់ហេតុសវនកម្មប្រព័ន្ធ",
+    "activeAccounts": "គណនីកំពុងដំណើរការ",
+    "online": "អនឡាញ",
+    "idle": "ទំនេរ",
+    "realtimePresence": "សកម្មភាពនិងទីតាំងបុគ្គលិកជាក់ស្តែង",
+    "viewAllLogs": "មើលកំណត់ហេតុទាំងអស់",
+    "noActiveSessions": "មិនមានវគ្គដំណើរការទេ",
+    "activeSessionsHeading": "គណនីបុគ្គលិកកំពុងដំណើរការផ្ទាល់",
+    "sessionHistoryHeading": "ប្រវត្តិការចាកចេញ និងការបិទកម្មវិធី",
+    "moreUsersActive": "គណនីដំណើរការផ្សេងទៀត"
   },
   "roles": {
     "admin": "អ្នកគ្រប់គ្រងប្រព័ន្ធ (Admin)",

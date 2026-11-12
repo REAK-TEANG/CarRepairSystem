@@ -103,6 +103,7 @@
     "invoices": "Invoices & Billing",
     "employees": "Staff & Employees",
     "reports": "Reports & Analytics",
+    "auditLogs": "Audit & Sessions",
     "settings": "System Settings"
   },
   "titles": {
@@ -119,8 +120,24 @@
     "invoicesBilling": "Invoices",
     "staffAttendance": "Employees",
     "analyticsReports": "Reports",
+    "auditLogs": "User Activity & Audit Logs",
     "workshopSettings": "Settings",
     "systemSettings": "Settings"
+  },
+  "audit": {
+    "pageTitle": "User Activity & Audit Logs",
+    "pageSubtitle": "Real-time online sessions, browser close telemetry, and administrative audit trails",
+    "tabLiveSessions": "Live Sessions & History",
+    "tabAuditTrail": "System Audit Trail",
+    "activeAccounts": "Active Accounts",
+    "online": "Online",
+    "idle": "Away",
+    "realtimePresence": "Real-time staff activity & location",
+    "viewAllLogs": "All Sessions & Audit",
+    "noActiveSessions": "No active sessions recorded",
+    "activeSessionsHeading": "Currently Active Staff Accounts",
+    "sessionHistoryHeading": "Past Session Logouts & Closures",
+    "moreUsersActive": "more active accounts"
   },
   "roles": {
     "admin": "System Administrator",

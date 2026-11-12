@@ -426,9 +426,9 @@ export default function SettingsPage() {
           <button
             onClick={() => setActiveTab('permissions')}
             title={t('settings.rbacMatrix')}
-            className={`flex items-center gap-1.5 sm:gap-2 min-h-[40px] sm:min-h-0 px-2.5 sm:px-3 py-2 sm:py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+            className={`flex items-center gap-1.5 sm:gap-2 h-8 px-2.5 sm:px-3 rounded-md text-xs font-medium whitespace-nowrap transition-all cursor-pointer touch-manipulation active:scale-95 ${
               activeTab === 'permissions'
-                ? 'bg-app-card text-app-text border border-app-border shadow-xs'
+                ? 'bg-app-card text-app-text border border-app-border shadow-xs font-semibold'
                 : 'text-app-muted hover:text-app-text hover:bg-app-hover'
             }`}
           >
@@ -441,9 +441,9 @@ export default function SettingsPage() {
         <button
           onClick={() => setActiveTab('profile')}
           title={t('settings.workshopProfile')}
-          className={`flex items-center gap-1.5 sm:gap-2 min-h-[40px] sm:min-h-0 px-2.5 sm:px-3 py-2 sm:py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+          className={`flex items-center gap-1.5 sm:gap-2 h-8 px-2.5 sm:px-3 rounded-md text-xs font-medium whitespace-nowrap transition-all cursor-pointer touch-manipulation active:scale-95 ${
             activeTab === 'profile'
-              ? 'bg-app-card text-app-text border border-app-border shadow-xs'
+              ? 'bg-app-card text-app-text border border-app-border shadow-xs font-semibold'
               : 'text-app-muted hover:text-app-text hover:bg-app-hover'
           }`}
         >
@@ -455,9 +455,9 @@ export default function SettingsPage() {
         <button
           onClick={() => setActiveTab('language')}
           title={t('settings.language')}
-          className={`flex items-center gap-1.5 sm:gap-2 min-h-[40px] sm:min-h-0 px-2.5 sm:px-3 py-2 sm:py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+          className={`flex items-center gap-1.5 sm:gap-2 h-8 px-2.5 sm:px-3 rounded-md text-xs font-medium whitespace-nowrap transition-all cursor-pointer touch-manipulation active:scale-95 ${
             activeTab === 'language'
-              ? 'bg-app-card text-app-text border border-app-border shadow-xs'
+              ? 'bg-app-card text-app-text border border-app-border shadow-xs font-semibold'
               : 'text-app-muted hover:text-app-text hover:bg-app-hover'
           }`}
         >
@@ -469,9 +469,9 @@ export default function SettingsPage() {
         <button
           onClick={() => setActiveTab('billing')}
           title={t('settings.taxDefaults')}
-          className={`flex items-center gap-1.5 sm:gap-2 min-h-[40px] sm:min-h-0 px-2.5 sm:px-3 py-2 sm:py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+          className={`flex items-center gap-1.5 sm:gap-2 h-8 px-2.5 sm:px-3 rounded-md text-xs font-medium whitespace-nowrap transition-all cursor-pointer touch-manipulation active:scale-95 ${
             activeTab === 'billing'
-              ? 'bg-app-card text-app-text border border-app-border shadow-xs'
+              ? 'bg-app-card text-app-text border border-app-border shadow-xs font-semibold'
               : 'text-app-muted hover:text-app-text hover:bg-app-hover'
           }`}
         >
@@ -483,9 +483,9 @@ export default function SettingsPage() {
         <button
           onClick={() => setActiveTab('security')}
           title={t('settings.dataSafety')}
-          className={`flex items-center gap-1.5 sm:gap-2 min-h-[40px] sm:min-h-0 px-2.5 sm:px-3 py-2 sm:py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+          className={`flex items-center gap-1.5 sm:gap-2 h-8 px-2.5 sm:px-3 rounded-md text-xs font-medium whitespace-nowrap transition-all cursor-pointer touch-manipulation active:scale-95 ${
             activeTab === 'security'
-              ? 'bg-app-card text-app-text border border-app-border shadow-xs'
+              ? 'bg-app-card text-app-text border border-app-border shadow-xs font-semibold'
               : 'text-app-muted hover:text-app-text hover:bg-app-hover'
           }`}
         >

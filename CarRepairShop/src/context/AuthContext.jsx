@@ -148,6 +148,14 @@ export const DEFAULT_PERMISSIONS_MATRIX = {
     cashier: [],
     storekeeper: [],
   },
+  audit_logs: {
+    admin: ['create', 'read', 'update', 'delete', 'export'],
+    manager: ['read', 'export'],
+    service_advisor: [],
+    mechanic: [],
+    cashier: [],
+    storekeeper: [],
+  },
 }
 
 export const PERMISSIONS_MATRIX = DEFAULT_PERMISSIONS_MATRIX
@@ -185,21 +193,7 @@ export function AuthProvider({ children }) {
     return DEFAULT_PERMISSIONS_MATRIX
   })
 
-  // Available real database accounts
-  const [availableAccounts, setAvailableAccounts] = useState([])
   const [loading, setLoading] = useState(false)
-
-  // Fetch all registered active database accounts
-  const refreshAccounts = useCallback(async () => {
-    try {
-      const accounts = await authService.getAccounts()
-      if (Array.isArray(accounts)) {
-        setAvailableAccounts(accounts)
-      }
-    } catch {
-      // Non-blocking
-    }
-  }, [])
 
   // Validate or initialize session on mount
   useEffect(() => {
@@ -247,17 +241,6 @@ export function AuthProvider({ children }) {
         })
     }
 
-    // Load registered database accounts asynchronously
-    authService
-      .getAccounts()
-      .then((accounts) => {
-        if (Array.isArray(accounts)) {
-          setAvailableAccounts(accounts)
-        }
-      })
-      .catch(() => {})
-
-
     // Listen for session expiration events
     const handleAuthExpired = () => {
       authService.logout()
@@ -268,7 +251,7 @@ export function AuthProvider({ children }) {
     return () => {
       window.removeEventListener('auth:expired', handleAuthExpired)
     }
-  }, [refreshAccounts])
+  }, [])
 
   // Login handler using database credentials
   const login = async (username, password) => {
@@ -307,45 +290,6 @@ export function AuthProvider({ children }) {
   }
 
   // Role Switching: Authenticates strictly against database users
-  const switchRole = useCallback(async (roleOrIdentifier) => {
-    setLoading(true)
-    authService.logout()
-    setCurrentUser(null)
-
-    try {
-      const payload = typeof roleOrIdentifier === 'object'
-        ? roleOrIdentifier
-        : { role: roleOrIdentifier }
-      const res = await authService.quickLogin(payload)
-      if (res?.user) {
-        const roleKey = (res.user.role || 'admin').toLowerCase().replace(/\s+/g, '_')
-        const meta = ROLE_METADATA[roleKey] || ROLE_METADATA.admin
-        const mergedUser = {
-          ...res.user,
-          role: roleKey,
-          roleTitle: res.user.roleTitle || meta.roleTitle,
-          badgeColor: meta.badgeColor,
-          defaultRoute: meta.defaultRoute,
-        }
-        setCurrentUser(mergedUser)
-        localStorage.setItem('auth_user', JSON.stringify(mergedUser))
-        settingsService.getPermissionsMatrix().then((matrix) => {
-          if (matrix && typeof matrix === 'object') {
-            setPermissionsMatrix(matrix)
-            localStorage.setItem('workshop_permissions_matrix', JSON.stringify(matrix))
-          }
-        }).catch(() => {})
-        return mergedUser
-      }
-      throw new Error('Account not found in database')
-    } catch (err) {
-      console.error('Role login failed:', roleOrIdentifier, err)
-      throw err
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
   // Logout handler
   const logout = useCallback(() => {
     authService.logout()
@@ -429,15 +373,12 @@ export function AuthProvider({ children }) {
         isAuthenticated: Boolean(currentUser),
         loading,
         login,
-        switchRole,
         logout,
         can,
         permissionsMatrix,
         updateRolePermission,
         savePermissionsMatrix,
         resetPermissionsToDefault,
-        availableAccounts,
-        refreshAccounts,
         allRoles: Object.keys(ROLE_METADATA).map(k => ({ role: k, ...ROLE_METADATA[k] })),
       }}
     >

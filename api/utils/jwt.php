@@ -49,3 +49,15 @@ class JWT {
         return $payload;
     }
 }
+
+/**
+ * Resolve the JWT signing secret. There is deliberately no fallback value:
+ * a missing or short secret is a configuration error, never a silent default.
+ */
+function getJwtSecret(): string {
+    $secret = getenv('JWT_SECRET');
+    if (!$secret || strlen($secret) < 32) {
+        throw new RuntimeException('JWT_SECRET environment variable must be set (minimum 32 characters)');
+    }
+    return $secret;
+}

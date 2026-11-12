@@ -20,11 +20,11 @@ if (!ob_get_level() && !headers_sent() && extension_loaded('zlib')) {
 // 1. Comprehensive HTTP Security Headers
 // -----------------------------------------------------------------------------
 header("X-Content-Type-Options: nosniff");
-header("X-Frame-Options: SAMEORIGIN");
+header("X-Frame-Options: DENY");
 header("Referrer-Policy: strict-origin-when-cross-origin");
-header("X-XSS-Protection: 1; mode=block");
+header("Strict-Transport-Security: max-age=31536000; includeSubDomains");
 header("Permissions-Policy: camera=(), microphone=(), geolocation=()");
-header("Content-Security-Policy: default-src 'self'; frame-ancestors 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:;");
+header("Content-Security-Policy: default-src 'none'; frame-ancestors 'none'");
 
 // -----------------------------------------------------------------------------
 // 2. Dynamic CORS Whitelist & Preflight Handling
@@ -50,16 +50,13 @@ if ($envClient = getenv('CLIENT_URL')) {
 }
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-$isDev = (getenv('APP_ENV') ?: 'development') === 'development';
-$isVercelOrigin = (bool) preg_match('#^https://[a-zA-Z0-9\-_.]+\.vercel\.app$#i', $origin);
+$isDev = (getenv('APP_ENV') ?: 'production') === 'development';
 $isLocalNetwork = (bool) preg_match('#^https?://(?:localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(?:1[6-9]|2\d|3[0-1])\.\d+\.\d+)(?::\d+)?$#', $origin);
 
-if ($origin && (in_array($origin, $allowedOrigins) || $isVercelOrigin || $isDev || $isLocalNetwork)) {
+if ($origin && (in_array($origin, $allowedOrigins, true) || ($isDev && $isLocalNetwork))) {
     header("Access-Control-Allow-Origin: $origin");
     header("Access-Control-Allow-Credentials: true");
     header("Vary: Origin");
-} else {
-    header("Access-Control-Allow-Origin: *");
 }
 
 header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS");
@@ -100,21 +97,6 @@ $_GET     = Sanitizer::clean($_GET);
 $_POST    = Sanitizer::clean($_POST);
 $_COOKIE  = Sanitizer::clean($_COOKIE);
 $_REQUEST = Sanitizer::clean($_REQUEST);
-
-// Helper: Safely resolve JWT secret
-function getJwtSecret() {
-    $secret = getenv('JWT_SECRET');
-    if (!$secret) {
-        $isDev = (getenv('APP_ENV') ?: 'development') === 'development';
-        if ($isDev) {
-            return 'carrepair_super_secret_jwt_key_2026_x89!@#%^&_workshop_pro';
-        }
-        http_response_code(500);
-        echo json_encode(['error' => 'Fatal: JWT_SECRET environment variable is not configured']);
-        exit;
-    }
-    return $secret;
-}
 
 // Global Authentication helper: Unified with AuthMiddleware
 function authenticate() {
@@ -241,6 +223,18 @@ try {
     case 'realtime':
         require_once __DIR__ . '/routes/events.php';
         break;
+    case 'sessions':
+    case 'user-sessions':
+    case 'user_sessions':
+        require_once __DIR__ . '/routes/sessions.php';
+        break;
+    case 'audit-logs':
+    case 'audit_logs':
+    case 'auditlogs':
+    case 'activity-logs':
+    case 'activity_logs':
+        require_once __DIR__ . '/routes/auditLogs.php';
+        break;
     default:
         http_response_code(404);
         echo json_encode(['error' => 'Not Found', 'path' => $path]);
@@ -255,8 +249,7 @@ try {
         $e->getTraceAsString()
     ));
     http_response_code(500);
-    $isDev = (getenv('APP_ENV') ?: 'development') === 'development';
-    $isDebug = $isDev || (isset($_SERVER['HTTP_X_DEBUG_KEY']) && $_SERVER['HTTP_X_DEBUG_KEY'] === 'carrepair_system_debug_2026');
+    $isDebug = (getenv('APP_ENV') ?: 'production') === 'development';
     echo json_encode([
         'error' => 'Internal Server Error',
         'message' => $isDebug ? $e->getMessage() : 'An unexpected server error occurred. Please try again later.',

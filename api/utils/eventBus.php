@@ -1,37 +1,8 @@
 <?php
 // api/utils/eventBus.php
+// Real-time event log. The system_events table is created by api/schema/*.sql.
 
 class EventBus {
-    private static $initialized = false;
-
-    /**
-     * Ensure system_events table exists
-     */
-    public static function init() {
-        if (self::$initialized) return;
-        global $pdo;
-        try {
-            if ($pdo) {
-                $pdo->exec("
-                    CREATE TABLE IF NOT EXISTS system_events (
-                        id BIGSERIAL PRIMARY KEY,
-                        topic VARCHAR(50) NOT NULL,
-                        event_type VARCHAR(50) NOT NULL,
-                        payload JSONB NOT NULL,
-                        created_at TIMESTAMPTZ DEFAULT NOW()
-                    )
-                ");
-                $pdo->exec("
-                    CREATE INDEX IF NOT EXISTS idx_system_events_lookup 
-                    ON system_events (id DESC, topic)
-                ");
-            }
-            self::$initialized = true;
-        } catch (Throwable $e) {
-            error_log("EventBus init warning: " . $e->getMessage());
-        }
-    }
-
     /**
      * Publish a real-time event
      * @param string $topic Domain topic ('repair_jobs', 'inventory', 'appointments', 'invoices', 'alerts')
@@ -40,47 +11,26 @@ class EventBus {
      * @return int|null Event ID
      */
     public static function publish($topic, $eventType, array $payload = []) {
-        global $pdo;
-
         try {
-            $jsonPayload = json_encode($payload);
-            $stmt = query(
-                "INSERT INTO system_events (topic, event_type, payload, created_at) VALUES (?, ?, ?::jsonb, NOW()) RETURNING id",
-                [$topic, $eventType, $jsonPayload]
+            // Insert and notify LISTEN subscribers in a single round trip
+            $row = get(
+                "WITH e AS (
+                     INSERT INTO system_events (topic, event_type, payload, created_at)
+                     VALUES (?, ?, ?::jsonb, NOW()) RETURNING id
+                 )
+                 SELECT id, pg_notify('system_events', json_build_object('id', id, 'topic', ?::text, 'type', ?::text)::text) FROM e",
+                [$topic, $eventType, json_encode($payload), $topic, $eventType]
             );
-            $row = $stmt->fetch();
-            $eventId = (int)($row['id'] ?? 0);
-
-            // Notify PostgreSQL LISTEN listeners if any
-            try {
-                $notifyData = json_encode(['id' => $eventId, 'topic' => $topic, 'type' => $eventType]);
-                $safePayload = str_replace("'", "''", $notifyData);
-                $pdo->exec("NOTIFY system_events, '{$safePayload}'");
-            } catch (Throwable $pe) {
-                // Ignore if notify is not permitted in connection mode
-            }
 
             // Prune events older than 24 hours (1 in 50 chance)
             if (mt_rand(1, 50) === 1) {
                 run("DELETE FROM system_events WHERE created_at < NOW() - INTERVAL '24 hours'");
             }
 
-            return $eventId;
+            return (int)($row['id'] ?? 0);
         } catch (Throwable $e) {
-            // Self-heal: initialize schema on first run or missing table, then retry once
-            self::init();
-            try {
-                $jsonPayload = json_encode($payload);
-                $stmt = query(
-                    "INSERT INTO system_events (topic, event_type, payload, created_at) VALUES (?, ?, ?::jsonb, NOW()) RETURNING id",
-                    [$topic, $eventType, $jsonPayload]
-                );
-                $row = $stmt->fetch();
-                return (int)($row['id'] ?? 0);
-            } catch (Throwable $retryException) {
-                error_log("EventBus publish error: " . $retryException->getMessage());
-                return null;
-            }
+            error_log("EventBus publish error: " . $e->getMessage());
+            return null;
         }
     }
 
@@ -90,28 +40,16 @@ class EventBus {
     public static function getEventsSince($afterId = 0, $limit = 50) {
         try {
             return all(
-                "SELECT id, topic, event_type, payload, created_at 
-                 FROM system_events 
-                 WHERE id > ? 
-                 ORDER BY id ASC 
+                "SELECT id, topic, event_type, payload, created_at
+                 FROM system_events
+                 WHERE id > ?
+                 ORDER BY id ASC
                  LIMIT ?",
                 [(int)$afterId, (int)$limit]
             );
         } catch (Throwable $e) {
-            self::init();
-            try {
-                return all(
-                    "SELECT id, topic, event_type, payload, created_at 
-                     FROM system_events 
-                     WHERE id > ? 
-                     ORDER BY id ASC 
-                     LIMIT ?",
-                    [(int)$afterId, (int)$limit]
-                );
-            } catch (Throwable $retryException) {
-                error_log("EventBus getEventsSince error: " . $retryException->getMessage());
-                return [];
-            }
+            error_log("EventBus getEventsSince error: " . $e->getMessage());
+            return [];
         }
     }
 
@@ -123,13 +61,8 @@ class EventBus {
             $row = get("SELECT COALESCE(MAX(id), 0) AS max_id FROM system_events");
             return (int)($row['max_id'] ?? 0);
         } catch (Throwable $e) {
-            self::init();
-            try {
-                $row = get("SELECT COALESCE(MAX(id), 0) AS max_id FROM system_events");
-                return (int)($row['max_id'] ?? 0);
-            } catch (Throwable $retryException) {
-                return 0;
-            }
+            error_log("EventBus getLatestEventId error: " . $e->getMessage());
+            return 0;
         }
     }
 }

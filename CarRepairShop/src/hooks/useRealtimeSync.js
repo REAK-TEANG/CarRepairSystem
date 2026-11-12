@@ -7,9 +7,13 @@ import { apiClient } from '@/services/apiClient'
  * Universal Real-Time Synchronization Hook
  * Provides seamless real-time cache synchronization across authorized browser clients.
  * - Connects to WebSocket only when VITE_WS_URL is explicitly defined.
- * - Otherwise uses lightweight, non-blocking REST event polling (/api/events/poll)
- *   every 4 seconds and upon window focus/visibility change.
+ * - Otherwise uses lightweight, non-blocking REST event polling (/api/events/poll):
+ *   every 4s while events are flowing, backing off to 16s when idle, paused while the
+ *   tab is hidden, and run immediately when the tab becomes visible again.
  */
+const POLL_MIN_MS = 4000
+const POLL_MAX_MS = 16000
+
 export function useRealtimeSync() {
   const queryClient = useQueryClient()
   const { user } = useAuth()
@@ -21,6 +25,7 @@ export function useRealtimeSync() {
   const pollTimerRef = useRef(null)
   const lastEventIdRef = useRef(0)
   const isPollingRef = useRef(false)
+  const pollDelayRef = useRef(POLL_MIN_MS)
 
   // Invalidate relevant TanStack queries on events
   const handleIncomingEvent = useCallback(
@@ -109,6 +114,9 @@ export function useRealtimeSync() {
         })
         if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
           res.data.forEach((evt) => handleIncomingEvent(evt))
+          pollDelayRef.current = POLL_MIN_MS
+        } else {
+          pollDelayRef.current = Math.min(Math.round(pollDelayRef.current * 1.5), POLL_MAX_MS)
         }
         if (res?.latestId) {
           lastEventIdRef.current = res.latestId
@@ -117,9 +125,10 @@ export function useRealtimeSync() {
         // Non-blocking catch
       } finally {
         isPollingRef.current = false
-        if (!isUnmounted) {
+        // Hidden tabs stop polling; the visibility handler restarts it on return
+        if (!isUnmounted && document.visibilityState === 'visible') {
           if (pollTimerRef.current) clearTimeout(pollTimerRef.current)
-          pollTimerRef.current = setTimeout(poll, 4000)
+          pollTimerRef.current = setTimeout(poll, pollDelayRef.current)
         }
       }
     }
@@ -128,9 +137,8 @@ export function useRealtimeSync() {
     const handleFocusOrVisible = () => {
       if (document.visibilityState === 'visible' && !isUnmounted) {
         if (pollTimerRef.current) clearTimeout(pollTimerRef.current)
-        poll()
-        // Also ensure all currently visible queries get refreshed
-        queryClient.invalidateQueries({ refetchType: 'active' })
+        pollDelayRef.current = POLL_MIN_MS
+        poll() // missed events invalidate exactly the queries they affect; stale data refetches on focus
       }
     }
 

@@ -11,7 +11,9 @@ class MechanicModel
                  COUNT(CASE WHEN ro.status::text = 'Completed' THEN 1 END) AS completed_jobs
           FROM employees e
           LEFT JOIN users u ON e.user_id = u.id
+          LEFT JOIN roles r ON u.role_id = r.id
           LEFT JOIN repair_orders ro ON ro.mechanic_id = e.id
+          WHERE (LOWER(r.name) = 'mechanic' OR LOWER(e.position) = 'mechanic')
           GROUP BY e.id, u.full_name, u.phone, u.email
           ORDER BY e.id ASC
         ");
@@ -25,7 +27,8 @@ class MechanicModel
           SELECT COUNT(DISTINCT e.id) AS cnt
           FROM employees e
           LEFT JOIN users u ON e.user_id = u.id
-          WHERE 1=1
+          LEFT JOIN roles r ON u.role_id = r.id
+          WHERE (LOWER(r.name) = 'mechanic' OR LOWER(e.position) = 'mechanic')
         ";
         $countParams = [];
         if ($search) {
@@ -47,8 +50,9 @@ class MechanicModel
                  COUNT(CASE WHEN ro.status::text = 'Completed' THEN 1 END) AS completed_jobs
           FROM employees e
           LEFT JOIN users u ON e.user_id = u.id
+          LEFT JOIN roles r ON u.role_id = r.id
           LEFT JOIN repair_orders ro ON ro.mechanic_id = e.id
-          WHERE 1=1
+          WHERE (LOWER(r.name) = 'mechanic' OR LOWER(e.position) = 'mechanic')
         ";
         $params = [];
         if ($search) {
@@ -206,6 +210,7 @@ class MechanicModel
     {
         return [
             'id'             => $r['id'],
+            'userId'         => (int) ($r['user_id'] ?? 0),
             'code'           => $r['employee_code'],
             'name'           => $r['full_name'] ?: "Mechanic {$r['employee_code']}",
             'phone'          => $r['phone'] ?? '',

@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import {
-  MagnifyingGlass,
   Plus,
   GasPump,
   Car,
@@ -37,6 +36,7 @@ import {
   SearchableSelect,
   Input,
   MobileDataCard,
+  PageHeader,
 } from '../../components/ui'
 import VehicleHistoryDrawer from '../../components/workshop/VehicleHistoryDrawer'
 import FastIntakeModal from '../../components/workshop/FastIntakeModal'
@@ -220,62 +220,44 @@ export default function VehiclesPage() {
 
   return (
     <div className="space-y-3 sm:space-y-4 text-app-text font-sans transition-colors duration-200">
-      {/* Page Header */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <h1 className="text-lg font-semibold tracking-tight text-app-text">{t('titles.vehicleRegistry')}</h1>
-          <span className="text-[11px] font-mono text-app-muted px-2 py-0.5 bg-app-card border border-app-border rounded-md">
-            {totalCount}
-          </span>
-        </div>
-        {can('vehicles', 'create') && (
-          <Button onClick={handleOpenAdd} size="sm" title={t('vehicles.addVehicle')}>
-            <Plus size={14} weight="bold" />
-            <span className="hidden sm:inline">{t('vehicles.addVehicle')}</span>
-          </Button>
-        )}
-      </div>
-
-      {/* Integrated Filter Bar & Search */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
-          {fuelOptions.map((f) => {
-            const count = f === 'All' ? vehicles.length : vehicles.filter((v) => v.fuelType === f).length
-            const isActive = fuelFilter === f
-            return (
-              <button
-                key={f}
-                onClick={() => {
-                  setFuelFilter(f)
-                  setPage(1)
-                }}
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
-                  isActive
-                    ? 'bg-app-accent text-app-accentText font-semibold'
-                    : 'text-app-muted hover:text-app-text hover:bg-app-hover'
-                }`}
-              >
-                <span>{f === 'All' ? t('common.all') : f}</span>
-                <span className="text-[10px] font-mono opacity-80">{count}</span>
-              </button>
-            )
-          })}
-        </div>
-
-        <div className="relative w-full sm:w-60">
-          <MagnifyingGlass size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted pointer-events-none z-10" />
-          <Input
-            type="text"
-            placeholder={t('common.quickSearch')}
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value)
-              setPage(1)
-            }}
-            className="pl-9"
-          />
-        </div>
-      </div>
+      {/* Universal Page Header & Toolbar */}
+      <PageHeader
+        title={t('titles.vehicleRegistry')}
+        count={totalCount}
+        searchQuery={searchQuery}
+        onSearch={(query) => {
+          setSearchQuery(query)
+          setPage(1)
+        }}
+        onClearSearch={() => {
+          setSearchQuery('')
+          setPage(1)
+        }}
+        searchPlaceholder={t('common.quickSearch')}
+        filterTabs={fuelOptions.map((f) => ({
+          key: f,
+          label: f === 'All' ? t('common.all') : f,
+          count: f === 'All' ? vehicles.length : vehicles.filter((v) => v.fuelType === f).length,
+        }))}
+        activeFilter={fuelFilter}
+        onFilterChange={(newFilter) => {
+          setFuelFilter(newFilter)
+          setPage(1)
+        }}
+        actions={
+          can('vehicles', 'create') && (
+            <Button
+              onClick={handleOpenAdd}
+              size="sm"
+              className="bg-app-accent text-app-accentText hover:bg-app-accentHover font-semibold shadow-xs touch-manipulation active-press"
+              title={t('vehicles.addVehicle')}
+            >
+              <Plus size={14} weight="bold" />
+              <span className="hidden sm:inline">{t('vehicles.addVehicle')}</span>
+            </Button>
+          )
+        }
+      />
 
       {/* Main Table */}
       {isLoading && vehicles.length === 0 ? (

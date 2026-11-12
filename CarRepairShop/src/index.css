@@ -95,12 +95,12 @@ html.dark {
     overscroll-behavior-y: none;
   }
 
-  /* Prevent iOS Safari / Android Chrome auto-zoom on input focus */
+  /* Native mobile ergonomics - avoid forced zoom while preserving compact typography */
   @media screen and (max-width: 640px) {
     input,
     select,
     textarea {
-      font-size: 16px !important;
+      font-size: inherit;
     }
   }
 
@@ -133,13 +133,24 @@ html.dark {
     background: var(--text-muted);
   }
 
-  /* Tactile native tap feedback */
+  /* Tactile native tap feedback & Ergonomic touch targets */
   .active-press {
-    transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.12s ease;
+    transition: transform 0.1s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.12s ease;
     -webkit-tap-highlight-color: transparent;
+    user-select: none;
   }
   .active-press:active {
-    transform: scale(0.975);
+    transform: scale(0.96);
+  }
+
+  .touch-target-min {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .touch-target-stepper {
+    min-height: 40px;
+    min-width: 40px;
   }
 
   /* Modal Entrance Animations */

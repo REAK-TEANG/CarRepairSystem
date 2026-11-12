@@ -60,13 +60,8 @@ function updateListWithDelete(oldData, id) {
 }
 
 export function useInventory(params = {}, options = {}) {
-  let auth = null
-  try {
-    auth = useAuth()
-  } catch {
-    // safe fallback if rendered outside AuthProvider
-  }
-  const hasPermission = auth?.can ? auth.can('inventory', 'read') : true
+  const auth = useAuth()
+  const hasPermission = auth.can ? auth.can('inventory', 'read') : true
   const isEnabled = (options.enabled ?? true) && hasPermission
 
   return useQuery({

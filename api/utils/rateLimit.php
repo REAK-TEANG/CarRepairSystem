@@ -2,62 +2,6 @@
 // api/utils/rateLimit.php
 
 class RateLimiter {
-    private static $tableInitialized = false;
-    private static $globalTableInitialized = false;
-
-    /**
-     * Ensure the rate limiting table exists in PostgreSQL
-     */
-    private static function initTable() {
-        if (self::$tableInitialized) return;
-        global $pdo;
-        try {
-            if ($pdo) {
-                $pdo->exec("
-                    CREATE TABLE IF NOT EXISTS login_attempts (
-                        id SERIAL PRIMARY KEY,
-                        ip_address VARCHAR(45) NOT NULL,
-                        identifier VARCHAR(100) NOT NULL,
-                        attempted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-                    )
-                ");
-                $pdo->exec("
-                    CREATE INDEX IF NOT EXISTS idx_login_attempts_lookup 
-                    ON login_attempts (ip_address, identifier, attempted_at)
-                ");
-            }
-            self::$tableInitialized = true;
-        } catch (Throwable $e) {
-            error_log("RateLimiter table init warning: " . $e->getMessage());
-        }
-    }
-
-    /**
-     * Ensure the global requests tracking table exists in PostgreSQL
-     */
-    private static function initGlobalTable() {
-        if (self::$globalTableInitialized) return;
-        global $pdo;
-        try {
-            if ($pdo) {
-                $pdo->exec("
-                    CREATE TABLE IF NOT EXISTS global_api_requests (
-                        id SERIAL PRIMARY KEY,
-                        ip_address VARCHAR(45) NOT NULL,
-                        requested_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-                    )
-                ");
-                $pdo->exec("
-                    CREATE INDEX IF NOT EXISTS idx_global_requests_ip_time 
-                    ON global_api_requests (ip_address, requested_at)
-                ");
-            }
-            self::$globalTableInitialized = true;
-        } catch (Throwable $e) {
-            error_log("RateLimiter global table init warning: " . $e->getMessage());
-        }
-    }
-
     /**
      * Get client IP address securely
      */
@@ -78,12 +22,11 @@ class RateLimiter {
     public static function isRateLimited($identifier, $maxAttempts = 5, $decayMinutes = 15) {
         $ip = self::getClientIp();
         $cleanId = strtolower(trim($identifier));
-        $isLocal = ($ip === '127.0.0.1' || $ip === '::1' || (getenv('APP_ENV') ?: 'development') === 'development');
+        $isLocal = ($ip === '127.0.0.1' || $ip === '::1' || (getenv('APP_ENV') ?: 'production') === 'development');
 
         // Never lock out local development by IP
         if ($isLocal) {
             // Only protect against extreme brute force per identifier in local dev (e.g. 50 attempts)
-            self::initTable();
             try {
                 $row = get("SELECT COUNT(*) AS cnt FROM login_attempts WHERE identifier = ? AND attempted_at >= NOW() - INTERVAL '$decayMinutes minutes'", [$cleanId]);
                 return ((int)($row['cnt'] ?? 0)) >= 50;
@@ -109,7 +52,6 @@ class RateLimiter {
             }
         }
 
-        self::initTable();
 
         try {
             // Check account-level lockout (5 attempts) OR IP-level DDoS lockout (30 attempts)
@@ -151,7 +93,6 @@ class RateLimiter {
             }
         }
 
-        self::initTable();
 
         try {
             run("INSERT INTO login_attempts (ip_address, identifier) VALUES (?, ?)", [$ip, $cleanId]);
@@ -182,7 +123,6 @@ class RateLimiter {
             }
         }
 
-        self::initTable();
 
         try {
             run("DELETE FROM login_attempts WHERE ip_address = ? OR identifier = ?", [$ip, $cleanId]);
@@ -196,31 +136,20 @@ class RateLimiter {
      */
     public static function isGlobalThrottled(int $maxRequests = 120, int $decayMinutes = 1): bool {
         $ip = self::getClientIp();
-        $redis = Cache::getClient();
-        if ($redis) {
-            try {
-                $key = "ratelimit:global:$ip";
-                $count = $redis->incr($key);
-                if ($count === 1) {
-                    $redis->expire($key, $decayMinutes * 60);
-                }
-                return $count > $maxRequests;
-            } catch (Throwable $e) {
-                error_log("RateLimiter Redis global check error: " . $e->getMessage());
-            }
+
+        // Fast path: in-memory counter (Redis or APCu), no database round trip
+        $count = Cache::increment("ratelimit:global:$ip", $decayMinutes * 60);
+        if ($count !== null) {
+            return $count > $maxRequests;
         }
 
+        // Fallback when no cache tier is available (e.g. local dev server)
         try {
-            $sql = "
-                SELECT COUNT(*) AS cnt 
-                FROM global_api_requests 
-                WHERE ip_address = ? 
-                  AND requested_at >= NOW() - INTERVAL '$decayMinutes minutes'
-            ";
-            $row = get($sql, [$ip]);
-            $currentCount = (int)($row['cnt'] ?? 0);
-
-            // Record this request
+            $row = get(
+                "SELECT COUNT(*) AS cnt FROM global_api_requests
+                 WHERE ip_address = ? AND requested_at >= NOW() - INTERVAL '$decayMinutes minutes'",
+                [$ip]
+            );
             run("INSERT INTO global_api_requests (ip_address) VALUES (?)", [$ip]);
 
             // Periodic cleanup (1 in 100 chance to minimize lock contention)
@@ -228,16 +157,9 @@ class RateLimiter {
                 run("DELETE FROM global_api_requests WHERE requested_at < NOW() - INTERVAL '1 hour'");
             }
 
-            return $currentCount >= $maxRequests;
+            return (int)($row['cnt'] ?? 0) >= $maxRequests;
         } catch (Throwable $e) {
-            if (str_contains($e->getMessage(), 'does not exist') || str_contains($e->getMessage(), '42P01')) {
-                self::initGlobalTable();
-                try {
-                    run("INSERT INTO global_api_requests (ip_address) VALUES (?)", [$ip]);
-                } catch (Throwable) {}
-            } else {
-                error_log("RateLimiter PG global check error: " . $e->getMessage());
-            }
+            error_log("RateLimiter global check error: " . $e->getMessage());
             return false;
         }
     }

@@ -3,33 +3,35 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import AppLayout from '@/layouts/AppLayout'
 import { AuthProvider, useAuth } from '@/context/AuthContext'
+import { pageLoaders } from '@/lib/pageLoaders'
 import { ThemeProvider } from '@/context/ThemeContext'
 import { ToastProvider } from '@/context/ToastContext'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { LoadingSpinner } from '@/components/ui'
 
 // Lazy-Loaded Page Modules
-const LoginPage = lazy(() => import('./pages/auth/LoginPage'))
-const UnauthorizedPage = lazy(() => import('./pages/auth/UnauthorizedPage'))
-const AdminDashboard = lazy(() => import('./pages/dashboards/AdminDashboard'))
-const MechanicDashboard = lazy(() => import('./pages/dashboards/MechanicDashboard'))
-const AppointmentsPage = lazy(() => import('./pages/operations/AppointmentsPage'))
-const RepairJobsPage = lazy(() => import('./pages/operations/RepairJobsPage'))
-const CustomersPage = lazy(() => import('./pages/operations/CustomersPage'))
-const VehiclesPage = lazy(() => import('./pages/operations/VehiclesPage'))
-const InventoryPage = lazy(() => import('./pages/workshop/InventoryPage'))
-const SuppliersPage = lazy(() => import('./pages/workshop/SuppliersPage'))
-const ServicesPage = lazy(() => import('./pages/workshop/ServicesPage'))
-const MechanicsPage = lazy(() => import('./pages/workshop/MechanicsPage'))
-const InvoicesPage = lazy(() => import('./pages/management/InvoicesPage'))
-const EmployeesPage = lazy(() => import('./pages/management/EmployeesPage'))
-const ReportsPage = lazy(() => import('./pages/management/ReportsPage'))
-const SettingsPage = lazy(() => import('./pages/management/SettingsPage'))
+const LoginPage = lazy(pageLoaders.LoginPage)
+const UnauthorizedPage = lazy(pageLoaders.UnauthorizedPage)
+const AdminDashboard = lazy(pageLoaders.AdminDashboard)
+const MechanicDashboard = lazy(pageLoaders.MechanicDashboard)
+const AppointmentsPage = lazy(pageLoaders.AppointmentsPage)
+const RepairJobsPage = lazy(pageLoaders.RepairJobsPage)
+const CustomersPage = lazy(pageLoaders.CustomersPage)
+const VehiclesPage = lazy(pageLoaders.VehiclesPage)
+const InventoryPage = lazy(pageLoaders.InventoryPage)
+const SuppliersPage = lazy(pageLoaders.SuppliersPage)
+const ServicesPage = lazy(pageLoaders.ServicesPage)
+const MechanicsPage = lazy(pageLoaders.MechanicsPage)
+const InvoicesPage = lazy(pageLoaders.InvoicesPage)
+const EmployeesPage = lazy(pageLoaders.EmployeesPage)
+const ReportsPage = lazy(pageLoaders.ReportsPage)
+const SettingsPage = lazy(pageLoaders.SettingsPage)
+const AuditLogsPage = lazy(pageLoaders.AuditLogsPage)
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 0, // Always consider stale so window focus & route changes get fresh updates instantly
+      staleTime: 30 * 1000, // Reuse data for 30s; mutations invalidate explicitly, focus/reconnect refetch stale data
       gcTime: 1000 * 60 * 10, // Retain data in garbage collector cache for 10m for instant UI transitions
       refetchOnWindowFocus: true, // Fetch fresh data automatically when user refocuses the window
       refetchOnReconnect: true,  // Fetch fresh data when network reconnects
@@ -141,6 +143,10 @@ export default function App() {
 
                     <Route element={<ProtectedRoute module="settings" />}>
                       <Route path="settings" element={<SettingsPage />} />
+                    </Route>
+
+                    <Route element={<ProtectedRoute allowedRoles={['admin', 'manager']} />}>
+                      <Route path="audit-logs" element={<AuditLogsPage />} />
                     </Route>
                   </Route>
 

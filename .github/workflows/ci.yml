@@ -1,0 +1,36 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: CarRepairShop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: CarRepairShop/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+  api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+      - name: PHP syntax check
+        run: find api -name '*.php' -not -path 'api/vendor/*' -print0 | xargs -0 -n1 php -l > /dev/null
+      - name: Unit tests
+        run: |
+          php api/tests/jwt_test.php
+          php -d apc.enable_cli=1 api/tests/cache_test.php

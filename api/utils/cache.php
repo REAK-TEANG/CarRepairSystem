@@ -47,51 +47,112 @@ class Cache {
     }
 
     /**
-     * Get value from cache
+     * Whether the in-process APCu cache is usable. Apache workers share one APCu
+     * segment, so it works as a zero-network cache on a single instance.
      */
-    public static function get($key) {
+    public static function apcuAvailable(): bool
+    {
+        static $available = null;
+        $available ??= function_exists('apcu_enabled') && apcu_enabled();
+        return $available;
+    }
+
+    /**
+     * Read a value. $hit tells a cached null/false apart from a miss.
+     * Tiers: Redis (shared, if configured) then APCu (per instance).
+     */
+    public static function fetch(string $key, ?bool &$hit = null): mixed
+    {
+        $hit = false;
         $redis = self::getClient();
         if ($redis) {
             try {
-                $value = $redis->get($key);
-                return $value ? json_decode($value, true) : null;
+                $raw = $redis->get($key);
+                if ($raw !== null) {
+                    $hit = true;
+                    return json_decode($raw, true);
+                }
             } catch (Throwable $e) {
                 error_log("Redis GET error: " . $e->getMessage());
+            }
+        }
+        if (self::apcuAvailable()) {
+            $value = apcu_fetch($key, $found);
+            if ($found) {
+                $hit = true;
+                return $value;
             }
         }
         return null;
     }
 
-    /**
-     * Set value in cache
-     * @param int $ttl Time to live in seconds
-     */
-    public static function set($key, $value, $ttl = 3600) {
+    /** Write a value to every available tier. */
+    public static function store(string $key, mixed $value, int $ttl = 3600): void
+    {
         $redis = self::getClient();
         if ($redis) {
             try {
                 $redis->setex($key, $ttl, json_encode($value));
-                return true;
             } catch (Throwable $e) {
                 error_log("Redis SET error: " . $e->getMessage());
             }
         }
-        return false;
+        if (self::apcuAvailable()) {
+            apcu_store($key, $value, $ttl);
+        }
     }
 
-    /**
-     * Delete key from cache
-     */
-    public static function delete($key) {
+    /** Return the cached value, or compute it with $producer and cache it. */
+    public static function remember(string $key, int $ttl, callable $producer): mixed
+    {
+        $value = self::fetch($key, $hit);
+        if ($hit) {
+            return $value;
+        }
+        $value = $producer();
+        self::store($key, $value, $ttl);
+        return $value;
+    }
+
+    /** Remove a key from every tier. */
+    public static function delete(string $key): void
+    {
         $redis = self::getClient();
         if ($redis) {
             try {
                 $redis->del($key);
-                return true;
             } catch (Throwable $e) {
                 error_log("Redis DEL error: " . $e->getMessage());
             }
         }
-        return false;
+        if (self::apcuAvailable()) {
+            apcu_delete($key);
+        }
+    }
+
+    /**
+     * Atomic fixed-window counter. Returns the new count, or null when no cache
+     * tier is available (callers then fall back to the database).
+     */
+    public static function increment(string $key, int $ttl): ?int
+    {
+        $redis = self::getClient();
+        if ($redis) {
+            try {
+                $count = (int) $redis->incr($key);
+                if ($count === 1) {
+                    $redis->expire($key, $ttl);
+                }
+                return $count;
+            } catch (Throwable $e) {
+                error_log("Redis INCR error: " . $e->getMessage());
+            }
+        }
+        if (self::apcuAvailable()) {
+            apcu_add($key, 0, $ttl);
+            $count = apcu_inc($key);
+            return $count === false ? null : (int) $count;
+        }
+        return null;
     }
 }

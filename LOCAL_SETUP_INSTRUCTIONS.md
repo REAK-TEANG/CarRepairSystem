@@ -89,3 +89,7 @@ Since this project uses a PHP backend, the project folder must be located inside
 - **Frontend Application:** Open your browser and navigate to [http://localhost:5173](http://localhost:5173).
 - **Backend API:** With the `npm run dev` script, the API runs independently on `http://localhost:8000` (you can update `VITE_API_URL=http://localhost:8000` in `CarRepairShop/.env` if it's not connecting).
 
+
+## Database schema updates
+
+Idempotent SQL files in `api/schema/` are applied in filename order by `php api/bin/migrate.php`, which the container runs automatically at startup (see `entrypoint.sh`). Applied files are tracked in the `schema_migrations` table. Add new schema changes as a new numbered file there; do not create tables or columns from request code.

@@ -3,9 +3,9 @@
 
 class AppointmentModel
 {
-    public static function getAll(): array
+    public static function getAll(array $filters = []): array
     {
-        $rows = Database::all("
+        $sql = "
           SELECT a.*,
                  c.full_name AS customer_name,
                  v.vehicle_number, v.brand, v.model,
@@ -15,13 +15,23 @@ class AppointmentModel
           LEFT JOIN vehicles   v ON a.vehicle_id   = v.id
           LEFT JOIN employees  e ON a.mechanic_id  = e.id
           LEFT JOIN users      u ON e.user_id      = u.id
-          ORDER BY a.scheduled_date ASC
-        ");
+        ";
+        $where = [];
+        $params = [];
+        if (!empty($filters['mechanicId'])) {
+            $where[] = '(a.mechanic_id = ? OR e.user_id = ?)';
+            $params[] = $filters['mechanicId'];
+            $params[] = $filters['mechanicId'];
+        }
+        if ($where) {
+            $sql .= ' WHERE ' . implode(' AND ', $where);
+        }
+        $sql .= ' ORDER BY a.scheduled_date ASC';
 
-        return array_map([self::class, 'format'], $rows);
+        return array_map([self::class, 'format'], Database::all($sql, $params));
     }
 
-    public static function getPaginated(string $search = '', int $page = 1, int $limit = 10, ?string $status = null): array
+    public static function getPaginated(string $search = '', int $page = 1, int $limit = 10, ?string $status = null, array $filters = []): array
     {
         $countSql = "
           SELECT COUNT(*) AS cnt
@@ -33,6 +43,11 @@ class AppointmentModel
           WHERE 1=1
         ";
         $countParams = [];
+        if (!empty($filters['mechanicId'])) {
+            $countSql .= " AND (a.mechanic_id = ? OR e.user_id = ?)";
+            $countParams[] = $filters['mechanicId'];
+            $countParams[] = $filters['mechanicId'];
+        }
         if ($search) {
             $countSql .= " AND (a.appointment_code ILIKE ? OR c.full_name ILIKE ? OR v.vehicle_number ILIKE ? OR v.brand ILIKE ? OR v.model ILIKE ? OR u.full_name ILIKE ?)";
             $countParams = array_merge($countParams, ["%$search%", "%$search%", "%$search%", "%$search%", "%$search%", "%$search%"]);
@@ -59,6 +74,11 @@ class AppointmentModel
           WHERE 1=1
         ";
         $params = [];
+        if (!empty($filters['mechanicId'])) {
+            $sql .= " AND (a.mechanic_id = ? OR e.user_id = ?)";
+            $params[] = $filters['mechanicId'];
+            $params[] = $filters['mechanicId'];
+        }
         if ($search) {
             $sql .= " AND (a.appointment_code ILIKE ? OR c.full_name ILIKE ? OR v.vehicle_number ILIKE ? OR v.brand ILIKE ? OR v.model ILIKE ? OR u.full_name ILIKE ?)";
             $params = array_merge($params, ["%$search%", "%$search%", "%$search%", "%$search%", "%$search%", "%$search%"]);
@@ -144,10 +164,11 @@ class AppointmentModel
             }
         }
 
-        $mechanicId = (!empty($input['mechanicId']) && is_numeric($input['mechanicId'])) ? (int) $input['mechanicId'] : null;
-        if ($mechanicId) {
-            $mechExists = Database::get('SELECT id FROM employees WHERE id = ?', [$mechanicId]);
-            if (!$mechExists) $mechanicId = null;
+        $rawMech = (!empty($input['mechanicId']) && is_numeric($input['mechanicId'])) ? (int) $input['mechanicId'] : null;
+        $mechanicId = null;
+        if ($rawMech) {
+            $mech = Database::get('SELECT id FROM employees WHERE id = ? OR user_id = ? LIMIT 1', [$rawMech, $rawMech]);
+            if ($mech) $mechanicId = (int) $mech['id'];
         }
         if (!$mechanicId && !empty($input['mechanic'])) {
             $mech = Database::get('SELECT e.id FROM employees e JOIN users u ON e.user_id = u.id WHERE LOWER(u.full_name) = LOWER(?) LIMIT 1', [trim($input['mechanic'])]);
@@ -191,14 +212,18 @@ class AppointmentModel
 
     public static function update(int $id, array $input): ?array
     {
-        $mechanicId = (!empty($input['mechanicId']) && (int) $input['mechanicId'] > 0)
-            ? (int) $input['mechanicId']
-            : ((!empty($input['mechanic_id']) && (int) $input['mechanic_id'] > 0) ? (int) $input['mechanic_id'] : null);
+        $mechanicProvided = array_key_exists('mechanicId', $input) || array_key_exists('mechanic_id', $input);
+        $rawMech = $input['mechanicId'] ?? $input['mechanic_id'] ?? null;
+        $mechanicId = null;
+        if ($mechanicProvided && !empty($rawMech) && is_numeric($rawMech) && (int)$rawMech > 0) {
+            $mech = Database::get('SELECT id FROM employees WHERE id = ? OR user_id = ? LIMIT 1', [(int)$rawMech, (int)$rawMech]);
+            $mechanicId = $mech ? (int) $mech['id'] : null;
+        }
 
         Database::run(
             "UPDATE appointments
              SET status         = COALESCE(?, status),
-                 mechanic_id    = COALESCE(?, mechanic_id),
+                 mechanic_id    = (CASE WHEN ?::boolean THEN ? ELSE mechanic_id END),
                  scheduled_date = COALESCE(?, scheduled_date),
                  scheduled_time = COALESCE(?, scheduled_time),
                  notes          = COALESCE(?, notes),
@@ -206,6 +231,7 @@ class AppointmentModel
              WHERE id = ?",
             [
                 $input['status'] ?? null,
+                $mechanicProvided ? 'true' : 'false',
                 $mechanicId,
                 $input['date']   ?? null,
                 $input['time']   ?? null,

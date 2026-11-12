@@ -1,3 +1,4 @@
+export { default as Avatar } from '@/components/ui/Avatar'
 export { default as Logo } from '@/components/ui/Logo'
 export { default as Modal } from '@/components/ui/Modal'
 export { default as Drawer } from '@/components/ui/Drawer'

@@ -34,7 +34,7 @@ $host = getenv('DB_HOST') ?: 'localhost';
 $port = getenv('DB_PORT') ?: '5432';
 $dbname = getenv('DB_NAME') ?: 'carrepairshop';
 $user = getenv('DB_USER') ?: 'postgres';
-$password = getenv('DB_PASSWORD') ?: '123';
+$password = getenv('DB_PASSWORD') ?: '';
 $usePersistent = filter_var(getenv('DB_PERSISTENT') ?: 'false', FILTER_VALIDATE_BOOLEAN);
 
 $sslmode = getenv('DB_SSLMODE') ?: (($host === 'localhost' || $host === '127.0.0.1') ? 'disable' : 'require');
@@ -58,24 +58,25 @@ function createPdoInstance() {
     return new PDO($dsn, $user, $password, $options);
 }
 
-try {
-    $pdo = createPdoInstance();
-} catch (PDOException $e) {
-    error_log("Database connection failed: " . $e->getMessage());
-    http_response_code(500);
-    echo json_encode([
-        'error' => 'Database connection failed',
-        'message' => $e->getMessage(),
-        'config' => [
-            'host' => $host,
-            'port' => $port,
-            'dbname' => $dbname,
-            'user' => $user,
-            'sslmode' => $sslmode,
-            'has_password' => (!empty($password) && $password !== '123'),
-        ]
-    ]);
-    exit;
+$pdo = null;
+
+/**
+ * Lazily open the shared PDO connection on first use. Requests that never touch
+ * the database (health checks, auth rejections) skip the TLS handshake entirely.
+ */
+function db(): PDO {
+    global $pdo;
+    if ($pdo === null) {
+        try {
+            $pdo = createPdoInstance();
+        } catch (PDOException $e) {
+            error_log('Database connection failed: ' . $e->getMessage());
+            http_response_code(503);
+            echo json_encode(['error' => 'Service Unavailable', 'message' => 'Database is temporarily unavailable']);
+            exit;
+        }
+    }
+    return $pdo;
 }
 
 /**
@@ -97,9 +98,7 @@ function isConnectionLost(Throwable $e): bool {
 
 function query($sql, $params = []) {
     global $pdo;
-    if ($pdo === null) {
-        $pdo = createPdoInstance();
-    }
+    $pdo = db();
     try {
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
@@ -157,6 +156,7 @@ function run($sql, $params = []) {
  */
 function transaction(callable $callback) {
     global $pdo;
+    $pdo = db();
     if ($pdo->inTransaction()) {
         return $callback($pdo);
     }
@@ -185,17 +185,11 @@ function transaction(callable $callback) {
  * Set the PostgreSQL Row Level Security (RLS) session context
  */
 function setDatabaseUserContext($role = null, $userId = null) {
-    global $pdo;
-    if (!$pdo) return;
+    if (($role === null || $role === '') && ($userId === null || $userId === '')) return;
     try {
-        if ($role !== null && $role !== '') {
-            $stmt = $pdo->prepare("SET app.current_user_role = ?");
-            $stmt->execute([(string) $role]);
-        }
-        if ($userId !== null && $userId !== '') {
-            $stmt = $pdo->prepare("SET app.current_user_id = ?");
-            $stmt->execute([(string) $userId]);
-        }
+        // One round trip for both settings (session-level, like SET)
+        db()->prepare("SELECT set_config('app.current_user_role', ?, false), set_config('app.current_user_id', ?, false)")
+            ->execute([(string) $role, (string) $userId]);
     } catch (Throwable $e) {
         // Silently continue if session variables cannot be set
     }

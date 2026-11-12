@@ -261,6 +261,7 @@ export default function RepairPipelineTracker({ mechanicFilter = null }) {
   // Filter Jobs
   const filteredJobs = jobs.filter((job) => {
     const matchesMechanic =
+      Boolean(mechanicFilter) ||
       selectedMechanic === 'all' ||
       String(job.mechanicId) === String(selectedMechanic) ||
       (job.mechanic && job.mechanic.toLowerCase().includes(String(selectedMechanic).toLowerCase()))

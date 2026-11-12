@@ -4,46 +4,15 @@ require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../utils/jwt.php';
 require_once __DIR__ . '/../utils/sanitizer.php';
 require_once __DIR__ . '/../utils/rateLimit.php';
+require_once __DIR__ . '/../utils/auditLogger.php';
+require_once __DIR__ . '/../models/SessionModel.php';
 require_once __DIR__ . '/../middleware/AuthMiddleware.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $path = $segments[1] ?? '';
-$secret = function_exists('getJwtSecret') ? getJwtSecret() : (getenv('JWT_SECRET') ?: 'carrepair_super_secret_jwt_key_2026_x89!@#%^&_workshop_pro');
+$secret = getJwtSecret();
 
-if ($method === 'GET' && ($path === 'accounts' || $path === 'roles-accounts')) {
-    // Return authentic active accounts directly from the database
-    $accounts = all(
-        "SELECT u.id, u.username, u.full_name as name, u.email, u.phone, u.avatar_url,
-                u.is_active, u.last_login,
-                r.id as role_id, r.name as role_name, r.description as role_description
-         FROM users u
-         LEFT JOIN roles r ON u.role_id = r.id
-         WHERE u.is_active = true
-         ORDER BY r.id ASC, u.id ASC"
-    );
-
-    $formatted = array_map(function($u) {
-        $roleName = $u['role_name'] ?: 'Staff';
-        $normalizedRole = strtolower(preg_replace('/\s+/', '_', $roleName));
-        return [
-            'id' => $u['id'],
-            'username' => $u['username'],
-            'name' => $u['name'],
-            'email' => $u['email'],
-            'phone' => $u['phone'] ?? '',
-            'avatar' => $u['avatar_url'] ?: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-            'role' => $normalizedRole,
-            'roleTitle' => $roleName,
-            'roleId' => $u['role_id'],
-            'roleDescription' => $u['role_description'] ?? '',
-            'lastLogin' => $u['last_login'],
-        ];
-    }, $accounts);
-
-    echo json_encode(['success' => true, 'accounts' => $formatted]);
-    exit;
-
-} else if ($method === 'GET' && $path === 'permissions') {
+if ($method === 'GET' && $path === 'permissions') {
     // Return role permissions matrix directly from the database (settings table)
     $row = get("SELECT setting_value FROM settings WHERE setting_key = 'roles_permissions_matrix'");
     $matrix = null;
@@ -74,7 +43,9 @@ if ($method === 'GET' && ($path === 'accounts' || $path === 'roles-accounts')) {
     // -------------------------------------------------------------------------
     // Rate Limiting: 5 failed attempts per 15-minute window
     // -------------------------------------------------------------------------
-    if (RateLimiter::isRateLimited($cleanUsername, 5, 15)) {
+    // Per-IP cap (20 failures / 15 min) stops one client spraying many usernames
+    $ipKey = 'ip:' . RateLimiter::getClientIp();
+    if (RateLimiter::isRateLimited($cleanUsername, 5, 15) || RateLimiter::isRateLimited($ipKey, 20, 15)) {
         http_response_code(429);
         echo json_encode([
             'error' => 'Too Many Requests',
@@ -94,6 +65,7 @@ if ($method === 'GET' && ($path === 'accounts' || $path === 'roles-accounts')) {
 
     if (!$user) {
         RateLimiter::recordFailure($cleanUsername);
+        RateLimiter::recordFailure($ipKey);
         http_response_code(401);
         echo json_encode(['error' => 'Invalid username or password']);
         exit;
@@ -122,6 +94,7 @@ if ($method === 'GET' && ($path === 'accounts' || $path === 'roles-accounts')) {
 
     if (!$isPasswordValid) {
         RateLimiter::recordFailure($cleanUsername);
+        RateLimiter::recordFailure($ipKey);
         http_response_code(401);
         echo json_encode(['error' => 'Invalid username or password']);
         exit;
@@ -153,75 +126,18 @@ if ($method === 'GET' && ($path === 'accounts' || $path === 'roles-accounts')) {
 
     $token = JWT::encode($payload, $secret);
 
-    echo json_encode([
-        'success' => true,
-        'token' => $token,
-        'user' => [
-            'id' => $user['id'],
-            'username' => $user['username'],
-            'name' => $user['full_name'],
-            'role' => $normalizedRole,
-            'roleTitle' => $roleTitle,
-            'email' => $user['email'],
-            'phone' => $user['phone'] ?? '',
-            'avatar' => $user['avatar_url'] ?: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-        ]
-    ]);
-    exit;
-
-} else if ($method === 'POST' && $path === 'quick-login') {
-    $input = Sanitizer::getJsonInput();
-    $role = trim($input['role'] ?? '');
-    $username = trim($input['username'] ?? '');
-
-    $user = null;
-    if (!empty($username)) {
-        $user = get(
-            "SELECT u.*, r.name as role_name 
-             FROM users u 
-             LEFT JOIN roles r ON u.role_id = r.id 
-             WHERE (LOWER(u.username) = LOWER(?) OR LOWER(u.email) = LOWER(?)) AND u.is_active = true 
-             LIMIT 1",
-            [$username, $username]
-        );
-    } else if (!empty($role)) {
-        $cleanRole = strtolower(preg_replace('/\s+/', '_', $role));
-        $user = get(
-            "SELECT u.*, r.name as role_name 
-             FROM users u 
-             LEFT JOIN roles r ON u.role_id = r.id 
-             WHERE (LOWER(r.name) = LOWER(?) OR LOWER(REPLACE(r.name, ' ', '_')) = ? OR LOWER(u.username) = ?) AND u.is_active = true 
-             ORDER BY u.id ASC LIMIT 1",
-            [$role, $cleanRole, $cleanRole]
-        );
-    }
-
-    if (!$user) {
-        http_response_code(404);
-        echo json_encode(['error' => 'No active database account found for the selected role or user.']);
-        exit;
-    }
-
-    $roleName = $user['role_name'] ?: 'Staff';
-    $normalizedRole = strtolower(preg_replace('/\s+/', '_', $roleName));
-    $roleTitle = $roleName ?: 'Staff Member';
-
-    // Set PostgreSQL Row Level Security (RLS) context
-    if (function_exists('setDatabaseUserContext')) {
-        setDatabaseUserContext($normalizedRole, $user['id']);
-    }
-
-    $payload = [
-        'id' => $user['id'],
-        'username' => $user['username'],
-        'email' => $user['email'],
-        'name' => $user['full_name'],
-        'role' => $normalizedRole,
-        'roleTitle' => $roleTitle,
-        'exp' => time() + (24 * 60 * 60)
-    ];
-
-    $token = JWT::encode($payload, $secret);
+    // Track active session & audit login event
+    SessionModel::createSession((int)$user['id'], $token);
+    AuditLogger::log(
+        'LOGIN',
+        'auth',
+        "User {$user['full_name']} (@{$user['username']}) signed in",
+        (string)$user['id'],
+        ['role' => $normalizedRole],
+        (int)$user['id'],
+        $user['username'],
+        $normalizedRole
+    );
 
     echo json_encode([
         'success' => true,
@@ -234,7 +150,7 @@ if ($method === 'GET' && ($path === 'accounts' || $path === 'roles-accounts')) {
             'roleTitle' => $roleTitle,
             'email' => $user['email'],
             'phone' => $user['phone'] ?? '',
-            'avatar' => $user['avatar_url'] ?: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+            'avatar' => $user['avatar_url'] ?: null,
         ]
     ]);
     exit;
@@ -269,7 +185,7 @@ if ($method === 'GET' && ($path === 'accounts' || $path === 'roles-accounts')) {
             'roleTitle' => $roleName,
             'email' => $user['email'],
             'phone' => $user['phone'] ?? '',
-            'avatar' => $user['avatar_url'] ?: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+            'avatar' => $user['avatar_url'] ?: null,
             'lastLogin' => $user['last_login'],
         ]
     ]);
@@ -281,6 +197,20 @@ if ($method === 'GET' && ($path === 'accounts' || $path === 'roles-accounts')) {
         $payload = JWT::decode($token, $secret);
         $ttl = ($payload && isset($payload['exp'])) ? max(60, $payload['exp'] - time()) : 86400;
         AuthMiddleware::blacklistToken($token, $ttl);
+        SessionModel::closeSession($token, 'manual_logout');
+
+        if ($payload) {
+            AuditLogger::log(
+                'LOGOUT',
+                'auth',
+                "User " . ($payload['name'] ?? $payload['username']) . " (@" . ($payload['username'] ?? 'user') . ") logged out",
+                (string)($payload['id'] ?? ''),
+                null,
+                $payload['id'] ?? null,
+                $payload['username'] ?? null,
+                $payload['role'] ?? null
+            );
+        }
     }
 
     echo json_encode([

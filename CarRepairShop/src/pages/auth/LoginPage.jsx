@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
+import { prefetchRoute } from '../../lib/prefetch'
 import { useTranslation } from 'react-i18next'
 import { Eye, EyeSlash, SignIn, Key, ArrowLeft, CheckCircle } from '@phosphor-icons/react'
 import Logo from '../../components/ui/Logo'
@@ -12,7 +14,8 @@ import { useToast } from '../../context/ToastContext'
 export default function LoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { login, switchRole, availableAccounts } = useAuth()
+  const { login } = useAuth()
+  const queryClient = useQueryClient()
   const { addToast } = useToast()
 
   const [showPassword, setShowPassword] = useState(false)
@@ -44,20 +47,6 @@ export default function LoginPage() {
     return userProfile?.defaultRoute || (userProfile?.role && roleRoutes[userProfile.role]) || '/admin/dashboard'
   }
 
-  const handleAccountSelect = async (account) => {
-    setError('')
-    setLoading(true)
-    try {
-      const user = await switchRole({ username: account.username })
-      const target = getTargetRoute(user)
-      navigate(target, { replace: true })
-    } catch (err) {
-      setError(err.message || 'Login failed for selected account')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
@@ -67,6 +56,7 @@ export default function LoginPage() {
       const res = await login(form.username, form.password)
       if (res.success && res.user) {
         const target = getTargetRoute(res.user)
+        prefetchRoute(target, queryClient) // start loading the landing page's code and data now
         navigate(target, { replace: true })
       } else {
         setError(res.error || 'Invalid username or password')
@@ -216,7 +206,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-1 top-1/2 -translate-y-1/2 text-app-muted hover:text-app-text transition-colors p-2 min-h-[40px] min-w-[40px] flex items-center justify-center cursor-pointer"
+                className="absolute right-1 top-1/2 -translate-y-1/2 text-app-muted hover:text-app-text transition-colors p-1.5 size-8 flex items-center justify-center cursor-pointer"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeSlash size={16} /> : <Eye size={16} />}
@@ -228,7 +218,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full min-h-[48px] flex items-center justify-center gap-2 py-3 px-4 bg-app-accent hover:bg-app-accentHover active:scale-[0.99] text-app-accentText font-semibold rounded-md text-sm transition-colors disabled:opacity-60 cursor-pointer mt-2"
+            className="w-full h-10 sm:h-9 flex items-center justify-center gap-2 px-4 bg-app-accent hover:bg-app-accentHover active:scale-[0.99] text-app-accentText font-semibold rounded-md text-sm transition-colors disabled:opacity-60 cursor-pointer mt-2"
           >
             {loading ? (
               <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -239,38 +229,6 @@ export default function LoginPage() {
               </>
             )}
           </button>
-
-          {/* Database Accounts Selector */}
-          {availableAccounts && availableAccounts.length > 0 && (
-            <>
-              <div className="relative flex py-1.5 items-center">
-                <div className="flex-grow border-t border-app-border"></div>
-                <span className="flex-shrink mx-3 text-[10px] font-semibold text-app-muted">
-                  Database Accounts
-                </span>
-                <div className="flex-grow border-t border-app-border"></div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-1.5 max-h-48 overflow-y-auto pr-0.5 custom-scrollbar">
-                {availableAccounts.map((acc) => (
-                  <button
-                    key={acc.id}
-                    type="button"
-                    disabled={loading}
-                    onClick={() => handleAccountSelect(acc)}
-                    className="min-h-[44px] flex flex-col items-start justify-center px-2.5 py-1.5 rounded-md bg-app-hover/50 hover:bg-app-hover border border-app-border hover:border-app-accent/40 text-left transition-colors group disabled:opacity-50 cursor-pointer"
-                  >
-                    <span className="text-[11px] font-semibold text-app-text group-hover:text-app-accent transition-colors truncate w-full">
-                      {acc.name || acc.username}
-                    </span>
-                    <span className="text-[10px] text-app-muted truncate w-full">
-                      {acc.roleTitle} (@{acc.username})
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
 
           {/* Card Footer */}
           <div className="text-center pt-2 text-[11px] text-app-muted">

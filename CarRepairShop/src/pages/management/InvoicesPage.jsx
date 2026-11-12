@@ -190,7 +190,7 @@ export default function InvoicesPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
         <div className="p-3 rounded-lg bg-app-card border border-app-border flex items-center justify-between gap-2">
           <div>
-            <p className="text-[11px] font-medium text-app-muted tracking-tight">Total Invoiced</p>
+            <p className="text-xs font-semibold text-app-muted tracking-tight">Total Invoiced</p>
             <p className="font-mono font-semibold text-xl text-app-text mt-0.5 tabular-nums">${totalBilled.toFixed(2)}</p>
           </div>
           <Receipt size={16} weight="bold" className="text-app-accent flex-shrink-0" />
@@ -198,7 +198,7 @@ export default function InvoicesPage() {
 
         <div className="p-3 rounded-lg bg-app-card border border-app-border flex items-center justify-between gap-2">
           <div>
-            <p className="text-[11px] font-medium text-app-muted tracking-tight">Total Collected</p>
+            <p className="text-xs font-semibold text-app-muted tracking-tight">Total Collected</p>
             <p className="font-mono font-semibold text-xl text-emerald-600 dark:text-emerald-400 mt-0.5 tabular-nums">
               ${totalCollected.toFixed(2)}
             </p>
@@ -208,7 +208,7 @@ export default function InvoicesPage() {
 
         <div className="p-3 rounded-lg bg-app-card border border-app-border flex items-center justify-between gap-2">
           <div>
-            <p className="text-[11px] font-medium text-app-muted tracking-tight">Outstanding</p>
+            <p className="text-xs font-semibold text-app-muted tracking-tight">Outstanding</p>
             <p className="font-mono font-semibold text-xl text-amber-600 dark:text-amber-400 mt-0.5 tabular-nums">
               ${totalOutstanding.toFixed(2)}
             </p>
@@ -218,7 +218,7 @@ export default function InvoicesPage() {
 
         <div className="p-3 rounded-lg bg-app-card border border-app-border flex items-center justify-between gap-2">
           <div>
-            <p className="text-[11px] font-medium text-app-muted tracking-tight">Paid Invoices</p>
+            <p className="text-xs font-semibold text-app-muted tracking-tight">Paid Invoices</p>
             <p className="font-mono font-semibold text-xl text-app-text mt-0.5 tabular-nums">
               {allInvoices.filter((i) => i.status === 'Paid').length}
               <span className="text-xs font-normal text-app-muted ml-1">/ {allInvoices.length}</span>
@@ -242,9 +242,9 @@ export default function InvoicesPage() {
                   setStatusFilter(st)
                   setCurrentPage(1)
                 }}
-                className={`min-h-[44px] sm:min-h-0 sm:py-1 px-3 sm:px-2.5 py-2 inline-flex items-center justify-center rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                className={`h-7.5 sm:h-7 px-2.5 py-1 inline-flex items-center gap-1.5 justify-center rounded-md text-xs font-medium whitespace-nowrap transition-all cursor-pointer touch-manipulation active:scale-95 ${
                   isActive
-                    ? 'bg-app-accent text-app-accentText font-semibold'
+                    ? 'bg-app-accent text-app-accentText font-semibold shadow-xs'
                     : 'text-app-muted hover:text-app-text hover:bg-app-hover'
                 }`}
               >

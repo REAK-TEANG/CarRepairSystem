@@ -5,52 +5,15 @@ require_once __DIR__ . '/../utils/eventBus.php';
 
 class RepairJobModel
 {
-    private static function ensureSchema(): void
-    {
-        $flag = sys_get_temp_dir() . '/carrepair_repair_orders_v2.flag';
-        if (file_exists($flag)) return;
-        try {
-            Database::run("
-                ALTER TABLE repair_orders 
-                    ADD COLUMN IF NOT EXISTS odometer INT DEFAULT 0,
-                    ADD COLUMN IF NOT EXISTS fuel_level VARCHAR(20) DEFAULT '1/2',
-                    ADD COLUMN IF NOT EXISTS intake_inspection JSONB DEFAULT '{}'::jsonb,
-                    ADD COLUMN IF NOT EXISTS qa_checklist JSONB DEFAULT '{}'::jsonb,
-                    ADD COLUMN IF NOT EXISTS labor_minutes INT DEFAULT 0,
-                    ADD COLUMN IF NOT EXISTS labor_rate NUMERIC(10,2) DEFAULT 45.00,
-                    ADD COLUMN IF NOT EXISTS customer_approval VARCHAR(50) DEFAULT 'Approved',
-                    ADD COLUMN IF NOT EXISTS approved_amount NUMERIC(12,2) DEFAULT 0.00,
-                    ADD COLUMN IF NOT EXISTS next_service_due_date DATE,
-                    ADD COLUMN IF NOT EXISTS next_service_due_km INT
-            ");
-            Database::run("ALTER TABLE spare_parts ADD COLUMN IF NOT EXISTS photo_url TEXT");
-            Database::run("ALTER TABLE services ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE");
-            Database::run("
-                DELETE FROM repair_parts a
-                USING repair_parts b
-                WHERE a.id < b.id
-                  AND a.repair_order_id = b.repair_order_id
-                  AND a.spare_part_id = b.spare_part_id
-            ");
-            Database::run("
-                CREATE UNIQUE INDEX IF NOT EXISTS idx_repair_parts_ro_sp_uniq 
-                ON repair_parts (repair_order_id, spare_part_id)
-            ");
-            @file_put_contents($flag, '1');
-        } catch (\Throwable $e) {
-            // Non-blocking schema safeguard
-        }
-    }
-
     public static function getAll(array $filters = []): array
     {
-        self::ensureSchema();
         $sql    = self::baseSql();
         $params = [];
         $where  = [];
 
         if (!empty($filters['mechanicId'])) {
-            $where[]  = 'ro.mechanic_id = ?';
+            $where[]  = '(ro.mechanic_id = ? OR e.user_id = ?)';
+            $params[] = $filters['mechanicId'];
             $params[] = $filters['mechanicId'];
         }
         if (!empty($filters['vehicleId'])) {
@@ -84,7 +47,8 @@ class RepairJobModel
         ";
         $countParams = [];
         if (!empty($filters['mechanicId'])) {
-            $countSql .= " AND ro.mechanic_id = ?";
+            $countSql .= " AND (ro.mechanic_id = ? OR e.user_id = ?)";
+            $countParams[] = $filters['mechanicId'];
             $countParams[] = $filters['mechanicId'];
         }
         if (!empty($filters['vehicleId'])) {
@@ -113,7 +77,8 @@ class RepairJobModel
         $where = [];
 
         if (!empty($filters['mechanicId'])) {
-            $where[] = 'ro.mechanic_id = ?';
+            $where[] = '(ro.mechanic_id = ? OR e.user_id = ?)';
+            $params[] = $filters['mechanicId'];
             $params[] = $filters['mechanicId'];
         }
         if (!empty($filters['vehicleId'])) {
@@ -155,7 +120,6 @@ class RepairJobModel
 
     public static function create(array $input, int $performedBy): array
     {
-        self::ensureSchema();
         return Database::transaction(function () use ($input, $performedBy) {
             $orderNumber = generateUniqueCode('repair_orders', 'order_number', 'RO-2026', 4);
             $costNum    = (float) preg_replace('/[^0-9.]/', '', $input['estimatedCost'] ?? '350') ?: 350.00;
@@ -184,10 +148,11 @@ class RepairJobModel
                 $vehicleId = $firstVeh ? (int) $firstVeh['id'] : 1;
             }
 
-            $mechanicId  = (!empty($input['mechanicId']) && is_numeric($input['mechanicId'])) ? (int) $input['mechanicId'] : null;
-            if ($mechanicId) {
-                $mechExists = Database::get('SELECT id FROM employees WHERE id = ?', [$mechanicId]);
-                if (!$mechExists) $mechanicId = null;
+            $rawMech = (!empty($input['mechanicId']) && is_numeric($input['mechanicId'])) ? (int) $input['mechanicId'] : null;
+            $mechanicId = null;
+            if ($rawMech) {
+                $mech = Database::get('SELECT id FROM employees WHERE id = ? OR user_id = ? LIMIT 1', [$rawMech, $rawMech]);
+                $mechanicId = $mech ? (int) $mech['id'] : null;
             }
 
             $problemDesc = $input['problemDescription'] ?? $input['problem'] ?? null;
@@ -248,7 +213,6 @@ class RepairJobModel
 
     public static function update(int $id, array $input, int $performedBy): ?array
     {
-        self::ensureSchema();
         return Database::transaction(function () use ($id, $input, $performedBy) {
             $existing = Database::get('SELECT id, order_number FROM repair_orders WHERE id = ?', [$id]);
             if (!$existing) {
@@ -267,9 +231,13 @@ class RepairJobModel
             $inspectionJson = isset($input['intakeInspection'])
                 ? (is_string($input['intakeInspection']) ? $input['intakeInspection'] : json_encode($input['intakeInspection']))
                 : null;
-            $mechanicId = (!empty($input['mechanicId']) && (int) $input['mechanicId'] > 0)
-                ? (int) $input['mechanicId']
-                : ((!empty($input['mechanic_id']) && (int) $input['mechanic_id'] > 0) ? (int) $input['mechanic_id'] : null);
+            $mechanicProvided = array_key_exists('mechanicId', $input) || array_key_exists('mechanic_id', $input);
+            $rawMech = $input['mechanicId'] ?? $input['mechanic_id'] ?? null;
+            $mechanicId = null;
+            if ($mechanicProvided && !empty($rawMech) && is_numeric($rawMech) && (int)$rawMech > 0) {
+                $mech = Database::get('SELECT id FROM employees WHERE id = ? OR user_id = ? LIMIT 1', [(int)$rawMech, (int)$rawMech]);
+                $mechanicId = $mech ? (int) $mech['id'] : null;
+            }
 
             $status = !empty($input['status']) ? self::normalizeStatus($input['status']) : null;
             $problem = $input['problemDescription'] ?? $input['problem'] ?? null;
@@ -283,7 +251,7 @@ class RepairJobModel
                      diagnosis             = COALESCE(?, diagnosis),
                      actual_cost           = COALESCE(?, actual_cost),
                      estimated_cost        = COALESCE(?, estimated_cost),
-                     mechanic_id           = COALESCE(?, mechanic_id),
+                     mechanic_id           = (CASE WHEN ?::boolean THEN ? ELSE mechanic_id END),
                      notes                 = COALESCE(?, notes),
                      odometer              = COALESCE(?, odometer),
                      fuel_level            = COALESCE(?, fuel_level),
@@ -303,6 +271,7 @@ class RepairJobModel
                     $input['diagnosis']               ?? null,
                     $actualNum,
                     $estNum,
+                    $mechanicProvided ? 'true' : 'false',
                     $mechanicId,
                     $input['notes']                   ?? null,
                     $odometer,

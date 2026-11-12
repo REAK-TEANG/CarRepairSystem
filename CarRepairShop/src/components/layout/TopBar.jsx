@@ -7,7 +7,7 @@ import {
   CaretDown,
   Moon,
   Sun,
-  ArrowClockwise,
+  Globe,
 } from '@phosphor-icons/react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -16,7 +16,6 @@ import { useTheme } from '../../context/ThemeContext'
 import { useRepairJobs } from '../../hooks/useRepairJobs'
 import { useInventory } from '../../hooks/useInventory'
 import { useAppStore } from '../../store/useAppStore'
-import LanguageSwitcher from '../ui/LanguageSwitcher'
 
 const routeTitleKeys = {
   '/admin/dashboard': 'titles.adminOverview',
@@ -32,11 +31,12 @@ const routeTitleKeys = {
   '/invoices': 'titles.invoicesBilling',
   '/employees': 'titles.staffAttendance',
   '/reports': 'titles.analyticsReports',
+  '/audit-logs': 'titles.auditLogs',
   '/settings': 'titles.workshopSettings',
 }
 
 export default function TopBar({ onToggleSidebar }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
   const setCommandPaletteOpen = useAppStore((state) => state.setCommandPaletteOpen)
@@ -83,7 +83,7 @@ export default function TopBar({ onToggleSidebar }) {
       <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 min-w-0">
         <button
           onClick={onToggleSidebar}
-          className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-md text-app-muted hover:bg-app-hover active:scale-[0.98] hover:text-app-text transition-colors lg:hidden flex-shrink-0"
+          className="size-9 flex items-center justify-center rounded-lg text-app-muted hover:bg-app-hover active:scale-95 hover:text-app-text transition-all lg:hidden flex-shrink-0 cursor-pointer"
           aria-label="Toggle navigation menu"
         >
           <List size={20} weight="bold" />
@@ -114,124 +114,100 @@ export default function TopBar({ onToggleSidebar }) {
       </div>
 
       {/* Right Action Icons & User Profile */}
-      <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
+      <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
         {/* Mobile Search Icon Button */}
         <button
           onClick={() => setCommandPaletteOpen(true)}
-          className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-sm text-app-muted hover:bg-app-hover active:scale-[0.98] hover:text-app-text transition-all sm:hidden cursor-pointer"
+          className="size-9 flex items-center justify-center rounded-lg text-app-muted hover:bg-app-hover active:scale-95 hover:text-app-text transition-all sm:hidden cursor-pointer"
           title="Search (⌘K)"
         >
           <MagnifyingGlass size={18} weight="bold" />
         </button>
 
-        {/* Language Switcher */}
-        <LanguageSwitcher />
+        {/* Bell Notifications */}
+        <div className="relative">
+          {(() => {
+            const activeRepairAlerts = repairJobs
+              .filter((j) => j.status === 'Diagnosing' || j.status === 'Repairing' || j.status === 'Waiting for Parts')
+              .slice(0, 3)
+              .map((j) => ({
+                id: `job-${j.id}`,
+                title: `${j.orderNumber} ${j.status.toLowerCase()}`,
+                desc: `${j.customer || 'Customer'} · ${j.vehicle || 'Vehicle'} (${j.mechanic || 'Assigned'})`,
+                color: j.status === 'Waiting for Parts' ? 'bg-amber-500' : 'bg-blue-500',
+                path: '/repair-jobs',
+              }))
 
-        {/* Theme and Alerts controls */}
-        <div className="flex items-center gap-0.5 sm:gap-1 bg-app-hover/50 border border-app-border p-0.5 sm:p-1 rounded-sm">
-          {/* Theme Switcher Button */}
-          <button
-            onClick={toggleTheme}
-            className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 p-2 rounded-sm text-app-muted hover:bg-app-card hover:text-app-text transition-all flex items-center justify-center"
-            title={isDark ? t('common.lightMode') : t('common.darkMode')}
-          >
-            {isDark ? <Sun size={17} weight="bold" className="text-amber-400" /> : <Moon size={17} weight="bold" />}
-          </button>
+            const lowStockAlerts = inventory
+              .filter((p) => (Number(p.stockQty) || 0) <= (Number(p.minThreshold) || 5))
+              .slice(0, 3)
+              .map((p) => ({
+                id: `part-${p.id}`,
+                title: `${p.name} low stock`,
+                desc: `${p.stockQty} units remaining (min: ${p.minThreshold || 5})`,
+                color: 'bg-amber-500',
+                path: '/inventory',
+              }))
 
-          {/* Refresh Button (desktop only) */}
-          <button
-            className="p-2 rounded-sm text-app-muted hover:bg-app-card hover:text-app-text transition-all hidden sm:block"
-            title={t('common.refresh')}
-            onClick={() => window.location.reload()}
-          >
-            <ArrowClockwise size={17} weight="bold" />
-          </button>
+            const liveAlerts = [...activeRepairAlerts, ...lowStockAlerts]
 
-          {/* Bell Notifications */}
-          <div className="relative">
-            {(() => {
-              const activeRepairAlerts = repairJobs
-                .filter((j) => j.status === 'Diagnosing' || j.status === 'Repairing' || j.status === 'Waiting for Parts')
-                .slice(0, 3)
-                .map((j) => ({
-                  id: `job-${j.id}`,
-                  title: `${j.orderNumber} ${j.status.toLowerCase()}`,
-                  desc: `${j.customer || 'Customer'} · ${j.vehicle || 'Vehicle'} (${j.mechanic || 'Assigned'})`,
-                  color: j.status === 'Waiting for Parts' ? 'bg-amber-500' : 'bg-blue-500',
-                  path: '/repair-jobs',
-                }))
-
-              const lowStockAlerts = inventory
-                .filter((p) => (Number(p.stockQty) || 0) <= (Number(p.minThreshold) || 5))
-                .slice(0, 3)
-                .map((p) => ({
-                  id: `part-${p.id}`,
-                  title: `${p.name} low stock`,
-                  desc: `${p.stockQty} units remaining (min: ${p.minThreshold || 5})`,
-                  color: 'bg-amber-500',
-                  path: '/inventory',
-                }))
-
-              const liveAlerts = [...activeRepairAlerts, ...lowStockAlerts]
-
-              return (
-                <>
-                  <button
-                    onClick={() => {
-                      setNotifOpen(!notifOpen)
-                      setProfileOpen(false)
-                    }}
-                    className="relative min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 p-2 rounded-sm text-app-muted hover:bg-app-card hover:text-app-text transition-all flex items-center justify-center"
-                    aria-label="Notifications"
-                  >
-                    <Bell size={17} weight={notifOpen ? 'fill' : 'bold'} />
-                    {liveAlerts.length > 0 && (
-                      <span className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-app-card" />
-                    )}
-                  </button>
-
-                  {notifOpen && (
-                    <div className="absolute right-0 mt-3 w-[calc(100vw-1.5rem)] sm:w-80 bg-app-card border border-app-border rounded-sm shadow-card py-2 z-50 max-w-xs sm:max-w-none">
-                      <div className="px-4 py-2.5 border-b border-app-border flex items-center justify-between">
-                        <h3 className="text-xs font-semibold text-app-text">{t('common.alerts', 'Alerts')}</h3>
-                        <span className="text-xs font-mono text-app-muted">
-                          {liveAlerts.length}
-                        </span>
-                      </div>
-                      <div className="divide-y divide-app-border text-xs max-h-72 overflow-y-auto">
-                        {liveAlerts.length === 0 ? (
-                          <div className="p-4 text-center text-xs text-app-muted">
-                            {t('common.noRecords')}
-                          </div>
-                        ) : (
-                          liveAlerts.map((alert) => (
-                            <div
-                              key={alert.id}
-                              onClick={() => {
-                                setNotifOpen(false)
-                                navigate(alert.path)
-                              }}
-                              className="p-3.5 hover:bg-app-hover transition-colors flex items-start gap-2.5 cursor-pointer"
-                            >
-                              <div className={`w-2 h-2 rounded-full ${alert.color} mt-1.5 flex-shrink-0`} />
-                              <div className="truncate flex-1">
-                                <p className="font-semibold text-app-text truncate">{alert.title}</p>
-                                <p className="text-[10px] text-app-muted mt-0.5 truncate">{alert.desc}</p>
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
+            return (
+              <>
+                <button
+                  onClick={() => {
+                    setNotifOpen(!notifOpen)
+                    setProfileOpen(false)
+                  }}
+                  className="relative size-9 sm:size-8 rounded-lg text-app-muted hover:bg-app-hover hover:text-app-text active:scale-95 transition-all flex items-center justify-center cursor-pointer"
+                  aria-label="Notifications"
+                >
+                  <Bell size={18} weight={notifOpen ? 'fill' : 'bold'} />
+                  {liveAlerts.length > 0 && (
+                    <span className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-app-card" />
                   )}
-                </>
-              )
-            })()}
-          </div>
+                </button>
+
+                {notifOpen && (
+                  <div className="absolute right-0 mt-3 w-[calc(100vw-1.5rem)] sm:w-80 bg-app-card border border-app-border rounded-xl shadow-xl py-2 z-50 max-w-xs sm:max-w-none">
+                    <div className="px-4 py-2.5 border-b border-app-border flex items-center justify-between">
+                      <h3 className="text-xs font-semibold text-app-text">{t('common.alerts', 'Alerts')}</h3>
+                      <span className="text-xs font-mono text-app-muted">
+                        {liveAlerts.length}
+                      </span>
+                    </div>
+                    <div className="divide-y divide-app-border text-xs max-h-72 overflow-y-auto">
+                      {liveAlerts.length === 0 ? (
+                        <div className="p-4 text-center text-xs text-app-muted">
+                          {t('common.noRecords')}
+                        </div>
+                      ) : (
+                        liveAlerts.map((alert) => (
+                          <div
+                            key={alert.id}
+                            onClick={() => {
+                              setNotifOpen(false)
+                              navigate(alert.path)
+                            }}
+                            className="p-3.5 hover:bg-app-hover transition-colors flex items-start gap-2.5 cursor-pointer"
+                          >
+                            <div className={`w-2 h-2 rounded-full ${alert.color} mt-1.5 flex-shrink-0`} />
+                            <div className="truncate flex-1">
+                              <p className="font-semibold text-app-text truncate">{alert.title}</p>
+                              <p className="text-[10px] text-app-muted mt-0.5 truncate">{alert.desc}</p>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </>
+            )
+          })()}
         </div>
 
         {/* Divider */}
-        <div className="w-px h-6 bg-app-border mx-0.5 sm:mx-1" />
+        <div className="w-px h-6 bg-app-border mx-0.5" />
 
         {/* User Profile Menu */}
         <div className="relative">
@@ -240,7 +216,7 @@ export default function TopBar({ onToggleSidebar }) {
               setProfileOpen(!profileOpen)
               setNotifOpen(false)
             }}
-            className="flex items-center justify-center sm:justify-start gap-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 p-1 sm:p-1.5 sm:pr-2.5 rounded-sm hover:bg-app-hover transition-all border border-transparent hover:border-app-border"
+            className="flex items-center justify-center sm:justify-start gap-2 p-1 sm:p-1.5 sm:pr-2.5 rounded-lg hover:bg-app-hover transition-all border border-transparent hover:border-app-border cursor-pointer"
           >
             <div className="relative">
               <div className="w-8 h-8 bg-app-accent/15 border border-app-accent/30 rounded-sm flex items-center justify-center text-app-accent font-bold text-xs shadow-subtle">
@@ -258,29 +234,87 @@ export default function TopBar({ onToggleSidebar }) {
           </button>
 
           {profileOpen && (
-            <div className="absolute right-0 mt-3 w-[calc(100vw-1.5rem)] sm:w-64 max-w-xs bg-app-card border border-app-border rounded-sm shadow-card py-2 z-50 text-xs">
+            <div className="absolute right-0 mt-3 w-[calc(100vw-1.5rem)] sm:w-72 max-w-xs bg-app-card border border-app-border rounded-xl shadow-xl py-2 z-50 text-xs animate-in fade-in zoom-in-95 duration-150">
+              {/* Profile Card Header */}
               <div className="px-4 py-3 border-b border-app-border">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-app-accent/15 border border-app-accent/30 rounded-sm flex items-center justify-center text-app-accent font-bold text-sm flex-shrink-0">
+                  <div className="w-10 h-10 bg-app-accent/15 border border-app-accent/30 rounded-xl flex items-center justify-center text-app-accent font-bold text-sm flex-shrink-0">
                     {user?.name ? user.name.split(' ').map((n) => n[0]).join('') : '?'}
                   </div>
                   <div className="truncate flex-1 min-w-0">
                     <p className="font-bold text-app-text truncate">{user?.name || 'User'}</p>
                     <p className="text-[11px] text-app-muted truncate">{user?.email || ''}</p>
-                    <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full bg-app-accent/10 text-app-accent font-semibold">
+                    <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full bg-app-accent/10 text-app-accent font-semibold border border-app-accent/20">
                       {user ? t(`roles.${user.role}`, user.roleTitle) : ''}
                     </span>
                   </div>
                 </div>
               </div>
 
+              {/* Preferences: Theme & Language */}
+              <div className="p-2 space-y-1 border-b border-app-border">
+                {/* Theme Switcher */}
+                <button
+                  type="button"
+                  onClick={toggleTheme}
+                  className="w-full px-3 py-2 flex items-center justify-between text-xs hover:bg-app-hover rounded-lg transition-colors cursor-pointer select-none"
+                >
+                  <div className="flex items-center gap-2.5 text-app-text font-medium">
+                    {isDark ? (
+                      <Sun size={16} weight="bold" className="text-amber-400" />
+                    ) : (
+                      <Moon size={16} weight="bold" className="text-slate-600 dark:text-slate-300" />
+                    )}
+                    <span>{t('settings.appearance', 'Theme')}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-app-input border border-app-border text-[11px] font-semibold text-app-text shadow-xs">
+                    <span className={`w-1.5 h-1.5 rounded-full ${isDark ? 'bg-amber-400' : 'bg-slate-400'}`} />
+                    <span>{isDark ? 'Obsidian' : 'Light'}</span>
+                  </div>
+                </button>
+
+                {/* Language Switcher */}
+                <div className="px-3 py-2 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5 text-app-text font-medium">
+                    <Globe size={16} weight="bold" className="text-app-muted" />
+                    <span>{t('settings.language', 'Language')}</span>
+                  </div>
+                  <div className="flex items-center bg-app-input border border-app-border rounded-lg p-0.5 shadow-xs">
+                    <button
+                      type="button"
+                      onClick={() => i18n.changeLanguage('km')}
+                      className={`px-2 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
+                        i18n.language === 'km'
+                          ? 'bg-app-accent text-app-accentText shadow-xs'
+                          : 'text-app-muted hover:text-app-text'
+                      }`}
+                    >
+                      🇰🇭 ខ្មែរ
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => i18n.changeLanguage('en')}
+                      className={`px-2 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
+                        i18n.language === 'en'
+                          ? 'bg-app-accent text-app-accentText shadow-xs'
+                          : 'text-app-muted hover:text-app-text'
+                      }`}
+                    >
+                      🇬🇧 EN
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sign Out */}
               <div className="p-1.5">
                 <button
+                  type="button"
                   onClick={handleSignOut}
-                  className="w-full min-h-[40px] flex items-center gap-2 px-3.5 py-2.5 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 rounded-sm transition-colors font-medium text-xs cursor-pointer"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors font-semibold text-xs cursor-pointer"
                 >
-                  <SignOut size={15} />
-                  {t('common.signOut')}
+                  <SignOut size={16} weight="bold" />
+                  <span>{t('common.signOut')}</span>
                 </button>
               </div>
             </div>

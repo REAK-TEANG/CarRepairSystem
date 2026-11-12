@@ -11,14 +11,17 @@ class AppointmentController
     {
         $search = $_GET['search'] ?? '';
         $status = $_GET['status'] ?? null;
+        $filters = [
+            'mechanicId' => $_GET['mechanicId'] ?? null,
+        ];
         $params = Pagination::getParams(10);
 
         if ($params['isAll']) {
-            echo json_encode(['data' => AppointmentModel::getAll()]);
+            echo json_encode(['data' => AppointmentModel::getAll($filters)]);
             return;
         }
 
-        $result = AppointmentModel::getPaginated($search, $params['page'], $params['limit'], $status);
+        $result = AppointmentModel::getPaginated($search, $params['page'], $params['limit'], $status, $filters);
         echo json_encode(Pagination::formatResponse($result['data'], $result['total'], $params['page'], $params['limit']));
     }
 

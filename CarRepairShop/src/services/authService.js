@@ -13,26 +13,6 @@ export const authService = {
   },
 
   /**
-   * Fast role or user login using real database account
-   */
-  async quickLogin(roleOrUsername) {
-    const payload = typeof roleOrUsername === 'object' ? roleOrUsername : { role: roleOrUsername }
-    const res = await apiClient.post('/auth/quick-login', payload)
-    if (res?.token) {
-      apiClient.setToken(res.token)
-    }
-    return res
-  },
-
-  /**
-   * Fetch real registered accounts directly from database
-   */
-  async getAccounts() {
-    const res = await apiClient.get('/auth/accounts')
-    return res?.accounts || []
-  },
-
-  /**
    * Fetch currently authenticated user profile
    */
   async getMe() {

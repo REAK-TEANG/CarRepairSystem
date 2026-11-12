@@ -1,4 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom'
+import { useRoutePrefetch } from '@/hooks/useRoutePrefetch'
 import {
   SquaresFour,
   Wrench,
@@ -28,6 +29,7 @@ import { cn } from '@/lib/utils'
  */
 export default function MobileBottomNav({ onOpenMore }) {
   const { user } = useAuth()
+  const prefetchHandlers = useRoutePrefetch()
   const location = useLocation()
   const setFastIntakeModalOpen = useAppStore((state) => state.setFastIntakeModalOpen)
 
@@ -155,85 +157,85 @@ export default function MobileBottomNav({ onOpenMore }) {
       aria-label="Mobile Navigation"
       className={cn(
         'fixed bottom-0 left-0 right-0 z-40 md:hidden',
-        'bg-app-card/90 backdrop-blur-xl border-t border-app-border',
-        'flex items-center justify-around px-2 py-1 select-none',
-        'shadow-[0_-4px_20px_rgba(0,0,0,0.08)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.4)]',
-        'pb-[max(0.45rem,env(safe-area-inset-bottom))]'
+        'bg-app-card/95 backdrop-blur-xl border-t border-app-border select-none',
+        'shadow-[0_-2px_12px_rgba(0,0,0,0.06)] dark:shadow-[0_-2px_12px_rgba(0,0,0,0.35)]',
+        'pb-[max(0.35rem,env(safe-area-inset-bottom))]'
       )}
     >
-      {activeTabs.map((tab, idx) => {
-        const Icon = tab.icon
+      <div className="grid grid-flow-col auto-cols-fr items-stretch h-[52px] max-w-lg mx-auto">
+        {activeTabs.map((tab) => {
+          const Icon = tab.icon
 
-        // Center Floating Action Button (e.g. + Intake)
-        if (tab.isCenterAction) {
-          return (
-            <div key="center-action" className="relative flex items-center justify-center -mt-5">
+          // Center Action (Intake)
+          if (tab.isCenterAction) {
+            return (
               <button
+                key="center-action"
                 type="button"
                 onClick={tab.action}
-                aria-label="Create Fast Intake"
-                className={cn(
-                  'w-12 h-12 min-w-[48px] min-h-[48px] shrink-0 rounded-full bg-app-accent text-app-accentText',
-                  'flex items-center justify-center shadow-lg active:scale-90 transition-transform duration-150',
-                  'border-4 border-[var(--bg-canvas)] outline-none focus:outline-none cursor-pointer'
-                )}
+                aria-label={tab.label}
+                className="flex flex-col items-center justify-center h-full w-full py-1 text-app-accent hover:text-app-accent/80 active:scale-90 transition-transform duration-100 cursor-pointer outline-none touch-manipulation"
               >
-                <Plus size={22} weight="bold" />
+                <div className="w-7 h-7 rounded-full bg-app-accent/15 flex items-center justify-center text-app-accent">
+                  <Icon size={18} weight="bold" />
+                </div>
+                <span className="text-[10px] font-semibold mt-0.5 tracking-tight leading-none text-app-accent">
+                  {tab.label}
+                </span>
               </button>
-            </div>
-          )
-        }
+            )
+          }
 
-        // Action-only tab (e.g. "More" menu)
-        if (tab.action) {
+          // Action-only tab (e.g. "More" menu)
+          if (tab.action) {
+            return (
+              <button
+                key={tab.label}
+                type="button"
+                onClick={tab.action}
+                className="flex flex-col items-center justify-center h-full w-full py-1 text-app-muted hover:text-app-text active:scale-95 transition-transform duration-100 cursor-pointer outline-none relative touch-manipulation"
+              >
+                <Icon size={22} weight="regular" />
+                <span className="text-[10px] font-medium mt-0.5 tracking-tight leading-none text-app-muted">
+                  {tab.label}
+                </span>
+              </button>
+            )
+          }
+
+          // Standard Navigation Link
+          const isActive = location.pathname === tab.href || location.pathname.startsWith(tab.href + '/')
+
           return (
-            <button
-              key={tab.label}
-              type="button"
-              onClick={tab.action}
-              className="flex flex-col items-center justify-center min-h-[44px] min-w-[44px] py-1 px-3 text-app-muted hover:text-app-text active:scale-95 transition-all outline-none focus:outline-none cursor-pointer"
-            >
-              <Icon size={20} weight="regular" />
-              <span className="text-[10px] font-semibold mt-1 tracking-tight">
-                {tab.label}
-              </span>
-            </button>
-          )
-        }
-
-        // Standard Navigation Link
-        const isActive = location.pathname.startsWith(tab.href)
-
-        return (
-          <NavLink
-            key={tab.href}
-            to={tab.href}
-            className={cn(
-              'flex flex-col items-center justify-center min-h-[44px] min-w-[44px] py-1 px-3 transition-all active:scale-95 outline-none',
-              isActive
-                ? 'text-app-accent'
-                : 'text-app-muted hover:text-app-text'
-            )}
-          >
-            <Icon
-              size={20}
-              weight={isActive ? 'fill' : 'regular'}
-              className={cn('transition-transform duration-150', isActive && 'scale-110')}
-            />
-            <span
+            <NavLink
+              key={tab.href}
+              to={tab.href}
+              {...prefetchHandlers(tab.href)}
               className={cn(
-                'text-[10px] mt-1 tracking-tight transition-colors',
-                isActive ? 'font-bold text-app-accent' : 'font-medium'
+                'flex flex-col items-center justify-center h-full w-full py-1 transition-all duration-100 relative outline-none touch-manipulation active:scale-95',
+                isActive ? 'text-app-accent' : 'text-app-muted hover:text-app-text'
               )}
             >
-              {tab.label}
-            </span>
-            {isActive && (
-              <span className="w-1 h-1 rounded-full bg-app-accent mt-0.5" />
-            )}
-          </NavLink>
-        )
-      })}
+              {isActive && (
+                <span className="absolute top-0 left-3 right-3 h-[2px] rounded-b-full bg-app-accent" />
+              )}
+              <Icon
+                size={22}
+                weight={isActive ? 'fill' : 'regular'}
+                className="transition-transform duration-100"
+              />
+              <span
+                className={cn(
+                  'text-[10px] mt-0.5 tracking-tight leading-none transition-colors',
+                  isActive ? 'font-bold text-app-accent' : 'font-medium text-app-muted'
+                )}
+              >
+                {tab.label}
+              </span>
+            </NavLink>
+          )
+        })}
+      </div>
     </nav>
   )
 }

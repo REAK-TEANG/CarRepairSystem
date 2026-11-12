@@ -101,7 +101,7 @@ class ApiClient {
       error.data = errorData
 
       // Broadcast auth expiration or unauthorized access
-      if (response.status === 401 && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/quick-login')) {
+      if (response.status === 401 && !endpoint.includes('/auth/login')) {
         this.clearToken()
         window.dispatchEvent(new CustomEvent('auth:expired', { detail: { message: errorMsg } }))
       }

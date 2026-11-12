@@ -6,7 +6,9 @@
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "cd api && php -S 0.0.0.0:8000 index.php",
     "dev:frontend": "cd CarRepairShop && npm run dev",
-    "build": "cd CarRepairShop && npm run build"
+    "build": "cd CarRepairShop && npm run build",
+    "lint": "cd CarRepairShop && npm run lint",
+    "test:api": "php api/tests/jwt_test.php && php -d apc.enable_cli=1 api/tests/cache_test.php"
   },
   "devDependencies": {
     "concurrently": "^10.0.5",

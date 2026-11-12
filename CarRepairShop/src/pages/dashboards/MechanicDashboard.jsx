@@ -27,7 +27,7 @@ export default function MechanicDashboard() {
 
   const isMechanicUser = user?.role === 'mechanic'
   const effectiveMechanicId = isMechanicUser
-    ? user?.id
+    ? (user?.employeeId || user?.id)
     : selectedMechanicId !== 'all'
     ? Number(selectedMechanicId)
     : undefined
@@ -36,7 +36,7 @@ export default function MechanicDashboard() {
   const { data: rawJobs = [] } = useRepairJobs(params)
   const jobs = Array.isArray(rawJobs) ? rawJobs : (rawJobs?.data || [])
 
-  const activeJobs = jobs.filter((j) => j.status === 'Diagnosing' || j.status === 'Repairing')
+  const activeJobs = jobs.filter((j) => j.status === 'Pending' || j.status === 'Diagnosing' || j.status === 'Repairing')
   const waitingParts = jobs.filter((j) => j.status === 'Waiting for Parts')
   const completedJobs = jobs.filter((j) => j.status === 'Completed' || j.status === 'Ready for Pickup')
 
@@ -55,18 +55,18 @@ export default function MechanicDashboard() {
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full sm:w-auto">
           {/* Mode Switcher */}
-          <div className="grid grid-cols-2 bg-app-card border border-app-border rounded-lg p-0.5 shadow-xs w-full sm:w-auto">
+          <div className="grid grid-cols-2 bg-app-card border border-app-border rounded-xl p-1 shadow-2xs w-full sm:w-auto">
             <button
               type="button"
               onClick={() => setViewMode('bay')}
               title="Bay Mode"
-              className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer touch-manipulation active:scale-[0.98] ${
+              className={`flex items-center justify-center gap-1.5 px-4 h-9 rounded-lg text-xs font-semibold transition-all cursor-pointer touch-manipulation active-press ${
                 viewMode === 'bay'
                   ? 'bg-app-accent text-app-accentText shadow-xs'
-                  : 'text-app-muted hover:text-app-text'
+                  : 'text-app-muted hover:text-app-text hover:bg-app-hover/50'
               }`}
             >
-              <DeviceTablet size={15} weight="bold" />
+              <DeviceTablet size={16} weight="bold" />
               <span>Bay</span>
               <span className="hidden sm:inline">&nbsp;Mode</span>
             </button>
@@ -74,13 +74,13 @@ export default function MechanicDashboard() {
               type="button"
               onClick={() => setViewMode('pipeline')}
               title="Pipeline Flow"
-              className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer touch-manipulation active:scale-[0.98] ${
+              className={`flex items-center justify-center gap-1.5 px-4 h-9 rounded-lg text-xs font-semibold transition-all cursor-pointer touch-manipulation active-press ${
                 viewMode === 'pipeline'
                   ? 'bg-app-accent text-app-accentText shadow-xs'
-                  : 'text-app-muted hover:text-app-text'
+                  : 'text-app-muted hover:text-app-text hover:bg-app-hover/50'
               }`}
             >
-              <Kanban size={15} weight="bold" />
+              <Kanban size={16} weight="bold" />
               <span>Pipeline</span>
               <span className="hidden sm:inline">&nbsp;Flow</span>
             </button>
@@ -109,43 +109,52 @@ export default function MechanicDashboard() {
       </div>
 
       {/* BENTO GRID: 3-Tile Work Status Cards */}
-      <StaggerGroup staggerDelay={75} duration={600} className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <StaggerGroup staggerDelay={75} duration={600} className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
         {/* Bento Metric 1: In Progress */}
-        <div className="col-span-1 bg-app-card rounded-lg p-3.5 border border-app-border flex flex-col justify-between">
+        <div className="col-span-1 bg-app-card rounded-xl p-4 border border-app-border border-l-4 border-l-blue-500 shadow-2xs flex flex-col justify-between hover:shadow-xs transition-shadow">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] font-medium text-app-muted tracking-tight">
+            <p className="text-xs font-semibold text-app-muted tracking-tight">
               {t('dashboard.activeJobs')}
             </p>
-            <Wrench size={15} weight="bold" className="text-blue-500" />
+            <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
+              <Wrench size={16} weight="bold" />
+            </div>
           </div>
-          <div className="mt-1">
-            <h2 className="text-2xl font-semibold text-app-text tabular-nums">{activeJobs.length}</h2>
+          <div className="mt-2">
+            <h2 className="text-2xl sm:text-3xl font-bold text-app-text tabular-nums tracking-tight">{activeJobs.length}</h2>
+            <p className="text-[11px] text-app-muted mt-0.5">Currently on shop floor</p>
           </div>
         </div>
 
         {/* Bento Metric 2: Waiting Parts */}
-        <div className="col-span-1 bg-app-card rounded-lg p-3.5 border border-app-border flex flex-col justify-between">
+        <div className="col-span-1 bg-app-card rounded-xl p-4 border border-app-border border-l-4 border-l-amber-500 shadow-2xs flex flex-col justify-between hover:shadow-xs transition-shadow">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] font-medium text-app-muted tracking-tight truncate">
+            <p className="text-xs font-semibold text-app-muted tracking-tight truncate">
               {t('status.Waiting for Parts')}
             </p>
-            <WarningCircle size={15} weight="bold" className="text-amber-500" />
+            <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
+              <WarningCircle size={16} weight="bold" />
+            </div>
           </div>
-          <div className="mt-1">
-            <h2 className="text-2xl font-semibold text-app-text tabular-nums">{waitingParts.length}</h2>
+          <div className="mt-2">
+            <h2 className="text-2xl sm:text-3xl font-bold text-app-text tabular-nums tracking-tight">{waitingParts.length}</h2>
+            <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5 font-medium">Pending parts delivery</p>
           </div>
         </div>
 
         {/* Bento Metric 3: Ready / Completed */}
-        <div className="col-span-2 sm:col-span-1 bg-app-card rounded-lg p-3.5 border border-app-border flex flex-col justify-between">
+        <div className="col-span-2 sm:col-span-1 bg-app-card rounded-xl p-4 border border-app-border border-l-4 border-l-emerald-500 shadow-2xs flex flex-col justify-between hover:shadow-xs transition-shadow">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] font-medium text-app-muted tracking-tight">
+            <p className="text-xs font-semibold text-app-muted tracking-tight">
               {t('status.Completed')}
             </p>
-            <CheckCircle size={15} weight="bold" className="text-emerald-500" />
+            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+              <CheckCircle size={16} weight="bold" />
+            </div>
           </div>
-          <div className="mt-1">
-            <h2 className="text-2xl font-semibold text-app-text tabular-nums">{completedJobs.length}</h2>
+          <div className="mt-2">
+            <h2 className="text-2xl sm:text-3xl font-bold text-app-text tabular-nums tracking-tight">{completedJobs.length}</h2>
+            <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5 font-medium">Ready for customer</p>
           </div>
         </div>
       </StaggerGroup>

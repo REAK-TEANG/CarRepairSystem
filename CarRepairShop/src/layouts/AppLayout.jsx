@@ -9,6 +9,7 @@ import { LoadingSpinner } from '../components/ui'
 import { useAppStore } from '../store/useAppStore'
 import { FadeIn } from '../components/animation/AnimeWrapper'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
+import { useSessionTracker } from '../hooks/useSessionTracker'
 
 export default function AppLayout() {
   const { user, loading } = useAuth()
@@ -16,6 +17,9 @@ export default function AppLayout() {
 
   // Initialize universal real-time event pipeline for connected clients
   useRealtimeSync()
+  
+  // Track active session presence, heartbeat telemetry, and window close
+  useSessionTracker()
   
   const sidebarCollapsed = useAppStore((state) => state.sidebarCollapsed)
   const toggleSidebar = useAppStore((state) => state.toggleSidebar)

@@ -8,7 +8,10 @@ require_once __DIR__ . '/../utils/cache.php';
 
 class AuthMiddleware
 {
-    private static $blacklistTableInitialized = false;
+    private const BLACKLIST_NEGATIVE_TTL = 30;   // seconds a "not revoked" answer is reused
+    private const PERMISSIONS_CACHE_KEY = 'roles_permissions_matrix';
+    private const PERMISSIONS_CACHE_TTL = 60;
+
 
     /**
      * Default Role-Permissions Matrix (Single Source of Truth fallback)
@@ -127,34 +130,6 @@ class AuthMiddleware
     }
 
     /**
-     * Ensure the token blacklist table exists in PostgreSQL
-     */
-    private static function initBlacklistTable(): void
-    {
-        if (self::$blacklistTableInitialized) return;
-        global $pdo;
-        try {
-            if ($pdo) {
-                $pdo->exec("
-                    CREATE TABLE IF NOT EXISTS token_blacklist (
-                        id SERIAL PRIMARY KEY,
-                        token_hash VARCHAR(64) UNIQUE NOT NULL,
-                        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-                        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-                    )
-                ");
-                $pdo->exec("
-                    CREATE INDEX IF NOT EXISTS idx_token_blacklist_hash_exp 
-                    ON token_blacklist (token_hash, expires_at)
-                ");
-            }
-            self::$blacklistTableInitialized = true;
-        } catch (Throwable $e) {
-            error_log("Token blacklist table init warning: " . $e->getMessage());
-        }
-    }
-
-    /**
      * Add token to blacklist (revocation upon logout)
      */
     public static function blacklistToken(string $token, int $ttl = 86400): void
@@ -162,24 +137,16 @@ class AuthMiddleware
         $hash = hash('sha256', $token);
         $ttl = max(60, $ttl);
 
-        // 1. Invalidate in Redis if active
-        $redis = Cache::getClient();
-        if ($redis) {
-            try {
-                $redis->setex("token_blacklist:$hash", $ttl, '1');
-            } catch (Throwable $e) {
-                error_log("Redis token blacklist error: " . $e->getMessage());
-            }
-        }
+        // Make revocation visible immediately in the cache tier(s)
+        Cache::store("token_blacklist:$hash", true, $ttl);
 
-        // 2. Persist in PostgreSQL fallback
-        self::initBlacklistTable();
+        // Persist so revocation survives restarts and other instances
         try {
             run(
-                "INSERT INTO token_blacklist (token_hash, expires_at) 
-                 VALUES (?, NOW() + INTERVAL '$ttl seconds') 
+                "INSERT INTO token_blacklist (token_hash, expires_at)
+                 VALUES (?, NOW() + (? || ' seconds')::interval)
                  ON CONFLICT (token_hash) DO NOTHING",
-                [$hash]
+                [$hash, (string) $ttl]
             );
 
             // Periodic cleanup of expired tokens (1 in 50 chance)
@@ -192,39 +159,32 @@ class AuthMiddleware
     }
 
     /**
-     * Check if a token has been revoked / blacklisted
+     * Check if a token has been revoked / blacklisted.
+     * "Not revoked" is cached briefly so repeated requests skip the database;
+     * revocations are written to the cache immediately by blacklistToken().
      */
     public static function isTokenBlacklisted(string $token): bool
     {
-        $hash = hash('sha256', $token);
+        $key = 'token_blacklist:' . hash('sha256', $token);
 
-        // Check Redis first
-        $redis = Cache::getClient();
-        if ($redis) {
-            try {
-                if ($redis->exists("token_blacklist:$hash")) {
-                    return true;
-                }
-            } catch (Throwable $e) {
-                error_log("Redis token blacklist check error: " . $e->getMessage());
-            }
+        $cached = Cache::fetch($key, $hit);
+        if ($hit) {
+            return (bool) $cached;
         }
 
-        // Check PostgreSQL fallback
         try {
             $row = get(
                 "SELECT 1 FROM token_blacklist WHERE token_hash = ? AND expires_at > NOW() LIMIT 1",
-                [$hash]
+                [hash('sha256', $token)]
             );
-            return !empty($row);
+            $revoked = !empty($row);
         } catch (Throwable $e) {
-            if (str_contains($e->getMessage(), 'does not exist') || str_contains($e->getMessage(), '42P01')) {
-                self::initBlacklistTable();
-            } else {
-                error_log("PostgreSQL token blacklist check error: " . $e->getMessage());
-            }
+            error_log("PostgreSQL token blacklist check error: " . $e->getMessage());
             return false;
         }
+
+        Cache::store($key, $revoked, self::BLACKLIST_NEGATIVE_TTL);
+        return $revoked;
     }
 
     /**
@@ -255,9 +215,7 @@ class AuthMiddleware
             exit;
         }
 
-        $secret = function_exists('getJwtSecret') 
-            ? getJwtSecret() 
-            : (getenv('JWT_SECRET') ?: 'carrepair_super_secret_jwt_key_2026_x89!@#%^&_workshop_pro');
+        $secret = getJwtSecret();
 
         $payload = JWT::decode($token, $secret);
         if (!$payload) {
@@ -290,6 +248,12 @@ class AuthMiddleware
             ]);
             exit;
         }
+    }
+
+    /** Drop the cached permissions matrix after it is edited. */
+    public static function forgetPermissionsMatrix(): void
+    {
+        Cache::delete(self::PERMISSIONS_CACHE_KEY);
     }
 
     /**
@@ -327,19 +291,16 @@ class AuthMiddleware
         $normModule = $moduleMap[strtolower($module)] ?? strtolower($module);
         $normAction = strtolower($action);
 
-        // Fetch dynamic permissions matrix (cached or from database settings)
-        $matrix = null;
-        try {
-            $row = get("SELECT setting_value FROM settings WHERE setting_key = 'roles_permissions_matrix'");
-            if ($row && !empty($row['setting_value'])) {
-                $decoded = json_decode($row['setting_value'], true);
-                if (is_array($decoded)) {
-                    $matrix = $decoded;
-                }
+        // Dynamic permissions matrix (cached; invalidated when settings change)
+        $matrix = Cache::remember(self::PERMISSIONS_CACHE_KEY, self::PERMISSIONS_CACHE_TTL, function () {
+            try {
+                $row = get("SELECT setting_value FROM settings WHERE setting_key = 'roles_permissions_matrix'");
+                $decoded = ($row && !empty($row['setting_value'])) ? json_decode($row['setting_value'], true) : null;
+                return is_array($decoded) ? $decoded : null;
+            } catch (Throwable $e) {
+                return null; // fall back to the static matrix
             }
-        } catch (Throwable $e) {
-            // DB query failed; fall back to static matrix
-        }
+        });
 
         // Determine effective allowed actions for this role
         $allowedActions = [];

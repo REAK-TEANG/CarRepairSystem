@@ -7,6 +7,7 @@ import {
   Car,
   Sparkle,
   Plus,
+  Minus,
   Trash,
   Sliders,
   Check,
@@ -161,6 +162,35 @@ export default function BayModeView({
       addToast(`Logged +1 ${supply.name}`, 'success')
     } catch (err) {
       addToast(err?.message || 'Failed to add supply', 'warning')
+    }
+  }
+
+  // Tactile Stepper: Increment / Decrement Logged Part Quantity
+  const handleUpdatePartQty = async (partIndex, delta) => {
+    if (!activeJob) return
+    const currentPart = activeParts[partIndex]
+    if (!currentPart) return
+
+    const newQty = (Number(currentPart.quantity) || 1) + delta
+    const updatedParts =
+      newQty <= 0
+        ? activeParts.filter((_, idx) => idx !== partIndex)
+        : activeParts.map((p, idx) => (idx === partIndex ? { ...p, quantity: newQty } : p))
+
+    try {
+      await updateJobMutation.mutateAsync({
+        id: activeJob.id,
+        data: {
+          usedParts: updatedParts,
+        },
+      })
+      if (newQty <= 0) {
+        addToast(`Removed ${currentPart.name}`, 'info')
+      } else {
+        addToast(`Updated ${currentPart.name} (${newQty}x)`, 'success')
+      }
+    } catch (err) {
+      addToast(err?.message || 'Failed to update quantity', 'warning')
     }
   }
 
@@ -372,53 +402,93 @@ export default function BayModeView({
                 </span>
               </div>
 
-              {/* 1-Tap Supply Chips */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+              {/* 1-Tap Supply Chips with Ergonomic Hit Zones */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
                 {COMMON_SUPPLIES.map((supply) => (
                   <button
                     key={supply.name}
                     type="button"
                     onClick={() => handleQuickAddSupply(supply)}
                     disabled={updateJobMutation.isPending}
-                    className="p-2.5 rounded-lg border border-app-border bg-app-input hover:bg-app-hover hover:border-app-accent/50 text-left transition-all cursor-pointer select-none active:scale-[0.98] group"
+                    className="p-3 sm:p-3.5 rounded-xl border border-app-border bg-app-input hover:bg-app-hover hover:border-app-accent/60 text-left transition-all cursor-pointer select-none active-press group shadow-2xs"
                   >
                     <div className="flex items-center justify-between text-app-muted group-hover:text-app-accent">
-                      <span className="text-[10px] font-mono font-bold">${supply.price.toFixed(2)}</span>
-                      <Plus size={12} weight="bold" />
+                      <span className="text-xs font-mono font-bold text-app-accent tabular-nums">${supply.price.toFixed(2)}</span>
+                      <div className="w-5 h-5 rounded-full bg-app-accent/10 flex items-center justify-center text-app-accent group-hover:scale-110 transition-transform">
+                        <Plus size={13} weight="bold" />
+                      </div>
                     </div>
-                    <p className="text-xs font-semibold text-app-text mt-1 leading-snug line-clamp-2">
+                    <p className="text-xs font-semibold text-app-text mt-1.5 leading-snug line-clamp-2">
                       {supply.name}
                     </p>
                   </button>
                 ))}
               </div>
 
-              {/* Active Logged Parts Table */}
+              {/* Active Logged Parts Table with Tactile Steppers */}
               {activeParts.length > 0 && (
-                <div className="border border-app-border rounded-lg overflow-hidden">
-                  <div className="bg-app-input px-3 py-2 border-b border-app-border flex items-center justify-between text-xs font-medium text-app-muted">
-                    <span>Logged Item</span>
-                    <span className="pr-6">Action</span>
+                <div className="border border-app-border rounded-xl overflow-hidden shadow-2xs">
+                  <div className="bg-app-surface px-3.5 py-2.5 border-b border-app-border flex items-center justify-between text-xs font-semibold text-app-muted">
+                    <span>Logged Item & Unit Price</span>
+                    <span className="pr-12">Qty & Line Total</span>
                   </div>
-                  <div className="divide-y divide-app-border max-h-48 overflow-y-auto">
-                    {activeParts.map((part, idx) => (
-                      <div key={part.id || idx} className="px-3 py-2 flex items-center justify-between text-xs">
-                        <div>
-                          <p className="font-semibold text-app-text">{part.name}</p>
-                          <p className="text-[10px] font-mono text-app-muted">
-                            Qty: {part.quantity || 1} • ${Number(part.unitPrice || part.price || 0).toFixed(2)}
-                          </p>
+                  <div className="divide-y divide-app-border max-h-56 overflow-y-auto">
+                    {activeParts.map((part, idx) => {
+                      const qty = Number(part.quantity) || 1
+                      const unitPrice = Number(part.unitPrice || part.price || 0)
+                      const lineTotal = (qty * unitPrice).toFixed(2)
+
+                      return (
+                        <div key={part.id || idx} className="px-3.5 py-2.5 flex items-center justify-between text-xs hover:bg-app-hover/50 transition-colors">
+                          <div className="min-w-0 pr-2">
+                            <p className="font-bold text-xs text-app-text truncate">{part.name}</p>
+                            <p className="text-xs font-mono text-app-muted tabular-nums">
+                              ${unitPrice.toFixed(2)} / unit
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-2.5 shrink-0">
+                            {/* Tactile Stepper */}
+                            <div className="flex items-center bg-app-surface border border-app-border rounded-lg p-0.5 shadow-2xs">
+                              <button
+                                type="button"
+                                onClick={() => handleUpdatePartQty(idx, -1)}
+                                className="size-8 flex items-center justify-center rounded-md text-app-muted hover:text-app-text hover:bg-app-card active-press cursor-pointer"
+                                title="Decrease quantity"
+                              >
+                                <Minus size={13} weight="bold" />
+                              </button>
+                              <span className="min-w-[28px] text-center font-mono font-bold text-xs text-app-text tabular-nums">
+                                {qty}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleUpdatePartQty(idx, 1)}
+                                className="size-8 flex items-center justify-center rounded-md text-app-muted hover:text-app-text hover:bg-app-card active-press cursor-pointer"
+                                title="Increase quantity"
+                              >
+                                <Plus size={13} weight="bold" />
+                              </button>
+                            </div>
+
+                            {/* Line Total */}
+                            <span className="font-mono font-bold text-xs text-app-text min-w-[55px] text-right tabular-nums">
+                              ${lineTotal}
+                            </span>
+
+                            {/* Delete Action */}
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePart(idx)}
+                              className="size-8 flex items-center justify-center rounded-lg text-rose-500 hover:bg-rose-500/15 active-press cursor-pointer ml-1"
+                              title="Remove item"
+                            >
+                              <Trash size={15} weight="bold" />
+                            </button>
+                          </div>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => handleRemovePart(idx)}
-                          className="p-1 rounded text-rose-400 hover:bg-rose-500/10 cursor-pointer"
-                          title="Remove item"
-                        >
-                          <Trash size={14} />
-                        </button>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
               )}

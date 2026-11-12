@@ -12,7 +12,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 if ($path === '/reports' || $path === '/reports/') {
     if ($method === 'GET') {
         $cacheKey = 'reports_summary';
-        $cachedData = Cache::get($cacheKey);
+        $cachedData = Cache::fetch($cacheKey);
         
         if ($cachedData) {
             echo json_encode(['data' => $cachedData, 'cached' => true]);
@@ -88,7 +88,7 @@ if ($path === '/reports' || $path === '/reports/') {
             ]
         ];
 
-        Cache::set($cacheKey, $responseData, 300); // cache for 5 minutes
+        Cache::store($cacheKey, $responseData, 300); // cache for 5 minutes
 
         echo json_encode(['data' => $responseData]);
         exit;
@@ -96,7 +96,7 @@ if ($path === '/reports' || $path === '/reports/') {
 } else if ($path === '/reports/dashboard-metrics' || $path === '/dashboard-metrics') {
     if ($method === 'GET') {
         $cacheKey = 'dashboard_metrics';
-        $cachedData = Cache::get($cacheKey);
+        $cachedData = Cache::fetch($cacheKey);
         
         if ($cachedData) {
             echo json_encode(['data' => $cachedData, 'cached' => true]);
@@ -123,7 +123,7 @@ if ($path === '/reports' || $path === '/reports/') {
             'completedRate' => $completedRate
         ];
 
-        Cache::set($cacheKey, $responseData, 120); // cache for 2 minutes
+        Cache::store($cacheKey, $responseData, 120); // cache for 2 minutes
 
         echo json_encode(['data' => $responseData]);
         exit;

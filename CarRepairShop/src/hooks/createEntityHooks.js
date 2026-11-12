@@ -76,14 +76,9 @@ export function createEntityHooks({
   const rootKey = Array.isArray(queryKey) ? queryKey : [queryKey]
 
   function useList(params = {}, options = {}) {
-    let auth = null
-    try {
-      auth = useAuth()
-    } catch {
-      // safe fallback if rendered outside AuthProvider
-    }
+    const auth = useAuth()
     const moduleName = rootKey[0]
-    const hasPermission = auth?.can ? auth.can(moduleName, 'read') : true
+    const hasPermission = auth.can ? auth.can(moduleName, 'read') : true
     const isEnabled = (options.enabled ?? true) && hasPermission
 
     return useQuery({

@@ -625,7 +625,7 @@ export default function ReportsPage() {
             <button
               type="button"
               onClick={() => setIsTimeDropdownOpen((prev) => !prev)}
-              className="inline-flex items-center gap-2 min-h-[44px] sm:min-h-0 px-3 py-2 sm:py-1.5 bg-app-card border border-app-border hover:border-app-accent/50 text-app-text rounded-md text-xs font-medium shadow-xs transition-colors cursor-pointer select-none"
+              className="inline-flex items-center gap-1.5 h-8 px-2.5 py-1 bg-app-card border border-app-border hover:border-app-accent/50 text-app-text rounded-md text-xs font-medium shadow-xs transition-colors cursor-pointer select-none focus:outline-none focus-visible:ring-1 focus-visible:ring-app-accent/40"
             >
               <CalendarBlank size={14} className="text-app-muted" weight="bold" />
               <span>{activeBounds.label}</span>
@@ -656,12 +656,12 @@ export default function ReportsPage() {
                         setTimeRange(item.key)
                         if (item.key !== 'custom') setIsTimeDropdownOpen(false)
                       }}
-                      className={`min-h-[36px] py-1.5 px-2 text-xs font-semibold rounded transition-colors text-center cursor-pointer flex items-center justify-center ${
+                      className={`h-7.5 px-2 text-xs font-medium rounded-md transition-all text-center cursor-pointer flex items-center justify-center touch-manipulation active:scale-95 ${
                         item.key === 'custom' ? 'col-span-2' : ''
                       } ${
                         timeRange === item.key
-                          ? 'bg-app-accent text-app-accentText shadow-xs'
-                          : 'text-app-muted hover:text-app-text'
+                          ? 'bg-app-accent text-app-accentText font-semibold shadow-xs'
+                          : 'text-app-muted hover:text-app-text hover:bg-app-card/60'
                       }`}
                     >
                       {item.label}
@@ -729,7 +729,7 @@ export default function ReportsPage() {
                 <button
                   type="button"
                   onClick={() => handleExportPdf()}
-                  className="w-full min-h-[44px] flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-app-text hover:bg-app-hover rounded-md transition-colors cursor-pointer text-left"
+                  className="w-full flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-medium text-app-text hover:bg-app-hover rounded-md transition-all cursor-pointer text-left active:scale-[0.99]"
                 >
                   <FilePdf size={16} weight="bold" className="text-rose-500 flex-shrink-0" />
                   <div>
@@ -741,7 +741,7 @@ export default function ReportsPage() {
                 <button
                   type="button"
                   onClick={() => handleExportExcel()}
-                  className="w-full min-h-[44px] flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-app-text hover:bg-app-hover rounded-md transition-colors cursor-pointer text-left"
+                  className="w-full flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-medium text-app-text hover:bg-app-hover rounded-md transition-all cursor-pointer text-left active:scale-[0.99]"
                 >
                   <FileXls size={16} weight="bold" className="text-emerald-500 flex-shrink-0" />
                   <div>
@@ -753,7 +753,7 @@ export default function ReportsPage() {
                 <button
                   type="button"
                   onClick={() => handlePrint()}
-                  className="w-full min-h-[44px] flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-app-text hover:bg-app-hover rounded-md transition-colors cursor-pointer text-left"
+                  className="w-full flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-medium text-app-text hover:bg-app-hover rounded-md transition-all cursor-pointer text-left active:scale-[0.99]"
                 >
                   <Printer size={16} weight="bold" className="text-sky-500 flex-shrink-0" />
                   <div>

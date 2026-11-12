@@ -18,23 +18,23 @@ function Input({
 
   const autoPl = (effectiveStartIcon && !hasCustomPl && !hasCustomPx) ? "pl-9" : ""
 
-  let paddingX = "px-3.5 sm:px-3"
+  let paddingX = "px-3"
   if (hasCustomPx || (hasCustomPl && hasCustomPr) || (autoPl && hasCustomPr)) {
     paddingX = ""
   } else if (hasCustomPl || autoPl) {
-    paddingX = "pr-3.5 sm:pr-3"
+    paddingX = "pr-3"
   } else if (hasCustomPr) {
-    paddingX = "pl-3.5 sm:pl-3"
+    paddingX = "pl-3"
   }
 
-  const paddingY = hasCustomPy ? "" : "py-2 sm:py-1.5"
+  const paddingY = hasCustomPy ? "" : "py-1.5"
 
   const inputEl = (
     <InputPrimitive
       type={type}
       data-slot="input"
       className={cn(
-        "min-h-[44px] sm:min-h-0 h-11 sm:h-8 w-full min-w-0 rounded-lg border border-app-border bg-app-input text-base sm:text-xs text-app-text placeholder:text-app-caption transition-colors outline-none focus:border-app-accent focus:ring-1 focus:ring-app-accent disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation",
+        "h-9 sm:h-8 w-full min-w-0 rounded-lg border border-app-border bg-app-input text-xs text-app-text placeholder:text-app-caption transition-colors outline-none focus:border-app-accent focus:ring-1 focus:ring-app-accent disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 touch-manipulation",
         paddingX,
         paddingY,
         autoPl,

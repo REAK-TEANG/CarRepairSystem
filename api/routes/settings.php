@@ -47,6 +47,7 @@ if ($path === '/settings/permissions') {
             ['roles_permissions_matrix', json_encode($matrix)]
         );
 
+        AuthMiddleware::forgetPermissionsMatrix();
         echo json_encode(['success' => true, 'message' => 'Role permissions matrix updated successfully', 'data' => $matrix]);
         exit;
     }
@@ -109,6 +110,7 @@ if ($path === '/settings/permissions') {
                 [$k, $v]
             );
         }
+        AuthMiddleware::forgetPermissionsMatrix();
 
         echo json_encode(['success' => true, 'message' => 'Settings saved successfully']);
         exit;

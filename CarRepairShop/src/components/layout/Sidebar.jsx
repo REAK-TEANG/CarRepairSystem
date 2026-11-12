@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
+import { useRoutePrefetch } from '../../hooks/useRoutePrefetch'
 import Logo from '../ui/Logo'
 import MobileAppHub from './MobileAppHub'
 import {
@@ -19,6 +20,7 @@ import {
   Buildings,
   IdentificationBadge,
   ChartLine,
+  ShieldCheck,
   X,
 } from '@phosphor-icons/react'
 import clsx from 'clsx'
@@ -55,6 +57,7 @@ const allNavLinks = [
       { nameKey: 'nav.invoices', href: '/invoices', icon: FileText, module: 'invoices' },
       { nameKey: 'nav.employees', href: '/employees', icon: IdentificationBadge, module: 'employees' },
       { nameKey: 'nav.reports', href: '/reports', icon: ChartLine, module: 'reports' },
+      { nameKey: 'nav.auditLogs', href: '/audit-logs', icon: ShieldCheck, module: 'audit_logs' },
       { nameKey: 'nav.settings', href: '/settings', icon: Gear, module: 'settings' },
     ],
   },
@@ -63,6 +66,7 @@ const allNavLinks = [
 export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile }) {
   const { t } = useTranslation()
   const location = useLocation()
+  const prefetchHandlers = useRoutePrefetch()
   const { user, can } = useAuth()
 
   const handleLinkClick = () => {
@@ -72,7 +76,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
   const isItemVisible = (item) => {
     if (!user) return false
     if (user.role === 'admin') return true
-    if (item.module === 'admin_dashboard') {
+    if (item.module === 'admin_dashboard' || item.module === 'audit_logs') {
       return user.role === 'admin' || user.role === 'manager'
     }
     if (item.module === 'mechanic_dashboard') {
@@ -137,6 +141,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
                       key={item.href}
                       to={item.href}
                       onClick={handleLinkClick}
+                      {...prefetchHandlers(item.href)}
                       className={clsx(
                         'flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors group relative',
                         isActive

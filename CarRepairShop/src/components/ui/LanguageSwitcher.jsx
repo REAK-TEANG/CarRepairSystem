@@ -41,7 +41,7 @@ export default function LanguageSwitcher({ variant = 'topbar', className }) {
               type="button"
               onClick={() => i18n.changeLanguage(l.code)}
               className={clsx(
-                'min-h-[44px] flex items-center justify-center gap-1.5 px-3 py-2 rounded-sm text-xs font-semibold transition-all cursor-pointer',
+                'h-8 px-2.5 py-1 flex items-center justify-center gap-1.5 rounded-sm text-xs font-medium transition-all cursor-pointer active:scale-95',
                 isActive
                   ? 'bg-app-card text-app-accent shadow-sm border border-app-border ring-1 ring-app-accent/20'
                   : 'text-app-muted hover:text-app-text hover:bg-app-card/50'
@@ -61,7 +61,7 @@ export default function LanguageSwitcher({ variant = 'topbar', className }) {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center sm:justify-start gap-1.5 px-2.5 py-1.5 rounded-sm text-xs font-medium text-app-text hover:bg-app-card transition-all border border-transparent hover:border-app-border cursor-pointer"
+        className="h-8 flex items-center justify-center sm:justify-start gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium text-app-text hover:bg-app-card transition-all border border-transparent hover:border-app-border cursor-pointer active:scale-95"
         title={`Language: ${currentLang.label}`}
       >
         <span className="text-sm">{currentLang.flag}</span>
@@ -84,7 +84,7 @@ export default function LanguageSwitcher({ variant = 'topbar', className }) {
                   type="button"
                   onClick={() => handleSelect(l.code)}
                   className={clsx(
-                    'w-full min-h-[40px] flex items-center justify-between px-3.5 py-2 hover:bg-app-hover active:scale-[0.98] text-left transition-colors cursor-pointer',
+                    'w-full h-8.5 flex items-center justify-between px-3 py-1.5 hover:bg-app-hover active:scale-[0.98] text-left transition-colors cursor-pointer',
                     isSelected && 'text-app-accent font-bold bg-app-accent/10'
                   )}
                 >

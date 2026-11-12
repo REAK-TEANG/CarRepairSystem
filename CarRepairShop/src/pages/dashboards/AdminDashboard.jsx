@@ -22,6 +22,7 @@ import { useInventory } from '../../hooks/useInventory'
 import { useEmployees } from '../../hooks/useEmployees'
 import { useAppointments } from '../../hooks/useAppointments'
 import { StaggerGroup } from '../../components/animation/AnimeWrapper'
+import ActiveUsersWidget from '../../components/dashboard/ActiveUsersWidget'
 
 function parseItemDate(item) {
   const raw = item?.issueDate || item?.issued_date || item?.date || item?.createdAt || item?.created_at
@@ -192,7 +193,7 @@ export default function AdminDashboard() {
           <button
             type="button"
             onClick={() => setIsFilterDropdownOpen((prev) => !prev)}
-            className="inline-flex items-center gap-2 min-h-[44px] sm:min-h-0 px-3 py-2 sm:py-1.5 bg-app-card border border-app-border hover:border-app-accent/50 text-app-text rounded-md text-xs font-medium shadow-xs transition-colors cursor-pointer select-none"
+            className="inline-flex items-center gap-1.5 h-8 px-2.5 py-1 bg-app-card border border-app-border hover:border-app-accent/50 text-app-text rounded-md text-xs font-medium shadow-xs transition-colors cursor-pointer select-none focus:outline-none focus-visible:ring-1 focus-visible:ring-app-accent/40"
           >
             <CalendarBlank size={14} className="text-app-muted" weight="bold" />
             <span className="truncate max-w-[130px] sm:max-w-none">
@@ -210,14 +211,14 @@ export default function AdminDashboard() {
           </button>
 
           {isFilterDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] max-w-xs sm:w-96 bg-app-card border border-app-border rounded-lg shadow-xl p-3 z-50 animate-modal-content space-y-3">
-              <div className="grid grid-cols-5 gap-1 p-1 bg-app-hover/60 rounded-md">
+            <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-app-card border border-app-border rounded-lg shadow-xl p-2.5 z-50 animate-modal-content space-y-2.5">
+              <div className="grid grid-cols-2 gap-1.5 p-1 bg-app-hover/60 rounded-md">
                 {[
                   { key: 'all', label: t('common.all', 'All') },
                   { key: 'today', label: t('reports.today', 'Today') },
                   { key: 'this_week', label: t('reports.thisWeek', 'This Week') },
                   { key: 'this_month', label: t('reports.thisMonth', 'This Month') },
-                  { key: 'custom', label: t('reports.customDate', 'Custom') },
+                  { key: 'custom', label: t('reports.customDate', 'Custom Range') },
                 ].map((item) => (
                   <button
                     key={item.key}
@@ -226,10 +227,12 @@ export default function AdminDashboard() {
                       setDateFilter(item.key)
                       if (item.key !== 'custom') setIsFilterDropdownOpen(false)
                     }}
-                    className={`py-1.5 px-1 min-h-[36px] flex items-center justify-center text-[11px] sm:text-xs font-semibold rounded transition-colors text-center cursor-pointer ${
+                    className={`h-7.5 px-2 flex items-center justify-center text-xs font-medium rounded-md transition-all text-center cursor-pointer touch-manipulation active:scale-95 ${
+                      item.key === 'custom' ? 'col-span-2' : ''
+                    } ${
                       dateFilter === item.key
-                        ? 'bg-app-accent text-app-accentText shadow-xs'
-                        : 'text-app-muted hover:text-app-text'
+                        ? 'bg-app-accent text-app-accentText font-semibold shadow-xs'
+                        : 'text-app-muted hover:text-app-text hover:bg-app-card/60'
                     }`}
                   >
                     {item.label}
@@ -290,7 +293,7 @@ export default function AdminDashboard() {
           <div className="col-span-2 md:col-span-2 lg:col-span-2 bg-app-card rounded-lg border border-app-border p-3.5 hover:border-app-border/80 transition-colors flex flex-col justify-between group">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[11px] font-medium text-app-muted tracking-tight">
+                <p className="text-xs font-semibold text-app-muted tracking-tight">
                   {t('dashboard.totalRevenue')}
                 </p>
                 <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-app-text mt-0.5 tabular-nums">
@@ -303,11 +306,11 @@ export default function AdminDashboard() {
             </div>
 
             <div className="mt-3 pt-2.5 border-t border-app-border/60 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-1 text-emerald-600 dark:text-[#13F287] font-medium text-[11px]">
-                <TrendUp size={12} weight="bold" />
+              <div className="flex items-center gap-1 text-emerald-600 dark:text-[#13F287] font-semibold text-xs">
+                <TrendUp size={13} weight="bold" />
                 <span>+12.4%</span>
               </div>
-              <span className="text-[11px] text-app-muted tabular-nums">
+              <span className="text-xs text-app-muted tabular-nums">
                 ${totalPaid.toLocaleString('en-US', { minimumFractionDigits: 2 })} {t('common.paid')}
               </span>
             </div>
@@ -319,13 +322,13 @@ export default function AdminDashboard() {
             className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-lg border border-app-border p-3.5 hover:border-app-border/80 transition-colors flex flex-col justify-between group"
           >
             <div className="flex items-center justify-between">
-              <p className="text-[11px] font-medium text-app-muted tracking-tight truncate">{t('dashboard.activeJobs')}</p>
+              <p className="text-xs font-semibold text-app-muted tracking-tight truncate">{t('dashboard.activeJobs')}</p>
               <Wrench size={15} weight="bold" className="text-blue-500 flex-shrink-0" />
             </div>
             <div className="mt-1">
               <p className="text-2xl font-semibold tracking-tight text-app-text tabular-nums">{activeOrders}</p>
             </div>
-            <div className="mt-2 pt-2 border-t border-app-border/60 flex items-center justify-between text-[11px] text-app-muted">
+            <div className="mt-2 pt-2 border-t border-app-border/60 flex items-center justify-between text-xs text-app-muted">
               <span>{completedOrders} {t('status.Completed')}</span>
               <ArrowUpRight size={12} className="group-hover:text-app-text transition-colors" />
             </div>
@@ -337,13 +340,13 @@ export default function AdminDashboard() {
             className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-lg border border-app-border p-3.5 hover:border-app-border/80 transition-colors flex flex-col justify-between group"
           >
             <div className="flex items-center justify-between">
-              <p className="text-[11px] font-medium text-app-muted tracking-tight truncate">{t('inventory.stockQty')}</p>
+              <p className="text-xs font-semibold text-app-muted tracking-tight truncate">{t('inventory.stockQty')}</p>
               <Package size={15} weight="bold" className="text-amber-500 flex-shrink-0" />
             </div>
             <div className="mt-1">
               <p className="text-2xl font-semibold tracking-tight text-app-text tabular-nums">{totalParts}</p>
             </div>
-            <div className="mt-2 pt-2 border-t border-app-border/60 flex items-center justify-between text-[11px] text-app-muted">
+            <div className="mt-2 pt-2 border-t border-app-border/60 flex items-center justify-between text-xs text-app-muted">
               <span>{inventory.length} items</span>
               <ArrowUpRight size={12} className="group-hover:text-app-text transition-colors" />
             </div>
@@ -355,13 +358,13 @@ export default function AdminDashboard() {
             className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-lg border border-app-border p-3.5 hover:border-app-border/80 transition-colors flex flex-col justify-between group"
           >
             <div className="flex items-center justify-between">
-              <p className="text-[11px] font-medium text-app-muted tracking-tight truncate">{t('customers.title')}</p>
+              <p className="text-xs font-semibold text-app-muted tracking-tight truncate">{t('customers.title')}</p>
               <Users size={15} weight="bold" className="text-sky-500 flex-shrink-0" />
             </div>
             <div className="mt-1">
               <p className="text-2xl font-semibold tracking-tight text-app-text tabular-nums">{customers.length}</p>
             </div>
-            <div className="mt-2 pt-2 border-t border-app-border/60 flex items-center justify-between text-[11px] text-app-muted">
+            <div className="mt-2 pt-2 border-t border-app-border/60 flex items-center justify-between text-xs text-app-muted">
               <span>{t('common.active')}</span>
               <ArrowUpRight size={12} className="group-hover:text-app-text transition-colors" />
             </div>
@@ -373,13 +376,13 @@ export default function AdminDashboard() {
             className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-lg border border-app-border p-3.5 hover:border-app-border/80 transition-colors flex flex-col justify-between group"
           >
             <div className="flex items-center justify-between">
-              <p className="text-[11px] font-medium text-app-muted tracking-tight truncate">{t('appointments.title')}</p>
+              <p className="text-xs font-semibold text-app-muted tracking-tight truncate">{t('appointments.title')}</p>
               <CalendarBlank size={15} weight="bold" className="text-purple-500 flex-shrink-0" />
             </div>
             <div className="mt-1">
               <p className="text-2xl font-semibold tracking-tight text-app-text tabular-nums">{scheduledApts}</p>
             </div>
-            <div className="mt-2 pt-2 border-t border-app-border/60 flex items-center justify-between text-[11px] text-app-muted">
+            <div className="mt-2 pt-2 border-t border-app-border/60 flex items-center justify-between text-xs text-app-muted">
               <span>{appointments.length} Total</span>
               <ArrowUpRight size={12} className="group-hover:text-app-text transition-colors" />
             </div>
@@ -539,60 +542,60 @@ export default function AdminDashboard() {
                 >
                   {hoveredSegment === 'paid' ? (
                     <>
-                      <span className="text-sm sm:text-base font-bold text-emerald-600 dark:text-[#13F287] tabular-nums transition-colors">
+                      <span className="text-base sm:text-lg font-bold text-emerald-600 dark:text-[#13F287] tabular-nums transition-colors">
                         ${totalPaid.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                       </span>
-                      <span className="text-[10px] text-app-muted font-medium">
+                      <span className="text-xs text-app-muted font-semibold">
                         {t('common.paid')} ({paidPercent}%)
                       </span>
                     </>
                   ) : hoveredSegment === 'due' ? (
                     <>
-                      <span className="text-sm sm:text-base font-bold text-amber-500 tabular-nums transition-colors">
+                      <span className="text-base sm:text-lg font-bold text-amber-500 tabular-nums transition-colors">
                         ${balanceDue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                       </span>
-                      <span className="text-[10px] text-app-muted font-medium">
+                      <span className="text-xs text-app-muted font-semibold">
                         {t('invoices.balanceDue')} ({duePercent}%)
                       </span>
                     </>
                   ) : hoveredSegment === 'inventory' ? (
                     <>
-                      <span className="text-sm sm:text-base font-bold text-sky-500 tabular-nums transition-colors">
+                      <span className="text-base sm:text-lg font-bold text-sky-500 tabular-nums transition-colors">
                         ${inventoryTotalVal.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                       </span>
-                      <span className="text-[10px] text-app-muted font-medium">
+                      <span className="text-xs text-app-muted font-semibold">
                         {t('nav.inventory')} ({inventoryPercent}%)
                       </span>
                     </>
                   ) : centerMode === 'active' ? (
                     <>
-                      <span className="text-xl font-bold text-app-text tabular-nums">{activeOrders}</span>
-                      <span className="text-[10px] text-app-muted font-medium">
+                      <span className="text-2xl font-bold text-app-text tabular-nums">{activeOrders}</span>
+                      <span className="text-xs text-app-muted font-semibold">
                         {t('status.Active')}
                       </span>
-                      <span className="text-[9px] font-mono text-app-muted/70">
+                      <span className="text-[11px] font-mono font-medium text-app-muted">
                         {paidPercent}% {t('common.paid').toLowerCase()}
                       </span>
                     </>
                   ) : centerMode === 'revenue' ? (
                     <>
-                      <span className="text-sm sm:text-base font-bold text-app-text tabular-nums">
+                      <span className="text-base sm:text-lg font-bold text-app-text tabular-nums">
                         ${combinedTotal.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                       </span>
-                      <span className="text-[10px] text-app-muted font-medium">
+                      <span className="text-xs text-app-muted font-semibold">
                         {t('common.total')} Assets
                       </span>
-                      <span className="text-[9px] font-mono text-app-muted/70">
+                      <span className="text-[11px] font-mono font-medium text-app-muted">
                         {totalParts} {t('common.total').toLowerCase()} parts
                       </span>
                     </>
                   ) : (
                     <>
-                      <span className="text-xl font-bold text-app-text tabular-nums">{paidPercent}%</span>
-                      <span className="text-[10px] text-app-muted font-medium">
+                      <span className="text-2xl font-bold text-app-text tabular-nums">{paidPercent}%</span>
+                      <span className="text-xs text-app-muted font-semibold">
                         {t('common.paid')}
                       </span>
-                      <span className="text-[9px] font-mono text-app-muted/70">
+                      <span className="text-[11px] font-mono font-medium text-app-muted">
                         {activeOrders} {t('status.Active').toLowerCase()}
                       </span>
                     </>
@@ -707,6 +710,9 @@ export default function AdminDashboard() {
 
         {/* Right 1 Column Bento Panels */}
         <div className="space-y-4 sm:space-y-6">
+          {/* Live Active Accounts Presence */}
+          <ActiveUsersWidget />
+
           {/* Live Alerts Bento Card */}
           <div className="bg-app-card rounded-sm border border-app-border p-3 shadow-card transition-colors duration-200">
             <div className="flex items-center justify-between mb-3">

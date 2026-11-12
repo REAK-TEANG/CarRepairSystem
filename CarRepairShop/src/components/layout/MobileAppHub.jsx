@@ -5,8 +5,6 @@ import {
   X,
   CaretRight,
   SignOut,
-  Sun,
-  Moon,
   SquaresFour,
   Wrench,
   CalendarBlank,
@@ -23,8 +21,6 @@ import {
   ShieldCheck,
 } from '@phosphor-icons/react'
 import { useAuth } from '../../context/AuthContext'
-import { useTheme } from '../../context/ThemeContext'
-import LanguageSwitcher from '../ui/LanguageSwitcher'
 import { cn } from '@/lib/utils'
 
 const navSections = [
@@ -94,7 +90,6 @@ export default function MobileAppHub({ isOpen, onClose }) {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, can, logout } = useAuth()
-  const { isDark, toggleTheme } = useTheme()
 
   // Prevent background scrolling when sheet is open
   useEffect(() => {
@@ -199,44 +194,6 @@ export default function MobileAppHub({ isOpen, onClose }) {
           </button>
         </div>
 
-        {/* Quick App Preferences Strip */}
-        <div className="px-5 py-2.5 border-b border-app-border/70 bg-app-input/20 flex items-center justify-between gap-2 shrink-0">
-          <div className="flex items-center gap-2">
-            {/* Theme Toggle Button */}
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-app-border bg-app-card hover:bg-app-hover active:scale-95 transition-all text-xs font-semibold text-app-text touch-manipulation cursor-pointer shadow-xs"
-            >
-              {isDark ? (
-                <>
-                  <Sun size={14} weight="bold" className="text-amber-400" />
-                  <span>{t('common.lightMode')}</span>
-                </>
-              ) : (
-                <>
-                  <Moon size={14} weight="bold" />
-                  <span>{t('common.darkMode')}</span>
-                </>
-              )}
-            </button>
-
-            {/* Language Switcher */}
-            <LanguageSwitcher variant="pill" />
-          </div>
-
-          {/* Quick Sign Out */}
-          <button
-            type="button"
-            onClick={handleSignOut}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-500/20 bg-rose-500/10 hover:bg-rose-500/20 active:scale-95 transition-all text-xs font-semibold text-rose-500 touch-manipulation cursor-pointer"
-            title="Sign Out"
-          >
-            <SignOut size={14} weight="bold" />
-            <span>Sign Out</span>
-          </button>
-        </div>
-
         {/* Scrollable Grouped Navigation Cards */}
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 overscroll-contain">
           {navSections.map((section) => {
@@ -316,6 +273,18 @@ export default function MobileAppHub({ isOpen, onClose }) {
               </div>
             )
           })}
+
+          {/* Bottom Clean Sign Out Action */}
+          <div className="pt-2 pb-2">
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-rose-500 bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/20 active:scale-[0.98] transition-all text-xs font-semibold touch-manipulation cursor-pointer"
+            >
+              <SignOut size={16} weight="bold" />
+              <span>{t('common.signOut')}</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

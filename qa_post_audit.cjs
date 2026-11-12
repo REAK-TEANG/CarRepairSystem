@@ -22,10 +22,15 @@ const ROUTES = [
 ];
 
 async function getAdminAuth() {
-  const res = await fetch('http://127.0.0.1:8000/api/auth/quick-login', {
+  // Real credentials are required: set QA_USERNAME and QA_PASSWORD before running.
+  const { QA_USERNAME, QA_PASSWORD } = process.env;
+  if (!QA_USERNAME || !QA_PASSWORD) {
+    throw new Error('Set QA_USERNAME and QA_PASSWORD environment variables to run this audit');
+  }
+  const res = await fetch('http://127.0.0.1:8000/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: 'admin' })
+    body: JSON.stringify({ username: QA_USERNAME, password: QA_PASSWORD })
   });
   return await res.json();
 }

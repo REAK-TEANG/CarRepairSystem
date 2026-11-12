@@ -4,6 +4,7 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     plan: free
+    region: singapore # keep next to the Supabase ap-southeast-1 database
     autoDeploy: true
     envVars:
       - key: APP_ENV

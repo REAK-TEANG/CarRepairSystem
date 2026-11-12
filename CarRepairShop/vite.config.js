@@ -52,9 +52,6 @@ export default defineConfig({
           if (id.includes('node_modules/xlsx')) {
             return 'vendor-xlsx'
           }
-          if (id.includes('node_modules/jspdf') || id.includes('node_modules/jspdf-autotable') || id.includes('node_modules/html2canvas')) {
-            return 'vendor-pdf'
-          }
         },
       },
     },

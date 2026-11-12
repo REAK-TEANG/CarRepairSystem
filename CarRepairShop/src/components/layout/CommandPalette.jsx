@@ -301,7 +301,7 @@ function CommandPaletteDialog({ onClose }) {
                     onClick={() => item.action()}
                     onMouseEnter={() => setSelectedIndex(idx)}
                     className={cn(
-                      'flex items-center justify-between min-h-[44px] px-3 py-2 rounded-lg cursor-pointer transition-colors text-xs select-none gap-3',
+                      'flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-colors text-xs select-none gap-3',
                       isSelected
                         ? 'bg-app-accent/15 text-app-accent font-medium'
                         : 'text-app-text hover:bg-app-hover'

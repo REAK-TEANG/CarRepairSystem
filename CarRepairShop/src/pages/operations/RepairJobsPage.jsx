@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import {
-  MagnifyingGlass,
   Plus,
   PencilSimple,
   Eye,
@@ -33,8 +32,8 @@ import {
   TableRow,
   TableCell,
   TableFooterBar,
-  Input,
   MobileDataCard,
+  PageHeader,
 } from '../../components/ui'
 import FastIntakeModal from '../../components/workshop/FastIntakeModal'
 import JobCardDrawer from '../../components/workshop/JobCardDrawer'
@@ -56,7 +55,7 @@ export default function RepairJobsPage() {
     limit: 10,
     search: debouncedSearch,
     status: activeFilter,
-    ...(user?.role === 'mechanic' ? { mechanicId: user?.id } : {}),
+    ...(user?.role === 'mechanic' ? { mechanicId: user?.employeeId || user?.id } : {}),
   }
   const { data: response, isLoading } = useRepairJobs(queryParams)
   const { items: jobs, totalCount, totalPages } = usePaginationData(response, { page, limit: 10 })
@@ -128,62 +127,43 @@ export default function RepairJobsPage() {
 
   return (
     <div className="space-y-3 sm:space-y-4 font-sans text-app-text">
-      {/* Page Header */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <h1 className="text-lg font-semibold tracking-tight text-app-text">{t('titles.repairJobsOrders')}</h1>
-          <span className="text-[11px] font-mono text-app-muted px-2 py-0.5 bg-app-card border border-app-border rounded-md">
-            {totalCount}
-          </span>
-        </div>
-        {can('repair_jobs', 'create') && (
-          <Button
-            onClick={() => setIsIntakeOpen(true)}
-            size="sm"
-            className="bg-app-accent text-app-accentText hover:bg-app-accentHover font-semibold shadow-xs"
-            title="Fast Vehicle Intake"
-          >
-            <Plus size={14} weight="bold" />
-            <span className="hidden sm:inline">Fast Vehicle Intake</span>
-          </Button>
-        )}
-      </div>
-
-      {/* Integrated Filter Bar & Search */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
-          {statusFilters.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => {
-                setActiveFilter(tab)
-                setPage(1)
-              }}
-              className={`min-h-[44px] sm:min-h-0 sm:py-1 px-3 sm:px-2.5 py-2 inline-flex items-center justify-center rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
-                activeFilter === tab
-                  ? 'bg-app-accent text-app-accentText font-semibold'
-                  : 'text-app-muted hover:text-app-text hover:bg-app-hover'
-              }`}
+      {/* Universal Page Header & Toolbar */}
+      <PageHeader
+        title={t('titles.repairJobsOrders')}
+        count={totalCount}
+        searchQuery={searchQuery}
+        onSearch={(query) => {
+          setSearchQuery(query)
+          setPage(1)
+        }}
+        onClearSearch={() => {
+          setSearchQuery('')
+          setPage(1)
+        }}
+        searchPlaceholder={t('common.quickSearch')}
+        filterTabs={statusFilters.map((tab) => ({
+          key: tab,
+          label: tab === 'All' ? t('common.all') : tab,
+        }))}
+        activeFilter={activeFilter}
+        onFilterChange={(tab) => {
+          setActiveFilter(tab)
+          setPage(1)
+        }}
+        actions={
+          can('repair_jobs', 'create') && (
+            <Button
+              onClick={() => setIsIntakeOpen(true)}
+              size="sm"
+              className="bg-app-accent text-app-accentText hover:bg-app-accentHover font-semibold shadow-xs touch-manipulation active-press"
+              title="Fast Vehicle Intake"
             >
-              {tab === 'All' ? t('common.all') : tab}
-            </button>
-          ))}
-        </div>
-
-        <div className="relative w-full sm:w-64">
-          <MagnifyingGlass size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted z-10 pointer-events-none" />
-          <Input
-            type="text"
-            placeholder={t('common.quickSearch')}
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value)
-              setPage(1)
-            }}
-            className="w-full pl-9 pr-3 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
-          />
-        </div>
-      </div>
+              <Plus size={14} weight="bold" />
+              <span className="hidden sm:inline">Fast Vehicle Intake</span>
+            </Button>
+          )
+        }
+      />
 
       {/* Main Table Container */}
       {isLoading && jobs.length === 0 ? (

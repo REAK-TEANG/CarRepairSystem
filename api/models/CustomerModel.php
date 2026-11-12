@@ -156,7 +156,7 @@ class CustomerModel
             'phone'            => $r['phone'] ?? '',
             'email'            => $r['email'] ?? '',
             'address'          => $r['address'] ?? '',
-            'avatar'           => 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+            'avatar'           => null,
             'vehiclesCount'    => (int) ($r['vehicles_count'] ?? 0),
             'totalSpent'       => '$' . number_format((float) ($r['total_spent'] ?? 0), 2, '.', ','),
             'registrationDate' => !empty($r['registration_date']) ? explode(' ', $r['registration_date'])[0] : '',

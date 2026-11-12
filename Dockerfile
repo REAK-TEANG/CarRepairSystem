@@ -14,7 +14,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions: pdo, pdo_pgsql, pgsql, opcache
-RUN docker-php-ext-install pdo pdo_pgsql pgsql opcache
+RUN docker-php-ext-install pdo pdo_pgsql pgsql opcache \
+    && pecl install apcu \
+    && docker-php-ext-enable apcu
+
+COPY docker/php-prod.ini /usr/local/etc/php/conf.d/zz-prod.ini
 
 # Enable Apache modules: rewrite, headers
 RUN a2enmod rewrite headers
@@ -32,7 +36,7 @@ RUN { \
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # Copy composer files and install PHP dependencies
-COPY api/composer.json ./
+COPY api/composer.json api/composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress
 
 # Copy the entire API application code into Apache DocumentRoot

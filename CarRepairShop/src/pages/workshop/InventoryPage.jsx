@@ -19,7 +19,7 @@ import { useSuppliers } from '../../hooks/useSuppliers'
 import { useDebounce } from '../../hooks/useDebounce'
 import { usePaginationData } from '../../hooks/usePaginationData'
 import { useAuth } from '../../context/AuthContext'
-import { Modal, StatusBadge, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Button, Input, Textarea, ImageUpload, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, SearchableSelect, DatePicker, MobileDataCard } from '../../components/ui'
+import { Modal, StatusBadge, ConfirmDialog, EmptyState, TableSkeleton, LoadingButton, Button, Input, Textarea, ImageUpload, Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableFooterBar, SearchableSelect, DatePicker, MobileDataCard, PageHeader } from '../../components/ui'
 
 
 export default function InventoryPage() {
@@ -314,60 +314,63 @@ export default function InventoryPage() {
 
   return (
     <div className="space-y-3 sm:space-y-4 font-sans text-app-text">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <h1 className="text-lg font-semibold tracking-tight text-app-text">{t('titles.sparePartsInventory')}</h1>
-          <span className="text-[11px] font-mono text-app-muted px-2 py-0.5 bg-app-card border border-app-border rounded-md">
-            {activeTab === 'inventory' ? totalCount : transactions.length}
-          </span>
-        </div>
-        {can('inventory', 'create') && (
-          <Button
-            onClick={handleOpenAdd}
-            size="sm"
-            title={t('inventory.addPart')}
-          >
-            <Plus size={14} weight="bold" />
-            <span className="hidden sm:inline">{t('inventory.addPart')}</span>
-          </Button>
-        )}
-      </div>
+      {/* Universal Page Header */}
+      <PageHeader
+        title={t('titles.sparePartsInventory')}
+        count={activeTab === 'inventory' ? totalCount : transactions.length}
+        actions={
+          can('inventory', 'create') && (
+            <Button
+              onClick={handleOpenAdd}
+              size="sm"
+              className="bg-app-accent text-app-accentText hover:bg-app-accentHover font-semibold shadow-xs touch-manipulation active-press"
+              title={t('inventory.addPart')}
+            >
+              <Plus size={14} weight="bold" />
+              <span className="hidden sm:inline">{t('inventory.addPart')}</span>
+            </Button>
+          )
+        }
+      />
 
       {/* View Switcher Tabs */}
-      <div className="flex items-center gap-1.5 border-b border-app-border pb-2.5">
+      <div className="flex items-center gap-2 border-b border-app-border pb-2.5">
         <button
           onClick={() => setActiveTab('inventory')}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer touch-manipulation active-press ${
             activeTab === 'inventory'
-              ? 'bg-app-card text-app-text border border-app-border shadow-xs'
+              ? 'bg-app-accent text-app-accentText shadow-xs'
               : 'text-app-muted hover:text-app-text hover:bg-app-hover'
           }`}
         >
           <Package size={15} weight="bold" />
           <span>Parts</span>
-          <span className="text-[10px] font-mono text-app-muted">{items.length}</span>
+          <span className={`text-[11px] font-mono px-1.5 py-0.2 rounded ${activeTab === 'inventory' ? 'bg-black/10 dark:bg-black/20 text-inherit font-bold' : 'text-app-muted'}`}>
+            {items.length}
+          </span>
         </button>
 
         <button
           onClick={() => setActiveTab('transactions')}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer touch-manipulation active-press ${
             activeTab === 'transactions'
-              ? 'bg-app-card text-app-text border border-app-border shadow-xs'
+              ? 'bg-app-accent text-app-accentText shadow-xs'
               : 'text-app-muted hover:text-app-text hover:bg-app-hover'
           }`}
         >
           <ClockCounterClockwise size={15} weight="bold" />
           <span>Stock Logs</span>
-          <span className="text-[10px] font-mono text-app-muted">{transactions.length}</span>
+          <span className={`text-[11px] font-mono px-1.5 py-0.2 rounded ${activeTab === 'transactions' ? 'bg-black/10 dark:bg-black/20 text-inherit font-bold' : 'text-app-muted'}`}>
+            {transactions.length}
+          </span>
         </button>
       </div>
 
       {activeTab === 'inventory' ? (
         <>
           {/* Category and Status Filters + Inline Search */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none">
               {categories.slice(0, 6).map((cat) => (
                 <button
                   key={cat}
@@ -375,9 +378,9 @@ export default function InventoryPage() {
                     setCategoryFilter(cat)
                     setPage(1)
                   }}
-                  className={`px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                  className={`h-7.5 px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-all cursor-pointer touch-manipulation active-press ${
                     categoryFilter === cat
-                      ? 'bg-app-accent text-app-accentText font-semibold'
+                      ? 'bg-app-accent text-app-accentText font-semibold shadow-2xs'
                       : 'text-app-muted hover:text-app-text hover:bg-app-hover'
                   }`}
                 >
@@ -386,7 +389,7 @@ export default function InventoryPage() {
               ))}
             </div>
 
-            <div className="relative w-full sm:w-60">
+            <div className="relative w-full sm:w-64">
               <MagnifyingGlass size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted pointer-events-none z-10" />
               <Input
                 type="text"
@@ -396,8 +399,21 @@ export default function InventoryPage() {
                   setSearchQuery(e.target.value)
                   setPage(1)
                 }}
-                className="pl-9"
+                className="pl-9 pr-8 text-xs bg-app-input border-app-border focus:border-app-accent"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('')
+                    setPage(1)
+                  }}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-app-muted hover:text-app-text transition-colors p-0.5 rounded cursor-pointer touch-manipulation"
+                  title="Clear search"
+                >
+                  <X size={13} weight="bold" />
+                </button>
+              )}
             </div>
           </div>
 

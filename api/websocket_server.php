@@ -44,7 +44,7 @@ class RealtimeServer implements MessageComponentInterface
             $query = $httpRequest->getUri()->getQuery();
             parse_str($query, $params);
             if (!empty($params['token'])) {
-                $secret = getenv('JWT_SECRET') ?: 'carrepair_super_secret_jwt_key_2026_x89!@#%^&_workshop_pro';
+                $secret = getJwtSecret();
                 $user = JWT::decode($params['token'], $secret);
             }
         }
@@ -89,7 +89,7 @@ class RealtimeServer implements MessageComponentInterface
 
             case 'auth':
                 $token = $data['token'] ?? '';
-                $secret = getenv('JWT_SECRET') ?: 'carrepair_super_secret_jwt_key_2026_x89!@#%^&_workshop_pro';
+                $secret = getJwtSecret();
                 $user = JWT::decode($token, $secret);
                 if ($user) {
                     $this->clientMeta[$from->resourceId]['user'] = $user;
