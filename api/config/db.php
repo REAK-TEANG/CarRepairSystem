@@ -30,21 +30,34 @@ if (file_exists(__DIR__ . '/../../.env')) {
     loadEnv(__DIR__ . '/../../server/.env');
 }
 
-$host = getenv('DB_HOST') ?: 'localhost';
-$port = getenv('DB_PORT') ?: '5432';
-$dbname = getenv('DB_NAME') ?: 'carrepairshop';
-$user = getenv('DB_USER') ?: 'postgres';
-$password = getenv('DB_PASSWORD') ?: '';
-$usePersistent = filter_var(getenv('DB_PERSISTENT') ?: 'false', FILTER_VALIDATE_BOOLEAN);
-
-$sslmode = getenv('DB_SSLMODE') ?: (($host === 'localhost' || $host === '127.0.0.1') ? 'disable' : 'require');
+/**
+ * Database settings, resolved once. Deliberately a function with a static cache rather
+ * than top-level variables: route files run in the global scope and use names like
+ * $user and $password, which would silently overwrite global settings.
+ */
+function dbConfig(): array {
+    static $config = null;
+    if ($config === null) {
+        $host = getenv('DB_HOST') ?: 'localhost';
+        $config = [
+            'host'       => $host,
+            'port'       => getenv('DB_PORT') ?: '5432',
+            'dbname'     => getenv('DB_NAME') ?: 'carrepairshop',
+            'user'       => getenv('DB_USER') ?: 'postgres',
+            'password'   => getenv('DB_PASSWORD') ?: '',
+            'persistent' => filter_var(getenv('DB_PERSISTENT') ?: 'false', FILTER_VALIDATE_BOOLEAN),
+            'sslmode'    => getenv('DB_SSLMODE') ?: (($host === 'localhost' || $host === '127.0.0.1') ? 'disable' : 'require'),
+        ];
+    }
+    return $config;
+}
 
 /**
  * Instantiate a fresh PDO instance configured for PostgreSQL and PgBouncer connection poolers
  */
 function createPdoInstance() {
-    global $host, $port, $dbname, $user, $password, $usePersistent, $sslmode;
-    $dsn = "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=$sslmode";
+    $c = dbConfig();
+    $dsn = "pgsql:host={$c['host']};port={$c['port']};dbname={$c['dbname']};sslmode={$c['sslmode']}";
     $options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -52,31 +65,54 @@ function createPdoInstance() {
         // to prevent prepared statement name collisions across pooled connections
         PDO::ATTR_EMULATE_PREPARES => true,
     ];
-    if ($usePersistent) {
+    if ($c['persistent']) {
         $options[PDO::ATTR_PERSISTENT] = true;
     }
-    return new PDO($dsn, $user, $password, $options);
+    return new PDO($dsn, $c['user'], $c['password'], $options);
 }
 
-$pdo = null;
+/**
+ * Map a connection failure to a coarse, non-sensitive category that is safe to show
+ * operators (health endpoint) without revealing hosts, users or passwords.
+ * Full details stay in the server log.
+ */
+function dbErrorCategory(Throwable $e): string {
+    $msg = $e->getMessage();
+    $rules = [
+        'auth_failed'  => '/password authentication failed|Tenant or user not found|authentication failed|no password supplied|role ".*" does not exist/i',
+        'pool_full'    => '/max(imum)? (client|connection)s?|too many (clients|connections)|remaining connection slots|EMAXCONN/i',
+        'ssl_error'    => '/SSL|certificate/i',
+        'unreachable'  => '/could not (connect|translate host|resolve)|connection (refused|timed out)|timeout expired|Name or service not known|No route to host|Network is unreachable/i',
+        'db_not_found' => '/database ".*" does not exist/i',
+    ];
+    foreach ($rules as $category => $pattern) {
+        if (preg_match($pattern, $msg)) {
+            return $category;
+        }
+    }
+    return 'unknown';
+}
 
 /**
  * Lazily open the shared PDO connection on first use. Requests that never touch
  * the database (health checks, auth rejections) skip the TLS handshake entirely.
+ * Pass $reconnect = true to replace a severed connection. The connection lives in a
+ * static, not a global, so route code cannot overwrite it.
  */
-function db(): PDO {
-    global $pdo;
-    if ($pdo === null) {
+function db(bool $reconnect = false): PDO {
+    static $connection = null;
+    if ($reconnect || $connection === null) {
         try {
-            $pdo = createPdoInstance();
+            $connection = createPdoInstance();
         } catch (PDOException $e) {
-            error_log('Database connection failed: ' . $e->getMessage());
+            error_log(sprintf('Database connection failed [%s]: %s', dbErrorCategory($e), $e->getMessage()));
             http_response_code(503);
+            header('Retry-After: 5');
             echo json_encode(['error' => 'Service Unavailable', 'message' => 'Database is temporarily unavailable']);
             exit;
         }
     }
-    return $pdo;
+    return $connection;
 }
 
 /**
@@ -97,7 +133,6 @@ function isConnectionLost(Throwable $e): bool {
 }
 
 function query($sql, $params = []) {
-    global $pdo;
     $pdo = db();
     try {
         $stmt = $pdo->prepare($sql);
@@ -108,7 +143,7 @@ function query($sql, $params = []) {
         if (isConnectionLost($e) && !$pdo->inTransaction()) {
             error_log("Database connection dropped, auto-reconnecting: " . $e->getMessage());
             try {
-                $pdo = createPdoInstance();
+                $pdo = db(true);
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute($params);
                 return $stmt;
@@ -136,13 +171,12 @@ function getAll($sql, $params = []) {
 }
 
 function run($sql, $params = []) {
-    global $pdo;
     $stmt = query($sql, $params);
     $lastId = null;
     $trimmed = ltrim($sql);
     if (stripos($trimmed, 'INSERT') === 0) {
         try {
-            $lastId = $pdo->lastInsertId();
+            $lastId = db()->lastInsertId();
         } catch (Throwable $e) {
             $lastId = null;
         }
@@ -155,7 +189,6 @@ function run($sql, $params = []) {
  * Automatically rolls back on any Exception/Throwable and re-throws.
  */
 function transaction(callable $callback) {
-    global $pdo;
     $pdo = db();
     if ($pdo->inTransaction()) {
         return $callback($pdo);
@@ -165,7 +198,7 @@ function transaction(callable $callback) {
         $pdo->query("SELECT 1");
     } catch (Throwable $e) {
         if (isConnectionLost($e)) {
-            $pdo = createPdoInstance();
+            $pdo = db(true);
         }
     }
     $pdo->beginTransaction();

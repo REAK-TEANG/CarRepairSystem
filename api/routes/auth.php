@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../utils/jwt.php';
 require_once __DIR__ . '/../utils/sanitizer.php';
+require_once __DIR__ . '/../utils/password.php';
 require_once __DIR__ . '/../utils/rateLimit.php';
 require_once __DIR__ . '/../utils/auditLogger.php';
 require_once __DIR__ . '/../models/SessionModel.php';
@@ -77,19 +78,11 @@ if ($method === 'GET' && $path === 'permissions') {
         exit;
     }
 
-    $isPasswordValid = false;
-    if (!empty($user['password_hash'])) {
-        if ($user['password_hash'] === $password) { // Handle legacy plain-text migration if any
-            $isPasswordValid = true;
-            $newHash = password_hash($password, PASSWORD_BCRYPT);
-            run('UPDATE users SET password_hash = ? WHERE id = ?', [$newHash, $user['id']]);
-        } else if (password_verify($password, $user['password_hash'])) {
-            $isPasswordValid = true;
-        } else if (in_array($password, ['password123', 'admin123', '123456', 'admin'])) {
-            $isPasswordValid = true;
-            $newHash = password_hash($password, PASSWORD_BCRYPT);
-            run('UPDATE users SET password_hash = ? WHERE id = ?', [$newHash, $user['id']]);
-        }
+    $storedHash = (string) ($user['password_hash'] ?? '');
+    $isPasswordValid = verifyLoginPassword($storedHash, (string) $password);
+    if ($isPasswordValid && !isPasswordHash($storedHash)) {
+        // Legacy plaintext value: upgrade it to a bcrypt hash now that it has been verified
+        run('UPDATE users SET password_hash = ? WHERE id = ?', [password_hash($password, PASSWORD_BCRYPT), $user['id']]);
     }
 
     if (!$isPasswordValid) {
@@ -246,7 +239,7 @@ if ($method === 'GET' && $path === 'permissions') {
         exit;
     }
 
-    $valid = password_verify($current, $user['password_hash']) || ($user['password_hash'] === $current);
+    $valid = verifyLoginPassword((string) $user['password_hash'], (string) $current);
     if (!$valid) {
         http_response_code(400);
         echo json_encode(['error' => 'Current password is incorrect']);

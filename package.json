@@ -8,7 +8,7 @@
     "dev:frontend": "cd CarRepairShop && npm run dev",
     "build": "cd CarRepairShop && npm run build",
     "lint": "cd CarRepairShop && npm run lint",
-    "test:api": "php api/tests/jwt_test.php && php -d apc.enable_cli=1 api/tests/cache_test.php"
+    "test:api": "php api/tests/jwt_test.php && php api/tests/db_error_test.php && php api/tests/db_globals_test.php && php api/tests/password_test.php && php -d apc.enable_cli=1 api/tests/cache_test.php"
   },
   "devDependencies": {
     "concurrently": "^10.0.5",

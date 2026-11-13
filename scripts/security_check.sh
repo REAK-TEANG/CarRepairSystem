@@ -20,6 +20,7 @@ check "/auth/accounts is not public"   "$([ "$(code $B/auth/accounts)" != 200 ] 
 check "/auth/roles-accounts is not public" "$([ "$(code $B/auth/roles-accounts)" != 200 ] && echo 1)"
 qc=$(curl -s -m 60 -X POST -H 'Content-Type: application/json' -d '{"username":"zz_probe_nonexistent"}' $B/auth/quick-login)
 check "passwordless /auth/quick-login removed" "$(echo "$qc" | grep -q 'No active database account' && echo 0 || echo 1)"
+check "/health/db does not leak connection details" "$(curl -s -m 60 $B/health/db | grep -qiE 'supabase|pooler|postgres|password|host' && echo 0 || echo 1)"
 check "forged alg=none token rejected" "$([ "$(code -H 'Authorization: Bearer eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJyb2xlIjoiYWRtaW4ifQ.' $B/customers)" = 401 ] && echo 1)"
 check "token signed with old public secret rejected" "$(node -e "
 const c=require('crypto');const b=o=>Buffer.from(JSON.stringify(o)).toString('base64url');

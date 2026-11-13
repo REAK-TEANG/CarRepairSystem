@@ -161,15 +161,24 @@ try {
     switch ($module) {
     case 'health':
         if (($segments[1] ?? '') === 'db') {
-            // Deep check: verifies the database connection (does not leak error details)
+            // Deep check: opens a real connection and reports a coarse failure category.
+            // Throttled because every call costs a database connection.
+            $hits = Cache::increment('healthdb:' . RateLimiter::getClientIp(), 60);
+            if ($hits !== null && $hits > 10) {
+                http_response_code(429);
+                header('Retry-After: 60');
+                echo json_encode(['status' => 'error', 'message' => 'Too many health checks']);
+                break;
+            }
+            $t = microtime(true);
             try {
-                $t = microtime(true);
-                db()->query('SELECT 1');
+                createPdoInstance()->query('SELECT 1');
                 echo json_encode(['status' => 'ok', 'database' => 'up', 'latency_ms' => (int) round((microtime(true) - $t) * 1000)]);
             } catch (Throwable $e) {
-                error_log('Health DB check failed: ' . $e->getMessage());
+                $category = dbErrorCategory($e);
+                error_log(sprintf('Health DB check failed [%s]: %s', $category, $e->getMessage()));
                 http_response_code(503);
-                echo json_encode(['status' => 'error', 'database' => 'down']);
+                echo json_encode(['status' => 'error', 'database' => 'down', 'reason' => $category]);
             }
             break;
         }
