@@ -159,8 +159,22 @@ if ($_SERVER['REQUEST_METHOD'] !== 'OPTIONS' && $module !== 'health' && $module 
 
 try {
     switch ($module) {
-    case '':
     case 'health':
+        if (($segments[1] ?? '') === 'db') {
+            // Deep check: verifies the database connection (does not leak error details)
+            try {
+                $t = microtime(true);
+                db()->query('SELECT 1');
+                echo json_encode(['status' => 'ok', 'database' => 'up', 'latency_ms' => (int) round((microtime(true) - $t) * 1000)]);
+            } catch (Throwable $e) {
+                error_log('Health DB check failed: ' . $e->getMessage());
+                http_response_code(503);
+                echo json_encode(['status' => 'error', 'database' => 'down']);
+            }
+            break;
+        }
+        // fall through to shallow health
+    case '':
         echo json_encode([
             'status' => 'ok',
             'service' => 'Car Repair Shop Management API',
