@@ -32,10 +32,6 @@ AuthMiddleware::forgetPermissionsMatrix();
 Cache::fetch('roles_permissions_matrix',$h);
 ok('forgetPermissionsMatrix invalidates the cache', $h===false);
 
-// RLS context in one round trip
-setDatabaseUserContext('admin', 7);
-$row=get("SELECT current_setting('app.current_user_role') r, current_setting('app.current_user_id') i");
-ok('setDatabaseUserContext sets both values', $row['r']==='admin' && $row['i']==='7');
 
 // event bus single-statement publish
 $id=EventBus::publish('integration','test',['x'=>1]);

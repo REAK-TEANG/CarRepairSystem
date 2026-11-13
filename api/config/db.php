@@ -215,20 +215,6 @@ function transaction(callable $callback) {
 }
 
 /**
- * Set the PostgreSQL Row Level Security (RLS) session context
- */
-function setDatabaseUserContext($role = null, $userId = null) {
-    if (($role === null || $role === '') && ($userId === null || $userId === '')) return;
-    try {
-        // One round trip for both settings (session-level, like SET)
-        db()->prepare("SELECT set_config('app.current_user_role', ?, false), set_config('app.current_user_id', ?, false)")
-            ->execute([(string) $role, (string) $userId]);
-    } catch (Throwable $e) {
-        // Silently continue if session variables cannot be set
-    }
-}
-
-/**
  * Generate a collision-free unique code for a given table/column.
  * Uses MAX-based extraction instead of COUNT(*) to avoid gaps/collision issues.
  *
@@ -265,5 +251,4 @@ class Database {
     public static function getAll($sql, $params = []) { return all($sql, $params); }
     public static function run($sql, $params = []) { return run($sql, $params); }
     public static function transaction(callable $callback) { return transaction($callback); }
-    public static function setUserContext($role = null, $userId = null) { return setDatabaseUserContext($role, $userId); }
 }

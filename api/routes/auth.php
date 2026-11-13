@@ -102,11 +102,6 @@ if ($method === 'GET' && $path === 'permissions') {
     $normalizedRole = strtolower(preg_replace('/\s+/', '_', $roleName));
     $roleTitle = $roleName ?: 'Administrator';
 
-    // Set PostgreSQL Row Level Security (RLS) context
-    if (function_exists('setDatabaseUserContext')) {
-        setDatabaseUserContext($normalizedRole, $user['id']);
-    }
-
     $payload = [
         'id' => $user['id'],
         'username' => $user['username'],

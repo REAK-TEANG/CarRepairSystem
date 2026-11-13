@@ -227,11 +227,6 @@ class AuthMiddleware
             exit;
         }
 
-        // Set PostgreSQL Row Level Security (RLS) context for this request
-        if (function_exists('setDatabaseUserContext')) {
-            setDatabaseUserContext($payload['role'] ?? null, $payload['id'] ?? null);
-        }
-
         return $payload;
     }
 

@@ -93,3 +93,7 @@ Since this project uses a PHP backend, the project folder must be located inside
 ## Database schema updates
 
 Idempotent SQL files in `api/schema/` are applied in filename order by `php api/bin/migrate.php`, which the container runs automatically at startup (see `entrypoint.sh`). Applied files are tracked in the `schema_migrations` table. Add new schema changes as a new numbered file there; do not create tables or columns from request code.
+
+### Security of the database's public API
+
+`api/schema/003_lock_down_public_api.sql` enables row level security on every table with **no policies** and revokes the Supabase `anon`/`authenticated` roles. The API connects as the table-owner role (which bypasses RLS) and does its own authorization in PHP. Any new table added in `api/schema/` must also `ENABLE ROW LEVEL SECURITY`; `php api/tests/rls_lockdown_test.php` fails if a table is left open. To verify a deployment from outside: `SUPABASE_URL=... SUPABASE_ANON_KEY=... bash scripts/rls_check.sh`.
