@@ -46,11 +46,11 @@ export default function MechanicDashboard() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-5 font-sans text-app-text">
+    <div className="space-y-5 sm:space-y-6 font-sans text-app-text">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 pb-1">
         <div className="flex items-center gap-2.5">
-          <h1 className="text-lg font-semibold tracking-tight">{t('titles.mechanicWorkspace')}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('titles.mechanicWorkspace')}</h1>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full sm:w-auto">
@@ -109,50 +109,50 @@ export default function MechanicDashboard() {
       </div>
 
       {/* BENTO GRID: 3-Tile Work Status Cards */}
-      <StaggerGroup staggerDelay={75} duration={600} className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+      <StaggerGroup staggerDelay={75} duration={600} className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 sm:gap-4.5">
         {/* Bento Metric 1: In Progress */}
-        <div className="col-span-1 bg-app-card rounded-xl p-4 border border-app-border border-l-4 border-l-blue-500 shadow-2xs flex flex-col justify-between hover:shadow-xs transition-shadow">
+        <div className="col-span-1 bg-app-card rounded-2xl p-4.5 sm:p-5 border border-app-border border-l-4 border-l-blue-500 shadow-xs flex flex-col justify-between hover:shadow-sm transition-all">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-app-muted tracking-tight">
               {t('dashboard.activeJobs')}
             </p>
-            <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
-              <Wrench size={16} weight="bold" />
+            <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+              <Wrench size={17} weight="bold" />
             </div>
           </div>
-          <div className="mt-2">
+          <div className="mt-2.5">
             <h2 className="text-2xl sm:text-3xl font-bold text-app-text tabular-nums tracking-tight">{activeJobs.length}</h2>
             <p className="text-[11px] text-app-muted mt-0.5">Currently on shop floor</p>
           </div>
         </div>
 
         {/* Bento Metric 2: Waiting Parts */}
-        <div className="col-span-1 bg-app-card rounded-xl p-4 border border-app-border border-l-4 border-l-amber-500 shadow-2xs flex flex-col justify-between hover:shadow-xs transition-shadow">
+        <div className="col-span-1 bg-app-card rounded-2xl p-4.5 sm:p-5 border border-app-border border-l-4 border-l-amber-500 shadow-xs flex flex-col justify-between hover:shadow-sm transition-all">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-app-muted tracking-tight truncate">
               {t('status.Waiting for Parts')}
             </p>
-            <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
-              <WarningCircle size={16} weight="bold" />
+            <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+              <WarningCircle size={17} weight="bold" />
             </div>
           </div>
-          <div className="mt-2">
+          <div className="mt-2.5">
             <h2 className="text-2xl sm:text-3xl font-bold text-app-text tabular-nums tracking-tight">{waitingParts.length}</h2>
             <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5 font-medium">Pending parts delivery</p>
           </div>
         </div>
 
         {/* Bento Metric 3: Ready / Completed */}
-        <div className="col-span-2 sm:col-span-1 bg-app-card rounded-xl p-4 border border-app-border border-l-4 border-l-emerald-500 shadow-2xs flex flex-col justify-between hover:shadow-xs transition-shadow">
+        <div className="col-span-2 sm:col-span-1 bg-app-card rounded-2xl p-4.5 sm:p-5 border border-app-border border-l-4 border-l-emerald-500 shadow-xs flex flex-col justify-between hover:shadow-sm transition-all">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-app-muted tracking-tight">
               {t('status.Completed')}
             </p>
-            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-              <CheckCircle size={16} weight="bold" />
+            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+              <CheckCircle size={17} weight="bold" />
             </div>
           </div>
-          <div className="mt-2">
+          <div className="mt-2.5">
             <h2 className="text-2xl sm:text-3xl font-bold text-app-text tabular-nums tracking-tight">{completedJobs.length}</h2>
             <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5 font-medium">Ready for customer</p>
           </div>

@@ -66,7 +66,7 @@ export default function Modal({
         className={clsx(
           'relative z-[2] w-full',
           maxWidth,
-          'bg-app-card border-t sm:border border-app-border rounded-t-2xl sm:rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] sm:max-h-[92vh] animate-sheet-content sm:animate-modal-content',
+          'bg-app-card border-t sm:border border-app-border rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] sm:max-h-[92vh] animate-sheet-content sm:animate-modal-content',
           className
         )}
         onClick={(e) => e.stopPropagation()}

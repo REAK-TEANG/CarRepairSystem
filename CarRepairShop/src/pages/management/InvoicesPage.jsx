@@ -163,12 +163,12 @@ export default function InvoicesPage() {
   const totalOutstanding = Math.max(0, totalBilled - totalCollected)
 
   return (
-    <div className="space-y-3 sm:space-y-4 text-app-text font-sans transition-colors duration-200">
+    <div className="space-y-5 sm:space-y-6 text-app-text font-sans transition-colors duration-200">
       {/* Page Header */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3.5 pb-1">
         <div className="flex items-center gap-2.5">
-          <h1 className="text-lg font-semibold tracking-tight text-app-text">{t('titles.invoicesBilling')}</h1>
-          <span className="text-[11px] font-mono text-app-muted px-2 py-0.5 bg-app-card border border-app-border rounded-md">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-app-text">{t('titles.invoicesBilling')}</h1>
+          <span className="text-xs font-mono text-app-muted px-2.5 py-0.5 bg-app-card border border-app-border rounded-full">
             {pagination.total}
           </span>
         </div>
@@ -187,50 +187,50 @@ export default function InvoicesPage() {
       </div>
 
       {/* KPI Financial Overview Strip (Linear Style) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
-        <div className="p-3 rounded-lg bg-app-card border border-app-border flex items-center justify-between gap-2">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+        <div className="p-4 sm:p-4.5 rounded-2xl bg-app-card border border-app-border flex items-center justify-between gap-2 shadow-xs">
           <div>
             <p className="text-xs font-semibold text-app-muted tracking-tight">Total Invoiced</p>
-            <p className="font-mono font-semibold text-xl text-app-text mt-0.5 tabular-nums">${totalBilled.toFixed(2)}</p>
+            <p className="font-mono font-bold text-xl sm:text-2xl text-app-text mt-1 tabular-nums">${totalBilled.toFixed(2)}</p>
           </div>
-          <Receipt size={16} weight="bold" className="text-app-accent flex-shrink-0" />
+          <Receipt size={18} weight="bold" className="text-app-accent flex-shrink-0" />
         </div>
 
-        <div className="p-3 rounded-lg bg-app-card border border-app-border flex items-center justify-between gap-2">
+        <div className="p-4 sm:p-4.5 rounded-2xl bg-app-card border border-app-border flex items-center justify-between gap-2 shadow-xs">
           <div>
             <p className="text-xs font-semibold text-app-muted tracking-tight">Total Collected</p>
-            <p className="font-mono font-semibold text-xl text-emerald-600 dark:text-emerald-400 mt-0.5 tabular-nums">
+            <p className="font-mono font-bold text-xl sm:text-2xl text-emerald-600 dark:text-emerald-400 mt-1 tabular-nums">
               ${totalCollected.toFixed(2)}
             </p>
           </div>
-          <Wallet size={16} weight="bold" className="text-emerald-500 flex-shrink-0" />
+          <Wallet size={18} weight="bold" className="text-emerald-500 flex-shrink-0" />
         </div>
 
-        <div className="p-3 rounded-lg bg-app-card border border-app-border flex items-center justify-between gap-2">
+        <div className="p-4 sm:p-4.5 rounded-2xl bg-app-card border border-app-border flex items-center justify-between gap-2 shadow-xs">
           <div>
             <p className="text-xs font-semibold text-app-muted tracking-tight">Outstanding</p>
-            <p className="font-mono font-semibold text-xl text-amber-600 dark:text-amber-400 mt-0.5 tabular-nums">
+            <p className="font-mono font-bold text-xl sm:text-2xl text-amber-600 dark:text-amber-400 mt-1 tabular-nums">
               ${totalOutstanding.toFixed(2)}
             </p>
           </div>
-          <HourglassHigh size={16} weight="bold" className="text-amber-500 flex-shrink-0" />
+          <HourglassHigh size={18} weight="bold" className="text-amber-500 flex-shrink-0" />
         </div>
 
-        <div className="p-3 rounded-lg bg-app-card border border-app-border flex items-center justify-between gap-2">
+        <div className="p-4 sm:p-4.5 rounded-2xl bg-app-card border border-app-border flex items-center justify-between gap-2 shadow-xs">
           <div>
             <p className="text-xs font-semibold text-app-muted tracking-tight">Paid Invoices</p>
-            <p className="font-mono font-semibold text-xl text-app-text mt-0.5 tabular-nums">
+            <p className="font-mono font-bold text-xl sm:text-2xl text-app-text mt-1 tabular-nums">
               {allInvoices.filter((i) => i.status === 'Paid').length}
               <span className="text-xs font-normal text-app-muted ml-1">/ {allInvoices.length}</span>
             </p>
           </div>
-          <CheckCircle size={16} weight="bold" className="text-sky-500 flex-shrink-0" />
+          <CheckCircle size={18} weight="bold" className="text-sky-500 flex-shrink-0" />
         </div>
       </div>
 
       {/* Integrated Filter Bar & Search */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
           {statusFilters.map((st) => {
             const count = st === 'All' ? allInvoices.length : allInvoices.filter((i) => i.status === st).length
             const isActive = statusFilter === st
@@ -242,7 +242,7 @@ export default function InvoicesPage() {
                   setStatusFilter(st)
                   setCurrentPage(1)
                 }}
-                className={`h-7.5 sm:h-7 px-2.5 py-1 inline-flex items-center gap-1.5 justify-center rounded-md text-xs font-medium whitespace-nowrap transition-all cursor-pointer touch-manipulation active:scale-95 ${
+                className={`h-8 px-3.5 py-1 inline-flex items-center gap-1.5 justify-center rounded-xl text-xs font-medium whitespace-nowrap transition-all cursor-pointer touch-manipulation active-press ${
                   isActive
                     ? 'bg-app-accent text-app-accentText font-semibold shadow-xs'
                     : 'text-app-muted hover:text-app-text hover:bg-app-hover'
@@ -255,7 +255,7 @@ export default function InvoicesPage() {
           })}
         </div>
 
-        <div className="relative w-full sm:w-60">
+        <div className="relative w-full sm:w-64">
           <MagnifyingGlass size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted z-10 pointer-events-none" />
           <Input
             type="text"
@@ -265,7 +265,7 @@ export default function InvoicesPage() {
               setSearchQuery(e.target.value)
               setCurrentPage(1)
             }}
-            className="w-full pl-9 pr-3 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+            className="w-full pl-9 pr-3 py-1.5 bg-app-input border border-app-border rounded-xl text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
           />
         </div>
       </div>
@@ -274,7 +274,7 @@ export default function InvoicesPage() {
       {isLoading && invoices.length === 0 ? (
         <TableSkeleton rows={6} columns={7} />
       ) : invoices.length === 0 ? (
-        <div className="bg-app-card rounded-lg border border-app-border shadow-xs overflow-hidden">
+        <div className="bg-app-card rounded-2xl border border-app-border shadow-xs overflow-hidden">
           <EmptyState
             title={t('common.noRecords')}
             description={t('common.noData')}

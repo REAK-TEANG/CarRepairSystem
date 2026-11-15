@@ -67,7 +67,7 @@ export default function Drawer({
         aria-label={typeof title === 'string' ? title : 'Drawer'}
         className={clsx(
           'relative z-[2] w-full h-full flex flex-col',
-          'bg-app-card border-l border-app-border shadow-2xl overflow-hidden animate-drawer-in',
+          'bg-app-card border-l border-app-border sm:rounded-l-3xl shadow-2xl overflow-hidden animate-drawer-in',
           width,
           className
         )}

@@ -161,7 +161,7 @@ export default function EmployeesPage() {
   }
 
   return (
-    <div className="space-y-3 sm:space-y-4 text-app-text font-sans">
+    <div className="space-y-5 sm:space-y-6 text-app-text font-sans">
       <PageHeader
         title={t('titles.staffAttendance')}
         count={totalCount}
@@ -190,7 +190,7 @@ export default function EmployeesPage() {
       {isLoading && employees.length === 0 ? (
         <TableSkeleton rows={6} columns={6} />
       ) : employees.length === 0 ? (
-        <div className="bg-app-card rounded-lg border border-app-border shadow-xs overflow-hidden">
+        <div className="bg-app-card rounded-2xl border border-app-border shadow-xs overflow-hidden">
           <EmptyState
             title={t('common.noRecords')}
             description={t('common.noData')}

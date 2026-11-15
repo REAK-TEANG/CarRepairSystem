@@ -219,7 +219,7 @@ export default function VehiclesPage() {
     : null
 
   return (
-    <div className="space-y-3 sm:space-y-4 text-app-text font-sans transition-colors duration-200">
+    <div className="space-y-5 sm:space-y-6 text-app-text font-sans transition-colors duration-200">
       {/* Universal Page Header & Toolbar */}
       <PageHeader
         title={t('titles.vehicleRegistry')}
@@ -263,7 +263,7 @@ export default function VehiclesPage() {
       {isLoading && vehicles.length === 0 ? (
         <TableSkeleton rows={6} columns={6} />
       ) : filteredVehicles.length === 0 ? (
-        <div className="bg-app-card rounded-lg border border-app-border shadow-xs overflow-hidden">
+        <div className="bg-app-card rounded-2xl border border-app-border shadow-xs overflow-hidden">
           <EmptyState
             title={t('common.noRecords')}
             description={t('common.noData')}
@@ -398,7 +398,7 @@ export default function VehiclesPage() {
                   className="cursor-pointer"
                 >
                   <TableCell className="font-mono font-bold text-app-accent">
-                    <span className="px-1.5 py-0.5 rounded-sm bg-app-accent/10 border border-app-accent/20">
+                    <span className="px-2 py-0.5 rounded-lg bg-app-accent/10 border border-app-accent/20">
                       {v.number}
                     </span>
                   </TableCell>
@@ -408,11 +408,11 @@ export default function VehiclesPage() {
                         <img
                           src={v.image}
                           alt={`${v.brand} ${v.model}`}
-                          className="w-8 h-8 rounded-sm object-cover ring-1 ring-app-border bg-app-hover flex-shrink-0"
+                          className="w-9 h-9 rounded-xl object-cover ring-1 ring-app-border bg-app-hover flex-shrink-0"
                         />
                       ) : (
-                        <div className="w-8 h-8 rounded-sm bg-app-hover border border-app-border flex items-center justify-center text-app-muted flex-shrink-0">
-                          <Car size={16} weight="duotone" />
+                        <div className="w-9 h-9 rounded-xl bg-app-hover border border-app-border flex items-center justify-center text-app-muted flex-shrink-0">
+                          <Car size={18} weight="duotone" />
                         </div>
                       )}
                       <div>

@@ -10,6 +10,7 @@ import {
   Receipt,
   ArrowUpRight,
   CaretDown,
+  Check,
 } from '@phosphor-icons/react'
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
@@ -185,17 +186,17 @@ export default function AdminDashboard() {
   const staffList = employees.slice(0, 5)
 
   return (
-    <div className="space-y-4 sm:space-y-5 text-app-text font-sans transition-colors duration-200">
+    <div className="space-y-5 sm:space-y-6 text-app-text font-sans transition-colors duration-200">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <h1 className="text-lg font-semibold tracking-tight text-app-text">{t('titles.adminOverview')}</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 pb-1">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-app-text">{t('titles.adminOverview')}</h1>
         <div ref={filterDropdownRef} className="relative">
           <button
             type="button"
             onClick={() => setIsFilterDropdownOpen((prev) => !prev)}
-            className="inline-flex items-center gap-1.5 h-8 px-2.5 py-1 bg-app-card border border-app-border hover:border-app-accent/50 text-app-text rounded-md text-xs font-medium shadow-xs transition-colors cursor-pointer select-none focus:outline-none focus-visible:ring-1 focus-visible:ring-app-accent/40"
+            className="inline-flex items-center gap-2 h-9 px-3.5 py-1.5 bg-app-card border border-app-border hover:border-app-accent/50 text-app-text rounded-xl text-xs font-semibold shadow-xs transition-all cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-app-accent/40 active-press"
           >
-            <CalendarBlank size={14} className="text-app-muted" weight="bold" />
+            <CalendarBlank size={14} className="text-app-accent" weight="bold" />
             <span className="truncate max-w-[130px] sm:max-w-none">
               {dateFilter === 'all'
                 ? t('common.all', 'All')
@@ -211,37 +212,42 @@ export default function AdminDashboard() {
           </button>
 
           {isFilterDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-app-card border border-app-border rounded-lg shadow-xl p-2.5 z-50 animate-modal-content space-y-2.5">
-              <div className="grid grid-cols-2 gap-1.5 p-1 bg-app-hover/60 rounded-md">
+            <div className="absolute right-0 mt-2 w-64 bg-app-card border border-app-border rounded-2xl shadow-xl p-2 z-50 animate-modal-content space-y-1">
+              <div className="space-y-0.5">
                 {[
                   { key: 'all', label: t('common.all', 'All') },
                   { key: 'today', label: t('reports.today', 'Today') },
                   { key: 'this_week', label: t('reports.thisWeek', 'This Week') },
                   { key: 'this_month', label: t('reports.thisMonth', 'This Month') },
                   { key: 'custom', label: t('reports.customDate', 'Custom Range') },
-                ].map((item) => (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onClick={() => {
-                      setDateFilter(item.key)
-                      if (item.key !== 'custom') setIsFilterDropdownOpen(false)
-                    }}
-                    className={`h-7.5 px-2 flex items-center justify-center text-xs font-medium rounded-md transition-all text-center cursor-pointer touch-manipulation active:scale-95 ${
-                      item.key === 'custom' ? 'col-span-2' : ''
-                    } ${
-                      dateFilter === item.key
-                        ? 'bg-app-accent text-app-accentText font-semibold shadow-xs'
-                        : 'text-app-muted hover:text-app-text hover:bg-app-card/60'
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                ))}
+                ].map((item) => {
+                  const isSelected = dateFilter === item.key
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => {
+                        setDateFilter(item.key)
+                        if (item.key !== 'custom') setIsFilterDropdownOpen(false)
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-2 text-xs rounded-xl font-medium transition-colors cursor-pointer touch-manipulation active-press ${
+                        isSelected
+                          ? 'bg-emerald-600 text-white font-semibold shadow-xs'
+                          : 'text-app-text hover:bg-app-hover hover:text-app-text'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <CalendarBlank size={14} className={isSelected ? 'text-white' : 'text-app-muted'} />
+                        <span>{item.label}</span>
+                      </div>
+                      {isSelected && <Check size={14} weight="bold" className="text-white shrink-0" />}
+                    </button>
+                  )
+                })}
               </div>
 
               {dateFilter === 'custom' && (
-                <div className="space-y-2 pt-1 border-t border-app-border">
+                <div className="space-y-2.5 pt-2 px-1 border-t border-app-border">
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div>
                       <label className="block text-[11px] text-app-muted font-medium mb-1">
@@ -267,7 +273,7 @@ export default function AdminDashboard() {
                   <button
                     type="button"
                     onClick={() => setIsFilterDropdownOpen(false)}
-                    className="w-full py-1.5 px-3 bg-app-accent text-app-accentText font-semibold rounded-md text-xs hover:bg-app-accentHover transition-colors cursor-pointer text-center"
+                    className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-xs transition-colors cursor-pointer text-center active-press shadow-xs"
                   >
                     {t('reports.apply', 'Apply Filter')}
                   </button>
@@ -282,32 +288,32 @@ export default function AdminDashboard() {
       {/* BENTO GRID (High Information Density)                        */}
       {/* ============================================================ */}
       {isInitialLoading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, idx) => (
             <CardSkeleton key={idx} />
           ))}
         </div>
       ) : (
-        <StaggerGroup staggerDelay={75} duration={600} className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        <StaggerGroup staggerDelay={75} duration={600} className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3.5 sm:gap-4.5">
           {/* BENTO TILE 1: Primary Revenue Hero Tile */}
-          <div className="col-span-2 md:col-span-2 lg:col-span-2 bg-app-card rounded-lg border border-app-border p-3.5 hover:border-app-border/80 transition-colors flex flex-col justify-between group">
+          <div className="col-span-2 md:col-span-2 lg:col-span-2 bg-app-card rounded-2xl border border-app-border p-4.5 sm:p-5 hover:border-app-border/80 transition-all shadow-xs flex flex-col justify-between group">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-xs font-semibold text-app-muted tracking-tight">
                   {t('dashboard.totalRevenue')}
                 </p>
-                <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-app-text mt-0.5 tabular-nums">
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-app-text mt-1 tabular-nums">
                   ${totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </h2>
               </div>
-              <div className="w-8 h-8 rounded-md bg-app-accent/10 border border-app-accent/20 flex items-center justify-center text-app-accent flex-shrink-0">
-                <CurrencyDollar size={18} weight="bold" />
+              <div className="w-9 h-9 rounded-xl bg-app-accent/10 border border-app-accent/20 flex items-center justify-center text-app-accent flex-shrink-0">
+                <CurrencyDollar size={20} weight="bold" />
               </div>
             </div>
 
-            <div className="mt-3 pt-2.5 border-t border-app-border/60 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-1 text-emerald-600 dark:text-[#13F287] font-semibold text-xs">
-                <TrendUp size={13} weight="bold" />
+            <div className="mt-4 pt-3 border-t border-app-border/60 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-1.5 text-emerald-600 dark:text-[#13F287] font-semibold text-xs">
+                <TrendUp size={14} weight="bold" />
                 <span>+12.4%</span>
               </div>
               <span className="text-xs text-app-muted tabular-nums">
@@ -319,72 +325,72 @@ export default function AdminDashboard() {
           {/* BENTO TILE 2: Active Repair Jobs */}
           <Link
             to="/repair-jobs"
-            className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-lg border border-app-border p-3.5 hover:border-app-border/80 transition-colors flex flex-col justify-between group"
+            className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-2xl border border-app-border p-4 hover:border-app-border/80 transition-all shadow-xs flex flex-col justify-between group"
           >
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold text-app-muted tracking-tight truncate">{t('dashboard.activeJobs')}</p>
-              <Wrench size={15} weight="bold" className="text-blue-500 flex-shrink-0" />
+              <Wrench size={16} weight="bold" className="text-blue-500 flex-shrink-0" />
             </div>
-            <div className="mt-1">
-              <p className="text-2xl font-semibold tracking-tight text-app-text tabular-nums">{activeOrders}</p>
+            <div className="mt-1.5">
+              <p className="text-2xl font-bold tracking-tight text-app-text tabular-nums">{activeOrders}</p>
             </div>
-            <div className="mt-2 pt-2 border-t border-app-border/60 flex items-center justify-between text-xs text-app-muted">
+            <div className="mt-3 pt-2.5 border-t border-app-border/60 flex items-center justify-between text-xs text-app-muted">
               <span>{completedOrders} {t('status.Completed')}</span>
-              <ArrowUpRight size={12} className="group-hover:text-app-text transition-colors" />
+              <ArrowUpRight size={13} className="group-hover:text-app-text transition-colors" />
             </div>
           </Link>
 
           {/* BENTO TILE 3: Spare Parts Inventory */}
           <Link
             to="/inventory"
-            className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-lg border border-app-border p-3.5 hover:border-app-border/80 transition-colors flex flex-col justify-between group"
+            className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-2xl border border-app-border p-4 hover:border-app-border/80 transition-all shadow-xs flex flex-col justify-between group"
           >
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold text-app-muted tracking-tight truncate">{t('inventory.stockQty')}</p>
-              <Package size={15} weight="bold" className="text-amber-500 flex-shrink-0" />
+              <Package size={16} weight="bold" className="text-amber-500 flex-shrink-0" />
             </div>
-            <div className="mt-1">
-              <p className="text-2xl font-semibold tracking-tight text-app-text tabular-nums">{totalParts}</p>
+            <div className="mt-1.5">
+              <p className="text-2xl font-bold tracking-tight text-app-text tabular-nums">{totalParts}</p>
             </div>
-            <div className="mt-2 pt-2 border-t border-app-border/60 flex items-center justify-between text-xs text-app-muted">
+            <div className="mt-3 pt-2.5 border-t border-app-border/60 flex items-center justify-between text-xs text-app-muted">
               <span>{inventory.length} items</span>
-              <ArrowUpRight size={12} className="group-hover:text-app-text transition-colors" />
+              <ArrowUpRight size={13} className="group-hover:text-app-text transition-colors" />
             </div>
           </Link>
 
           {/* BENTO TILE 4: Customers Total */}
           <Link
             to="/customers"
-            className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-lg border border-app-border p-3.5 hover:border-app-border/80 transition-colors flex flex-col justify-between group"
+            className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-2xl border border-app-border p-4 hover:border-app-border/80 transition-all shadow-xs flex flex-col justify-between group"
           >
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold text-app-muted tracking-tight truncate">{t('customers.title')}</p>
-              <Users size={15} weight="bold" className="text-sky-500 flex-shrink-0" />
+              <Users size={16} weight="bold" className="text-sky-500 flex-shrink-0" />
             </div>
-            <div className="mt-1">
-              <p className="text-2xl font-semibold tracking-tight text-app-text tabular-nums">{customers.length}</p>
+            <div className="mt-1.5">
+              <p className="text-2xl font-bold tracking-tight text-app-text tabular-nums">{customers.length}</p>
             </div>
-            <div className="mt-2 pt-2 border-t border-app-border/60 flex items-center justify-between text-xs text-app-muted">
+            <div className="mt-3 pt-2.5 border-t border-app-border/60 flex items-center justify-between text-xs text-app-muted">
               <span>{t('common.active')}</span>
-              <ArrowUpRight size={12} className="group-hover:text-app-text transition-colors" />
+              <ArrowUpRight size={13} className="group-hover:text-app-text transition-colors" />
             </div>
           </Link>
 
           {/* BENTO TILE 5: Appointments Scheduled */}
           <Link
             to="/appointments"
-            className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-lg border border-app-border p-3.5 hover:border-app-border/80 transition-colors flex flex-col justify-between group"
+            className="col-span-1 md:col-span-1 lg:col-span-1 bg-app-card rounded-2xl border border-app-border p-4 hover:border-app-border/80 transition-all shadow-xs flex flex-col justify-between group"
           >
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold text-app-muted tracking-tight truncate">{t('appointments.title')}</p>
-              <CalendarBlank size={15} weight="bold" className="text-purple-500 flex-shrink-0" />
+              <CalendarBlank size={16} weight="bold" className="text-purple-500 flex-shrink-0" />
             </div>
-            <div className="mt-1">
-              <p className="text-2xl font-semibold tracking-tight text-app-text tabular-nums">{scheduledApts}</p>
+            <div className="mt-1.5">
+              <p className="text-2xl font-bold tracking-tight text-app-text tabular-nums">{scheduledApts}</p>
             </div>
-            <div className="mt-2 pt-2 border-t border-app-border/60 flex items-center justify-between text-xs text-app-muted">
+            <div className="mt-3 pt-2.5 border-t border-app-border/60 flex items-center justify-between text-xs text-app-muted">
               <span>{appointments.length} Total</span>
-              <ArrowUpRight size={12} className="group-hover:text-app-text transition-colors" />
+              <ArrowUpRight size={13} className="group-hover:text-app-text transition-colors" />
             </div>
           </Link>
         </StaggerGroup>
@@ -393,43 +399,43 @@ export default function AdminDashboard() {
       {/* ============================================================ */}
       {/* QUICK ACTIONS BENTO ROW (Fast Navigation for Mobile Users)  */}
       {/* ============================================================ */}
-      <StaggerGroup staggerDelay={50} delay={300} className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+      <StaggerGroup staggerDelay={50} delay={300} className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         <Link
           to="/repair-jobs"
-          className="flex items-center gap-2.5 p-3 rounded-sm bg-app-card border border-app-border hover:border-app-accent/40 hover:bg-app-hover transition-all text-xs font-semibold text-app-text shadow-subtle group"
+          className="flex items-center gap-3 p-3.5 rounded-xl bg-app-card border border-app-border hover:border-app-accent/40 hover:bg-app-hover transition-all text-xs font-semibold text-app-text shadow-xs active-press group"
         >
-          <div className="w-7 h-7 rounded-sm bg-app-accent/15 text-app-accent flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-            <Plus size={14} weight="bold" />
+          <div className="w-8 h-8 rounded-lg bg-app-accent/15 text-app-accent flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+            <Plus size={15} weight="bold" />
           </div>
           <span className="truncate">{t('repairJobs.createJob')}</span>
         </Link>
 
         <Link
           to="/appointments"
-          className="flex items-center gap-2.5 p-3 rounded-sm bg-app-card border border-app-border hover:border-app-accent/40 hover:bg-app-hover transition-all text-xs font-semibold text-app-text shadow-subtle group"
+          className="flex items-center gap-3 p-3.5 rounded-xl bg-app-card border border-app-border hover:border-app-accent/40 hover:bg-app-hover transition-all text-xs font-semibold text-app-text shadow-xs active-press group"
         >
-          <div className="w-7 h-7 rounded-sm bg-purple-500/15 text-purple-500 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-            <CalendarBlank size={14} weight="bold" />
+          <div className="w-8 h-8 rounded-lg bg-purple-500/15 text-purple-500 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+            <CalendarBlank size={15} weight="bold" />
           </div>
           <span className="truncate">{t('appointments.newAppointment')}</span>
         </Link>
 
         <Link
           to="/invoices"
-          className="flex items-center gap-2.5 p-3 rounded-sm bg-app-card border border-app-border hover:border-app-accent/40 hover:bg-app-hover transition-all text-xs font-semibold text-app-text shadow-subtle group"
+          className="flex items-center gap-3 p-3.5 rounded-xl bg-app-card border border-app-border hover:border-app-accent/40 hover:bg-app-hover transition-all text-xs font-semibold text-app-text shadow-xs active-press group"
         >
-          <div className="w-7 h-7 rounded-sm bg-emerald-500/15 text-emerald-500 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-            <Receipt size={14} weight="bold" />
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-500 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+            <Receipt size={15} weight="bold" />
           </div>
           <span className="truncate">{t('invoices.createInvoice')}</span>
         </Link>
 
         <Link
           to="/inventory"
-          className="flex items-center gap-2.5 p-3 rounded-sm bg-app-card border border-app-border hover:border-app-accent/40 hover:bg-app-hover transition-all text-xs font-semibold text-app-text shadow-subtle group"
+          className="flex items-center gap-3 p-3.5 rounded-xl bg-app-card border border-app-border hover:border-app-accent/40 hover:bg-app-hover transition-all text-xs font-semibold text-app-text shadow-xs active-press group"
         >
-          <div className="w-7 h-7 rounded-sm bg-amber-500/15 text-amber-500 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-            <Package size={14} weight="bold" />
+          <div className="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-500 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+            <Package size={15} weight="bold" />
           </div>
           <span className="truncate">{t('inventory.addPart')}</span>
         </Link>
@@ -442,7 +448,7 @@ export default function AdminDashboard() {
         {/* Left 2 Columns: Chart Breakdown + Customer Table */}
         <div className="xl:col-span-2 space-y-4 sm:space-y-6">
           {/* Revenue Breakdown Bento Box */}
-          <div className="bg-app-card rounded-sm border border-app-border p-4 shadow-card transition-colors duration-200">
+          <div className="bg-app-card rounded-2xl border border-app-border p-4.5 sm:p-6 shadow-xs transition-all duration-200">
             <div className="flex items-center justify-between mb-4 sm:mb-6">
               <h2 className="text-sm font-semibold text-app-text">{t('reports.partsVsLabor')}</h2>
               <span className="text-xs font-mono font-bold text-app-accent">${totalRevenue.toFixed(2)}</span>
@@ -665,7 +671,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Customer Directory Mini Bento Table */}
-          <div className="bg-app-card rounded-sm border border-app-border p-4 shadow-card transition-colors duration-200">
+          <div className="bg-app-card rounded-2xl border border-app-border p-4.5 sm:p-5 shadow-xs transition-all duration-200">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-app-text">{t('customers.title')}</h2>
               <Link to="/customers" className="text-xs text-app-accent hover:underline font-semibold flex items-center gap-1">
@@ -685,8 +691,8 @@ export default function AdminDashboard() {
                 {customers.slice(0, 5).map((customer) => (
                   <TableRow key={customer.id} className="cursor-pointer">
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-sm bg-app-hover border border-app-border flex items-center justify-center text-app-muted flex-shrink-0 font-bold text-[10px]">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-app-hover border border-app-border flex items-center justify-center text-app-muted flex-shrink-0 font-bold text-xs">
                           {customer.name[0]}
                         </div>
                         <div>
@@ -714,16 +720,16 @@ export default function AdminDashboard() {
           <ActiveUsersWidget />
 
           {/* Live Alerts Bento Card */}
-          <div className="bg-app-card rounded-sm border border-app-border p-3 shadow-card transition-colors duration-200">
-            <div className="flex items-center justify-between mb-3">
+          <div className="bg-app-card rounded-2xl border border-app-border p-4 sm:p-5 shadow-xs transition-all duration-200">
+            <div className="flex items-center justify-between mb-3.5">
               <h3 className="text-xs font-semibold text-app-text">{t('common.alerts', 'Alerts')}</h3>
-              <span className="text-xs font-mono text-app-muted">
+              <span className="text-xs font-mono text-app-muted px-2 py-0.5 rounded-full bg-app-hover">
                 {notificationsFeed.length}
               </span>
             </div>
             <div className="space-y-2.5">
               {notificationsFeed.map((item) => (
-                <div key={item.id} className="flex items-start gap-2.5 p-2 rounded-sm bg-app-hover/50 border border-app-border/40">
+                <div key={item.id} className="flex items-start gap-2.5 p-2.5 rounded-xl bg-app-hover/50 border border-app-border/40">
                   <div
                     className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
                       item.type === 'warning' ? 'bg-amber-500' : item.type === 'success' ? 'bg-purple-500' : 'bg-blue-500'
@@ -739,18 +745,18 @@ export default function AdminDashboard() {
           </div>
 
           {/* Recent Repair Orders Activity */}
-          <div className="bg-app-card rounded-sm border border-app-border p-3 shadow-card transition-colors duration-200">
-            <div className="flex items-center justify-between mb-3">
+          <div className="bg-app-card rounded-2xl border border-app-border p-4 sm:p-5 shadow-xs transition-all duration-200">
+            <div className="flex items-center justify-between mb-3.5">
               <h3 className="text-xs font-semibold text-app-text">{t('dashboard.recentJobs')}</h3>
-              <Link to="/repair-jobs" className="text-[11px] text-app-accent hover:underline">
+              <Link to="/repair-jobs" className="text-xs text-app-accent hover:underline font-semibold">
                 {t('common.view')} ▾
               </Link>
             </div>
             <div className="space-y-2">
               {activitiesFeed.map((act) => (
-                <div key={act.id} className="flex items-start gap-2.5 p-2 rounded-sm hover:bg-app-hover transition-colors">
-                  <div className="w-6 h-6 rounded-sm bg-app-hover text-app-muted flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Wrench size={13} weight="bold" />
+                <div key={act.id} className="flex items-start gap-2.5 p-2.5 rounded-xl hover:bg-app-hover transition-colors">
+                  <div className="w-7 h-7 rounded-lg bg-app-hover text-app-muted flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Wrench size={14} weight="bold" />
                   </div>
                   <div className="truncate flex-1">
                     <p className="text-xs font-medium text-app-text truncate">{act.title}</p>
@@ -762,21 +768,21 @@ export default function AdminDashboard() {
           </div>
 
           {/* Workshop Staff Roster */}
-          <div className="bg-app-card rounded-sm border border-app-border p-3 shadow-card transition-colors duration-200">
-            <div className="flex items-center justify-between mb-3">
+          <div className="bg-app-card rounded-2xl border border-app-border p-4 sm:p-5 shadow-xs transition-all duration-200">
+            <div className="flex items-center justify-between mb-3.5">
               <h3 className="text-xs font-semibold text-app-text">{t('employees.title')}</h3>
-              <Link to="/employees" className="text-[11px] text-app-accent hover:underline">
+              <Link to="/employees" className="text-xs text-app-accent hover:underline font-semibold">
                 {staffList.length} staff
               </Link>
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               {staffList.map((m) => (
                 <div
                   key={m.id}
-                  className="flex items-center justify-between p-2 rounded-sm hover:bg-app-hover text-app-muted transition-colors"
+                  className="flex items-center justify-between p-2.5 rounded-xl hover:bg-app-hover text-app-muted transition-colors"
                 >
                   <div className="flex items-center gap-2.5 truncate">
-                    <div className="w-7 h-7 rounded-sm bg-app-accent/15 border border-app-accent/30 flex items-center justify-center text-xs font-bold text-app-accent flex-shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-app-accent/15 border border-app-accent/30 flex items-center justify-center text-xs font-bold text-app-accent flex-shrink-0">
                       {m.name ? m.name[0] : 'S'}
                     </div>
                     <div className="truncate">
@@ -789,9 +795,9 @@ export default function AdminDashboard() {
                     <a
                       href={`tel:${m.phone}`}
                       title={m.phone}
-                      className="w-7 h-7 rounded-sm bg-app-hover text-app-muted hover:text-app-text flex items-center justify-center transition-colors flex-shrink-0"
+                      className="w-8 h-8 rounded-lg bg-app-hover text-app-muted hover:text-app-text flex items-center justify-center transition-colors flex-shrink-0"
                     >
-                      <Phone size={13} weight="bold" />
+                      <Phone size={14} weight="bold" />
                     </a>
                   )}
                 </div>

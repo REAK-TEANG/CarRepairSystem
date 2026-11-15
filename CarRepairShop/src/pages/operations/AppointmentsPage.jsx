@@ -310,12 +310,12 @@ export default function AppointmentsPage() {
   })
 
   return (
-    <div className="space-y-4 sm:space-y-5 font-sans text-app-text">
+    <div className="space-y-5 sm:space-y-6 font-sans text-app-text">
       {/* Page Header */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3.5 pb-1">
         <div className="flex items-center gap-2.5">
-          <h1 className="text-lg font-semibold tracking-tight text-app-text">{t('titles.appointmentsSchedule')}</h1>
-          <span className="text-[11px] font-mono text-app-muted px-2 py-0.5 bg-app-card border border-app-border rounded-md">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-app-text">{t('titles.appointmentsSchedule')}</h1>
+          <span className="text-xs font-mono text-app-muted px-2.5 py-0.5 bg-app-card border border-app-border rounded-full">
             {activeTab === 'calendar' ? totalCount : reminders.length}
           </span>
         </div>
@@ -357,10 +357,10 @@ export default function AppointmentsPage() {
       </div>
 
       {/* View Switcher Tabs */}
-      <div className="flex items-center gap-2 border-b border-app-border pb-2.5">
+      <div className="flex items-center gap-2 border-b border-app-border pb-3">
         <button
           onClick={() => setActiveTab('calendar')}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer touch-manipulation active-press ${
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer touch-manipulation active-press ${
             activeTab === 'calendar'
               ? 'bg-app-accent text-app-accentText shadow-xs'
               : 'text-app-muted hover:text-app-text hover:bg-app-hover'
@@ -368,14 +368,14 @@ export default function AppointmentsPage() {
         >
           <CalendarBlank size={15} weight="bold" />
           <span>Appointments</span>
-          <span className={`text-[11px] font-mono px-1.5 py-0.2 rounded ${activeTab === 'calendar' ? 'bg-black/10 dark:bg-black/20 text-inherit font-bold' : 'text-app-muted'}`}>
+          <span className={`text-[11px] font-mono px-1.5 py-0.2 rounded-full ${activeTab === 'calendar' ? 'bg-black/10 dark:bg-black/20 text-inherit font-bold' : 'text-app-muted'}`}>
             {appointments.length}
           </span>
         </button>
 
         <button
           onClick={() => setActiveTab('reminders')}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer touch-manipulation active-press ${
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer touch-manipulation active-press ${
             activeTab === 'reminders'
               ? 'bg-app-accent text-app-accentText shadow-xs'
               : 'text-app-muted hover:text-app-text hover:bg-app-hover'
@@ -383,7 +383,7 @@ export default function AppointmentsPage() {
         >
           <Bell size={15} weight="bold" />
           <span>Reminders</span>
-          <span className={`text-[11px] font-mono px-1.5 py-0.2 rounded ${activeTab === 'reminders' ? 'bg-black/10 dark:bg-black/20 text-inherit font-bold' : 'text-app-muted'}`}>
+          <span className={`text-[11px] font-mono px-1.5 py-0.2 rounded-full ${activeTab === 'reminders' ? 'bg-black/10 dark:bg-black/20 text-inherit font-bold' : 'text-app-muted'}`}>
             {reminders.length}
           </span>
         </button>
@@ -393,7 +393,7 @@ export default function AppointmentsPage() {
         /* Grid: Left Calendar + Right Main Table */
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Left Calendar Picker */}
-          <div className="bg-app-card rounded-sm border border-app-border p-4 shadow-card self-start transition-colors duration-200">
+          <div className="bg-app-card rounded-2xl border border-app-border p-4.5 sm:p-5 shadow-xs self-start transition-all duration-200">
             <div className="flex items-center justify-between mb-3">
               <button
                 onClick={() => {
@@ -438,7 +438,7 @@ export default function AppointmentsPage() {
                   <button
                     key={day}
                     onClick={() => setSelectedDate(isSelected ? null : day)}
-                    className={`h-8 rounded-sm flex flex-col items-center justify-center relative text-xs font-medium transition-colors cursor-pointer ${
+                    className={`h-8 rounded-lg flex flex-col items-center justify-center relative text-xs font-medium transition-colors cursor-pointer ${
                       isSelected
                         ? 'bg-app-accent text-app-accentText font-bold shadow-subtle'
                         : isToday
@@ -470,11 +470,11 @@ export default function AppointmentsPage() {
           </div>
 
           {/* Right Main Table */}
-          <div className="lg:col-span-3 space-y-2.5">
+          <div className="lg:col-span-3 space-y-3.5">
             {/* Integrated Toolbar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               {/* Filter Tabs */}
-              <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
                 {statusFilters.map((st) => (
                   <button
                     key={st}
@@ -482,7 +482,7 @@ export default function AppointmentsPage() {
                       setActiveFilter(st)
                       setPage(1)
                     }}
-                    className={`h-7.5 sm:h-7 px-2.5 py-1 inline-flex items-center justify-center rounded-md text-xs font-medium whitespace-nowrap transition-all cursor-pointer touch-manipulation active:scale-95 ${
+                    className={`h-8 px-3.5 py-1 inline-flex items-center justify-center rounded-xl text-xs font-medium whitespace-nowrap transition-all cursor-pointer touch-manipulation active-press ${
                       activeFilter === st
                         ? 'bg-app-accent text-app-accentText font-semibold shadow-xs'
                         : 'text-app-muted hover:text-app-text hover:bg-app-hover'
@@ -494,7 +494,7 @@ export default function AppointmentsPage() {
               </div>
 
               {/* Inline Search */}
-              <div className="relative w-full sm:w-60">
+              <div className="relative w-full sm:w-64">
                 <MagnifyingGlass size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted z-10 pointer-events-none" />
                 <Input
                   type="text"
@@ -504,7 +504,7 @@ export default function AppointmentsPage() {
                     setSearchQuery(e.target.value)
                     setPage(1)
                   }}
-                  className="w-full pl-9 pr-3 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
+                  className="w-full pl-9 pr-3 py-1.5 bg-app-input border border-app-border rounded-xl text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-app-accent transition-colors"
                 />
               </div>
             </div>
@@ -512,7 +512,7 @@ export default function AppointmentsPage() {
             {isLoading && appointments.length === 0 ? (
               <TableSkeleton rows={6} columns={7} />
             ) : filtered.length === 0 ? (
-              <div className="bg-app-card rounded-lg border border-app-border shadow-xs overflow-hidden">
+              <div className="bg-app-card rounded-2xl border border-app-border shadow-xs overflow-hidden">
                 <EmptyState
                   title={t('common.noRecords')}
                   description={t('common.noData')}
@@ -705,7 +705,7 @@ export default function AppointmentsPage() {
         </div>
       ) : (
         /* Maintenance Reminders (Service CRM) Tab */
-        <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden space-y-3">
+        <div className="bg-app-card rounded-2xl border border-app-border shadow-xs overflow-hidden space-y-4">
           <div className="p-4 border-b border-app-border flex items-center justify-between">
             <div>
               <h2 className="text-sm font-semibold text-app-text flex items-center gap-2">

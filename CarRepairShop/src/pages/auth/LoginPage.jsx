@@ -252,7 +252,7 @@ export default function LoginPage() {
       >
         <div className="space-y-4 text-xs font-sans">
           {forgotError && (
-            <div className="px-3.5 py-2.5 bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 rounded-sm font-medium">
+            <div className="px-3.5 py-2.5 bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 rounded-xl font-medium">
               {forgotError}
             </div>
           )}
@@ -260,7 +260,7 @@ export default function LoginPage() {
           {forgotStep === 1 ? (
             /* STEP 1: Enter Username/Email */
             <form onSubmit={handleRequestCode} className="space-y-4">
-              <div className="flex items-start gap-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-sm text-app-text">
+              <div className="flex items-start gap-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-app-text">
                 <Key size={20} className="text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
                 <p className="text-xs leading-relaxed text-app-muted">
                   {t('auth.forgotPasswordSubtitle')}
@@ -284,7 +284,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setIsForgotOpen(false)}
-                  className="px-3.5 py-2 rounded-sm text-app-muted hover:bg-app-hover transition-colors font-medium cursor-pointer"
+                  className="px-3.5 py-2 rounded-xl text-app-muted hover:bg-app-hover transition-colors font-medium cursor-pointer"
                 >
                   {t('common.cancel')}
                 </button>
@@ -297,14 +297,14 @@ export default function LoginPage() {
             /* STEP 2: Verification Code & New Password */
             <form onSubmit={handleResetPassword} className="space-y-4">
               {codePreview && (
-                <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-sm text-emerald-700 dark:text-emerald-300 flex items-center justify-between">
+                <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-700 dark:text-emerald-300 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <CheckCircle size={18} weight="bold" />
                     <span>
                       Verification code for <strong className="font-mono font-bold">{forgotIdentifier}</strong>:
                     </span>
                   </div>
-                  <span className="font-mono font-bold text-sm bg-emerald-500/20 px-2 py-0.5 rounded-sm text-emerald-600 dark:text-emerald-300 tracking-wider">
+                  <span className="font-mono font-bold text-sm bg-emerald-500/20 px-2 py-0.5 rounded-lg text-emerald-600 dark:text-emerald-300 tracking-wider">
                     {codePreview}
                   </span>
                 </div>
@@ -368,7 +368,7 @@ export default function LoginPage() {
                     setForgotStep(1)
                     setForgotError('')
                   }}
-                  className="flex items-center gap-1.5 px-3 py-2 text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98] rounded-sm transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-2 text-app-muted hover:text-app-text hover:bg-app-hover active:scale-[0.98] rounded-xl transition-colors cursor-pointer"
                 >
                   <ArrowLeft size={14} />
                   <span>{t('common.back')}</span>

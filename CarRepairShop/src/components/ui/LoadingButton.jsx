@@ -16,7 +16,7 @@ export default function LoadingButton({
 }) {
   const isActive = loading || isLoading
   const baseStyles =
-    'inline-flex flex-row items-center justify-center gap-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all select-none disabled:opacity-50 disabled:cursor-not-allowed shadow-subtle cursor-pointer touch-manipulation [&_svg]:shrink-0 [&_svg]:inline-block'
+    'inline-flex flex-row items-center justify-center gap-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all select-none disabled:opacity-50 disabled:cursor-not-allowed shadow-subtle cursor-pointer touch-manipulation [&_svg]:shrink-0 [&_svg]:inline-block'
 
   const variants = {
     primary:

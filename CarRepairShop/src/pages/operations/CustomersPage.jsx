@@ -95,7 +95,7 @@ export default function CustomersPage() {
   }
 
   return (
-    <div className="space-y-3 sm:space-y-4 text-app-text font-sans transition-colors duration-200">
+    <div className="space-y-5 sm:space-y-6 text-app-text font-sans transition-colors duration-200">
       <PageHeader
         title={t('titles.customerDirectory')}
         count={totalCount}
@@ -123,7 +123,7 @@ export default function CustomersPage() {
       {isLoading && customers.length === 0 ? (
         <TableSkeleton rows={6} columns={5} />
       ) : customers.length === 0 ? (
-        <div className="bg-app-card rounded-lg border border-app-border shadow-xs overflow-hidden">
+        <div className="bg-app-card rounded-2xl border border-app-border shadow-xs overflow-hidden">
           <EmptyState
             title={t('common.noRecords')}
             description={t('common.noData')}
@@ -202,8 +202,8 @@ export default function CustomersPage() {
                   >
                     <TableCell className="font-mono font-semibold text-app-accent">{customer.code}</TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-sm bg-app-hover flex items-center justify-center text-app-muted font-bold text-[10px] flex-shrink-0">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-app-hover flex items-center justify-center text-app-muted font-bold text-[11px] flex-shrink-0">
                           {customer.name[0]}
                         </div>
                         <span className="font-semibold text-app-text">{customer.name}</span>

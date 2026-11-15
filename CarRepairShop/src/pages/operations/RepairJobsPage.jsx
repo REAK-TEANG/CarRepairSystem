@@ -126,7 +126,7 @@ export default function RepairJobsPage() {
   }
 
   return (
-    <div className="space-y-3 sm:space-y-4 font-sans text-app-text">
+    <div className="space-y-5 sm:space-y-6 font-sans text-app-text">
       {/* Universal Page Header & Toolbar */}
       <PageHeader
         title={t('titles.repairJobsOrders')}
@@ -169,7 +169,7 @@ export default function RepairJobsPage() {
       {isLoading && jobs.length === 0 ? (
         <TableSkeleton rows={6} columns={7} />
       ) : jobs.length === 0 ? (
-        <div className="bg-app-card rounded-lg border border-app-border shadow-xs overflow-hidden">
+        <div className="bg-app-card rounded-2xl border border-app-border shadow-xs overflow-hidden">
           <EmptyState
             title={t('common.noRecords')}
             description={t('common.noData')}

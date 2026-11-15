@@ -11,6 +11,7 @@ import {
   CalendarBlank,
   CaretDown,
   ArrowsDownUp,
+  Check,
   X,
 } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
@@ -313,7 +314,7 @@ export default function InventoryPage() {
   })
 
   return (
-    <div className="space-y-3 sm:space-y-4 font-sans text-app-text">
+    <div className="space-y-5 sm:space-y-6 font-sans text-app-text">
       {/* Universal Page Header */}
       <PageHeader
         title={t('titles.sparePartsInventory')}
@@ -334,10 +335,10 @@ export default function InventoryPage() {
       />
 
       {/* View Switcher Tabs */}
-      <div className="flex items-center gap-2 border-b border-app-border pb-2.5">
+      <div className="flex items-center gap-2 border-b border-app-border pb-3">
         <button
           onClick={() => setActiveTab('inventory')}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer touch-manipulation active-press ${
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer touch-manipulation active-press ${
             activeTab === 'inventory'
               ? 'bg-app-accent text-app-accentText shadow-xs'
               : 'text-app-muted hover:text-app-text hover:bg-app-hover'
@@ -345,14 +346,14 @@ export default function InventoryPage() {
         >
           <Package size={15} weight="bold" />
           <span>Parts</span>
-          <span className={`text-[11px] font-mono px-1.5 py-0.2 rounded ${activeTab === 'inventory' ? 'bg-black/10 dark:bg-black/20 text-inherit font-bold' : 'text-app-muted'}`}>
+          <span className={`text-[11px] font-mono px-1.5 py-0.2 rounded-full ${activeTab === 'inventory' ? 'bg-black/10 dark:bg-black/20 text-inherit font-bold' : 'text-app-muted'}`}>
             {items.length}
           </span>
         </button>
 
         <button
           onClick={() => setActiveTab('transactions')}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer touch-manipulation active-press ${
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer touch-manipulation active-press ${
             activeTab === 'transactions'
               ? 'bg-app-accent text-app-accentText shadow-xs'
               : 'text-app-muted hover:text-app-text hover:bg-app-hover'
@@ -360,7 +361,7 @@ export default function InventoryPage() {
         >
           <ClockCounterClockwise size={15} weight="bold" />
           <span>Stock Logs</span>
-          <span className={`text-[11px] font-mono px-1.5 py-0.2 rounded ${activeTab === 'transactions' ? 'bg-black/10 dark:bg-black/20 text-inherit font-bold' : 'text-app-muted'}`}>
+          <span className={`text-[11px] font-mono px-1.5 py-0.2 rounded-full ${activeTab === 'transactions' ? 'bg-black/10 dark:bg-black/20 text-inherit font-bold' : 'text-app-muted'}`}>
             {transactions.length}
           </span>
         </button>
@@ -369,8 +370,8 @@ export default function InventoryPage() {
       {activeTab === 'inventory' ? (
         <>
           {/* Category and Status Filters + Inline Search */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-            <div className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
               {categories.slice(0, 6).map((cat) => (
                 <button
                   key={cat}
@@ -378,7 +379,7 @@ export default function InventoryPage() {
                     setCategoryFilter(cat)
                     setPage(1)
                   }}
-                  className={`h-7.5 px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-all cursor-pointer touch-manipulation active-press ${
+                  className={`h-8 px-3.5 py-1 rounded-xl text-xs font-medium whitespace-nowrap transition-all cursor-pointer touch-manipulation active-press ${
                     categoryFilter === cat
                       ? 'bg-app-accent text-app-accentText font-semibold shadow-2xs'
                       : 'text-app-muted hover:text-app-text hover:bg-app-hover'
@@ -399,7 +400,7 @@ export default function InventoryPage() {
                   setSearchQuery(e.target.value)
                   setPage(1)
                 }}
-                className="pl-9 pr-8 text-xs bg-app-input border-app-border focus:border-app-accent"
+                className="pl-9 pr-8 text-xs bg-app-input border-app-border focus:border-app-accent rounded-xl"
               />
               {searchQuery && (
                 <button
@@ -421,7 +422,7 @@ export default function InventoryPage() {
       {isLoading && items.length === 0 ? (
         <TableSkeleton rows={6} columns={7} />
       ) : filtered.length === 0 ? (
-        <div className="bg-app-card rounded-lg border border-app-border shadow-xs overflow-hidden">
+        <div className="bg-app-card rounded-2xl border border-app-border shadow-xs overflow-hidden">
           <EmptyState
             title={t('common.noRecords')}
             description={t('common.noData')}
@@ -581,11 +582,11 @@ export default function InventoryPage() {
                       <img
                         src={part.image}
                         alt={part.name}
-                        className="w-8 h-8 rounded-sm object-cover border border-app-border bg-app-card flex-shrink-0"
+                        className="w-9 h-9 rounded-xl object-cover border border-app-border bg-app-card flex-shrink-0"
                       />
                     ) : (
-                      <div className="w-8 h-8 rounded-sm bg-app-hover border border-app-border flex items-center justify-center flex-shrink-0 text-app-muted">
-                        <Package size={16} />
+                      <div className="w-9 h-9 rounded-xl bg-app-hover border border-app-border flex items-center justify-center flex-shrink-0 text-app-muted">
+                        <Package size={18} />
                       </div>
                     )}
                     <div>
@@ -635,7 +636,7 @@ export default function InventoryPage() {
     </>
   ) : (
     /* Stock Movement & Auto Stock-Out Transactions View */
-    <div className="bg-app-card rounded-sm border border-app-border shadow-card overflow-hidden">
+    <div className="bg-app-card rounded-2xl border border-app-border shadow-xs overflow-hidden">
       <div className="p-3.5 sm:p-4 border-b border-app-border flex flex-col gap-3">
         {/* Header Title */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -670,7 +671,7 @@ export default function InventoryPage() {
                   setTxTypeFilter(typeItem.key)
                   setTxPage(1)
                 }}
-                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                   txTypeFilter === typeItem.key
                     ? 'bg-app-accent text-app-accentText font-semibold'
                     : 'text-app-muted hover:text-app-text hover:bg-app-hover'
@@ -695,7 +696,7 @@ export default function InventoryPage() {
                   setTxSearch(e.target.value)
                   setTxPage(1)
                 }}
-                className="w-full pl-9 pr-7 py-1 bg-app-input border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted/70 focus:outline-none focus:border-app-accent"
+                className="w-full pl-9 pr-7 py-1.5 bg-app-input border border-app-border rounded-xl text-xs text-app-text placeholder:text-app-muted/70 focus:outline-none focus:border-app-accent"
               />
               {txSearch && (
                 <button
@@ -716,7 +717,7 @@ export default function InventoryPage() {
               <button
                 type="button"
                 onClick={() => setIsTxDateDropdownOpen((prev) => !prev)}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-app-card border border-app-border hover:border-app-accent/50 text-app-text rounded-md text-xs font-medium shadow-xs transition-colors cursor-pointer select-none whitespace-nowrap"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-app-card border border-app-border hover:border-app-accent/50 text-app-text rounded-xl text-xs font-medium shadow-xs transition-colors cursor-pointer select-none whitespace-nowrap"
               >
                 <CalendarBlank size={13} className="text-app-muted" weight="bold" />
                 <span>{txActiveBounds.label}</span>
@@ -724,38 +725,43 @@ export default function InventoryPage() {
               </button>
 
               {isTxDateDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-72 bg-app-card border border-app-border rounded-lg shadow-xl p-3 z-50 animate-modal-content space-y-3">
-                  <div className="grid grid-cols-2 gap-1 p-1 bg-app-hover/60 rounded-md">
+                <div className="absolute right-0 mt-2 w-64 bg-app-card border border-app-border rounded-2xl shadow-xl p-2 z-50 animate-modal-content space-y-1">
+                  <div className="space-y-0.5">
                     {[
                       { key: 'all', label: t('reports.allTime', 'All Time') },
                       { key: 'today', label: t('common.today', 'Today') },
                       { key: 'this_week', label: t('reports.thisWeek', 'This Week') },
                       { key: 'this_month', label: t('reports.thisMonth', 'This Month') },
                       { key: 'custom', label: t('reports.customDate', 'Custom Range') },
-                    ].map((item) => (
-                      <button
-                        key={item.key}
-                        type="button"
-                        onClick={() => {
-                          setTxDateRange(item.key)
-                          setTxPage(1)
-                          if (item.key !== 'custom') setIsTxDateDropdownOpen(false)
-                        }}
-                        className={`py-1 px-2 text-xs font-semibold rounded transition-colors text-center cursor-pointer ${
-                          item.key === 'custom' ? 'col-span-2' : ''
-                        } ${
-                          txDateRange === item.key
-                            ? 'bg-app-accent text-app-accentText shadow-xs'
-                            : 'text-app-muted hover:text-app-text'
-                        }`}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
+                    ].map((item) => {
+                      const isSelected = txDateRange === item.key
+                      return (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => {
+                            setTxDateRange(item.key)
+                            setTxPage(1)
+                            if (item.key !== 'custom') setIsTxDateDropdownOpen(false)
+                          }}
+                          className={`w-full flex items-center justify-between px-3 py-2 text-xs rounded-xl font-medium transition-colors cursor-pointer touch-manipulation active-press ${
+                            isSelected
+                              ? 'bg-emerald-600 text-white font-semibold shadow-xs'
+                              : 'text-app-text hover:bg-app-hover hover:text-app-text'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <CalendarBlank size={14} className={isSelected ? 'text-white' : 'text-app-muted'} />
+                            <span>{item.label}</span>
+                          </div>
+                          {isSelected && <Check size={14} weight="bold" className="text-white shrink-0" />}
+                        </button>
+                      )
+                    })}
                   </div>
 
                   {txDateRange === 'custom' && (
-                    <div className="space-y-2 pt-1 border-t border-app-border">
+                    <div className="space-y-2.5 pt-2 px-1 border-t border-app-border">
                       <div className="grid grid-cols-2 gap-2 text-xs">
                         <div>
                           <label className="block text-[11px] text-app-muted font-medium mb-1">
@@ -787,9 +793,9 @@ export default function InventoryPage() {
                       <button
                         type="button"
                         onClick={() => setIsTxDateDropdownOpen(false)}
-                        className="w-full py-1 px-3 bg-app-accent text-app-accentText font-semibold rounded-md text-xs hover:bg-app-accentHover transition-colors cursor-pointer text-center"
+                        className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-xs transition-colors cursor-pointer text-center active-press shadow-xs"
                       >
-                        {t('reports.apply', 'Apply Range')}
+                        {t('reports.apply', 'Apply Filter')}
                       </button>
                     </div>
                   )}

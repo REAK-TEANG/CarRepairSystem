@@ -157,12 +157,12 @@ export default function ServicesPage() {
   }
 
   return (
-    <div className="space-y-3 sm:space-y-4 text-app-text font-sans">
+    <div className="space-y-5 sm:space-y-6 text-app-text font-sans">
       {/* Page Header */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3.5 pb-1">
         <div className="flex items-center gap-2.5">
-          <h1 className="text-lg font-semibold tracking-tight text-app-text">{t('titles.serviceCatalog')}</h1>
-          <span className="text-[11px] font-mono text-app-muted px-2 py-0.5 bg-app-card border border-app-border rounded-md">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-app-text">{t('titles.serviceCatalog')}</h1>
+          <span className="text-xs font-mono text-app-muted px-2.5 py-0.5 bg-app-card border border-app-border rounded-full">
             {pagination.total}
           </span>
         </div>
@@ -180,8 +180,8 @@ export default function ServicesPage() {
       </div>
 
       {/* Integrated Filter Bar & Search */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
           {statusOptions.map((st) => (
             <button
               key={st}
@@ -189,9 +189,9 @@ export default function ServicesPage() {
                 setStatusFilter(st)
                 setCurrentPage(1)
               }}
-              className={`px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer touch-manipulation active-press ${
                 statusFilter === st
-                  ? 'bg-app-accent text-app-accentText font-semibold'
+                  ? 'bg-app-accent text-app-accentText shadow-xs'
                   : 'text-app-muted hover:text-app-text hover:bg-app-hover'
               }`}
             >
@@ -200,7 +200,7 @@ export default function ServicesPage() {
           ))}
         </div>
 
-        <div className="relative w-full sm:w-60">
+        <div className="relative w-full sm:w-64">
           <MagnifyingGlass size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted pointer-events-none z-10" />
           <Input
             type="text"
@@ -210,7 +210,7 @@ export default function ServicesPage() {
               setSearchQuery(e.target.value)
               setCurrentPage(1)
             }}
-            className="pl-9"
+            className="pl-9 rounded-xl"
           />
         </div>
       </div>
@@ -219,7 +219,7 @@ export default function ServicesPage() {
       {isLoading && services.length === 0 ? (
         <TableSkeleton rows={6} columns={6} />
       ) : services.length === 0 ? (
-        <div className="bg-app-card rounded-lg border border-app-border shadow-xs overflow-hidden">
+        <div className="bg-app-card rounded-2xl border border-app-border shadow-xs overflow-hidden">
           <EmptyState
             title={t('common.noRecords')}
             description={t('common.noData')}

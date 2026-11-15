@@ -103,12 +103,12 @@ export default function MechanicsPage() {
   }
 
   return (
-    <div className="space-y-3 sm:space-y-4 text-app-text font-sans">
+    <div className="space-y-5 sm:space-y-6 text-app-text font-sans">
       {/* Page Header */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3.5 pb-1">
         <div className="flex items-center gap-2.5">
-          <h1 className="text-lg font-semibold tracking-tight text-app-text">{t('titles.mechanicsStaffRoster')}</h1>
-          <span className="text-[11px] font-mono text-app-muted px-2 py-0.5 bg-app-card border border-app-border rounded-md">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-app-text">{t('titles.mechanicsStaffRoster')}</h1>
+          <span className="text-xs font-mono text-app-muted px-2.5 py-0.5 bg-app-card border border-app-border rounded-full">
             {pagination.total}
           </span>
         </div>
@@ -126,12 +126,12 @@ export default function MechanicsPage() {
       </div>
 
       {/* View Switcher Tabs */}
-      <div className="flex items-center gap-1.5 border-b border-app-border pb-2.5">
+      <div className="flex items-center gap-2 border-b border-app-border pb-3">
         <button
           onClick={() => setActiveTab('pipeline')}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer touch-manipulation active-press ${
             activeTab === 'pipeline'
-              ? 'bg-app-card text-app-text border border-app-border shadow-xs'
+              ? 'bg-app-accent text-app-accentText shadow-xs'
               : 'text-app-muted hover:text-app-text hover:bg-app-hover'
           }`}
         >
@@ -141,15 +141,15 @@ export default function MechanicsPage() {
 
         <button
           onClick={() => setActiveTab('roster')}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer touch-manipulation active-press ${
             activeTab === 'roster'
-              ? 'bg-app-card text-app-text border border-app-border shadow-xs'
+              ? 'bg-app-accent text-app-accentText shadow-xs'
               : 'text-app-muted hover:text-app-text hover:bg-app-hover'
           }`}
         >
           <UsersThree size={15} weight="bold" />
           <span>Mechanics</span>
-          <span className="text-[10px] font-mono text-app-muted">{pagination.total}</span>
+          <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${activeTab === 'roster' ? 'bg-black/10 dark:bg-black/20 text-inherit font-bold' : 'text-app-muted'}`}>{pagination.total}</span>
         </button>
       </div>
 
@@ -158,8 +158,8 @@ export default function MechanicsPage() {
       ) : (
         <>
           {/* Integrated Filter Bar & Search */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
               {statusFilters.map((st) => {
                 const isActive = activeFilter === st
                 const translatedSt = st === 'All' ? t('common.all') : t(`status.${st}`, st)
@@ -170,9 +170,9 @@ export default function MechanicsPage() {
                       setActiveFilter(st)
                       setCurrentPage(1)
                     }}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer touch-manipulation active-press ${
                       isActive
-                        ? 'bg-app-accent text-app-accentText font-semibold'
+                        ? 'bg-app-accent text-app-accentText shadow-xs'
                         : 'text-app-muted hover:text-app-text hover:bg-app-hover'
                     }`}
                   >
@@ -183,7 +183,7 @@ export default function MechanicsPage() {
               })}
             </div>
 
-            <div className="relative w-full sm:w-60">
+            <div className="relative w-full sm:w-64">
               <MagnifyingGlass size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-app-muted pointer-events-none z-10" />
               <Input
                 type="text"
@@ -193,7 +193,7 @@ export default function MechanicsPage() {
                   setSearchQuery(e.target.value)
                   setCurrentPage(1)
                 }}
-                className="pl-9"
+                className="pl-9 rounded-xl"
               />
             </div>
           </div>
@@ -202,7 +202,7 @@ export default function MechanicsPage() {
           {isLoading && mechanics.length === 0 ? (
             <TableSkeleton rows={6} columns={5} />
           ) : mechanics.length === 0 ? (
-            <div className="bg-app-card rounded-lg border border-app-border shadow-xs overflow-hidden">
+            <div className="bg-app-card rounded-2xl border border-app-border shadow-xs overflow-hidden">
               <EmptyState
                 title={t('common.noRecords')}
                 description={t('common.noData')}

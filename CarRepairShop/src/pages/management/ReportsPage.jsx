@@ -14,6 +14,7 @@ import {
   CaretDown,
   X,
   ArrowUpRight,
+  Check,
 } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { useReports } from '@/hooks/useReports'
@@ -598,16 +599,16 @@ export default function ReportsPage() {
   ]
 
   return (
-    <div className="space-y-4 sm:space-y-5 text-app-text font-sans">
+    <div className="space-y-5 sm:space-y-6 text-app-text font-sans">
       {/* ============================================================ */}
       {/* 1. TOP HEADER & EXPORT ACTION CONTROLS                       */}
       {/* ============================================================ */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 pb-1">
         <div className="flex items-center gap-2.5">
-          <h1 className="text-lg font-semibold tracking-tight text-app-text">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-app-text">
             {t('titles.analyticsReports')}
           </h1>
-          <span className="text-[11px] font-mono text-app-muted px-2 py-0.5 bg-app-card border border-app-border rounded-md">
+          <span className="text-xs font-mono text-app-muted px-2.5 py-0.5 bg-app-card border border-app-border rounded-full">
             {selectedCategory === 'Financial'
               ? filteredInvoices.length
               : selectedCategory === 'Operations'
@@ -629,7 +630,7 @@ export default function ReportsPage() {
             <button
               type="button"
               onClick={() => setIsTimeDropdownOpen((prev) => !prev)}
-              className="inline-flex items-center gap-1.5 h-8 px-2.5 py-1 bg-app-card border border-app-border hover:border-app-accent/50 text-app-text rounded-md text-xs font-medium shadow-xs transition-colors cursor-pointer select-none focus:outline-none focus-visible:ring-1 focus-visible:ring-app-accent/40"
+              className="inline-flex items-center gap-2 h-9 px-3.5 py-1.5 bg-app-card border border-app-border hover:border-app-accent/50 text-app-text rounded-xl text-xs font-semibold shadow-xs transition-colors cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-app-accent/40 active-press"
             >
               <CalendarBlank size={14} className="text-app-muted" weight="bold" />
               <span>{activeBounds.label}</span>
@@ -642,39 +643,44 @@ export default function ReportsPage() {
             </button>
 
             {isTimeDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] max-w-xs sm:w-72 bg-app-card border border-app-border rounded-lg shadow-xl p-3 z-50 animate-modal-content space-y-3">
-                <div className="grid grid-cols-2 gap-1 p-1 bg-app-hover/60 rounded-md">
+              <div className="absolute right-0 mt-2 w-64 bg-app-card border border-app-border rounded-2xl shadow-xl p-2 z-50 animate-modal-content space-y-1">
+                <div className="space-y-0.5">
                   {[
                     { key: 'all', label: t('reports.allTime', 'All Time') },
                     { key: 'today', label: t('reports.today', 'Today') },
-                    { key: 'this_week', label: t('reports.thisWeek') },
-                    { key: 'this_month', label: t('reports.thisMonth') },
+                    { key: 'this_week', label: t('reports.thisWeek', 'This Week') },
+                    { key: 'this_month', label: t('reports.thisMonth', 'This Month') },
                     { key: 'this_quarter', label: t('reports.thisQuarter', 'This Quarter') },
                     { key: 'this_year', label: t('reports.thisYear', 'This Year') },
-                    { key: 'custom', label: t('reports.customDate', 'Custom') },
-                  ].map((item) => (
-                    <button
-                      key={item.key}
-                      type="button"
-                      onClick={() => {
-                        setTimeRange(item.key)
-                        if (item.key !== 'custom') setIsTimeDropdownOpen(false)
-                      }}
-                      className={`h-7.5 px-2 text-xs font-medium rounded-md transition-all text-center cursor-pointer flex items-center justify-center touch-manipulation active:scale-95 ${
-                        item.key === 'custom' ? 'col-span-2' : ''
-                      } ${
-                        timeRange === item.key
-                          ? 'bg-app-accent text-app-accentText font-semibold shadow-xs'
-                          : 'text-app-muted hover:text-app-text hover:bg-app-card/60'
-                      }`}
-                    >
-                      {item.label}
-                    </button>
-                  ))}
+                    { key: 'custom', label: t('reports.customDate', 'Custom Range') },
+                  ].map((item) => {
+                    const isSelected = timeRange === item.key
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => {
+                          setTimeRange(item.key)
+                          if (item.key !== 'custom') setIsTimeDropdownOpen(false)
+                        }}
+                        className={`w-full flex items-center justify-between px-3 py-2 text-xs rounded-xl font-medium transition-colors cursor-pointer touch-manipulation active-press ${
+                          isSelected
+                            ? 'bg-emerald-600 text-white font-semibold shadow-xs'
+                            : 'text-app-text hover:bg-app-hover hover:text-app-text'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <CalendarBlank size={14} className={isSelected ? 'text-white' : 'text-app-muted'} />
+                          <span>{item.label}</span>
+                        </div>
+                        {isSelected && <Check size={14} weight="bold" className="text-white shrink-0" />}
+                      </button>
+                    )
+                  })}
                 </div>
 
                 {timeRange === 'custom' && (
-                  <div className="space-y-2 pt-1 border-t border-app-border">
+                  <div className="space-y-2.5 pt-2 px-1 border-t border-app-border">
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
                         <label className="block text-[11px] text-app-muted font-medium mb-1">
@@ -700,7 +706,7 @@ export default function ReportsPage() {
                     <button
                       type="button"
                       onClick={() => setIsTimeDropdownOpen(false)}
-                      className="w-full py-1.5 px-3 bg-app-accent text-app-accentText font-semibold rounded-md text-xs hover:bg-app-accentHover transition-colors cursor-pointer text-center"
+                      className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-xs transition-colors cursor-pointer text-center active-press shadow-xs"
                     >
                       {t('reports.apply', 'Apply Range')}
                     </button>
@@ -780,18 +786,18 @@ export default function ReportsPage() {
         ) : (
           <>
             {/* Total Invoiced & Collections */}
-            <div className="bg-app-card rounded-lg border border-app-border p-3.5 flex flex-col justify-between">
+            <div className="bg-app-card rounded-2xl border border-app-border p-4.5 sm:p-5 flex flex-col justify-between shadow-xs">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-medium text-app-muted tracking-tight">
+                <span className="text-xs font-semibold text-app-muted tracking-tight">
                   {t('dashboard.totalRevenue')}
                 </span>
-                <CurrencyDollar size={18} weight="bold" className="text-app-accent flex-shrink-0" />
+                <CurrencyDollar size={20} weight="bold" className="text-app-accent flex-shrink-0" />
               </div>
-              <div className="mt-1">
-                <p className="font-mono font-semibold text-2xl text-app-text tabular-nums">
+              <div className="mt-2">
+                <p className="font-mono font-bold text-2xl text-app-text tabular-nums">
                   {fmt(totalInvoiced)}
                 </p>
-                <div className="flex items-center gap-2 mt-1 text-[11px] text-app-muted">
+                <div className="flex items-center gap-2 mt-1 text-xs text-app-muted">
                   <span>
                     Paid: <strong className="text-emerald-500 font-mono">{fmt(totalPaid)}</strong>
                   </span>
@@ -804,18 +810,18 @@ export default function ReportsPage() {
             </div>
 
             {/* Repair Orders & Completion Rate */}
-            <div className="bg-app-card rounded-lg border border-app-border p-3.5 flex flex-col justify-between">
+            <div className="bg-app-card rounded-2xl border border-app-border p-4.5 sm:p-5 flex flex-col justify-between shadow-xs">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-medium text-app-muted tracking-tight">
+                <span className="text-xs font-semibold text-app-muted tracking-tight">
                   {t('repairJobs.title')}
                 </span>
-                <Wrench size={18} weight="bold" className="text-emerald-500 flex-shrink-0" />
+                <Wrench size={20} weight="bold" className="text-emerald-500 flex-shrink-0" />
               </div>
-              <div className="mt-1">
-                <p className="font-mono font-semibold text-2xl text-app-text tabular-nums">
+              <div className="mt-2">
+                <p className="font-mono font-bold text-2xl text-app-text tabular-nums">
                   {completedOrdersCount} <span className="text-sm font-normal text-app-muted">/ {totalOrdersCount}</span>
                 </p>
-                <div className="flex items-center gap-2 mt-1 text-[11px] text-app-muted">
+                <div className="flex items-center gap-2 mt-1 text-xs text-app-muted">
                   <span>
                     Rate: <strong className="text-emerald-500 font-mono">{completionRate}%</strong>
                   </span>
@@ -828,18 +834,18 @@ export default function ReportsPage() {
             </div>
 
             {/* Inventory Valuation & Alerts */}
-            <div className="bg-app-card rounded-lg border border-app-border p-3.5 flex flex-col justify-between">
+            <div className="bg-app-card rounded-2xl border border-app-border p-4.5 sm:p-5 flex flex-col justify-between shadow-xs">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-medium text-app-muted tracking-tight">
+                <span className="text-xs font-semibold text-app-muted tracking-tight">
                   {t('reports.inventoryAudit', 'Inventory Valuation')}
                 </span>
-                <Package size={18} weight="bold" className="text-amber-500 flex-shrink-0" />
+                <Package size={20} weight="bold" className="text-amber-500 flex-shrink-0" />
               </div>
-              <div className="mt-1">
-                <p className="font-mono font-semibold text-2xl text-app-text tabular-nums">
+              <div className="mt-2">
+                <p className="font-mono font-bold text-2xl text-app-text tabular-nums">
                   {fmt(totalInventoryVal)}
                 </p>
-                <div className="flex items-center gap-2 mt-1 text-[11px] text-app-muted">
+                <div className="flex items-center gap-2 mt-1 text-xs text-app-muted">
                   <span>
                     Units: <strong className="text-app-text font-mono">{totalStockUnits}</strong>
                   </span>
@@ -855,14 +861,14 @@ export default function ReportsPage() {
             </div>
 
             {/* Customers & Fleet */}
-            <div className="bg-app-card rounded-lg border border-app-border p-3.5 flex flex-col justify-between">
+            <div className="bg-app-card rounded-2xl border border-app-border p-4.5 sm:p-5 flex flex-col justify-between shadow-xs">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-medium text-app-muted tracking-tight">
+                <span className="text-xs font-semibold text-app-muted tracking-tight">
                   {t('customers.title')} & Fleet
                 </span>
-                <Users size={18} weight="bold" className="text-sky-500 flex-shrink-0" />
+                <Users size={20} weight="bold" className="text-sky-500 flex-shrink-0" />
               </div>
-              <div className="mt-1">
+              <div className="mt-2">
                 <p className="font-mono font-semibold text-2xl text-app-text tabular-nums">
                   {totalCustomersCount}
                 </p>
@@ -884,9 +890,9 @@ export default function ReportsPage() {
       {/* ============================================================ */}
       {/* 3. CONTROLS BAR: CATEGORY TABS & LIVE SEARCH                 */}
       {/* ============================================================ */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Category Tabs */}
-        <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
           {categories.map((cat) => (
             <button
               key={cat.key}
@@ -894,9 +900,9 @@ export default function ReportsPage() {
                 setSelectedCategory(cat.key)
                 setSearchQuery('')
               }}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+              className={`h-8 px-3.5 py-1 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer touch-manipulation active-press ${
                 selectedCategory === cat.key
-                  ? 'bg-app-accent text-app-accentText font-semibold shadow-xs'
+                  ? 'bg-app-accent text-app-accentText shadow-xs'
                   : 'text-app-muted hover:text-app-text hover:bg-app-hover'
               }`}
             >
@@ -916,7 +922,7 @@ export default function ReportsPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t('reports.searchReports', 'Filter records by keyword...')}
-            className="w-full pl-9 pr-7 py-1.5 bg-app-card border border-app-border rounded-md text-xs text-app-text placeholder:text-app-muted/70 focus:outline-none focus:border-app-accent shadow-xs"
+            className="w-full pl-9 pr-7 py-1.5 bg-app-card border border-app-border rounded-xl text-xs text-app-text placeholder:text-app-muted/70 focus:outline-none focus:border-app-accent shadow-xs"
           />
           {searchQuery && (
             <button
@@ -936,7 +942,7 @@ export default function ReportsPage() {
 
       {/* CATEGORY: FINANCIAL INVOICES & REVENUE */}
       {selectedCategory === 'Financial' && (
-        <div className="bg-app-card rounded-lg border border-app-border shadow-xs overflow-hidden">
+        <div className="bg-app-card rounded-2xl border border-app-border shadow-xs overflow-hidden">
           <div className="p-3 bg-app-card border-b border-app-border flex items-center justify-between gap-2">
             <div>
               <h2 className="text-xs sm:text-sm font-semibold text-app-text">
@@ -1042,7 +1048,7 @@ export default function ReportsPage() {
 
       {/* CATEGORY: OPERATIONS WORK ORDERS */}
       {selectedCategory === 'Operations' && (
-        <div className="bg-app-card rounded-lg border border-app-border shadow-xs overflow-hidden">
+        <div className="bg-app-card rounded-2xl border border-app-border shadow-xs overflow-hidden">
           <div className="p-3 bg-app-card border-b border-app-border flex items-center justify-between gap-2">
             <div>
               <h2 className="text-xs sm:text-sm font-semibold text-app-text">
@@ -1126,7 +1132,7 @@ export default function ReportsPage() {
 
       {/* CATEGORY: INVENTORY & VALUATION */}
       {selectedCategory === 'Inventory' && (
-        <div className="bg-app-card rounded-lg border border-app-border shadow-xs overflow-hidden">
+        <div className="bg-app-card rounded-2xl border border-app-border shadow-xs overflow-hidden">
           <div className="p-3 bg-app-card border-b border-app-border flex items-center justify-between gap-2">
             <div>
               <h2 className="text-xs sm:text-sm font-semibold text-app-text">
@@ -1243,7 +1249,7 @@ export default function ReportsPage() {
 
       {/* CATEGORY: MECHANICS & PRODUCTIVITY */}
       {selectedCategory === 'Mechanics' && (
-        <div className="bg-app-card rounded-lg border border-app-border shadow-xs overflow-hidden">
+        <div className="bg-app-card rounded-2xl border border-app-border shadow-xs overflow-hidden">
           <div className="p-3 bg-app-card border-b border-app-border flex items-center justify-between gap-2">
             <div>
               <h2 className="text-xs sm:text-sm font-semibold text-app-text">
@@ -1322,7 +1328,7 @@ export default function ReportsPage() {
 
       {/* CATEGORY: CUSTOMERS & FLEET */}
       {selectedCategory === 'Customers' && (
-        <div className="bg-app-card rounded-lg border border-app-border shadow-xs overflow-hidden">
+        <div className="bg-app-card rounded-2xl border border-app-border shadow-xs overflow-hidden">
           <div className="p-3 bg-app-card border-b border-app-border flex items-center justify-between gap-2">
             <div>
               <h2 className="text-xs sm:text-sm font-semibold text-app-text">
@@ -1392,7 +1398,7 @@ export default function ReportsPage() {
       {selectedCategory === 'All' && (
         <div className="space-y-4">
           {/* Official Workshop Curated Reports Section */}
-          <div className="bg-app-card rounded-lg border border-app-border shadow-xs overflow-hidden">
+          <div className="bg-app-card rounded-2xl border border-app-border shadow-xs overflow-hidden">
             <div className="p-3 bg-app-card border-b border-app-border flex items-center justify-between gap-2">
               <div>
                 <h2 className="text-xs sm:text-sm font-semibold text-app-text">
@@ -1468,7 +1474,7 @@ export default function ReportsPage() {
           </div>
 
           {/* Quick Financial Audit Snapshot */}
-          <div className="bg-app-card rounded-lg border border-app-border shadow-xs overflow-hidden">
+          <div className="bg-app-card rounded-2xl border border-app-border shadow-xs overflow-hidden">
             <div className="p-3 bg-app-card border-b border-app-border flex items-center justify-between">
               <div>
                 <h3 className="text-xs font-semibold text-app-text">
