@@ -13,22 +13,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 $path = $segments[1] ?? '';
 $secret = getJwtSecret();
 
-if ($method === 'GET' && $path === 'permissions') {
-    // Return role permissions matrix directly from the database (settings table)
-    $row = get("SELECT setting_value FROM settings WHERE setting_key = 'roles_permissions_matrix'");
-    $matrix = null;
-    if ($row && !empty($row['setting_value'])) {
-        $matrix = json_decode($row['setting_value'], true);
-    }
-    if (!$matrix) {
-        http_response_code(404);
-        echo json_encode(['error' => 'Permission matrix not found in database settings']);
-        exit;
-    }
-    echo json_encode(['success' => true, 'data' => $matrix]);
-    exit;
-
-} else if ($method === 'POST' && $path === 'login') {
+if ($method === 'POST' && $path === 'login') {
     $input = Sanitizer::getJsonInput();
     $username = $input['username'] ?? '';
     $password = $input['password'] ?? '';
@@ -45,7 +30,7 @@ if ($method === 'GET' && $path === 'permissions') {
     // Rate Limiting: 5 failed attempts per 15-minute window
     // -------------------------------------------------------------------------
     // Per-IP cap (20 failures / 15 min) stops one client spraying many usernames
-    $ipKey = 'ip:' . RateLimiter::getClientIp();
+    $ipKey = 'ip:' . clientIp();
     if (RateLimiter::isRateLimited($cleanUsername, 5, 15) || RateLimiter::isRateLimited($ipKey, 20, 15)) {
         http_response_code(429);
         echo json_encode([
@@ -79,9 +64,9 @@ if ($method === 'GET' && $path === 'permissions') {
     }
 
     $storedHash = (string) ($user['password_hash'] ?? '');
-    $isPasswordValid = verifyLoginPassword($storedHash, (string) $password);
-    if ($isPasswordValid && !isPasswordHash($storedHash)) {
-        // Legacy plaintext value: upgrade it to a bcrypt hash now that it has been verified
+    [$isPasswordValid, $needsResave] = checkLoginPassword($storedHash, (string) $password);
+    if ($needsResave) {
+        // Legacy stored form (plain text, or saved after tag stripping): store a hash of the real password
         run('UPDATE users SET password_hash = ? WHERE id = ?', [password_hash($password, PASSWORD_BCRYPT), $user['id']]);
     }
 
@@ -234,15 +219,28 @@ if ($method === 'GET' && $path === 'permissions') {
         exit;
     }
 
-    $valid = verifyLoginPassword((string) $user['password_hash'], (string) $current);
-    if (!$valid) {
+    // A stolen session must not be able to guess the current password at full speed
+    $attemptKey = 'pwchange:' . $user['id'];
+    if (RateLimiter::isRateLimited($attemptKey, 5, 15)) {
+        http_response_code(429);
+        echo json_encode(['error' => 'Too many attempts. Please wait 15 minutes and try again.']);
+        exit;
+    }
+
+    if (!verifyLoginPassword((string) $user['password_hash'], (string) $current)) {
+        RateLimiter::recordFailure($attemptKey);
         http_response_code(400);
         echo json_encode(['error' => 'Current password is incorrect']);
         exit;
     }
+    RateLimiter::resetAttempts($attemptKey);
 
     $newHash = password_hash($new, PASSWORD_BCRYPT);
     run('UPDATE users SET password_hash = ?, updated_at = NOW() WHERE id = ?', [$newHash, $user['id']]);
+
+    // Sign out every other device; keep the session that made the change
+    $revoked = SessionModel::revokeAllForUser((int) $user['id'], 'password_changed', hash('sha256', (string) getBearerToken()));
+    AuditLogger::log('PASSWORD_CHANGE', 'auth', "Password changed; $revoked other session(s) signed out", (string) $user['id']);
 
     echo json_encode(['success' => true, 'message' => 'Password changed successfully']);
     exit;
@@ -257,13 +255,19 @@ if ($method === 'GET' && $path === 'permissions') {
         exit;
     }
 
-    $user = get('SELECT id, email FROM users WHERE LOWER(username) = ? OR LOWER(email) = ?', [$ident, $ident]);
-    if ($user) {
+    // Same response whether or not the account exists, and whether or not a code was issued.
+    // At most 3 codes per account per hour, so an attacker cannot keep refreshing the guess budget.
+    $user = get('SELECT id, username FROM users WHERE LOWER(username) = ? OR LOWER(email) = ?', [$ident, $ident]);
+    $requestKey = 'reset-request:' . $ident;
+    if ($user && !RateLimiter::isRateLimited($requestKey, 3, 60)) {
+        RateLimiter::recordFailure($requestKey, 60);
         $code = (string) random_int(100000, 999999);
         run(
-            "UPDATE users SET reset_token = ?, reset_expires_at = NOW() + INTERVAL '1 hour' WHERE id = ?",
-            [$code, $user['id']]
+            "UPDATE users SET reset_token = ?, reset_expires_at = NOW() + INTERVAL '1 hour', reset_attempts = 0 WHERE id = ?",
+            [hash('sha256', $code), $user['id']]
         );
+        // Delivery is not implemented yet: no email provider is configured.
+        AuditLogger::log('PASSWORD_RESET_REQUEST', 'auth', "Password reset code issued for @{$user['username']}", (string) $user['id'], null, (int) $user['id'], $user['username']);
     }
 
     echo json_encode([
@@ -293,23 +297,35 @@ if ($method === 'GET' && $path === 'permissions') {
     }
 
     $user = get(
-        "SELECT id, reset_token, reset_expires_at 
-         FROM users 
-         WHERE (LOWER(username) = ? OR LOWER(email) = ?) AND reset_token = ? AND reset_expires_at > NOW()",
-        [$ident, $ident, $code]
+        "SELECT id, username, reset_token, reset_attempts FROM users
+         WHERE (LOWER(username) = ? OR LOWER(email) = ?) AND reset_token IS NOT NULL AND reset_expires_at > NOW()",
+        [$ident, $ident]
     );
 
-    if (!$user) {
+    // Each code allows 5 guesses; the 5th wrong one destroys it.
+    $maxAttempts = 5;
+    if (!$user || (int) $user['reset_attempts'] >= $maxAttempts || !hash_equals((string) $user['reset_token'], hash('sha256', $code))) {
+        if ($user) {
+            run(
+                "UPDATE users SET reset_attempts = reset_attempts + 1,
+                        reset_token = CASE WHEN reset_attempts + 1 >= ? THEN NULL ELSE reset_token END
+                 WHERE id = ?",
+                [$maxAttempts, $user['id']]
+            );
+        }
         http_response_code(400);
         echo json_encode(['error' => 'Invalid or expired password reset code']);
         exit;
     }
 
-    $hash = password_hash($newPass, PASSWORD_BCRYPT);
     run(
-        "UPDATE users SET password_hash = ?, reset_token = NULL, reset_expires_at = NULL, updated_at = NOW() WHERE id = ?",
-        [$hash, $user['id']]
+        "UPDATE users SET password_hash = ?, reset_token = NULL, reset_expires_at = NULL, reset_attempts = 0, updated_at = NOW() WHERE id = ?",
+        [password_hash($newPass, PASSWORD_BCRYPT), $user['id']]
     );
+
+    // Whoever had the old password must lose access too
+    $revoked = SessionModel::revokeAllForUser((int) $user['id'], 'password_changed');
+    AuditLogger::log('PASSWORD_RESET', 'auth', "Password reset with a code; $revoked session(s) signed out", (string) $user['id'], null, (int) $user['id'], $user['username']);
 
     echo json_encode(['success' => true, 'message' => 'Password has been reset successfully. You can now log in.']);
     exit;

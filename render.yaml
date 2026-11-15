@@ -25,5 +25,7 @@ services:
         value: "false"
       - key: JWT_SECRET
         sync: false
+      - key: TRUSTED_PROXY
+        value: cloudflare
       - key: CLIENT_URL
         sync: false

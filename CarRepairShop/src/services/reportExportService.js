@@ -1,6 +1,17 @@
-import { jsPDF } from 'jspdf'
-import autoTable from 'jspdf-autotable'
-import * as XLSX from 'xlsx'
+// The PDF and Excel libraries are large, so each export function imports its own on demand.
+
+/**
+ * Escape a value for insertion into HTML text or attribute context.
+ * The print view is built as an HTML string, so every data value must pass through this.
+ */
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
 
 /**
  * Clean string for safe file naming
@@ -18,10 +29,19 @@ function formatCurrency(val) {
 }
 
 /**
+ * Normalise a value for an Excel cell: numbers stay numbers, empty becomes an empty cell,
+ * everything else is written as text.
+ */
+function toCell(value) {
+  if (value === null || value === undefined || value === '') return null
+  return typeof value === 'number' ? value : String(value)
+}
+
+/**
  * EXPORT TO PDF (.pdf)
  * Generates an executive, beautifully formatted vector PDF report using jsPDF & autoTable.
  */
-export function exportReportToPdf({
+export async function exportReportToPdf({
   title = 'Workshop Report',
   category = 'General',
   dateRange = 'All Time',
@@ -31,6 +51,8 @@ export function exportReportToPdf({
   summaryTotals = null,
   fileName = null,
 }) {
+  const [{ jsPDF }, { default: autoTable }] = await Promise.all([import('jspdf'), import('jspdf-autotable')])
+
   const doc = new jsPDF({
     orientation: columns.length > 7 ? 'landscape' : 'portrait',
     unit: 'mm',
@@ -206,9 +228,9 @@ export function exportReportToPdf({
 
 /**
  * EXPORT TO EXCEL (.xlsx)
- * Generates an actual native Microsoft Excel workbook (.xlsx) with clean column widths and numeric typing.
+ * Generates a native Excel workbook with numeric typing and sized columns.
  */
-export function exportReportToExcel({
+export async function exportReportToExcel({
   title = 'Workshop Report',
   category = 'General',
   dateRange = 'All Time',
@@ -218,64 +240,59 @@ export function exportReportToExcel({
   summaryTotals = null,
   fileName = null,
 }) {
-  const wb = XLSX.utils.book_new()
+  const { default: writeExcelFile } = await import('write-excel-file/browser')
   const rows = []
 
   // Metadata block
   rows.push(['AUTO REPAIR WORKSHOP MANAGEMENT SYSTEM'])
-  rows.push([`Report: ${title}`, '', `Category: ${category}`])
-  rows.push([`Date Range: ${dateRange}`, '', `Exported: ${new Date().toLocaleString()}`])
+  rows.push([`Report: ${title}`, null, `Category: ${category}`])
+  rows.push([`Date Range: ${dateRange}`, null, `Exported: ${new Date().toLocaleString()}`])
   rows.push([])
 
   // KPI Block
   if (kpis && kpis.length > 0) {
     rows.push(['EXECUTIVE SUMMARY'])
-    rows.push(kpis.map((k) => k.label))
-    rows.push(kpis.map((k) => k.value))
+    rows.push(kpis.map((k) => toCell(k.label)))
+    rows.push(kpis.map((k) => toCell(k.value)))
     rows.push([])
   }
 
   // Header Row
-  rows.push(columns.map((c) => c.header))
+  rows.push(columns.map((c) => toCell(c.header)))
 
   // Data Rows
   data.forEach((item) => {
-    const row = columns.map((col) => {
-      const val = item[col.key]
-      if (val === null || val === undefined) return ''
-      if (col.format === 'currency' || col.format === 'number') {
-        const num = Number(val)
-        return isNaN(num) ? val : num
-      }
-      return val
-    })
-    rows.push(row)
+    rows.push(
+      columns.map((col) => {
+        const val = item[col.key]
+        if (col.format === 'currency' || col.format === 'number') {
+          const num = Number(val)
+          return val === null || val === undefined || val === '' || isNaN(num) ? toCell(val) : num
+        }
+        return toCell(val)
+      })
+    )
   })
 
   // Summary Totals Row
   if (summaryTotals && summaryTotals.length > 0) {
     rows.push([])
-    rows.push(summaryTotals)
+    rows.push(summaryTotals.map(toCell))
   }
 
-  const ws = XLSX.utils.aoa_to_sheet(rows)
-
-  // Calculate Column Widths
-  const colWidths = columns.map((col) => {
-    let maxLen = col.header.length
+  // Column widths (in characters) sized to the longest value
+  const columnWidths = columns.map((col) => {
+    let maxLen = String(col.header ?? '').length
     data.forEach((item) => {
-      const val = String(item[col.key] ?? '')
-      if (val.length > maxLen) maxLen = val.length
+      const len = String(item[col.key] ?? '').length
+      if (len > maxLen) maxLen = len
     })
-    return { wch: Math.min(Math.max(maxLen + 4, 12), 40) }
+    return { width: Math.min(Math.max(maxLen + 4, 12), 40) }
   })
-  ws['!cols'] = colWidths
 
-  const cleanSheetName = (title.replace(/[^a-zA-Z0-9 ]/g, '') || 'Report').slice(0, 31)
-  XLSX.utils.book_append_sheet(wb, ws, cleanSheetName)
-
+  const sheet = (title.replace(/[^a-zA-Z0-9 ]/g, '') || 'Report').slice(0, 31)
   const outputName = `${sanitizeFilename(fileName || title)}_${new Date().toISOString().split('T')[0]}.xlsx`
-  XLSX.writeFile(wb, outputName, { bookType: 'xlsx' })
+  await writeExcelFile(rows, { sheet, columns: columnWidths }).toFile(outputName)
 }
 
 /**
@@ -317,8 +334,8 @@ export function printReport({
           .map(
             (k) => `
           <div style="border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; background-color: #f8fafc;">
-            <div style="font-size: 10px; color: #64748b; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">${k.label}</div>
-            <div style="font-size: 16px; font-weight: 700; color: #0f172a;">${k.value}</div>
+            <div style="font-size: 10px; color: #64748b; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">${escapeHtml(k.label)}</div>
+            <div style="font-size: 16px; font-weight: 700; color: #0f172a;">${escapeHtml(k.value)}</div>
           </div>
         `
           )
@@ -330,7 +347,7 @@ export function printReport({
   const headersHtml = columns
     .map(
       (c) =>
-        `<th style="text-align: ${c.align || (c.format === 'currency' ? 'right' : 'left')}; padding: 8px 10px; background: #0f172a; color: #ffffff; font-size: 11px; font-weight: 600; border: 1px solid #0f172a;">${c.header}</th>`
+        `<th style="text-align: ${c.align || (c.format === 'currency' ? 'right' : 'left')}; padding: 8px 10px; background: #0f172a; color: #ffffff; font-size: 11px; font-weight: 600; border: 1px solid #0f172a;">${escapeHtml(c.header)}</th>`
     )
     .join('')
 
@@ -344,7 +361,7 @@ export function printReport({
             let displayVal = val === null || val === undefined ? '-' : val
             if (col.format === 'currency') displayVal = formatCurrency(val)
             const align = col.align || (col.format === 'currency' ? 'right' : 'left')
-            return `<td style="text-align: ${align}; padding: 7px 10px; border: 1px solid #e2e8f0; font-size: 11px; color: #1e293b;">${displayVal}</td>`
+            return `<td style="text-align: ${align}; padding: 7px 10px; border: 1px solid #e2e8f0; font-size: 11px; color: #1e293b;">${escapeHtml(displayVal)}</td>`
           })
           .join('')}
       </tr>
@@ -359,7 +376,7 @@ export function printReport({
         ${summaryTotals
           .map(
             (val, idx) => `
-          <td style="text-align: ${columns[idx]?.align || (columns[idx]?.format === 'currency' ? 'right' : 'left')}; padding: 8px 10px; border: 1px solid #cbd5e1; font-size: 11px; color: #0f172a;">${val || ''}</td>
+          <td style="text-align: ${columns[idx]?.align || (columns[idx]?.format === 'currency' ? 'right' : 'left')}; padding: 8px 10px; border: 1px solid #cbd5e1; font-size: 11px; color: #0f172a;">${escapeHtml(val || '')}</td>
         `
           )
           .join('')}
@@ -372,7 +389,7 @@ export function printReport({
     <html>
       <head>
         <meta charset="utf-8" />
-        <title>${title}</title>
+        <title>${escapeHtml(title)}</title>
         <style>
           @page { size: auto; margin: 15mm; }
           body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; color: #0f172a; margin: 0; padding: 0; }
@@ -390,10 +407,10 @@ export function printReport({
         <div class="header">
           <div>
             <h1 class="title">AUTO REPAIR WORKSHOP MANAGEMENT</h1>
-            <div class="subtitle">${title} · <strong style="color: #0f172a;">${category.toUpperCase()}</strong></div>
+            <div class="subtitle">${escapeHtml(title)} · <strong style="color: #0f172a;">${escapeHtml(category.toUpperCase())}</strong></div>
           </div>
           <div class="meta">
-            <div>Scope: <strong>${dateRange}</strong></div>
+            <div>Scope: <strong>${escapeHtml(dateRange)}</strong></div>
             <div>Printed: <strong>${dateStr} ${timeStr}</strong></div>
           </div>
         </div>

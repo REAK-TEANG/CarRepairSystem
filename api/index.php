@@ -143,15 +143,16 @@ $segments = array_values(array_filter(explode('/', trim($path, '/'))));
 $module = strtolower($segments[0] ?? '');
 
 // -----------------------------------------------------------------------------
-// 4. Global API Rate Limiting / Flooding Protection (120 req/min per IP)
+// 4. Global API Rate Limiting / Flooding Protection (per signed-in user, else per IP)
 // -----------------------------------------------------------------------------
 if ($_SERVER['REQUEST_METHOD'] !== 'OPTIONS' && $module !== 'health' && $module !== '') {
-    if (RateLimiter::isGlobalThrottled(120, 1)) {
+    [$rateBucket, $rateLimit] = RateLimiter::requestBucket(getBearerToken());
+    if (RateLimiter::isGlobalThrottled($rateBucket, $rateLimit)) {
         http_response_code(429);
         header('Retry-After: 60');
         echo json_encode([
             'error' => 'Too Many Requests',
-            'message' => 'API rate limit exceeded. Maximum 120 requests per minute.'
+            'message' => "API rate limit exceeded. Maximum $rateLimit requests per minute."
         ]);
         exit;
     }
@@ -163,7 +164,7 @@ try {
         if (($segments[1] ?? '') === 'db') {
             // Deep check: opens a real connection and reports a coarse failure category.
             // Throttled because every call costs a database connection.
-            $hits = Cache::increment('healthdb:' . RateLimiter::getClientIp(), 60);
+            $hits = Cache::increment('healthdb:' . clientIp(), 60);
             if ($hits !== null && $hits > 10) {
                 http_response_code(429);
                 header('Retry-After: 60');
@@ -173,12 +174,12 @@ try {
             $t = microtime(true);
             try {
                 createPdoInstance()->query('SELECT 1');
-                echo json_encode(['status' => 'ok', 'database' => 'up', 'latency_ms' => (int) round((microtime(true) - $t) * 1000)]);
+                echo json_encode(['status' => 'ok', 'database' => 'up', 'latency_ms' => (int) round((microtime(true) - $t) * 1000), 'cache' => Cache::tier()]);
             } catch (Throwable $e) {
                 $category = dbErrorCategory($e);
                 error_log(sprintf('Health DB check failed [%s]: %s', $category, $e->getMessage()));
                 http_response_code(503);
-                echo json_encode(['status' => 'error', 'database' => 'down', 'reason' => $category]);
+                echo json_encode(['status' => 'error', 'database' => 'down', 'reason' => $category, 'cache' => Cache::tier()]);
             }
             break;
         }
@@ -243,7 +244,6 @@ try {
         require_once __DIR__ . '/routes/serviceReminders.php';
         break;
     case 'events':
-    case 'realtime':
         require_once __DIR__ . '/routes/events.php';
         break;
     case 'sessions':

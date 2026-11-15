@@ -24,6 +24,7 @@ import { useMechanics } from '@/hooks/useMechanics'
 import { useCustomers } from '@/hooks/useCustomers'
 import { useVehicles } from '@/hooks/useVehicles'
 import { CardSkeleton, Button, DatePicker } from '@/components/ui'
+import { useToast } from '@/context/ToastContext'
 import {
   exportReportToPdf,
   exportReportToExcel,
@@ -56,6 +57,7 @@ function parseDate(item) {
 
 export default function ReportsPage() {
   const { t } = useTranslation()
+  const { addToast } = useToast()
 
   // Tab category: 'All' | 'Financial' | 'Operations' | 'Inventory' | 'Mechanics' | 'Customers'
   const [selectedCategory, setSelectedCategory] = useState('All')
@@ -566,17 +568,19 @@ export default function ReportsPage() {
   }
 
   // Trigger Handlers
-  const handleExportPdf = (categoryKey = selectedCategory) => {
+  // The export libraries load on demand, so an export can fail (e.g. offline): tell the user.
+  const runExport = async (exporter, categoryKey) => {
     setIsExportDropdownOpen(false)
-    const bundle = getExportBundle(categoryKey)
-    exportReportToPdf(bundle)
+    try {
+      await exporter(getExportBundle(categoryKey))
+    } catch {
+      addToast(t('reports.exportFailed'), 'error')
+    }
   }
 
-  const handleExportExcel = (categoryKey = selectedCategory) => {
-    setIsExportDropdownOpen(false)
-    const bundle = getExportBundle(categoryKey)
-    exportReportToExcel(bundle)
-  }
+  const handleExportPdf = (categoryKey = selectedCategory) => runExport(exportReportToPdf, categoryKey)
+
+  const handleExportExcel = (categoryKey = selectedCategory) => runExport(exportReportToExcel, categoryKey)
 
   const handlePrint = (categoryKey = selectedCategory) => {
     setIsExportDropdownOpen(false)

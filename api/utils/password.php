@@ -25,3 +25,23 @@ function verifyLoginPassword(string $stored, string $supplied): bool
     }
     return hash_equals($stored, $supplied);
 }
+
+/**
+ * Login check that also accepts the legacy form of a password.
+ * Until November 2026 all input went through strip_tags(), so a password containing '<' was
+ * stored without everything from the '<' on. Such a user can still sign in with what they
+ * actually type; the caller then re-saves the full password.
+ *
+ * @return array{0: bool, 1: bool} [valid, needs re-save]
+ */
+function checkLoginPassword(string $stored, string $supplied): array
+{
+    if (verifyLoginPassword($stored, $supplied)) {
+        return [true, !isPasswordHash($stored)];
+    }
+    $legacy = strip_tags($supplied);
+    if ($legacy !== $supplied && verifyLoginPassword($stored, $legacy)) {
+        return [true, true];
+    }
+    return [false, false];
+}

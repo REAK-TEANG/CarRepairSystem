@@ -17,12 +17,10 @@ $GLOBALS['__apcu']=[]; // simulate a restart / another worker: only DB remains
 ok('revocation survives cache loss (read back from DB)', AuthMiddleware::isTokenBlacklisted($tok)===true);
 run("DELETE FROM token_blacklist WHERE token_hash = ?", [hash('sha256',$tok)]);
 
-// global throttle via cache counter: 3rd request over a limit of 2 is blocked, no DB rows written
-$before=(int)get("SELECT COUNT(*) c FROM global_api_requests")['c'];
-$_SERVER['REMOTE_ADDR']='203.0.113.9';
-$r=[RateLimiter::isGlobalThrottled(2,1),RateLimiter::isGlobalThrottled(2,1),RateLimiter::isGlobalThrottled(2,1)];
+// global throttle: counted in the cache tier only
+$r=[RateLimiter::isGlobalThrottled('ip:203.0.113.9',2),RateLimiter::isGlobalThrottled('ip:203.0.113.9',2),RateLimiter::isGlobalThrottled('ip:203.0.113.9',2)];
 ok('throttle allows 2 then blocks the 3rd', $r===[false,false,true]);
-ok('throttle used the cache, wrote no DB rows', (int)get("SELECT COUNT(*) c FROM global_api_requests")['c']===$before);
+ok('a different bucket is unaffected', RateLimiter::isGlobalThrottled('user:7',2)===false);
 
 // permissions matrix cache + invalidation
 $GLOBALS['__apcu']=[];

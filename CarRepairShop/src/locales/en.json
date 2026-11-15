@@ -423,6 +423,7 @@
     "exportPdf": "Export PDF",
     "exportExcel": "Export Excel (.xlsx)",
     "printReport": "Print Report",
+    "exportFailed": "Export failed. Please check your connection and try again.",
     "allTime": "All Time",
     "today": "Today",
     "thisWeek": "This Week",

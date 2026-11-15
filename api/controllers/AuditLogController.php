@@ -93,10 +93,10 @@ class AuditLogController
         // UTF-8 BOM for Microsoft Excel compatibility
         fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
 
-        fputcsv($output, ['ID', 'Date & Time', 'Username', 'Role', 'Action', 'Module', 'Entity ID', 'Description', 'IP Address']);
+        fputcsv($output, ['ID', 'Date & Time', 'Username', 'Role', 'Action', 'Module', 'Entity ID', 'Description', 'IP Address'], ',', '"', '');
 
         foreach ($rows as $row) {
-            fputcsv($output, [
+            fputcsv($output, array_map([Sanitizer::class, 'csvCell'], [
                 $row['id'],
                 $row['created_at'],
                 $row['username'],
@@ -106,7 +106,7 @@ class AuditLogController
                 $row['entity_id'] ?? '',
                 $row['description'],
                 $row['ip_address'] ?? '',
-            ]);
+            ]), ',', '"', '');
         }
 
         fclose($output);

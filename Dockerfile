@@ -50,7 +50,7 @@ RUN chmod +x /entrypoint.sh && sed -i 's/\r$//' /entrypoint.sh
 RUN chown -R www-data:www-data /var/www/html
 
 # Expose standard web ports
-EXPOSE 80 10000
+EXPOSE 80
 
 # Use dynamic port entrypoint
 ENTRYPOINT ["/entrypoint.sh"]

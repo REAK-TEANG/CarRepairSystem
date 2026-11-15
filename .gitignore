@@ -29,3 +29,6 @@ pnpm-debug.log*
 .DS_Store
 Thumbs.db
 .playwright-mcp/
+
+# PHP dependencies (installed by composer in the Docker build)
+api/vendor/

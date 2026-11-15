@@ -3,34 +3,10 @@
 
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/headers.php';
+require_once __DIR__ . '/clientIp.php';
 
 class AuditLogger
 {
-    /**
-     * Resolve client IP address supporting reverse proxies & local networks
-     */
-    public static function getClientIp(): string
-    {
-        $headers = [
-            'HTTP_CF_CONNECTING_IP',
-            'HTTP_X_FORWARDED_FOR',
-            'HTTP_CLIENT_IP',
-            'REMOTE_ADDR'
-        ];
-
-        foreach ($headers as $header) {
-            if (!empty($_SERVER[$header])) {
-                $ipList = explode(',', $_SERVER[$header]);
-                $ip = trim($ipList[0]);
-                if (filter_var($ip, FILTER_VALIDATE_IP)) {
-                    return $ip;
-                }
-            }
-        }
-
-        return $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
-    }
-
     /**
      * Resolve device / user agent
      */
@@ -67,7 +43,7 @@ class AuditLogger
                 }
             }
 
-            $ip = self::getClientIp();
+            $ip = clientIp();
             $agent = self::getUserAgent();
             $jsonChanges = $changes !== null ? json_encode($changes, JSON_UNESCAPED_UNICODE) : null;
 

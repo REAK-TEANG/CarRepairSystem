@@ -57,6 +57,15 @@ class Cache {
         return $available;
     }
 
+    /** Name of the active cache tier: "redis", "apcu" or "none". */
+    public static function tier(): string
+    {
+        if (self::getClient()) {
+            return 'redis';
+        }
+        return self::apcuAvailable() ? 'apcu' : 'none';
+    }
+
     /**
      * Read a value. $hit tells a cached null/false apart from a miss.
      * Tiers: Redis (shared, if configured) then APCu (per instance).

@@ -4,29 +4,42 @@
 class Sanitizer
 {
     /**
-     * Recursively clean input data:
-     * - Trim whitespace
-     * - Strip null byte characters (\0)
-     * - Strip HTML and PHP tags to prevent Cross-Site Scripting (XSS)
+     * Recursively normalise input data:
+     * - trim surrounding whitespace
+     * - remove NUL bytes and other control characters (tab, newline and carriage return are kept)
+     *
+     * Text is otherwise kept exactly as sent. HTML is not stripped here: that silently corrupted
+     * legitimate values (e.g. 'Tyres 15"<16"', passwords containing '<'). Output is escaped where it
+     * is rendered instead: React escapes all text, and the report print view uses escapeHtml().
      */
     public static function clean(mixed $data): mixed
     {
         if (is_array($data)) {
             $cleaned = [];
             foreach ($data as $k => $v) {
-                $cleanKey = is_string($k) ? trim(strip_tags(str_replace("\0", '', $k))) : $k;
-                $cleaned[$cleanKey] = self::clean($v);
+                $cleaned[is_string($k) ? self::cleanString($k) : $k] = self::clean($v);
             }
             return $cleaned;
         }
 
-        if (is_string($data)) {
-            $trimmed = trim($data);
-            $noNull = str_replace("\0", '', $trimmed);
-            return strip_tags($noNull);
-        }
+        return is_string($data) ? self::cleanString($data) : $data;
+    }
 
-        return $data;
+    /**
+     * Make a value safe for a CSV cell opened in Excel/Sheets: text starting with = + - @ or a
+     * tab/CR would otherwise run as a formula (CSV injection). Such text gets a leading apostrophe.
+     */
+    public static function csvCell(mixed $value): string
+    {
+        $text = (string) ($value ?? '');
+        return preg_match('/^[=+\-@\t\r]/', $text) ? "'" . $text : $text;
+    }
+
+    private static function cleanString(string $value): string
+    {
+        // Byte mode (no /u): these bytes never occur inside a multi-byte UTF-8 character, and
+        // invalid UTF-8 cannot make the call fail and blank the value.
+        return trim(preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $value));
     }
 
     /**

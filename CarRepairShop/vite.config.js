@@ -49,9 +49,6 @@ export default defineConfig({
           if (id.includes('node_modules/@phosphor-icons/react')) {
             return 'vendor-icons'
           }
-          if (id.includes('node_modules/xlsx')) {
-            return 'vendor-xlsx'
-          }
         },
       },
     },

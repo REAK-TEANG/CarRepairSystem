@@ -17,10 +17,4 @@ if [ -n "$ADMIN_RESET_USERNAME" ] && [ -n "$ADMIN_RESET_PASSWORD" ]; then
     NEW_PASSWORD="$ADMIN_RESET_PASSWORD" php /var/www/html/bin/set_password.php "$ADMIN_RESET_USERNAME" || echo "WARNING: password reset failed"
 fi
 
-# Start Ratchet WebSocket server daemon in background if available
-if [ -f "/var/www/html/api/websocket_server.php" ]; then
-    echo "Starting background WebSocket real-time daemon on port ${WS_PORT:-8080}..."
-    WS_PORT="${WS_PORT:-8080}" php /var/www/html/api/websocket_server.php &
-fi
-
 exec apache2-foreground

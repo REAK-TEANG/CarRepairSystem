@@ -1,15 +1,13 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/context/AuthContext'
 import { apiClient } from '@/services/apiClient'
 
 /**
- * Universal Real-Time Synchronization Hook
- * Provides seamless real-time cache synchronization across authorized browser clients.
- * - Connects to WebSocket only when VITE_WS_URL is explicitly defined.
- * - Otherwise uses lightweight, non-blocking REST event polling (/api/events/poll):
- *   every 4s while events are flowing, backing off to 16s when idle, paused while the
- *   tab is hidden, and run immediately when the tab becomes visible again.
+ * Real-time cache synchronization across signed-in browser clients.
+ * Polls /api/events/poll and invalidates exactly the queries each event affects:
+ * every 4s while events are flowing, backing off to 16s when idle, paused while the
+ * tab is hidden, and run immediately when the tab becomes visible again.
  */
 const POLL_MIN_MS = 4000
 const POLL_MAX_MS = 16000
@@ -17,11 +15,7 @@ const POLL_MAX_MS = 16000
 export function useRealtimeSync() {
   const queryClient = useQueryClient()
   const { user } = useAuth()
-  const [isConnected, setIsConnected] = useState(false)
-  const [transport, setTransport] = useState('disconnected') // 'websocket' | 'poll' | 'disconnected'
-  const [lastEvent, setLastEvent] = useState(null)
 
-  const wsRef = useRef(null)
   const pollTimerRef = useRef(null)
   const lastEventIdRef = useRef(0)
   const isPollingRef = useRef(false)
@@ -31,7 +25,6 @@ export function useRealtimeSync() {
   const handleIncomingEvent = useCallback(
     (eventData) => {
       if (!eventData || !eventData.topic) return
-      setLastEvent(eventData)
 
       const topic = eventData.topic.toLowerCase()
 
@@ -98,8 +91,7 @@ export function useRealtimeSync() {
   )
 
   useEffect(() => {
-    const token = apiClient.getToken()
-    if (!token || !user) {
+    if (!apiClient.getToken() || !user) {
       return
     }
 
@@ -144,75 +136,13 @@ export function useRealtimeSync() {
 
     window.addEventListener('focus', handleFocusOrVisible)
     document.addEventListener('visibilitychange', handleFocusOrVisible)
-
-    // Fallback: Non-blocking REST polling
-    const startPolling = () => {
-      if (isUnmounted) return
-      setTransport('poll')
-      setIsConnected(true)
-      poll()
-    }
-
-    // Only attempt WebSocket if an explicit VITE_WS_URL is provided in environment
-    const explicitWsUrl = import.meta.env.VITE_WS_URL
-    if (explicitWsUrl) {
-      try {
-        const ws = new WebSocket(`${explicitWsUrl}?token=${encodeURIComponent(token)}`)
-        wsRef.current = ws
-
-        ws.onopen = () => {
-          if (isUnmounted) return
-          setIsConnected(true)
-          setTransport('websocket')
-
-          ws.send(JSON.stringify({ type: 'auth', token }))
-          ws.send(
-            JSON.stringify({
-              type: 'subscribe',
-              topics: ['repair_jobs', 'inventory', 'appointments', 'invoices', 'customers', 'vehicles'],
-            })
-          )
-        }
-
-        ws.onmessage = (event) => {
-          try {
-            const msg = JSON.parse(event.data)
-            if (msg.type === 'event') {
-              handleIncomingEvent(msg)
-            }
-          } catch {
-            // ignore non-json
-          }
-        }
-
-        ws.onerror = () => {
-          ws.close()
-        }
-
-        ws.onclose = () => {
-          if (isUnmounted) return
-          setIsConnected(false)
-          setTransport('disconnected')
-          startPolling()
-        }
-      } catch {
-        startPolling()
-      }
-    } else {
-      startPolling()
-    }
+    poll()
 
     return () => {
       isUnmounted = true
       window.removeEventListener('focus', handleFocusOrVisible)
       document.removeEventListener('visibilitychange', handleFocusOrVisible)
       if (pollTimerRef.current) clearTimeout(pollTimerRef.current)
-      if (wsRef.current) {
-        wsRef.current.close()
-        wsRef.current = null
-      }
     }
-  }, [user, handleIncomingEvent, queryClient])
-
-  return { isConnected, transport, lastEvent }
+  }, [user, handleIncomingEvent])
 }

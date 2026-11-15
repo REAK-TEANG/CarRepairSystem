@@ -1,32 +1,21 @@
 <?php
 // api/utils/rateLimit.php
 
-class RateLimiter {
-    /**
-     * Get client IP address securely
-     */
-    public static function getClientIp() {
-        if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
-            return $_SERVER['HTTP_CF_CONNECTING_IP'];
-        }
-        if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-            $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
-            return trim($ips[0]);
-        }
-        return $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
-    }
+require_once __DIR__ . '/clientIp.php';
+require_once __DIR__ . '/jwt.php';
+require_once __DIR__ . '/cache.php';
 
+class RateLimiter {
     /**
      * Check if client IP or username has exceeded maximum failed login attempts
      */
     public static function isRateLimited($identifier, $maxAttempts = 5, $decayMinutes = 15) {
-        $ip = self::getClientIp();
+        $ip = clientIp();
         $cleanId = strtolower(trim($identifier));
-        $isLocal = ($ip === '127.0.0.1' || $ip === '::1' || (getenv('APP_ENV') ?: 'production') === 'development');
 
-        // Never lock out local development by IP
-        if ($isLocal) {
-            // Only protect against extreme brute force per identifier in local dev (e.g. 50 attempts)
+        // Development only: a relaxed per-identifier limit so developers do not lock themselves out.
+        // Never decided by IP: a security limit must not depend on where the request appears to come from.
+        if ((getenv('APP_ENV') ?: 'production') === 'development') {
             try {
                 $row = get("SELECT COUNT(*) AS cnt FROM login_attempts WHERE identifier = ? AND attempted_at >= NOW() - INTERVAL '$decayMinutes minutes'", [$cleanId]);
                 return ((int)($row['cnt'] ?? 0)) >= 50;
@@ -72,7 +61,7 @@ class RateLimiter {
      * Record a failed login attempt
      */
     public static function recordFailure($identifier, $decayMinutes = 15) {
-        $ip = self::getClientIp();
+        $ip = clientIp();
         $cleanId = strtolower(trim($identifier));
         
         $redis = Cache::getClient();
@@ -110,7 +99,7 @@ class RateLimiter {
      * Clear all recorded failures on successful login
      */
     public static function resetAttempts($identifier) {
-        $ip = self::getClientIp();
+        $ip = clientIp();
         $cleanId = strtolower(trim($identifier));
         
         $redis = Cache::getClient();
@@ -131,36 +120,37 @@ class RateLimiter {
         }
     }
 
+    public const ANONYMOUS_LIMIT = 120; // requests per minute, per IP, without a valid login
+    public const USER_LIMIT = 300;      // requests per minute, per signed-in user
+
     /**
-     * Check if client IP has exceeded maximum allowed global API requests
+     * Which allowance a request counts against: [bucket key, requests per minute].
+     * A request carrying a validly signed, unexpired token gets that user's own bucket, so
+     * colleagues behind one office IP do not use up each other's allowance. Anything else
+     * (no token, forged, expired) shares the caller's IP bucket, so made-up tokens gain nothing.
      */
-    public static function isGlobalThrottled(int $maxRequests = 120, int $decayMinutes = 1): bool {
-        $ip = self::getClientIp();
-
-        // Fast path: in-memory counter (Redis or APCu), no database round trip
-        $count = Cache::increment("ratelimit:global:$ip", $decayMinutes * 60);
-        if ($count !== null) {
-            return $count > $maxRequests;
-        }
-
-        // Fallback when no cache tier is available (e.g. local dev server)
-        try {
-            $row = get(
-                "SELECT COUNT(*) AS cnt FROM global_api_requests
-                 WHERE ip_address = ? AND requested_at >= NOW() - INTERVAL '$decayMinutes minutes'",
-                [$ip]
-            );
-            run("INSERT INTO global_api_requests (ip_address) VALUES (?)", [$ip]);
-
-            // Periodic cleanup (1 in 100 chance to minimize lock contention)
-            if (mt_rand(1, 100) === 1) {
-                run("DELETE FROM global_api_requests WHERE requested_at < NOW() - INTERVAL '1 hour'");
+    public static function requestBucket(?string $bearerToken): array {
+        if ($bearerToken) {
+            try {
+                $claims = JWT::decode($bearerToken, getJwtSecret());
+            } catch (Throwable $e) {
+                $claims = false;
             }
-
-            return (int)($row['cnt'] ?? 0) >= $maxRequests;
-        } catch (Throwable $e) {
-            error_log("RateLimiter global check error: " . $e->getMessage());
-            return false;
+            if (is_array($claims) && !empty($claims['id'])) {
+                return ['user:' . (int) $claims['id'], self::USER_LIMIT];
+            }
         }
+        return ['ip:' . clientIp(), self::ANONYMOUS_LIMIT];
+    }
+
+    /**
+     * Count this request against a bucket and report whether it is over the limit.
+     * Uses the in-memory cache tier (Redis or APCu) only. Without one there is no global
+     * throttle: counting in the database would add load exactly when a flood needs less of it.
+     * Check "cache" in /health/db to confirm a tier is active in production.
+     */
+    public static function isGlobalThrottled(string $bucket, int $maxRequests, int $decayMinutes = 1): bool {
+        $count = Cache::increment("ratelimit:global:$bucket", $decayMinutes * 60);
+        return $count !== null && $count > $maxRequests;
     }
 }

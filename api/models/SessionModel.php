@@ -29,7 +29,7 @@ class SessionModel
     public static function createSession(int $userId, string $token, string $currentRoute = '/'): ?int
     {
         $tokenHash = hash('sha256', $token);
-        $ip = AuditLogger::getClientIp();
+        $ip = clientIp();
         $userAgent = AuditLogger::getUserAgent();
         $deviceType = self::detectDeviceType($userAgent);
 
@@ -245,6 +245,35 @@ class SessionModel
     }
 
     /**
+     * Close and revoke every open session of a user, e.g. after a password change.
+     * $keepTokenHash spares one session (the user's current one after changing their own password).
+     * Returns the number of sessions revoked.
+     */
+    public static function revokeAllForUser(int $userId, string $closeReason, ?string $keepTokenHash = null): int
+    {
+        $sessions = all(
+            "SELECT id, session_token_hash FROM user_sessions
+             WHERE user_id = ? AND status IN ('active', 'idle') AND session_token_hash IS NOT NULL",
+            [$userId]
+        );
+        $revoked = 0;
+        foreach ($sessions as $session) {
+            if ($keepTokenHash !== null && hash_equals($keepTokenHash, $session['session_token_hash'])) {
+                continue;
+            }
+            run(
+                "UPDATE user_sessions
+                 SET status = 'revoked', close_reason = ?, logout_at = NOW(), updated_at = NOW()
+                 WHERE id = ?",
+                [$closeReason, $session['id']]
+            );
+            AuthMiddleware::blacklistTokenHash($session['session_token_hash']);
+            $revoked++;
+        }
+        return $revoked;
+    }
+
+    /**
      * Terminate / Revoke session by Admin (Kill Switch)
      */
     public static function revokeSession(int $sessionId, array $adminUser): bool
@@ -273,18 +302,8 @@ class SessionModel
             [$sessionId]
         );
 
-        // 2. Blacklist the token hash in token_blacklist so immediate requests fail
-        try {
-            $tokenHash = $session['session_token_hash'];
-            run(
-                "INSERT INTO token_blacklist (token_hash, expires_at) 
-                 VALUES (?, NOW() + INTERVAL '24 hours') 
-                 ON CONFLICT (token_hash) DO NOTHING",
-                [$tokenHash]
-            );
-        } catch (Throwable $e) {
-            error_log("Failed to insert into token_blacklist: " . $e->getMessage());
-        }
+        // 2. Revoke the token itself (cache + database) so the very next request fails
+        AuthMiddleware::blacklistTokenHash($session['session_token_hash']);
 
         // 3. Log the administrative revocation in audit logs
         AuditLogger::log(

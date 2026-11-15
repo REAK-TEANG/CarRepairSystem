@@ -19,6 +19,9 @@ jobs:
           cache-dependency-path: CarRepairShop/package-lock.json
       - run: npm ci
       - run: npm run lint
+      - run: npm run check:csp
+      - name: Dependency audit (shipped code, high severity and above)
+        run: npm audit --omit=dev --audit-level=high
       - run: npm run build
 
   api:
@@ -27,13 +30,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.4"
+          php-version: "8.3" # same as the production Docker image
+          tools: composer
+      - name: Install dependencies
+        run: composer install --no-dev --no-interaction --no-progress --working-dir=api
+      - name: Dependency audit
+        run: composer audit --no-dev --working-dir=api
       - name: PHP syntax check
         run: find api -name '*.php' -not -path 'api/vendor/*' -print0 | xargs -0 -n1 php -l > /dev/null
       - name: Unit tests
-        run: |
-          php api/tests/jwt_test.php
-          php api/tests/db_error_test.php
-          php api/tests/db_globals_test.php
-          php api/tests/password_test.php
-          php -d apc.enable_cli=1 api/tests/cache_test.php
+        run: bash scripts/test-api.sh

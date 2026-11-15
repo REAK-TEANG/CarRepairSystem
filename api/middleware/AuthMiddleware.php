@@ -134,7 +134,14 @@ class AuthMiddleware
      */
     public static function blacklistToken(string $token, int $ttl = 86400): void
     {
-        $hash = hash('sha256', $token);
+        self::blacklistTokenHash(hash('sha256', $token), $ttl);
+    }
+
+    /**
+     * Revoke a token known only by its SHA-256 hash (as stored in user_sessions).
+     */
+    public static function blacklistTokenHash(string $hash, int $ttl = 86400): void
+    {
         $ttl = max(60, $ttl);
 
         // Make revocation visible immediately in the cache tier(s)
@@ -252,39 +259,30 @@ class AuthMiddleware
     }
 
     /**
-     * Role-Based Access Control (RBAC) Enforcement
-     * Checks if the authenticated user's role has permission for $module and $action.
-     * Terminates execution with 403 Forbidden if not permitted.
+     * Whether the user in $payload may perform $action on $module, per the permissions matrix
+     * (database settings, cached; falling back to DEFAULT_PERMISSIONS). Admins may do anything.
      *
      * @param string $module Target domain module (e.g. 'customers', 'repair_jobs', 'inventory', etc.)
      * @param string $action Requested action ('create', 'read', 'update', 'delete', 'export')
      * @param array $payload Decoded JWT payload
      */
-    public static function authorize(string $module, string $action, array $payload): void
+    public static function can(string $module, string $action, array $payload): bool
     {
         $userRole = strtolower($payload['role'] ?? '');
-
-        // System Administrator has universal access
         if ($userRole === 'admin') {
-            return;
+            return true;
         }
 
-        // Module alias normalization
         $moduleMap = [
             'repairjobs'        => 'repair_jobs',
             'repair-jobs'       => 'repair_jobs',
-            'repair_jobs'       => 'repair_jobs',
             'repair-orders'     => 'repair_jobs',
             'spare-parts'       => 'inventory',
             'spare_parts'       => 'inventory',
-            'inventory'         => 'inventory',
             'service-reminders' => 'service_reminders',
-            'service_reminders' => 'service_reminders',
             'servicereminders'  => 'service_reminders',
         ];
-
         $normModule = $moduleMap[strtolower($module)] ?? strtolower($module);
-        $normAction = strtolower($action);
 
         // Dynamic permissions matrix (cached; invalidated when settings change)
         $matrix = Cache::remember(self::PERMISSIONS_CACHE_KEY, self::PERMISSIONS_CACHE_TTL, function () {
@@ -297,24 +295,26 @@ class AuthMiddleware
             }
         });
 
-        // Determine effective allowed actions for this role
-        $allowedActions = [];
-        if ($matrix && isset($matrix[$normModule][$userRole]) && is_array($matrix[$normModule][$userRole])) {
-            $allowedActions = $matrix[$normModule][$userRole];
-        } else if (isset(self::DEFAULT_PERMISSIONS[$normModule][$userRole])) {
-            $allowedActions = self::DEFAULT_PERMISSIONS[$normModule][$userRole];
+        $allowedActions = $matrix[$normModule][$userRole] ?? self::DEFAULT_PERMISSIONS[$normModule][$userRole] ?? [];
+        return is_array($allowedActions) && in_array(strtolower($action), $allowedActions, true);
+    }
+
+    /**
+     * Role-Based Access Control (RBAC) Enforcement.
+     * Terminates execution with 403 Forbidden unless can() allows the action.
+     */
+    public static function authorize(string $module, string $action, array $payload): void
+    {
+        if (self::can($module, $action, $payload)) {
+            return;
         }
 
-        if (in_array($normAction, $allowedActions, true)) {
-            return; // Permitted
-        }
-
-        // Access Denied
         http_response_code(403);
+        $userRole = strtolower($payload['role'] ?? '');
         $roleTitle = $payload['roleTitle'] ?? ucfirst(str_replace('_', ' ', $userRole));
         echo json_encode([
             'error'   => 'Forbidden',
-            'message' => "Your current role ('$roleTitle') does not have permission to {$normAction} {$normModule}."
+            'message' => "Your current role ('$roleTitle') does not have permission to " . strtolower($action) . ' ' . strtolower($module) . '.'
         ]);
         exit;
     }
