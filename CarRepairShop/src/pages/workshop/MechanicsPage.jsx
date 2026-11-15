@@ -403,7 +403,7 @@ export default function MechanicsPage() {
               {t('common.cancel')}
             </Button>
             <LoadingButton type="submit" loading={createMechanicMutation.isPending}>
-              <Plus size={14} weight="bold" className="sm:mr-1" />
+              <Plus size={14} weight="bold" />
               <span className="hidden sm:inline">{t('mechanics.createMechanic')}</span>
               <span className="sm:hidden">Add</span>
             </LoadingButton>

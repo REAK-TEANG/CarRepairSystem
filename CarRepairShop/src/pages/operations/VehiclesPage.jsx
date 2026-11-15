@@ -619,7 +619,7 @@ export default function VehiclesPage() {
               {t('common.cancel')}
             </Button>
             <LoadingButton type="submit" loading={createVehicleMutation.isPending}>
-              <Plus size={14} weight="bold" className="sm:mr-1" />
+              <Plus size={14} weight="bold" />
               <span className="hidden sm:inline">{t('vehicles.createVehicle')}</span>
               <span className="sm:hidden">Register</span>
             </LoadingButton>

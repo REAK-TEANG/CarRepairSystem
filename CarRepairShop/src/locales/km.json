@@ -433,11 +433,11 @@
     "startDate": "ថ្ងៃចាប់ផ្តើម",
     "endDate": "ថ្ងៃបញ្ចប់",
     "apply": "អនុវត្ត",
-    "financialAudit": "ហិរញ្ញវត្ថុ (វិក្កយបត្រ & ចំណូល)",
-    "operationsAudit": "ប្រតិបត្តិការ (បញ្ជាការងារ)",
-    "inventoryAudit": "ស្តុក (តម្លៃគ្រឿងបន្លាស់)",
-    "mechanicsAudit": "ជាងជំនាញ (កម្លាំងពលកម្ម)",
-    "customersAudit": "អតិថិជន (គណនី & យានយន្ត)",
+    "financialAudit": "ហិរញ្ញវត្ថុ",
+    "operationsAudit": "ប្រតិបត្តិការ",
+    "inventoryAudit": "ស្តុក",
+    "mechanicsAudit": "ជាងជំនាញ",
+    "customersAudit": "អតិថិជន",
     "searchReports": "ស្វែងរកតាមលេខបញ្ជា វិក្កយបត្រ អតិថិជន គ្រឿងបន្លាស់..."
   },
   "settings": {

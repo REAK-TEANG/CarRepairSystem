@@ -43,7 +43,7 @@ export default function StatusBadge({ status, variant, className, pulse = false 
   return (
     <span
       className={clsx(
-        'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold tracking-normal whitespace-nowrap font-sans transition-colors',
+        'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold tracking-normal whitespace-nowrap font-sans transition-colors',
         variants[resolvedVariant],
         className
       )}

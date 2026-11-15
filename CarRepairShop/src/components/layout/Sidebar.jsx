@@ -95,8 +95,8 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
       {/* Brand Header */}
       <div className="flex items-center justify-between h-14 px-3.5 border-b border-[var(--sidebar-border)]">
         <div className="flex items-center gap-2.5 overflow-hidden">
-          <div className="flex-shrink-0 w-8 h-8 bg-app-accent rounded-md flex items-center justify-center shadow-xs">
-            <Logo size={18} className="text-white dark:text-gray-950" />
+          <div className="flex-shrink-0 w-8.5 h-8.5 bg-emerald-600 dark:bg-emerald-600 rounded-xl flex items-center justify-center shadow-xs">
+            <Logo size={18} className="text-white" />
           </div>
           {!collapsed && (
             <div className="min-w-0">
@@ -132,9 +132,9 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
                   {t(section.categoryKey)}
                 </p>
               )}
-              <nav className="space-y-0.5">
+              <nav className="space-y-1">
                 {visibleItems.map((item) => {
-                  const isActive = location.pathname === item.href
+                  const isActive = location.pathname === item.href || (item.href !== '/' && location.pathname.startsWith(item.href + '/'))
                   const translatedName = t(item.nameKey)
                   return (
                     <NavLink
@@ -143,19 +143,19 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
                       onClick={handleLinkClick}
                       {...prefetchHandlers(item.href)}
                       className={clsx(
-                        'flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors group relative',
+                        'flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all group relative active:scale-[0.98]',
                         isActive
-                          ? 'bg-app-accent/10 text-app-accent font-semibold ring-1 ring-app-accent/25'
+                          ? 'bg-emerald-600 dark:bg-emerald-600 text-white font-semibold shadow-xs'
                           : 'text-app-muted hover:bg-[var(--sidebar-hover)] hover:text-app-text'
                       )}
                       title={collapsed ? translatedName : undefined}
                     >
                       <item.icon
-                        size={16}
+                        size={17}
                         weight={isActive ? 'bold' : 'regular'}
                         className={clsx(
                           'flex-shrink-0 transition-colors',
-                          isActive ? 'text-app-accent' : 'text-app-muted group-hover:text-app-text'
+                          isActive ? 'text-white' : 'text-app-muted group-hover:text-app-text'
                         )}
                       />
                       {!collapsed && (
@@ -175,7 +175,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
         {!collapsed && (
           <div className="flex items-center gap-2.5 overflow-hidden">
             <div className="relative flex-shrink-0">
-              <div className="w-8 h-8 rounded-sm bg-app-accent/15 border border-app-accent/30 flex items-center justify-center text-app-accent font-bold text-xs">
+              <div className="w-8 h-8 rounded-xl bg-emerald-600/15 border border-emerald-600/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold text-xs">
                 {user?.name ? user.name.split(' ').map((n) => n[0]).join('') : '?'}
               </div>
             </div>
@@ -189,7 +189,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onCloseMobile
         )}
         <button
           onClick={onToggle}
-          className="p-2 rounded-sm text-app-muted hover:bg-[var(--sidebar-hover)] hover:text-app-text transition-colors flex-shrink-0 hidden lg:block"
+          className="p-2 rounded-lg text-app-muted hover:bg-[var(--sidebar-hover)] hover:text-app-text transition-colors flex-shrink-0 hidden lg:block"
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? <CaretRight size={16} weight="bold" /> : <CaretLeft size={16} weight="bold" />}

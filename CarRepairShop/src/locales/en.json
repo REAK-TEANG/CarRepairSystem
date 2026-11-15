@@ -434,11 +434,11 @@
     "startDate": "Start Date",
     "endDate": "End Date",
     "apply": "Apply",
-    "financialAudit": "Financial (Invoices & Revenue)",
-    "operationsAudit": "Operations (Work Orders)",
-    "inventoryAudit": "Inventory (Stock Valuation)",
-    "mechanicsAudit": "Technicians (Labor & Efficiency)",
-    "customersAudit": "Customers (Accounts & Fleet)",
+    "financialAudit": "Financial",
+    "operationsAudit": "Operations",
+    "inventoryAudit": "Inventory",
+    "mechanicsAudit": "Technicians",
+    "customersAudit": "Customers",
     "searchReports": "Filter records by order #, invoice, customer, part, mechanic..."
   },
   "settings": {

@@ -293,7 +293,7 @@ export default function CustomersPage() {
               {t('common.cancel')}
             </Button>
             <LoadingButton type="submit" loading={createCustomerMutation.isPending}>
-              <Plus size={14} weight="bold" className="sm:mr-1" />
+              <Plus size={14} weight="bold" />
               <span className="hidden sm:inline">{t('customers.createCustomer')}</span>
               <span className="sm:hidden">Create</span>
             </LoadingButton>

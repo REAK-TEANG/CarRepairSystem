@@ -275,9 +275,9 @@ export default function JobCardDrawer({
               type="button"
               isLoading={isSaving}
               onClick={handleSave}
-              className="bg-app-accent text-app-accentText hover:bg-app-accentHover font-semibold px-4"
+              className="bg-app-accent text-app-accentText hover:bg-app-accentHover font-semibold px-4 active-press touch-manipulation"
             >
-              <FloppyDisk size={14} weight="bold" className="sm:mr-1" />
+              <FloppyDisk size={14} weight="bold" />
               <span className="hidden sm:inline">Save Changes</span>
               <span className="sm:hidden">Save</span>
             </LoadingButton>
@@ -537,9 +537,9 @@ export default function JobCardDrawer({
                   }
                 }}
                 disabled={!selectedServiceId}
-                className="bg-app-accent text-app-accentText hover:bg-app-accentHover text-xs h-9 px-3"
+                className="bg-app-accent text-app-accentText hover:bg-app-accentHover text-xs h-9 px-3 active-press touch-manipulation inline-flex items-center gap-1.5"
               >
-                <Plus size={14} className="sm:mr-1" />
+                <Plus size={14} weight="bold" />
                 <span className="hidden sm:inline">Add Service</span>
                 <span className="sm:hidden">Add</span>
               </Button>
@@ -576,9 +576,9 @@ export default function JobCardDrawer({
                 size="sm"
                 onClick={handleAddPart}
                 disabled={!newPartId}
-                className="bg-app-accent text-app-accentText hover:bg-app-accentHover text-xs h-9"
+                className="bg-app-accent text-app-accentText hover:bg-app-accentHover text-xs h-9 active-press touch-manipulation inline-flex items-center gap-1.5"
               >
-                <Plus size={14} className="sm:mr-1" />
+                <Plus size={14} weight="bold" />
                 <span className="hidden sm:inline">Add Part</span>
                 <span className="sm:hidden">Add</span>
               </Button>
@@ -672,7 +672,7 @@ export default function JobCardDrawer({
                 type="button"
                 isLoading={isGeneratingInvoice}
                 onClick={handleGenerateInvoice}
-                className="w-full bg-app-accent text-app-accentText hover:bg-app-accentHover font-semibold py-2.5 flex items-center justify-center gap-2"
+                className="w-full bg-app-accent text-app-accentText hover:bg-app-accentHover font-semibold py-2.5 active-press touch-manipulation"
               >
                 <Receipt size={16} weight="bold" />
                 <span className="hidden sm:inline">Generate Official Invoice & Settle</span>

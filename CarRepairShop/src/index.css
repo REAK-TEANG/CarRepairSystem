@@ -111,6 +111,14 @@ html.dark {
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
+
+  /* Universal button & CTA icon alignment lock: prevent SVG block-line breaks */
+  button svg,
+  [data-slot="button"] svg {
+    display: inline-block;
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
 }
 
 @layer components {

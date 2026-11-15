@@ -952,7 +952,7 @@ export default function AppointmentsPage() {
               Cancel
             </button>
             <LoadingButton type="submit" loading={createReminderMutation.isPending}>
-              <Plus size={14} weight="bold" className="sm:mr-1" />
+              <Plus size={14} weight="bold" />
               <span className="hidden sm:inline">Schedule Reminder</span>
               <span className="sm:hidden">Schedule</span>
             </LoadingButton>
@@ -1078,7 +1078,7 @@ export default function AppointmentsPage() {
               {t('common.cancel')}
             </button>
             <LoadingButton type="submit" loading={createAptMutation.isPending}>
-              <Plus size={14} weight="bold" className="sm:mr-1" />
+              <Plus size={14} weight="bold" />
               <span className="hidden sm:inline">{t('appointments.createAppointment')}</span>
               <span className="sm:hidden">Create</span>
             </LoadingButton>

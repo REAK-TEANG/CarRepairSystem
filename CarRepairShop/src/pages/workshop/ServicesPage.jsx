@@ -508,7 +508,7 @@ export default function ServicesPage() {
               {t('common.cancel')}
             </button>
             <LoadingButton type="submit" loading={createServiceMutation.isPending}>
-              <Plus size={14} weight="bold" className="sm:mr-1" />
+              <Plus size={14} weight="bold" />
               <span className="hidden sm:inline">{t('services.createService')}</span>
               <span className="sm:hidden">Add</span>
             </LoadingButton>

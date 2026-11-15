@@ -21,20 +21,20 @@ export function PageHeader({
   className = '',
 }) {
   return (
-    <div className={cn('space-y-3 font-sans', className)}>
+    <div className={cn('space-y-3.5 sm:space-y-4 font-sans', className)}>
       {/* Top Bar: Title + Total Badge + Primary Action Cluster */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 pb-0.5">
         <div className="flex items-center gap-2.5">
-          <h1 className="text-lg font-bold tracking-tight text-app-text">{title}</h1>
+          <h1 className="text-lg sm:text-xl font-bold tracking-tight text-app-text">{title}</h1>
           {count !== undefined && count !== null && (
-            <span className="text-xs font-mono font-semibold text-app-muted px-2 py-0.5 bg-app-card border border-app-border rounded-md shadow-2xs">
+            <span className="text-xs font-mono font-semibold text-app-muted px-2.5 py-0.5 bg-app-card border border-app-border rounded-lg shadow-2xs">
               {count}
             </span>
           )}
         </div>
 
         {actions && (
-          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+          <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
             {actions}
           </div>
         )}
@@ -42,10 +42,10 @@ export function PageHeader({
 
       {/* Secondary Bar: Segmented Status Pills + Search Toolbar */}
       {(filterTabs || onSearch || children) && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-0.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
           {/* Segmented Filter Pills */}
           {filterTabs && filterTabs.length > 0 && (
-            <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
               {filterTabs.map((tab) => {
                 const tabKey = typeof tab === 'string' ? tab : tab.key
                 const tabLabel = typeof tab === 'string' ? tab : tab.label
@@ -58,7 +58,7 @@ export function PageHeader({
                     type="button"
                     onClick={() => onFilterChange?.(tabKey)}
                     className={cn(
-                      'h-8 px-3 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer touch-manipulation active-press inline-flex items-center gap-1.5',
+                      'h-8.5 px-3.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer touch-manipulation active-press inline-flex items-center gap-1.5',
                       isActive
                         ? 'bg-app-accent text-app-accentText shadow-xs'
                         : 'bg-app-card border border-app-border text-app-muted hover:text-app-text hover:bg-app-hover'

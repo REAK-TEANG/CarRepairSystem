@@ -308,7 +308,7 @@ export default function SuppliersPage() {
               {t('common.cancel')}
             </Button>
             <LoadingButton type="submit" loading={createSupplierMutation.isPending}>
-              <Plus size={14} weight="bold" className="sm:mr-1" />
+              <Plus size={14} weight="bold" />
               <span className="hidden sm:inline">{t('suppliers.createSupplier')}</span>
               <span className="sm:hidden">Add</span>
             </LoadingButton>

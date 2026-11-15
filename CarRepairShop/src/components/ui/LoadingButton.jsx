@@ -16,7 +16,7 @@ export default function LoadingButton({
 }) {
   const isActive = loading || isLoading
   const baseStyles =
-    'inline-flex items-center justify-center gap-2 rounded-lg text-xs font-semibold transition-all select-none disabled:opacity-50 disabled:cursor-not-allowed shadow-subtle cursor-pointer'
+    'inline-flex flex-row items-center justify-center gap-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all select-none disabled:opacity-50 disabled:cursor-not-allowed shadow-subtle cursor-pointer touch-manipulation [&_svg]:shrink-0 [&_svg]:inline-block'
 
   const variants = {
     primary:
@@ -38,17 +38,17 @@ export default function LoadingButton({
       {...props}
     >
       {isActive ? (
-        <>
+        <span className="inline-flex flex-row items-center justify-center gap-1.5 whitespace-nowrap leading-none">
           <Spin>
-            <CircleNotch size={15} weight="bold" className="text-current flex-shrink-0" />
+            <CircleNotch size={15} weight="bold" className="text-current shrink-0 inline-block" />
           </Spin>
           <span>Processing...</span>
-        </>
+        </span>
       ) : (
-        <>
-          {Icon && <Icon size={15} weight="bold" className="flex-shrink-0" />}
-          <span>{children}</span>
-        </>
+        <span className="inline-flex flex-row items-center justify-center gap-1.5 whitespace-nowrap leading-none">
+          {Icon && <Icon size={15} weight="bold" className="shrink-0 inline-block" />}
+          {children}
+        </span>
       )}
     </button>
   )

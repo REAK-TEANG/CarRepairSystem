@@ -12,7 +12,7 @@ function Table({
     <div
       data-slot="table-container"
       className={cn(
-        "w-full overflow-hidden rounded-lg border border-app-border bg-app-card shadow-xs",
+        "w-full overflow-hidden rounded-xl border border-app-border bg-app-card shadow-xs",
         containerClassName
       )}
     >
@@ -93,7 +93,7 @@ function TableHead({
     <th
       data-slot="table-head"
       className={cn(
-        "h-8 px-3 text-left align-middle text-[11px] font-semibold text-app-muted uppercase tracking-wider whitespace-nowrap select-none [&:has([role=checkbox])]:pr-0",
+        "h-9 sm:h-10 px-4 text-left align-middle text-xs font-semibold text-app-muted uppercase tracking-wider whitespace-nowrap select-none [&:has([role=checkbox])]:pr-0",
         className
       )}
       {...props}
@@ -109,7 +109,7 @@ function TableCell({
     <td
       data-slot="table-cell"
       className={cn(
-        "px-3 py-2 text-xs align-middle text-app-text whitespace-nowrap tabular-nums [&:has([role=checkbox])]:pr-0",
+        "px-4 py-3 sm:py-3.5 text-xs align-middle text-app-text whitespace-nowrap tabular-nums [&:has([role=checkbox])]:pr-0",
         className
       )}
       {...props}
@@ -144,7 +144,7 @@ function TableFooterBar({
 
   return (
     <div data-slot="table-footer-bar" className={cn(
-      "flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5 border-t border-app-border bg-app-card text-xs text-app-muted select-none rounded-b-lg",
+      "flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-t border-app-border bg-app-card text-xs text-app-muted select-none rounded-b-xl",
       className
     )}>
       <div className="flex items-center gap-1.5">
